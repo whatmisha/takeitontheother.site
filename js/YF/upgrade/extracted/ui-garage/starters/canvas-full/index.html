@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en" data-tool-name="Raster Texture Starter">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>Raster Texture Starter</title>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="../../css/framework.css">
+    <link rel="stylesheet" href="../../css/ui-contract.css">
+    <link rel="stylesheet" href="./app.css">
+</head>
+<body>
+    <div class="container canvas-starter">
+        <header class="top-links" aria-label="Tool navigation">
+            <a class="top-link" href="../../START_HERE.md">UI Garage</a>
+            <div class="preset-toolbar-cluster">
+                <div class="preset-dropdown" id="presetDropdown">
+                    <button class="preset-dropdown-toggle" id="presetDropdownToggle" type="button"
+                            aria-haspopup="listbox" aria-expanded="false" aria-controls="presetDropdownMenu">
+                        <span class="preset-dropdown-text">Presets</span>
+                        <span class="preset-dropdown-arrow" aria-hidden="true">⌄</span>
+                    </button>
+                    <ul class="preset-dropdown-menu" id="presetDropdownMenu" role="listbox"></ul>
+                </div>
+                <button id="presetToolbarShareBtn" class="preset-toolbar-share-btn" type="button"
+                        aria-label="Copy share link" data-tooltip="Copy share link">↗</button>
+                <button id="savePresetBtn" class="top-link" type="button" style="display:none">Save preset</button>
+            </div>
+            <button class="zoom-indicator" id="zoomIndicator" type="button" data-tooltip="Click to fit">100%</button>
+        </header>
+
+        <main class="main-content">
+            <h1 class="sr-only">Raster Texture Starter</h1>
+            <section class="canvas-container" id="canvasContainer" aria-label="Raster artwork viewport" tabindex="0">
+                <canvas id="mainCanvas" role="img" aria-label="Generated raster texture"></canvas>
+            </section>
+
+            <aside class="controls-panel" id="texturePanel">
+                <div class="panel-header" id="texturePanelHeader">
+                    <span>Texture</span>
+                    <button class="collapse-icon" type="button" aria-label="Collapse panel">⌄</button>
+                </div>
+                <div class="panel-content"><section class="control-section">
+                    <div class="control-group">
+                        <label for="densitySlider"><span>Density</span><input id="densityValue" class="value-display" value="180"></label>
+                        <input id="densitySlider" type="range" min="20" max="500" value="180">
+                    </div>
+                    <div class="control-group">
+                        <label for="radiusSlider"><span>Radius</span><input id="radiusValue" class="value-display" value="14"></label>
+                        <input id="radiusSlider" type="range" min="2" max="64" value="14">
+                    </div>
+                    <div class="control-group">
+                        <label for="jitterSlider"><span>Jitter</span><input id="jitterValue" class="value-display" value="0.65"></label>
+                        <input id="jitterSlider" type="range" min="0" max="1" step="0.01" value="0.65">
+                    </div>
+                </section></div>
+            </aside>
+
+            <aside class="controls-panel" id="appearancePanel">
+                <div class="panel-header" id="appearancePanelHeader">
+                    <span>Appearance</span>
+                    <button class="collapse-icon" type="button" aria-label="Collapse panel">⌄</button>
+                </div>
+                <div class="panel-content"><section class="control-section">
+                    <div class="control-group">
+                        <label for="opacitySlider"><span>Marks</span><input id="opacityValue" class="value-display" value="0.82"></label>
+                        <input id="opacitySlider" type="range" min="0" max="1" step="0.01" value="0.82">
+                    </div>
+                    <div class="control-group">
+                        <label for="assetOpacitySlider"><span>Asset</span><input id="assetOpacityValue" class="value-display" value="0.45"></label>
+                        <input id="assetOpacitySlider" type="range" min="0" max="1" step="0.01" value="0.45">
+                    </div>
+                    <label class="checkbox-label" for="squareToggle">
+                        <input id="squareToggle" type="checkbox" data-setting="square"><span>Square marks</span>
+                    </label>
+                    <label class="checkbox-label" for="invertToggle">
+                        <input id="invertToggle" type="checkbox" data-setting="invert"><span>Invert blend</span>
+                    </label>
+                    <div class="color-swatches-compact">
+                        <div class="color-swatch-row">
+                            <div class="color-swatch-compact" id="markColorItem" data-color-type="mark">
+                                <button class="color-dot color-dot--expandable" id="markColorPreview" type="button" aria-label="Open mark color"></button>
+                                <span class="color-label">Mark</span>
+                                <input class="color-swatch-hex" id="markColorHex" value="#ff5c35" aria-label="Mark color hex">
+                            </div>
+                            <div class="color-hsb-slot" id="markColorHsbSlot"><div id="unifiedColorPickerContainer"></div></div>
+                        </div>
+                        <div class="color-swatch-row">
+                            <div class="color-swatch-compact" id="backgroundColorItem" data-color-type="background">
+                                <button class="color-dot color-dot--expandable" id="backgroundColorPreview" type="button" aria-label="Open background color"></button>
+                                <span class="color-label">Background</span>
+                                <input class="color-swatch-hex" id="backgroundColorHex" value="#131313" aria-label="Background color hex">
+                            </div>
+                            <div class="color-hsb-slot" id="backgroundColorHsbSlot"></div>
+                        </div>
+                    </div>
+                </section></div>
+            </aside>
+
+            <aside class="controls-panel" id="assetPanel">
+                <div class="panel-header" id="assetPanelHeader">
+                    <span>Asset</span>
+                    <button class="collapse-icon" type="button" aria-label="Collapse panel">⌄</button>
+                </div>
+                <div class="panel-content"><section class="control-section intake-stack">
+                    <div id="assetIntake" class="file-intake">
+                        <button id="assetDropzone" class="file-intake__trigger" type="button" data-shortcut-open-file>Open or drop an image</button>
+                        <input id="assetFileInput" class="sr-only" type="file" accept="image/*">
+                        <p id="assetFileStatus" class="file-intake__status">No image loaded</p>
+                        <button id="clearAssetFile" class="top-link" type="button" hidden>Clear image</button>
+                    </div>
+                    <div id="jsonIntake" class="file-intake file-intake--compact">
+                        <button id="jsonDropzone" class="top-link" type="button">Open settings JSON</button>
+                        <input id="jsonFileInput" class="sr-only" type="file" accept=".json,application/json">
+                        <p id="jsonFileStatus" class="file-intake__status">No settings file</p>
+                    </div>
+                </section></div>
+            </aside>
+        </main>
+
+        <nav class="bottom-buttons action-dock" role="toolbar" aria-label="Tool actions">
+            <div class="action-dock__slot action-dock__slot--utility">
+                <button class="btn-fixed" type="button" data-history-undo aria-label="Undo">Undo</button>
+                <button class="btn-fixed" type="button" data-history-redo aria-label="Redo">Redo</button>
+                <button class="btn-fixed" type="button" data-action-dock-extra-toggle aria-expanded="false">JSON</button>
+                <button id="exportJsonBtn" class="btn-fixed" type="button" data-action-dock-json-export data-action-dock-extra hidden>Export JSON</button>
+                <button id="importJsonBtn" class="btn-fixed" type="button" data-action-dock-json-import data-action-dock-extra hidden>Import JSON</button>
+            </div>
+            <div class="action-dock__slot action-dock__slot--primary">
+                <button id="shuffleBtn" class="btn-fixed" type="button">Shuffle</button>
+                <button id="exportSvgBtn" class="btn-fixed" type="button">SVG</button>
+                <button id="exportPng1Btn" class="btn-fixed" type="button">PNG 1×</button>
+                <button id="exportPng2Btn" class="btn-fixed" type="button" data-action-dock-primary-export>PNG 2× ⌘E</button>
+            </div>
+            <div class="action-dock__slot action-dock__slot--options">
+                <span id="operationStatus" class="starter-status" role="status" aria-live="polite">Ready</span>
+            </div>
+        </nav>
+
+        <dialog id="dialog" class="modal">
+            <div class="modal-content">
+                <h2 id="dialogTitle" class="modal-title"></h2>
+                <div id="dialogText" class="modal-text"></div>
+                <input id="dialogInput" class="modal-input" type="text" style="display:none">
+                <div id="dialogButtons" class="modal-buttons"></div>
+            </div>
+        </dialog>
+    </div>
+    <script type="module" src="./tool.js"></script>
+</body>
+</html>

@@ -19,6 +19,7 @@
     { "path": "src/history/HistoryManager.js", "surface": "stable", "owner": "application-shell-or-caller", "lifecycle": "release-reference" },
     { "path": "src/index.js", "surface": "stable", "owner": "framework", "lifecycle": "entrypoint" },
     { "path": "src/mobile/MobileBootstrap.js", "surface": "stable", "owner": "application-shell-or-caller", "lifecycle": "destroy" },
+    { "path": "src/persistence/DraftStore.js", "surface": "stable", "owner": "application-shell-or-caller", "lifecycle": "destroy" },
     { "path": "src/preset/PresetSession.js", "surface": "stable", "owner": "application-shell-or-caller", "lifecycle": "release-reference" },
     { "path": "src/preset/PresetStore.js", "surface": "stable", "owner": "application-shell-or-caller", "lifecycle": "operation-scoped" },
     { "path": "src/preset/ShareCodec.js", "surface": "stable", "owner": "application-shell-or-caller", "lifecycle": "operation-scoped" },

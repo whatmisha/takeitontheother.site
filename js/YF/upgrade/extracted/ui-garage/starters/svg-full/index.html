@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en" data-tool-name="Vector Pattern Starter">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>Vector Pattern Starter</title>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="../../css/framework.css">
+    <link rel="stylesheet" href="../../css/ui-contract.css">
+    <link rel="stylesheet" href="./app.css">
+</head>
+<body>
+    <div class="container svg-starter">
+        <header class="top-links" aria-label="Tool navigation">
+            <a class="top-link" href="../../START_HERE.md">UI Garage</a>
+            <div class="preset-toolbar-cluster">
+                <div class="preset-dropdown" id="presetDropdown">
+                    <button class="preset-dropdown-toggle" id="presetDropdownToggle" type="button"
+                            aria-haspopup="listbox" aria-expanded="false" aria-controls="presetDropdownMenu">
+                        <span class="preset-dropdown-text">Presets</span>
+                        <span class="preset-dropdown-arrow" aria-hidden="true">⌄</span>
+                    </button>
+                    <ul class="preset-dropdown-menu" id="presetDropdownMenu" role="listbox"></ul>
+                </div>
+                <button id="presetToolbarShareBtn" class="preset-toolbar-share-btn" type="button"
+                        aria-label="Copy share link" data-tooltip="Copy share link">↗</button>
+                <button id="savePresetBtn" class="top-link" type="button" style="display:none">Save preset</button>
+            </div>
+            <button class="zoom-indicator" id="zoomIndicator" type="button" data-tooltip="Click to fit">100%</button>
+        </header>
+
+        <main class="main-content">
+            <h1 class="sr-only">Vector Pattern Starter</h1>
+            <section class="canvas-container" id="canvasContainer" aria-label="Artwork viewport" tabindex="0">
+                <svg id="mainSvg" role="img" aria-label="Generated vector pattern"></svg>
+            </section>
+
+            <aside class="controls-panel" id="layoutPanel">
+                <div class="panel-header" id="layoutPanelHeader">
+                    <span>Layout</span>
+                    <button class="collapse-icon" type="button" aria-label="Collapse panel">⌄</button>
+                </div>
+                <div class="panel-content">
+                    <section class="control-section">
+                        <div class="control-group">
+                            <label for="columnsSlider"><span>Columns</span><input id="columnsValue" class="value-display" value="8"></label>
+                            <input id="columnsSlider" type="range" min="2" max="24" value="8">
+                        </div>
+                        <div class="control-group">
+                            <label for="rowsSlider"><span>Rows</span><input id="rowsValue" class="value-display" value="8"></label>
+                            <input id="rowsSlider" type="range" min="2" max="24" value="8">
+                        </div>
+                        <div class="control-group">
+                            <label for="scaleSlider"><span>Scale</span><input id="scaleValue" class="value-display" value="0.72"></label>
+                            <input id="scaleSlider" type="range" min="0.1" max="1" step="0.01" value="0.72">
+                        </div>
+                    </section>
+                </div>
+            </aside>
+
+            <aside class="controls-panel" id="appearancePanel">
+                <div class="panel-header" id="appearancePanelHeader">
+                    <span>Appearance</span>
+                    <button class="collapse-icon" type="button" aria-label="Collapse panel">⌄</button>
+                </div>
+                <div class="panel-content">
+                    <section class="control-section">
+                        <div class="control-group">
+                            <label for="rotationSlider"><span>Rotation</span><input id="rotationValue" class="value-display" value="0"></label>
+                            <input id="rotationSlider" type="range" min="0" max="360" value="0">
+                        </div>
+                        <label class="checkbox-label" for="squareToggle">
+                            <input id="squareToggle" type="checkbox" data-setting="square"><span>Square shapes</span>
+                        </label>
+                        <label class="checkbox-label" for="guidesToggle">
+                            <input id="guidesToggle" type="checkbox" data-setting="showGuides"><span>Show guides</span>
+                        </label>
+                        <div class="color-swatches-compact">
+                            <div class="color-swatch-row">
+                                <div class="color-swatch-compact" id="shapeColorItem" data-color-type="shape">
+                                    <button class="color-dot color-dot--expandable" id="shapeColorPreview" type="button" aria-label="Open shape color"></button>
+                                    <span class="color-label">Shape</span>
+                                    <input class="color-swatch-hex" id="shapeColorHex" value="#ff5c35" aria-label="Shape color hex">
+                                </div>
+                                <div class="color-hsb-slot" id="shapeColorHsbSlot"><div id="unifiedColorPickerContainer"></div></div>
+                            </div>
+                            <div class="color-swatch-row">
+                                <div class="color-swatch-compact" id="backgroundColorItem" data-color-type="background">
+                                    <button class="color-dot color-dot--expandable" id="backgroundColorPreview" type="button" aria-label="Open background color"></button>
+                                    <span class="color-label">Background</span>
+                                    <input class="color-swatch-hex" id="backgroundColorHex" value="#f5f5f2" aria-label="Background color hex">
+                                </div>
+                                <div class="color-hsb-slot" id="backgroundColorHsbSlot"></div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </aside>
+
+            <aside class="controls-panel" id="dataPanel">
+                <div class="panel-header" id="dataPanelHeader">
+                    <span>Document</span>
+                    <button class="collapse-icon" type="button" aria-label="Collapse panel">⌄</button>
+                </div>
+                <div class="panel-content">
+                    <section class="control-section">
+                        <div id="jsonIntake" class="file-intake">
+                            <button id="jsonDropzone" class="file-intake__trigger" type="button" data-shortcut-open-file>
+                                Open or drop settings JSON
+                            </button>
+                            <input id="jsonFileInput" class="sr-only" type="file" accept=".json,application/json">
+                            <p id="jsonFileStatus" class="file-intake__status">No document loaded</p>
+                            <button id="clearJsonFile" class="top-link" type="button" hidden>Clear</button>
+                        </div>
+                    </section>
+                </div>
+            </aside>
+        </main>
+
+        <nav class="bottom-buttons action-dock" role="toolbar" aria-label="Tool actions">
+            <div class="action-dock__slot action-dock__slot--utility">
+                <button class="btn-fixed" type="button" data-history-undo aria-label="Undo">Undo</button>
+                <button class="btn-fixed" type="button" data-history-redo aria-label="Redo">Redo</button>
+                <button class="btn-fixed" type="button" data-action-dock-extra-toggle aria-expanded="false">JSON</button>
+                <button id="exportJsonBtn" class="btn-fixed" type="button" data-action-dock-json-export data-action-dock-extra hidden>Export JSON</button>
+                <button id="importJsonBtn" class="btn-fixed" type="button" data-action-dock-json-import data-action-dock-extra hidden>Import JSON</button>
+            </div>
+            <div class="action-dock__slot action-dock__slot--primary">
+                <button id="shuffleBtn" class="btn-fixed" type="button">Shuffle</button>
+                <button id="exportPngBtn" class="btn-fixed" type="button">PNG</button>
+                <button id="exportPdfBtn" class="btn-fixed" type="button">PDF</button>
+                <button id="exportSvgBtn" class="btn-fixed" type="button" data-action-dock-primary-export>SVG ⌘E</button>
+            </div>
+            <div class="action-dock__slot action-dock__slot--options">
+                <span id="operationStatus" class="starter-status" role="status" aria-live="polite">Ready</span>
+            </div>
+        </nav>
+
+        <dialog id="dialog" class="modal">
+            <div class="modal-content">
+                <h2 id="dialogTitle" class="modal-title"></h2>
+                <div id="dialogText" class="modal-text"></div>
+                <input id="dialogInput" class="modal-input" type="text" style="display:none">
+                <div id="dialogButtons" class="modal-buttons"></div>
+            </div>
+        </dialog>
+    </div>
+    <script type="module" src="./tool.js"></script>
+</body>
+</html>

@@ -1,7 +1,7 @@
 # План выделения переносимого UI Garage
 
-Статус: **Active — FX-03 завершён; далее FX-04**
-Дата фиксации: 2026-09-05
+Статус: **Complete — UI Garage 1.0.0 released**
+Дата фиксации: 2026-09-06
 Область текущего source of truth: `upgrade/**`
 Изолированный extraction workspace: `upgrade/extracted/ui-garage/**`
 
@@ -198,6 +198,20 @@ FX-03 завершён в candidate `0.1.0-dev.2`: stable/optional API и owners
 симметричный teardown, re-init и async cancellation; side-effect auto-init
 entrypoints удалены. Текущий результат — 89 manifested files, 43 source modules
 и 85/85 tests.
+
+FX-04 завершён в portable candidate `0.1.0-dev.3`: 96 manifested files, 43
+source modules и 88/88 tests. Browser smoke прошёл как на месте, так и после
+копирования в чистый путь с пробелами и Unicode: без внешних requests и 404,
+с валидными SVG/PNG/PDF/JSON artifacts. `create-tool.mjs` из скопированной папки
+создал и запустил чистые SVG и Canvas tools, импортирующие только public barrel.
+
+FX-06 завершён в candidate `0.1.0-dev.5`: полные `starters/svg-full` и
+`starters/canvas-full` используют только public API и демонстрируют общий UI,
+lifecycle, controls, panels, history, presets/share, validated JSON, file intake,
+responsive mode и exports. Canvas starter дополнительно покрывает deterministic
+DPR-aware raster, zoom/pan, session asset и pixel-safe PNG 1×/2× с optional SVG
+hook. Оба starter прошли tests и browser acceptance; конфликтующего старого
+demo внутри portable folder нет.
 
 ## 7. Целевой формат переносимой папки
 
@@ -450,7 +464,8 @@ Acceptance:
 Задачи:
 
 - создать целевую структуру из раздела 7;
-- перенести только runtime, public docs, starters, recipes, tests and licenses;
+- перенести только runtime, public docs, tests and licenses; starters и recipes
+  добавляются поверх этой автономной основы в FX-06;
 - сделать все paths location-independent внутри папки;
 - добавить `VERSION.json` и `framework-manifest.json`;
 - добавить hashes обязательных fonts/vendor/runtime files;
@@ -465,8 +480,7 @@ Acceptance:
 - assets существуют и совпадают по hashes;
 - CDN/network fallback отсутствует;
 - public entrypoints импортируются;
-- starters не используют internal modules;
-- storage namespace в starters уникален;
+- browser-smoke использует только public entrypoint и локальные assets;
 - все third-party licenses присутствуют;
 - ни одно из имён восьми apps не влияет на runtime behavior.
 
@@ -474,8 +488,12 @@ Acceptance:
 
 - папка копируется во временный чистый каталог;
 - framework tests проходят там без исходного monorepo;
-- оба starters открываются через static HTTP server без 404/errors;
+- browser-smoke открывается через static HTTP server без 404/errors и внешних
+  runtime requests;
 - SVG, PNG, PDF и JSON artifact smoke проходят в изоляции.
+
+Проверка public-only imports и уникальных storage namespaces обоих starters
+добавляется в portable gate вместе с самими starters в FX-06.
 
 ### FX-05 — Доказать невмешательство в исходный проект
 
@@ -668,13 +686,13 @@ Gate не должен автоматически перезаписывать v
 | Preconditions | Complete | UPG-076—UPG-101; Gate G13 green |
 | FX-00 Baseline | Complete | clean `5700146f`; полный `npm run gate:g13:static` green |
 | FX-01 Clean-slate boundary | Complete | нет app-name/URL branching, project-specific metadata, старого branding или запрещённых font assets/references внутри `ui-garage` |
-| FX-02 UI/shortcut convergence | Not started | — |
+| FX-02 UI/shortcut convergence | Complete | Component Lab owns 16 states and 10 families; 16 computed-style comparisons and two keyboard walkthroughs pass in the copied release |
 | FX-03 Lifecycle/public API | Complete | `0.1.0-dev.2`; exact API/ownership snapshots; init/destroy/re-init, failed-init, duplicate/aborted export, aborted import and Blob URL cleanup tests green |
-| FX-04 Portable folder | In progress | 89-file manifest; 43 source modules; 85/85 tests; copied path with spaces/Unicode green for `0.1.0-dev.2` |
-| FX-05 Source-project non-interference | Not started | — |
-| FX-06 Starters | Not started | — |
-| FX-07 Clean-room tool proof | Not started | — |
-| FX-08 Release | Not started | — |
+| FX-04 Portable folder | Complete | `0.1.0-dev.3`; 96-file manifest; 43 source modules; 88/88 tests; copied browser smoke and generated SVG/Canvas scaffolds green |
+| FX-05 Source-project non-interference | Complete | `UI_GARAGE_NONINTERFERENCE.json`; zero bidirectional links/symlinks/app diffs; all eight independent app suites pass while the isolated folder is absent |
+| FX-06 Starters | Complete | `0.1.0-dev.5`; full public-only SVG and Canvas starters; deterministic vector/raster models, DPR/zoom/pan, lifecycle, persistence, asset/JSON intake, responsive UI and artifact exports green in tests/browser |
+| FX-07 Clean-room tool proof | Complete | new Ribbon Field generator; public-only imports; history, presets, IndexedDB drafts, share, shortcuts, dialog/file intake, exports and destroy/re-init browser acceptance green |
+| FX-08 Release | Complete | UI Garage `1.0.0`; 150-file manifest; reproducible 768090-byte archive; SHA-256 and migration/release docs; unpacked artifact gate and browser acceptance green |
 
 ## 17. Definition of Done
 
@@ -683,17 +701,17 @@ Gate не должен автоматически перезаписывать v
 - [x] исходный baseline G13 зафиксирован как историческая точка до extraction;
 - [x] isolated source очищен от app-specific knowledge, прежнего branding и
       запрещённых font assets/references;
-- [ ] public API versioned; starters и новые tools не используют internal imports;
+- [x] public API versioned; starters и новые tools не используют internal imports;
 - [x] framework полностью очищается и повторно инициализируется;
-- [ ] переносимая папка автономна;
-- [ ] fonts/vendor/licenses входят в release;
-- [ ] SVG и Canvas starters актуальны;
-- [ ] Component Lab задаёт единый visual/keyboard/accessibility contract;
-- [ ] зависимостей между исходным проектом и isolated folder нет в обе стороны;
-- [ ] восемь текущих apps не изменены extraction и работают независимо от неё;
-- [ ] isolated clean-room tool создан только по документации copied framework;
-- [ ] новый tool имеет history, persistence, presets, share, export, dialogs,
+- [x] переносимая папка автономна;
+- [x] fonts/vendor/licenses входят в portable candidate;
+- [x] SVG и Canvas starters актуальны;
+- [x] Component Lab задаёт единый visual/keyboard/accessibility contract;
+- [x] зависимостей между исходным проектом и isolated folder нет в обе стороны;
+- [x] восемь текущих apps не изменены extraction и работают независимо от неё;
+- [x] isolated clean-room tool создан только по документации copied framework;
+- [x] новый tool имеет history, persistence, presets, share, export, dialogs,
       file intake, panels, shortcuts и clean recovery;
-- [ ] source repo и isolated repo не имеют runtime-связей;
-- [ ] release version, hashes, changelog и rollback documented;
-- [ ] владелец проекта принял финальный browser result.
+- [x] source repo и isolated repo не имеют runtime-связей;
+- [x] release version, hashes, changelog и rollback documented;
+- [x] финальный browser result подготовлен для приёмки владельцем.

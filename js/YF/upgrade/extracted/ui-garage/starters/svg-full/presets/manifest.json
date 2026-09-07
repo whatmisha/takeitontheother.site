@@ -1,0 +1,7 @@
+{
+  "presets": [
+    { "name": "Starter", "file": "starter.json" },
+    { "name": "Night Grid", "file": "night-grid.json" },
+    { "name": "Rotated Blocks", "file": "rotated-blocks.json" }
+  ]
+}

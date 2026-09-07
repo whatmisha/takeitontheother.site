@@ -40,6 +40,7 @@ export { HistoryBridge } from './history/HistoryBridge.js';
 export { PresetStore } from './preset/PresetStore.js';
 export { PresetSession, SHARED_SLOT, NEW_SLOT } from './preset/PresetSession.js';
 export { ShareCodec, SHARE_SOFT_LIMIT_CHARS } from './preset/ShareCodec.js';
+export { DraftStore } from './persistence/DraftStore.js';
 export { SVGExporter, svgDocumentString } from './export/SVGExporter.js';
 export { ExportGuard } from './export/ExportGuard.js';
 export { TextToPath } from './export/TextToPath.js';

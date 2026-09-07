@@ -377,7 +377,18 @@ export class ApplicationShell {
             defaults['mod+z'] = () => this.undo();
             defaults['mod+shift+z'] = () => this.redo();
         }
-        if (this.exporter) defaults['mod+e'] = () => { void this.exportSVG(); };
+        if (this.exporter) {
+            defaults['mod+e'] = () => {
+                if (this.config.export?.primaryFormat === 'png') {
+                    void this.exportPNG(
+                        this.config.export.primaryFilename,
+                        this.config.export.primaryScale ?? 2
+                    );
+                } else {
+                    void this.exportSVG(this.config.export?.primaryFilename);
+                }
+            };
+        }
         this.shortcuts.registerAll(defaults);
         const custom = this.config.shortcuts || {};
         for (const [combo, handler] of Object.entries(custom)) {

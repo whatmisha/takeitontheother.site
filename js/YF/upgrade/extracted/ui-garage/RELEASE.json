@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "name": "UI Garage",
+  "version": "1.0.0",
+  "status": "released",
+  "manifest": "framework-manifest.json",
+  "archiveName": "ui-garage-1.0.0.tar.gz",
+  "hashAlgorithm": "sha256"
+}

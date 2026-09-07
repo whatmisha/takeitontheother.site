@@ -37,6 +37,32 @@ body {
     flex: 0 0 auto;
 }
 
+.component-lab__chrome {
+    position: static;
+    top: auto;
+    right: auto;
+    left: auto;
+    width: auto;
+    transform: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    min-height: 72px;
+    margin-top: 16px;
+    padding: 16px;
+    border-radius: var(--radius-input);
+    background: var(--color-bg);
+}
+
+.component-lab__chrome .top-link,
+.component-lab__chrome .zoom-indicator {
+    position: static;
+    transform: none;
+}
+
+.component-lab__chrome .preset-dropdown-menu { z-index: 10; }
+
 .component-lab__header h1,
 .component-lab__section h2,
 .component-lab__header p {
@@ -106,6 +132,12 @@ body {
     gap: 32px;
 }
 
+.component-lab__choice-states {
+    display: grid;
+    gap: 10px;
+    margin-top: 18px;
+}
+
 .component-lab__intakes {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -132,10 +164,45 @@ body {
     margin-top: 16px;
 }
 
+.component-lab__panel-grid,
+.component-lab__control-grid,
+.component-lab__transients {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.component-lab__panel-grid .component-lab__panel { margin-top: 0; }
+
+.component-lab__control-grid article,
+.component-lab__transients article {
+    min-height: 92px;
+    padding: 16px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-input);
+}
+
+.component-lab__control-grid .control-group { margin: 0; }
+.component-lab__transients article { display: grid; place-items: center; }
+.component-lab__transients .lab-popup { position: static; transform: none; }
+.component-lab__transients .lab-warning { color: #e4b45d; }
+.component-lab__transients .lab-error { color: #ff8b8b; }
+.component-lab__transients .lab-reduced-motion { transition: none !important; }
+
+.component-lab__intakes .file-intake__trigger {
+    position: static;
+    width: 100%;
+    min-height: 40px;
+}
+
 @media (max-width: 720px) {
     body { padding: 16px; }
     .component-lab__header,
-    .component-lab__columns { grid-template-columns: 1fr; }
+    .component-lab__columns,
+    .component-lab__control-grid,
+    .component-lab__panel-grid,
+    .component-lab__transients { grid-template-columns: 1fr; }
     .component-lab__header { flex-direction: column; }
     .component-lab__dock { flex-wrap: wrap; }
 }

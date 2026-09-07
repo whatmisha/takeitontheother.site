@@ -15,6 +15,7 @@ async function collectFiles(directory = root) {
         if (entry.name === '.DS_Store') throw new Error(`Finder metadata is not portable: ${path.join(directory, entry.name)}`);
         if (ignoredNames.has(entry.name)) continue;
         const absolute = path.join(directory, entry.name);
+        if (entry.isSymbolicLink()) throw new Error(`Symlinks are not portable: ${absolute}`);
         if (entry.isDirectory()) files.push(...await collectFiles(absolute));
         else if (entry.isFile()) files.push(absolute);
     }
@@ -59,6 +60,7 @@ for (const entry of manifest.files) {
 }
 
 const sourceFiles = actualFiles.filter(file => file.startsWith(`${srcRoot}${path.sep}`) && file.endsWith('.js'));
+const starterFiles = actualFiles.filter(file => portablePath(file).startsWith('starters/') && file.endsWith('.js'));
 
 for (const file of sourceFiles) {
     const source = await readFile(file, 'utf8');
@@ -75,6 +77,38 @@ for (const file of sourceFiles) {
         assert.ok(absolute.startsWith(`${root}${path.sep}`), `${portablePath(file)} imports outside the portable folder`);
     }
 }
+
+const starterStorageKeys = [];
+
+for (const file of starterFiles) {
+    const source = await readFile(file, 'utf8');
+    const specifiers = [
+        ...source.matchAll(/^\s*(?:import|export)\s+(?:[^"'()]*?\s+from\s*)?["']([^"']+)["']/gm),
+        ...source.matchAll(/\bimport\s*\(\s*["']([^"']+)["']\s*\)/g)
+    ].map(match => match[1]).filter(specifier => specifier.startsWith('.'));
+
+    for (const specifier of specifiers) {
+        const absolute = await realpath(path.resolve(path.dirname(file), specifier.split(/[?#]/u)[0]));
+        assert.ok(absolute.startsWith(`${root}${path.sep}`), `${portablePath(file)} imports outside the portable folder`);
+        if (absolute.startsWith(`${srcRoot}${path.sep}`)) {
+            assert.ok(
+                absolute === path.join(srcRoot, 'index.js') || absolute === path.join(srcRoot, 'experimental.js'),
+                `${portablePath(file)} bypasses the public framework entry point`
+            );
+        }
+    }
+
+    for (const match of source.matchAll(/\bstorageKey\s*:\s*["']([^"']*)["']/g)) {
+        assert.ok(match[1].trim(), `${portablePath(file)} declares an empty storage key`);
+        starterStorageKeys.push(match[1]);
+    }
+}
+
+assert.equal(
+    new Set(starterStorageKeys).size,
+    starterStorageKeys.length,
+    'Starter storage keys must be unique'
+);
 
 for (const required of [
     'src/index.js',
@@ -125,4 +159,4 @@ const optionalApi = await import(pathToFileURL(path.join(root, 'src/experimental
 assert.deepEqual(Object.keys(api).sort(), apiSnapshot.stable.exports, 'Stable public API snapshot changed');
 assert.deepEqual(Object.keys(optionalApi).sort(), apiSnapshot.optional.exports, 'Optional public API snapshot changed');
 
-console.log(`Portable verification passed: ${actualFiles.length} files, ${sourceFiles.length} source modules, manifest and boundaries valid.`);
+console.log(`Portable verification passed: ${actualFiles.length} files, ${sourceFiles.length} source modules, ${starterFiles.length} starter modules, manifest and boundaries valid.`);

@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "capturedOn": "2026-09-06",
+  "viewportCssPixels": "1280x720",
+  "devicePixelRatio": 2,
+  "screenshotBytes": 72313,
+  "screenshotSha256": "20363dd21a3c1d64861a4285b272693f50137c1e28c1fb6468170a69da53dc44",
+  "informationalOnly": true,
+  "enforcedGate": {
+    "page": "tests/visual-contract/index.html",
+    "computedStyleComparisons": 16,
+    "keyboardWalkthroughs": 2
+  }
+}

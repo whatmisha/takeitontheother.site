@@ -1,6 +1,6 @@
 # Portable framework contract
 
-Status: extraction candidate `0.1.0-dev.2`.
+Status: stable release `1.0.0`.
 
 ## Dependency direction
 
@@ -57,6 +57,9 @@ Canonical commands are Cmd/Ctrl+Z, Shift+Cmd/Ctrl+Z, Cmd/Ctrl+E,
 Cmd/Ctrl+J, Shift+Cmd/Ctrl+J, J, Cmd/Ctrl+backslash, `?`, and Escape when the
 corresponding capability exists. Browser-owned Cmd/Ctrl+0 and Cmd/Ctrl+1 are not
 captured. Zoom plus/minus is opt-in through the zoom capability.
+The primary export defaults to SVG; Canvas tools can declare
+`export.primaryFormat: 'png'`, `primaryFilename` and `primaryScale` without
+registering a competing shortcut.
 
 ## Assets
 

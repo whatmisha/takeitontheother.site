@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>UI Garage — Component Lab</title>
     <link rel="stylesheet" href="../css/framework.css">
+    <link rel="stylesheet" href="../css/ui-contract.css">
     <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
@@ -18,6 +19,24 @@
             </div>
         </header>
 
+        <section class="component-lab__section" aria-labelledby="chromeTitle">
+            <h2 id="chromeTitle">Navigation, presets and zoom</h2>
+            <div class="component-lab__chrome top-links" data-contract-family="chrome">
+                <a class="top-link" href="#chromeTitle">UI Garage</a>
+                <div class="preset-dropdown" id="labPresetDropdown">
+                    <button class="preset-dropdown-toggle" id="labPresetToggle" type="button"
+                            aria-haspopup="listbox" aria-expanded="false" aria-controls="labPresetMenu">
+                        <span class="preset-dropdown-text">Starter</span><span class="preset-dropdown-arrow">⌄</span>
+                    </button>
+                    <ul class="preset-dropdown-menu" id="labPresetMenu" role="listbox">
+                        <li role="option" aria-selected="true" tabindex="0">Starter</li>
+                        <li role="option" aria-selected="false" tabindex="-1">Alternate</li>
+                    </ul>
+                </div>
+                <button class="zoom-indicator" type="button" data-tooltip="Click to fit">100%</button>
+            </div>
+        </section>
+
         <section class="component-lab__section" aria-labelledby="buttonStatesTitle">
             <h2 id="buttonStatesTitle">Action states</h2>
             <div class="component-lab__states">
@@ -25,7 +44,11 @@
                 <article data-state="hover"><span>Hover</span><button class="btn-fixed lab-hover">SVG ⌘E</button></article>
                 <article data-state="focus"><span>Focus</span><button class="btn-fixed lab-focus">SVG ⌘E</button></article>
                 <article data-state="disabled"><span>Disabled</span><button class="btn-fixed" disabled>SVG ⌘E</button></article>
+                <article data-state="active"><span>Active</span><button class="btn-fixed" aria-pressed="true">Active</button></article>
+                <article data-state="selected"><span>Selected</span><button class="btn-fixed btn-fixed--selected">Selected</button></article>
                 <article data-state="loading"><span>Loading</span><button class="btn-fixed lab-loading" aria-busy="true">Preparing…</button></article>
+                <article data-state="success"><span>Success</span><button class="btn-fixed btn-fixed--success">Saved</button></article>
+                <article data-state="warning"><span>Warning</span><button class="btn-fixed btn-fixed--warning">Review</button></article>
                 <article data-state="error"><span>Error</span><button class="btn-fixed btn-fixed--danger">Try again</button></article>
             </div>
         </section>
@@ -34,12 +57,14 @@
             <h2 id="dockTitle">Centered ActionDock</h2>
             <nav class="bottom-buttons action-dock component-lab__dock" role="toolbar" aria-label="Example export actions">
                 <div class="action-dock__slot action-dock__slot--utility">
-                    <button class="btn-fixed btn-intro-help" aria-label="Help">?</button>
-                    <button class="btn-fixed btn-fixed--muted">JSON ⌘J</button>
+                    <button class="btn-fixed btn-intro-help" aria-label="Keyboard shortcuts">?</button>
+                    <button class="btn-fixed btn-fixed--muted" data-action-dock-extra-toggle aria-expanded="false">JSON</button>
+                    <button class="btn-fixed" data-action-dock-json-export data-action-dock-extra hidden>Export JSON</button>
+                    <button class="btn-fixed" data-action-dock-json-import data-action-dock-extra hidden>Import JSON</button>
                 </div>
                 <div class="action-dock__slot action-dock__slot--primary">
                     <button class="btn-fixed">PNG</button>
-                    <button class="btn-fixed">SVG ⌘E</button>
+                    <button class="btn-fixed" data-action-dock-primary-export>SVG ⌘E</button>
                 </div>
                 <div class="action-dock__slot action-dock__slot--options">
                     <label class="toggle-label">
@@ -59,21 +84,55 @@
                     <input type="radio" id="lab4x" name="labScale"><label for="lab4x">4×</label>
                     <input type="radio" id="lab8x" name="labScale"><label for="lab8x">8×</label>
                 </div>
+                <div class="component-lab__choice-states">
+                    <label class="checkbox-label"><input type="checkbox" checked><span>Selected</span></label>
+                    <label class="checkbox-label"><input type="checkbox" disabled><span>Disabled</span></label>
+                    <label class="checkbox-label"><input type="checkbox" checked disabled><span>Readonly</span></label>
+                </div>
             </article>
             <article>
                 <h2>FileIntake states</h2>
                 <div class="component-lab__intakes">
-                    <div class="file-intake" data-file-state="empty"><span>Empty</span></div>
-                    <div class="file-intake" data-file-state="loading" aria-busy="true"><span>Loading</span></div>
-                    <div class="file-intake" data-file-state="ready"><span>Ready</span></div>
-                    <div class="file-intake" data-file-state="error" role="status"><span>Error</span></div>
+                    <div class="file-intake" data-file-state="empty"><button class="file-intake__trigger">Empty</button><span>Choose a file</span></div>
+                    <div class="file-intake" data-file-state="loading" aria-busy="true"><button class="file-intake__trigger" aria-busy="true">Loading</button><span role="status">Reading…</span></div>
+                    <div class="file-intake" data-file-state="ready"><button class="file-intake__trigger">Replace</button><span role="status">Ready</span></div>
+                    <div class="file-intake" data-file-state="error"><button class="file-intake__trigger">Try again</button><span role="status">Error</span></div>
                 </div>
             </article>
         </section>
 
+        <section class="component-lab__section" aria-labelledby="controlsTitle">
+            <h2 id="controlsTitle">Controls and colors</h2>
+            <div class="component-lab__control-grid">
+                <article data-state="normal">
+                    <div class="control-group">
+                        <label for="labControlRange"><span>Intensity</span><input class="value-display" value="50"></label>
+                        <input id="labControlRange" type="range" min="0" max="100" value="50">
+                    </div>
+                </article>
+                <article data-state="disabled">
+                    <div class="control-group">
+                        <label for="labDisabledRange"><span>Disabled</span><input class="value-display" value="30" disabled></label>
+                        <input id="labDisabledRange" type="range" min="0" max="100" value="30" disabled>
+                    </div>
+                </article>
+                <article data-state="readonly">
+                    <label for="labReadonly">Readonly value</label>
+                    <input id="labReadonly" class="value-display" value="72" readonly>
+                </article>
+                <article data-state="open">
+                    <div class="color-swatch-compact">
+                        <button class="color-dot color-dot--expandable" type="button" aria-expanded="true" aria-label="Open color"></button>
+                        <span class="color-label">Color open</span><input class="color-swatch-hex" value="#ff5c35">
+                    </div>
+                </article>
+            </div>
+        </section>
+
         <section class="component-lab__section" aria-labelledby="panelTitle">
             <h2 id="panelTitle">Panel shell</h2>
-            <aside class="controls-panel component-lab__panel" aria-label="Example panel">
+            <div class="component-lab__panel-grid">
+            <aside class="controls-panel component-lab__panel" aria-label="Expanded example panel" data-lab-live-panel>
                 <div class="panel-header">
                     <span>Texture Settings <span class="panel-params">FS · Pixel 1</span></span>
                     <button class="collapse-icon" type="button" aria-label="Collapse panel" aria-expanded="true">
@@ -87,7 +146,28 @@
                     </div>
                 </div>
             </aside>
+            <aside class="controls-panel component-lab__panel panel-collapsed" aria-label="Collapsed example panel">
+                <div class="panel-header"><span>Collapsed <span class="panel-params">Summary</span></span>
+                    <button class="collapse-icon collapsed" type="button" aria-label="Expand panel" aria-expanded="false">⌄</button>
+                </div>
+                <div class="panel-content"><p>Hidden panel content</p></div>
+            </aside>
+            </div>
+        </section>
+
+        <section class="component-lab__section" aria-labelledby="transientTitle">
+            <h2 id="transientTitle">Transient, feedback and motion states</h2>
+            <div class="component-lab__transients">
+                <article data-state="open"><div class="ui-shortcut-help__popup lab-popup" role="dialog" aria-label="Shortcut example"><dl><dt>Export</dt><dd>⌘E</dd></dl></div></article>
+                <article data-state="closed"><button class="btn-fixed" aria-expanded="false">Closed popup</button></article>
+                <article data-state="success"><span class="starter-status" role="status" data-state="success">Saved</span></article>
+                <article data-state="warning"><span class="starter-status lab-warning" role="status">Review settings</span></article>
+                <article data-state="error"><span class="starter-status lab-error" role="alert">Export failed</span></article>
+                <article data-state="mobile"><button class="btn-fixed" data-action-dock-primary-export>Mobile primary</button></article>
+                <article data-state="reduced-motion"><button class="btn-fixed lab-reduced-motion">No transition</button></article>
+            </div>
         </section>
     </main>
+    <script type="module" src="./lab.js"></script>
 </body>
 </html>

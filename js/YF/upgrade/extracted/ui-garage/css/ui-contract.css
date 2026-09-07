@@ -6,9 +6,9 @@
 }
 
 body,
-:where(.top-links, .preset-toolbar, .controls-panel, .action-dock, .modal, .modal-overlay, .zoom-indicator),
-:where(.top-links, .preset-toolbar, .controls-panel, .action-dock, .modal, .modal-overlay, .zoom-indicator) *,
-:where(.top-links, .preset-toolbar, .controls-panel, .action-dock, .modal, .modal-overlay, .zoom-indicator) :where(button, input, select, textarea, label) {
+:where(.top-links, .preset-toolbar, .controls-panel, .action-dock, .modal, .modal-overlay, .zoom-indicator, .file-intake),
+:where(.top-links, .preset-toolbar, .controls-panel, .action-dock, .modal, .modal-overlay, .zoom-indicator, .file-intake) *,
+:where(.top-links, .preset-toolbar, .controls-panel, .action-dock, .modal, .modal-overlay, .zoom-indicator, .file-intake) :where(button, input, select, textarea, label) {
     font-family: var(--ui-font-stack) !important;
     font-weight: 400 !important;
 }
@@ -338,6 +338,29 @@ body,
     content: "Done";
     opacity: 1;
 }
+
+/* Named semantic action states. Applications select meaning; UI Garage owns presentation. */
+.btn-fixed--selected,
+.btn-fixed[aria-pressed="true"],
+.btn-fixed--success {
+    background: var(--ui-foreground) !important;
+    color: #000 !important;
+}
+
+.btn-fixed--warning {
+    background: #d89b35 !important;
+    color: #111 !important;
+}
+
+.btn-fixed--danger {
+    background: #c84f4f !important;
+    color: #fff !important;
+}
+
+.starter-status[data-state="loading"] { opacity: 0.65; }
+.starter-status[data-state="success"] { color: #8bcf9b; }
+.starter-status[data-state="warning"] { color: #e4b45d; }
+.starter-status[data-state="error"] { color: #ff8b8b; }
 
 @media (prefers-reduced-motion: reduce) {
     [data-export-feedback-state],

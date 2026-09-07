@@ -1,0 +1,7 @@
+{
+  "presets": [
+    { "name": "Starter", "file": "starter.json" },
+    { "name": "Soft Field", "file": "soft-field.json" },
+    { "name": "Pixel Night", "file": "pixel-night.json" }
+  ]
+}

@@ -52,7 +52,7 @@ test('every public resource-owning controller exposes destroy()', async () => {
         'ActionDockController', 'ApplicationShell', 'CanvasTarget', 'ColorPicker',
         'DialogHost', 'FileIntakeController', 'HistoryBridge', 'MobileBootstrap',
         'OverlayDialogHost', 'PanelManager', 'PresetMenuKeyboardController',
-        'RenderTarget', 'SVGExporter', 'SliderController', 'SvgTarget',
+        'DraftStore', 'RenderTarget', 'SVGExporter', 'SliderController', 'SvgTarget',
         'TooltipService', 'UnifiedColorPicker', 'UnifiedUiController', 'ZoomPanManager'
     ]) assert.equal(typeof stable[name]?.prototype?.destroy, 'function', `${name} must expose destroy()`);
     for (const name of ['DicePanel', 'RangeSliderController']) {
@@ -77,7 +77,7 @@ test('every source module has one explicit owner and API surface classification'
     const declared = ownership.modules.map(module => module.path);
     assert.deepEqual(declared, [...declared].sort(), 'ownership rows must stay path-sorted');
     assert.deepEqual(declared, actual.sort());
-    assert.equal(new Set(declared).size, 43);
+    assert.equal(new Set(declared).size, 44);
     for (const module of ownership.modules) {
         assert.ok(['stable', 'optional', 'internal'].includes(module.surface), `${module.path}: invalid surface`);
         assert.ok(module.owner, `${module.path}: missing owner`);
@@ -112,7 +112,7 @@ test('framework source graph stays local and application-agnostic', async () => 
             assert.ok(resolved.startsWith(`${frameworkRoot}${path.sep}`));
         }
     }
-    assert.equal(files.length, 43);
+    assert.equal(files.length, 44);
 });
 
 test('working CSS and exporters use checked-in same-origin assets', async () => {

@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>UI Garage — Browser smoke</title>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="../../css/framework.css">
+    <style>
+        body { min-height: 100vh; display: grid; place-items: center; margin: 0; }
+        main { width: min(680px, calc(100vw - 40px)); padding: 24px; }
+        pre { overflow: auto; padding: 16px; border: 1px solid var(--color-border); border-radius: var(--radius); }
+        [data-smoke-status="passed"] { color: #8bd49c; }
+        [data-smoke-status="failed"] { color: #ff8f8f; }
+        #smokeCanvas, #smokeSvg { position: absolute; width: 1px; height: 1px; overflow: hidden; }
+    </style>
+</head>
+<body>
+    <main>
+        <p>UI Garage portability gate</p>
+        <h1 data-smoke-status="running">Browser smoke is running…</h1>
+        <pre id="smokeResult" aria-live="polite">Waiting for browser checks.</pre>
+        <svg id="smokeSvg" xmlns="http://www.w3.org/2000/svg" width="64" height="48" viewBox="0 0 64 48" aria-hidden="true">
+            <rect width="64" height="48" rx="8" fill="#ff5c35"/>
+            <circle cx="32" cy="24" r="12" fill="#111"/>
+        </svg>
+        <canvas id="smokeCanvas" width="64" height="48" aria-hidden="true"></canvas>
+    </main>
+    <script type="module" src="./smoke.js"></script>
+</body>
+</html>

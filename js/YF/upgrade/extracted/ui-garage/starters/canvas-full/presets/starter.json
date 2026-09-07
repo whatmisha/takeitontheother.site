@@ -1,0 +1,14 @@
+{
+  "width": 960,
+  "height": 640,
+  "density": 180,
+  "radius": 14,
+  "jitter": 0.65,
+  "opacity": 0.82,
+  "assetOpacity": 0.45,
+  "square": false,
+  "invert": false,
+  "color": "#ff5c35",
+  "background": "#131313",
+  "seed": 90210
+}

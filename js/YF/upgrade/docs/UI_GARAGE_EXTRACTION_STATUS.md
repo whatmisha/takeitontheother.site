@@ -1,48 +1,43 @@
-# Portability status
+# UI Garage extraction status
 
-Baseline: G13, commit `5700146f4eff56d8d8ece8092dc5d85475c483b1`.
-Candidate: `0.1.0-dev.2` in `upgrade/extracted/ui-garage/`.
+Status: **complete**. Stable release: `1.0.0`.
 
-## Completed in iteration 1
+The portable framework lives only in `upgrade/extracted/ui-garage/`. The eight
+existing applications neither import nor load it, and UI Garage contains no
+imports, symlinks or runtime paths back to them. Their source trees have no
+extraction-related changes. All independent application suites passed while the
+isolated folder was physically absent; the historical aggregate gate's only
+blocker was a pre-existing missing external donor path, recorded honestly in
+`UI_GARAGE_NONINTERFERENCE.json`.
 
-- isolated folder created without changing current applications;
-- runtime, CSS, fonts, vendors/licenses, tests and Component Lab copied;
-- G13 baseline captured;
-- app-name/URL branching removed from candidate `UnifiedUiController`;
-- UI summaries, private shortcuts and file/panel exceptions converted to config
-  or declarative attributes;
-- internal gate-stage import query strings removed;
-- shared preset-storage fallback removed;
-- portable manifest and boundary verifier added.
-- `npm run check` passed after copying the folder to a nested temporary path
-  containing spaces and Unicode.
-- portable folder renamed to `ui-garage`; project-specific evidence moved to
-  `upgrade/docs`; package branding and bundled font inventory cleaned.
-- current candidate: 85 tests, 89 manifested files and 43 source modules;
-- content and filename scans find no previous product branding, forbidden font
-  references or application-specific names in the portable source/docs/tests;
-- only CoFo Sans Regular and Medium remain; both WOFF outline files parse with
-  the bundled OpenType runtime.
-- FX-03 public API and module ownership are exact machine-readable snapshots;
-- application/controller teardown supports init, destroy and clean re-init;
-- failed initialization, duplicate/aborted export, aborted import, timers and
-  Blob URL cleanup are covered by tests;
-- side-effect auto-init entrypoints were removed from the portable package.
-- `npm run check` is green both in place and in a fresh nested copy whose path
-  contains spaces and Unicode.
+## Final acceptance
 
-## Open work, in execution order
+- 103/103 portable tests pass in place, in a Unicode-path copy and after
+  unpacking the release archive;
+- 150 manifested files and 44 classified framework source modules verify;
+- Component Lab owns 16 required states and 10 component families;
+- 16 cross-starter computed-style comparisons and two keyboard walkthroughs
+  pass in a real browser;
+- browser artifact smoke validates SVG, PNG, PDF and JSON with zero remote
+  requests;
+- the new clean-room Ribbon Field tool passes history/undo/redo, preset
+  persistence, IndexedDB draft recovery, share round-trip, collapse shortcuts,
+  dialog/file-intake presence, joined/repeated export and destroy/re-init;
+- the unpacked canonical archive produced zero HTTP 404 responses during the
+  final browser suite.
 
-| Priority | Phase | Gap | Acceptance |
-|---|---|---|---|
-| P0 | FX-04 | Run isolated browser network and artifact checks | No 404s, runtime network fallbacks or broken SVG/PNG/PDF/JSON artifacts |
-| P1 | FX-06 | Build complete `starters/svg-full` and `starters/canvas-full` | Both use only public API and pass artifact smoke tests |
-| P1 | FX-02 | Expand Component Lab to every accepted state and add visual baselines | Shared component states have one visual owner |
-| P1 | FX-05 | Prove source-project non-interference | Zero links in either direction; moving or removing the isolated folder leaves current apps unchanged |
-| P1 | FX-07 | Build a clean-room tool from only this copied folder | Full product workflow works without original apps |
-| P2 | FX-08 | Release `1.0.0`, archive/hash and migration guide | Reproducible release artifact accepted |
+## Release artifact
 
-The clean-slate and lifecycle/public API tasks are complete. Do not connect or
-switch existing tools at any phase; they remain independent of this folder. Do
-not mark this candidate portable before FX-04 is complete, and do not release
-`1.0.0` before FX-07.
+- folder: `upgrade/extracted/ui-garage/`;
+- archive: `upgrade/releases/ui-garage-1.0.0.tar.gz`;
+- archive SHA-256:
+  `c65dcef5141af256f33a5521487275b67a68de9f798cd51d7b9bcd392e9dbc5d`;
+- archive size: 768090 bytes;
+- manifest SHA-256:
+  `83cad17c4dc1b3d270157cc710202226cf01da26174505f7ceb242d1fe4c9179`;
+- two consecutive archive builds were byte-identical.
+
+Detailed machine-readable results are in
+`UI_GARAGE_RELEASE_ACCEPTANCE.json`. Start new consumer work from
+`ui-garage/START_HERE.md`; update copied releases according to
+`ui-garage/MIGRATION_GUIDE.md`.

@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "owner": "UI Garage",
+  "states": ["normal", "hover", "focus", "active", "selected", "disabled", "readonly", "loading", "success", "warning", "error", "open", "closed", "collapsed", "mobile", "reduced-motion"],
+  "families": [
+    { "name": "panel", "selector": ".controls-panel", "states": ["normal", "collapsed", "mobile"] },
+    { "name": "range", "selector": "input[type=range]", "states": ["normal", "focus", "disabled", "readonly"] },
+    { "name": "choice", "selector": ".checkbox-label, .segmented-control", "states": ["normal", "selected", "disabled", "readonly"] },
+    { "name": "color", "selector": ".color-swatch-compact", "states": ["normal", "open", "focus", "disabled"] },
+    { "name": "preset", "selector": ".preset-dropdown", "states": ["closed", "open", "selected", "focus"] },
+    { "name": "navigation", "selector": ".top-link, .zoom-indicator", "states": ["normal", "hover", "focus", "mobile"] },
+    { "name": "action", "selector": ".action-dock, .btn-fixed", "states": ["normal", "hover", "focus", "active", "selected", "disabled", "loading", "success", "warning", "error", "mobile"] },
+    { "name": "dialog", "selector": ".modal, .ui-shortcut-help__popup", "states": ["closed", "open", "focus"] },
+    { "name": "status", "selector": "[role=status], [role=alert]", "states": ["loading", "success", "warning", "error"] },
+    { "name": "file-intake", "selector": ".file-intake", "states": ["normal", "loading", "success", "error", "focus"] }
+  ]
+}

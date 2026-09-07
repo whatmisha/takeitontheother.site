@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "name": "UI Garage",
+  "version": "1.0.0",
+  "acceptedOn": "2026-09-06",
+  "sourceHead": "3ddefa57930c6ffa50eeba90f2d4e2b4e59bda9e",
+  "archive": {
+    "path": "upgrade/releases/ui-garage-1.0.0.tar.gz",
+    "bytes": 768090,
+    "sha256": "c65dcef5141af256f33a5521487275b67a68de9f798cd51d7b9bcd392e9dbc5d",
+    "rebuildMatch": true
+  },
+  "manifest": {
+    "path": "upgrade/extracted/ui-garage/framework-manifest.json",
+    "files": 150,
+    "sourceModules": 44,
+    "sha256": "83cad17c4dc1b3d270157cc710202226cf01da26174505f7ceb242d1fe4c9179"
+  },
+  "portableGate": {
+    "tests": 103,
+    "passed": 103,
+    "failed": 0,
+    "inPlace": "passed",
+    "unicodePathCopy": "passed",
+    "unpackedArchive": "passed"
+  },
+  "browser": {
+    "unpackedArchive": "passed",
+    "remoteRequests": 0,
+    "http404": 0,
+    "componentComparisons": 16,
+    "keyboardWalkthroughs": 2,
+    "artifacts": {
+      "svgBytes": 292,
+      "pngBytes": 649,
+      "pdfBytes": 1574,
+      "jsonBytes": 82
+    }
+  },
+  "cleanRoom": {
+    "tool": "Ribbon Field",
+    "history": "undo-redo",
+    "presetPersistence": "survived-reinit",
+    "draftPersistence": "indexeddb-round-trip",
+    "share": "v1-round-trip",
+    "shortcuts": "collapse-restore",
+    "dialogAndFileIntake": "present-and-clean",
+    "exports": "joined-and-repeatable",
+    "lifecycle": "destroy-reinit",
+    "remoteRequests": 0
+  },
+  "nonInterferenceEvidence": "upgrade/docs/UI_GARAGE_NONINTERFERENCE.json"
+}

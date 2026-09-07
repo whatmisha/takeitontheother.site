@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "capturedOn": "2026-09-06",
+  "sourceHead": "3ddefa57930c6ffa50eeba90f2d4e2b4e59bda9e",
+  "isolatedFolder": "upgrade/extracted/ui-garage",
+  "workingTreeChangesInApplications": 0,
+  "consumerReferencesToIsolatedFolder": 0,
+  "isolatedSymlinks": 0,
+  "absenceProof": {
+    "isolatedFolderMovedOutsideSourceTree": true,
+    "applicationSuitesPassed": ["sparky", "grid_generator", "label_generator", "keyboarder", "wordplayer", "dither", "pulsar_coder", "wander_bender"],
+    "isolatedFolderRestored": true
+  },
+  "historicalGate": {
+    "command": "npm run gate:g13:static",
+    "currentResult": "blocked-before-completion",
+    "reason": "A pre-existing external donor source used by the historical source manifest is absent outside the YF workspace.",
+    "unrelatedToIsolatedFolder": true
+  },
+  "applicationHashes": {
+    "sparky": { "files": 95, "sha256": "e998435679df26fec0595634c91c505c0fdf172bb7b131b309e0dffe7c2ce002" },
+    "grid_generator": { "files": 374, "sha256": "7f3bd7b1d43efb208cd25452a3f4c908a7358fcab8f37b1298435f84554ed61e" },
+    "label_generator": { "files": 125, "sha256": "b65fb77ee8eebc8bfeb63a7203aa4473017e5aa3489df676faf06f08d84b079d" },
+    "keyboarder": { "files": 131, "sha256": "3b8e5d82705e191e9143e2459aace567e4e3a15911d7ea4a7a12b97436f40d77" },
+    "wordplayer": { "files": 36, "sha256": "6697869421334337294583928431a59304cd721e330c0249abceb749006bb0d9" },
+    "dither": { "files": 13, "sha256": "4964d721fa521c43b15005f1e9a73ea5c1eb87425152adfbe8855744b220447b" },
+    "pulsar_coder": { "files": 39, "sha256": "c08727653e31f1888cbfde410de90179f8dfe5ff70a33378e1a84cb5ef932d4c" },
+    "wander_bender": { "files": 27, "sha256": "46416f1be83f082d191328f9951426a6d6bd2979d332b4be9e80084d3a129222" }
+  }
+}
