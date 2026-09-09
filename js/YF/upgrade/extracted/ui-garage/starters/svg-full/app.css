@@ -5,10 +5,10 @@
 .svg-starter #appearancePanel { top: 76px; right: 20px; left: auto; width: 270px; }
 .svg-starter #dataPanel { top: auto; right: auto; bottom: 78px; left: 20px; width: 250px; }
 .svg-starter .panel-header { display: flex; justify-content: space-between; align-items: center; }
-.svg-starter .collapse-icon { appearance: none; border: 0; background: transparent; padding: 4px; }
+.svg-starter .collapse-icon { appearance: none; border: 0; background: transparent; padding: 0; }
 .svg-starter .preset-toolbar-cluster { display: flex; align-items: center; gap: var(--spacing-md); }
 .svg-starter .starter-status { min-width: 78px; color: var(--color-text-muted); font-size: 12px; text-align: right; }
-.svg-starter .file-intake__trigger { width: 100%; min-height: 48px; }
+.svg-starter .file-intake__trigger { width: 100%; min-height: var(--button-height); }
 .svg-starter .file-intake__status { margin: 8px 0 0; color: var(--color-text-muted); font-size: 12px; }
 .svg-starter .file-intake [hidden] { display: none !important; }
 .svg-starter [aria-busy="true"] { cursor: progress; }

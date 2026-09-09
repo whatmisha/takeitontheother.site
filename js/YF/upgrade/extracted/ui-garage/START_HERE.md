@@ -2,7 +2,7 @@
 
 ## Current status
 
-This is the stable `1.0.0` release. Runtime, assets and complete SVG and Canvas
+This is the stable `1.0.2` release. Runtime, assets and complete SVG and Canvas
 starters are independently testable and travel together in this folder.
 
 ## Runtime boundary

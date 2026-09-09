@@ -20,6 +20,8 @@ export class RangeSliderController {
      * @param {number} config.decimals - Number of decimal places
      * @param {number} config.baseStep - Base step
      * @param {number} config.shiftStep - Step when Shift pressed
+     * @param {string} [config.minAriaLabel='Minimum value'] - Accessible name for the lower thumb
+     * @param {string} [config.maxAriaLabel='Maximum value'] - Accessible name for the upper thumb
      * @param {Function} config.onUpdate - Callback on value change
      */
     initRangeSlider(containerId, config) {
@@ -45,6 +47,7 @@ export class RangeSliderController {
         minThumb.setAttribute('tabindex', '0');
         minThumb.setAttribute('aria-valuemin', config.min);
         minThumb.setAttribute('aria-valuemax', config.max);
+        minThumb.setAttribute('aria-label', config.minAriaLabel || 'Minimum value');
         
         const maxThumb = document.createElement('div');
         maxThumb.className = 'range-slider-thumb range-slider-thumb-max';
@@ -52,6 +55,7 @@ export class RangeSliderController {
         maxThumb.setAttribute('tabindex', '0');
         maxThumb.setAttribute('aria-valuemin', config.min);
         maxThumb.setAttribute('aria-valuemax', config.max);
+        maxThumb.setAttribute('aria-label', config.maxAriaLabel || 'Maximum value');
         
         const activeRange = document.createElement('div');
         activeRange.className = 'range-slider-active';
@@ -448,7 +452,9 @@ export class RangeSliderController {
         activeRange.style.width = 'auto';
 
         // Update aria attributes
+        minThumb.setAttribute('aria-valuemax', maxValue.toFixed(config.decimals));
         minThumb.setAttribute('aria-valuenow', minValue.toFixed(config.decimals));
+        maxThumb.setAttribute('aria-valuemin', minValue.toFixed(config.decimals));
         maxThumb.setAttribute('aria-valuenow', maxValue.toFixed(config.decimals));
     }
 

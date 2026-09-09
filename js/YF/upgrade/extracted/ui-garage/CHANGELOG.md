@@ -1,5 +1,27 @@
 # Changelog
 
+## 1.0.2 — 2026-09-08
+
+- Added integer and decimal two-handle range sliders to Component Lab.
+- Documented and regression-tested fine, coarse Shift, Home/End and
+  opposite-handle keyboard constraints for sliders.
+- Added accessible names and dynamic ARIA bounds to range-slider handles.
+- Kept the Component Lab dialog and ActionDock previews contained, and removed
+  the duplicate shortcut-help trigger.
+
+## 1.0.1 — 2026-09-08
+
+- Restored the canonical vector chevrons and share-link icon across Component
+  Lab, both starters and the clean-room proof.
+- Added explicit icon geometry and alignment rules so browser font metrics can
+  no longer distort toolbar or panel controls.
+- Prevented ActionDock shadows from darkening adjacent buttons and restored the
+  primary/secondary action hierarchy used by the reference tools.
+- Added complete portable defaults for file intake and clear actions, plus the
+  missing native-dialog open state.
+- Expanded the visual contract to cover preset glyph geometry, sharing and the
+  dialog shell, with source-level regression checks for all corrected defects.
+
 ## 1.0.0 — 2026-09-06
 
 - Established the stable public API, lifecycle, storage and CSS contracts.

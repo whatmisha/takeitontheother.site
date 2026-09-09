@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#000000">
+    <meta name="description" content="Lorenz — a parametric pixel attractor generator.">
+    <title>Lorenz — Pixel Attractor</title>
+    <link rel="stylesheet" href="../framework/css/othersite-styles.css">
+    <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+    <div class="container">
+        <header class="top-links" aria-label="Tool controls">
+            <div class="preset-toolbar-cluster">
+                <div class="preset-dropdown" id="presetDropdown">
+                    <button class="preset-dropdown-toggle" id="presetDropdownToggle" type="button" aria-haspopup="listbox" aria-expanded="false" aria-controls="presetDropdownMenu">
+                        <span class="preset-dropdown-text">Classic</span>
+                        <svg class="preset-dropdown-arrow" width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+                    <ul class="preset-dropdown-menu" id="presetDropdownMenu" role="listbox"></ul>
+                </div>
+                <button type="button" id="presetToolbarShareBtn" class="preset-toolbar-share-btn" aria-label="Copy share link" data-tooltip="Copy share link">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" width="18" height="18" fill="none" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2" d="M5.74 3.43l.61-.61a2 2 0 0 1 2.83 2.83l-.61.61M6.26 8.57l-.61.61a2 2 0 0 1-2.83-2.83l.61-.61M7.52 4.48 4.48 7.52"/></svg>
+                </button>
+            </div>
+            <button class="top-link" id="savePresetBtn" type="button" style="display:none;">Save preset</button>
+            <button class="zoom-indicator" id="zoomIndicator" type="button" data-tooltip="Fit to screen">100%</button>
+        </header>
+
+        <main class="main-content" id="mainContent">
+            <h1 class="sr-only">Lorenz parametric pixel attractor generator</h1>
+            <div class="canvas-container lorenz-canvas" id="canvasContainer">
+                <canvas id="mainCanvas" role="img" aria-label="Lorenz attractor preview"></canvas>
+                <output class="trajectory-status" id="trajectoryStatus" aria-live="polite"></output>
+            </div>
+
+            <aside class="controls-panel controls-panel-left" id="systemPanel">
+                <div class="panel-header" id="systemPanelHeader"><span>System</span><span class="collapse-icon" aria-hidden="true">⌄</span></div>
+                <div class="panel-content"><section class="control-section">
+                    <div class="control-group"><label for="sigmaSlider"><span>Sigma</span><input type="text" class="value-display" id="sigmaValue" value="10"></label><input type="range" id="sigmaSlider" min="0.1" max="30" step="0.1" value="10"></div>
+                    <div class="control-group"><label for="rhoSlider"><span>Rho</span><input type="text" class="value-display" id="rhoValue" value="28"></label><input type="range" id="rhoSlider" min="0" max="100" step="0.1" value="28"></div>
+                    <div class="control-group"><label for="betaSlider"><span>Beta</span><input type="text" class="value-display" id="betaValue" value="2.667"></label><input type="range" id="betaSlider" min="0.1" max="10" step="0.001" value="2.667"></div>
+                    <button class="panel-button" id="classicValuesBtn" type="button">Classic values</button>
+                </section></div>
+            </aside>
+
+            <aside class="controls-panel" id="viewPanel">
+                <div class="panel-header" id="viewPanelHeader"><span>View</span><span class="collapse-icon" aria-hidden="true">⌄</span></div>
+                <div class="panel-content"><section class="control-section">
+                    <div class="control-group"><label for="rotationXSlider"><span>Rotation X <span class="unit">°</span></span><input type="text" class="value-display" id="rotationXValue" value="-8"></label><input type="range" id="rotationXSlider" min="-180" max="180" step="1" value="-8"></div>
+                    <div class="control-group"><label for="rotationYSlider"><span>Rotation Y <span class="unit">°</span></span><input type="text" class="value-display" id="rotationYValue" value="15"></label><input type="range" id="rotationYSlider" min="-180" max="180" step="1" value="15"></div>
+                    <div class="control-group"><label for="rotationZSlider"><span>Rotation Z <span class="unit">°</span></span><input type="text" class="value-display" id="rotationZValue" value="0"></label><input type="range" id="rotationZSlider" min="-180" max="180" step="1" value="0"></div>
+                    <div class="control-group"><label for="perspectiveSlider"><span>Perspective</span><input type="text" class="value-display" id="perspectiveValue" value="34"></label><input type="range" id="perspectiveSlider" min="0" max="100" step="1" value="34"></div>
+                    <div class="control-group"><label for="viewScaleSlider"><span>Scale</span><input type="text" class="value-display" id="viewScaleValue" value="1"></label><input type="range" id="viewScaleSlider" min="0.4" max="1.3" step="0.01" value="1"></div>
+                    <div class="control-group pill-toggle-row"><label class="pill-toggle" for="showAxes"><input type="checkbox" id="showAxes" class="sr-only" data-setting="showAxes"><span>Axes</span></label></div>
+                    <button class="panel-button" id="resetViewBtn" type="button">Reset position</button>
+                </section></div>
+            </aside>
+
+            <aside class="controls-panel controls-panel-text" id="generationPanel">
+                <div class="panel-header" id="generationPanelHeader"><span>Generation</span><span class="collapse-icon" aria-hidden="true">⌄</span></div>
+                <div class="panel-content"><section class="control-section">
+                    <div class="control-group"><label for="pointCountSlider"><span>Detail</span><input type="text" class="value-display value-display-wide" id="pointCountValue" value="24000"></label><input type="range" id="pointCountSlider" min="1000" max="100000" step="1000" value="24000"></div>
+                    <div class="control-group"><label for="sampleStrideSlider"><span>Spacing</span><input type="text" class="value-display" id="sampleStrideValue" value="1"></label><input type="range" id="sampleStrideSlider" min="1" max="12" step="1" value="1"></div>
+                    <output class="generation-meta" id="pixelCountLabel">Calculating vector pixels</output>
+                    <details class="advanced-controls">
+                        <summary>Advanced</summary>
+                        <div class="advanced-controls-body">
+                            <div class="control-group"><label for="dtSlider"><span>Time step</span><input type="text" class="value-display" id="dtValue" value="0.005"></label><input type="range" id="dtSlider" min="0.001" max="0.02" step="0.001" value="0.005"></div>
+                            <div class="control-group"><label for="warmupStepsSlider"><span>Warm-up</span><input type="text" class="value-display value-display-wide" id="warmupStepsValue" value="1800"></label><input type="range" id="warmupStepsSlider" min="0" max="10000" step="100" value="1800"></div>
+                            <div class="control-group"><label for="x0Slider"><span>Initial X</span><input type="text" class="value-display" id="x0Value" value="0"></label><input type="range" id="x0Slider" min="-30" max="30" step="0.1" value="0"></div>
+                            <div class="control-group"><label for="y0Slider"><span>Initial Y</span><input type="text" class="value-display" id="y0Value" value="1"></label><input type="range" id="y0Slider" min="-30" max="30" step="0.1" value="1"></div>
+                            <div class="control-group"><label for="z0Slider"><span>Initial Z</span><input type="text" class="value-display" id="z0Value" value="1.05"></label><input type="range" id="z0Slider" min="-10" max="60" step="0.05" value="1.05"></div>
+                        </div>
+                    </details>
+                </section></div>
+            </aside>
+
+            <aside class="controls-panel controls-panel-presets" id="appearancePanel">
+                <div class="panel-header" id="appearancePanelHeader"><span>Appearance</span><span class="collapse-icon" aria-hidden="true">⌄</span></div>
+                <div class="panel-content"><section class="control-section">
+                    <fieldset class="format-fieldset">
+                        <legend>Format</legend>
+                        <div class="segmented-control segmented-control-compact">
+                            <input type="radio" id="formatSquare" name="artboardFormat" value="square" checked><label for="formatSquare">1:1</label>
+                            <input type="radio" id="formatPortrait" name="artboardFormat" value="portrait"><label for="formatPortrait">4:5</label>
+                            <input type="radio" id="formatWide" name="artboardFormat" value="wide"><label for="formatWide">16:9</label>
+                        </div>
+                    </fieldset>
+                    <div class="control-group"><label for="pixelWidthSlider"><span>Pixel width <span class="unit">px</span></span><input type="text" class="value-display" id="pixelWidthValue" value="2"></label><input type="range" id="pixelWidthSlider" min="0.5" max="16" step="0.25" value="2"></div>
+                    <div class="control-group"><label for="pixelHeightSlider"><span>Pixel height <span class="unit">px</span></span><input type="text" class="value-display" id="pixelHeightValue" value="2"></label><input type="range" id="pixelHeightSlider" min="0.5" max="16" step="0.25" value="2"></div>
+                    <div class="control-group"><label for="gridStepSlider"><span>Raster grid <span class="unit">px</span></span><input type="text" class="value-display" id="gridStepValue" value="2"></label><input type="range" id="gridStepSlider" min="0" max="16" step="0.25" value="2"></div>
+                    <div class="control-group"><label for="opacitySlider"><span>Opacity <span class="unit">%</span></span><input type="text" class="value-display" id="opacityValue" value="90"></label><input type="range" id="opacitySlider" min="5" max="100" step="1" value="90"></div>
+                    <div class="color-swatches-compact">
+                        <div class="color-swatch-row">
+                            <div class="color-swatch-compact" id="pixelColorItem" data-color-type="pixel">
+                                <button type="button" class="color-dot color-dot--expandable" id="pixelColorPreview" aria-label="Open Pixel color controls"></button>
+                                <span class="color-label">Pixel</span><input type="text" class="color-swatch-hex" id="pixelColorHex" value="#ffffff" maxlength="7" aria-label="Pixel color hex">
+                            </div>
+                            <div class="color-hsb-slot" id="pixelColorHsbSlot"><div id="unifiedColorPickerContainer"></div></div>
+                        </div>
+                        <div class="color-swatch-row">
+                            <div class="color-swatch-compact" id="backgroundColorItem" data-color-type="background">
+                                <button type="button" class="color-dot color-dot--expandable" id="backgroundColorPreview" aria-label="Open Background color controls"></button>
+                                <span class="color-label">Background</span><input type="text" class="color-swatch-hex" id="backgroundColorHex" value="#000000" maxlength="7" aria-label="Background color hex">
+                            </div>
+                            <div class="color-hsb-slot" id="backgroundColorHsbSlot"></div>
+                        </div>
+                    </div>
+                </section></div>
+            </aside>
+        </main>
+
+        <nav class="bottom-buttons" aria-label="Export actions">
+            <button class="btn-fixed btn-intro-help" id="helpBtn" type="button" aria-label="About">?</button>
+            <button class="btn-fixed" id="exportPngBtn" type="button">Export PNG</button>
+            <button class="btn-fixed" id="exportSvgBtn" type="button">Export SVG ⌘E</button>
+        </nav>
+
+        <dialog id="dialog" class="modal"><div class="modal-content"><h2 id="dialogTitle" class="modal-title"></h2><div id="dialogText" class="modal-text"></div><input id="dialogInput" class="modal-input" type="text" style="display:none;"><div id="dialogButtons" class="modal-buttons"></div></div></dialog>
+    </div>
+    <script type="module" src="./tool.js"></script>
+</body>
+</html>

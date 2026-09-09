@@ -1,0 +1,7 @@
+{
+  "presets": [
+    { "name": "Classic", "file": "classic.json" },
+    { "name": "Fine", "file": "fine.json" },
+    { "name": "Blocks", "file": "blocks.json" }
+  ]
+}

@@ -11,6 +11,9 @@ async function collectFiles(directory = root) {
     const files = [];
     for (const entry of await readdir(directory, { withFileTypes: true })) {
         if (entry.name === '.DS_Store') throw new Error(`Remove Finder metadata before release: ${path.join(directory, entry.name)}`);
+        if (entry.isDirectory() && / \d+$/u.test(entry.name)) {
+            throw new Error(`Remove duplicate sync directory before release: ${path.join(directory, entry.name)}`);
+        }
         if (ignoredNames.has(entry.name)) continue;
         const absolute = path.join(directory, entry.name);
         if (entry.isDirectory()) files.push(...await collectFiles(absolute));

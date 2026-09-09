@@ -4,7 +4,7 @@ UI Garage is a self-contained foundation for static SVG and Canvas graphics
 tools. Runtime source, CSS, fonts, vendor libraries, licenses, tests and the
 Component Lab are local to this folder.
 
-Current stable version: `1.0.0`.
+Current stable version: `1.0.2`.
 
 Requirements:
 

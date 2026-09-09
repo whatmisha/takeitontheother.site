@@ -494,6 +494,7 @@ h6 {
     border-radius: var(--radius-sm);
     background: transparent;
     font: inherit;
+    line-height: 0;
     transition: transform var(--duration-collapse) var(--easing-standard),
                 color var(--transition-normal);
     display: inline-flex;
@@ -515,6 +516,13 @@ h6 {
 
 .collapse-icon.collapsed {
     transform: rotate(-90deg);
+}
+
+.collapse-icon svg {
+    display: block;
+    width: 10px;
+    height: 6px;
+    pointer-events: none;
 }
 
 /* Panel Content - panel content with collapse animation */
@@ -2758,6 +2766,7 @@ button.color-dot--expandable:focus-visible {
 }
 
 .preset-dropdown-arrow {
+    display: block;
     color: var(--color-text);
     transition: transform var(--duration-collapse) var(--easing-standard);
     flex-shrink: 0;
@@ -2783,15 +2792,28 @@ button.color-dot--expandable:focus-visible {
     border-radius: var(--radius-button);
     background: var(--color-bg-panel);
     color: var(--color-text-secondary);
+    line-height: 0;
     cursor: pointer;
     box-shadow: 0 12px 48px rgba(0, 0, 0, 0.7);
     transition: background-color var(--transition-slow), color var(--transition-fast);
     -webkit-tap-highlight-color: transparent;
 }
 
+.preset-toolbar-share-btn svg {
+    display: block;
+    width: 18px;
+    height: 18px;
+    pointer-events: none;
+}
+
 .preset-toolbar-share-btn:hover {
     background-color: #2a2a2a;
     color: var(--color-text);
+}
+
+.preset-toolbar-share-btn:focus-visible {
+    outline: 1px solid var(--color-text);
+    outline-offset: 2px;
 }
 
 .preset-toolbar-share-btn:active {
@@ -3326,7 +3348,14 @@ textarea::-moz-selection {
     flex-wrap: wrap;
     justify-content: center;
     row-gap: var(--spacing-md);
+    column-gap: var(--spacing-lg);
     pointer-events: auto;
+}
+
+/* Keep every floating action's shadow behind its own surface. The compact
+   negative spread preserves depth without darkening adjacent buttons. */
+.action-dock .btn-fixed {
+    box-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.9);
 }
 
 .action-dock__slot {
@@ -4028,6 +4057,71 @@ html.is-mobile body {
     border-radius: var(--radius-input);
 }
 
+/* A direct trigger gets a complete portable default. More specialised tool
+   buttons can still combine the state marker with their own component class. */
+.file-intake > .file-intake__trigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: var(--button-height);
+    padding: var(--spacing-md) var(--spacing-3xl);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-button);
+    background: var(--color-bg-input);
+    color: var(--color-text-secondary);
+    font: inherit;
+    font-size: 0.9rem;
+    line-height: 1;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color var(--transition-fast),
+                background-color var(--transition-fast),
+                color var(--transition-fast);
+}
+
+.file-intake > .file-intake__trigger:hover:not(:disabled) {
+    border-color: var(--color-text-subtle);
+    background: #111;
+    color: var(--color-text);
+}
+
+.file-intake > .file-intake__trigger:focus-visible {
+    outline: 1px solid var(--color-text);
+    outline-offset: 2px;
+}
+
+.file-intake > .file-intake__trigger:disabled {
+    border-color: var(--color-border);
+    background: var(--color-inactive-bg);
+    color: var(--color-inactive-text);
+    cursor: default;
+}
+
+.file-intake > .file-intake__clear {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    margin-top: var(--spacing-md);
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--color-text-muted);
+    font: inherit;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: color var(--transition-fast);
+}
+
+.file-intake > .file-intake__clear:hover:not(:disabled) {
+    color: var(--color-text);
+}
+
+.file-intake > .file-intake__clear:focus-visible {
+    outline: 1px solid var(--color-text);
+    outline-offset: 2px;
+}
+
 .file-intake.is-dragover {
     outline: 1px dashed var(--color-text);
     outline-offset: 4px;
@@ -4389,6 +4483,10 @@ html.is-mobile body {
     position: relative;
     transform: scale(0.95);
     transition: transform var(--duration-expand) var(--easing-decelerate);
+}
+
+.modal[open] > .modal-content {
+    transform: scale(1);
 }
 
 .modal-title {

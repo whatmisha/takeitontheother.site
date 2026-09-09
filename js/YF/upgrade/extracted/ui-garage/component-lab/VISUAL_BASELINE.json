@@ -8,7 +8,8 @@
   "informationalOnly": true,
   "enforcedGate": {
     "page": "tests/visual-contract/index.html",
-    "computedStyleComparisons": 16,
-    "keyboardWalkthroughs": 2
+    "computedStyleComparisons": 22,
+    "keyboardWalkthroughs": 2,
+    "rangeSliderKeyboardWalkthroughs": 1
   }
 }

@@ -13,6 +13,9 @@ async function collectFiles(directory = root) {
     const files = [];
     for (const entry of await readdir(directory, { withFileTypes: true })) {
         if (entry.name === '.DS_Store') throw new Error(`Finder metadata is not portable: ${path.join(directory, entry.name)}`);
+        if (entry.isDirectory() && / \d+$/u.test(entry.name)) {
+            throw new Error(`Duplicate sync directory is not portable: ${path.join(directory, entry.name)}`);
+        }
         if (ignoredNames.has(entry.name)) continue;
         const absolute = path.join(directory, entry.name);
         if (entry.isSymbolicLink()) throw new Error(`Symlinks are not portable: ${absolute}`);

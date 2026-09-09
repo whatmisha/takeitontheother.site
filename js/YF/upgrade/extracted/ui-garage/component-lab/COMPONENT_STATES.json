@@ -5,6 +5,7 @@
   "families": [
     { "name": "panel", "selector": ".controls-panel", "states": ["normal", "collapsed", "mobile"] },
     { "name": "range", "selector": "input[type=range]", "states": ["normal", "focus", "disabled", "readonly"] },
+    { "name": "range-slider", "selector": ".range-slider-container", "states": ["normal", "focus"] },
     { "name": "choice", "selector": ".checkbox-label, .segmented-control", "states": ["normal", "selected", "disabled", "readonly"] },
     { "name": "color", "selector": ".color-swatch-compact", "states": ["normal", "open", "focus", "disabled"] },
     { "name": "preset", "selector": ".preset-dropdown", "states": ["closed", "open", "selected", "focus"] },

@@ -12,7 +12,7 @@ const publicApi = await readJson('PUBLIC_API.json');
 const manifest = await readJson('framework-manifest.json');
 const states = await readJson('component-lab/COMPONENT_STATES.json');
 
-assert.equal(version.version, '1.0.0');
+assert.equal(version.version, '1.0.2');
 assert.equal(version.status, 'released');
 assert.equal(release.version, version.version);
 assert.equal(packageMetadata.version, version.version);

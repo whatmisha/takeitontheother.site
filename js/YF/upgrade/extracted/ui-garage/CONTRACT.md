@@ -1,6 +1,6 @@
 # Portable framework contract
 
-Status: stable release `1.0.0`.
+Status: stable release `1.0.2`.
 
 ## Dependency direction
 
@@ -60,6 +60,14 @@ captured. Zoom plus/minus is opt-in through the zoom capability.
 The primary export defaults to SVG; Canvas tools can declare
 `export.primaryFormat: 'png'`, `primaryFilename` and `primaryScale` without
 registering a competing shortcut.
+
+Native single-slider tracks keep the browser's keyboard semantics and the HTML
+`step`: arrows change one step and Home/End use the bounds. Their paired numeric
+fields add Arrow Up/Down, with Shift snapping to the next/previous coarse-step
+multiple; Enter commits on blur and Escape restores the last stored value.
+Two-thumb range-slider handles use Left/Down and Right/Up for the configured
+fine step, Shift for the coarse step, and Home/End for the nearest allowed
+boundary. A lower handle cannot pass the upper handle, and vice versa.
 
 ## Assets
 
