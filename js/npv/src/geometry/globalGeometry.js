@@ -1,6 +1,6 @@
 export const ARTBOARD_SIZE = 480;
 export const ARTBOARD_CENTER = ARTBOARD_SIZE / 2;
-export const MAX_ELLIPSES = 2048;
+export const MAX_ELLIPSES = 8192;
 
 const TAU = Math.PI * 2;
 const EPSILON = 1e-7;
@@ -79,6 +79,27 @@ function projectiveDistanceScore(candidate, chosen) {
     return closest;
 }
 
+function fastProjectiveDistanceScore(candidate, chosen) {
+    let closestDot = 0;
+    for (const axis of chosen) {
+        closestDot = Math.max(
+            closestDot,
+            Math.abs(candidate.x * axis.x + candidate.y * axis.y + candidate.z * axis.z)
+        );
+    }
+    return Math.acos(clamp(closestDot, -1, 1));
+}
+
+function reverseBits(value, bitCount) {
+    let source = value;
+    let reversed = 0;
+    for (let bit = 0; bit < bitCount; bit += 1) {
+        reversed = reversed * 2 + source % 2;
+        source = Math.floor(source / 2);
+    }
+    return reversed;
+}
+
 function regularCoreAxes() {
     const halfStep = Math.PI / 9;
     const fullStep = halfStep * 2;
@@ -150,7 +171,8 @@ function buildAxisSequence() {
         );
     }
     const scores = candidates.map((candidate) => projectiveDistanceScore(candidate, chosen));
-    while (chosen.length < MAX_ELLIPSES) {
+    const greedyLimit = Math.min(MAX_ELLIPSES, 2048);
+    while (chosen.length < greedyLimit) {
         let bestIndex = -1;
         let bestScore = -Infinity;
         for (let index = 0; index < candidates.length; index += 1) {
@@ -168,6 +190,19 @@ function buildAxisSequence() {
                 candidate.x * best.x + candidate.y * best.y + candidate.z * best.z
             );
             scores[index] = Math.min(scores[index], Math.acos(clamp(dotProduct, -1, 1)));
+        }
+    }
+    if (chosen.length < MAX_ELLIPSES) {
+        const extensionCandidates = candidateAxes(MAX_ELLIPSES * 4);
+        const bitCount = Math.ceil(Math.log2(extensionCandidates.length));
+        const minimumDistance = Math.acos(0.99998);
+        for (let step = 0; step < extensionCandidates.length; step += 1) {
+            if (chosen.length >= MAX_ELLIPSES) break;
+            const candidate = extensionCandidates[reverseBits(step, bitCount)];
+            const distance = fastProjectiveDistanceScore(candidate, chosen);
+            if (distance < minimumDistance) continue;
+            chosen.push(candidate);
+            separations.push(Math.min(separations.at(-1), distance));
         }
     }
     return {
