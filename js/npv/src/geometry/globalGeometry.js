@@ -1,6 +1,6 @@
 export const ARTBOARD_SIZE = 480;
 export const ARTBOARD_CENTER = ARTBOARD_SIZE / 2;
-export const MAX_ELLIPSES = 1024;
+export const MAX_ELLIPSES = 2048;
 
 const TAU = Math.PI * 2;
 const EPSILON = 1e-7;
@@ -50,7 +50,7 @@ function rotateVector(source, rotationX, rotationY, rotationZ) {
     };
 }
 
-function candidateAxes(count = Math.max(2048, MAX_ELLIPSES * 8)) {
+function candidateAxes(count = 8192) {
     const goldenAngle = Math.PI * (3 - Math.sqrt(5));
     const candidates = [];
     for (let index = 0; index < count; index += 1) {
@@ -409,6 +409,13 @@ function packedBaseAngularRadii(settings, axes) {
         ? settings.overlapGap / Math.max(EPSILON, settings.sphereRadius)
         : 0;
     const minimumRadius = screenRadiusToAngular(0.5, settings.sphereRadius);
+    if (axes.length > 128) {
+        const uniformRadius = Math.max(
+            minimumRadius,
+            (minimumPointSeparation(axes) - gap) * 0.5
+        );
+        return Array(points.length).fill(uniformRadius);
+    }
     return points.map((point, index) => {
         let nearest = Math.PI;
         points.forEach((other, otherIndex) => {

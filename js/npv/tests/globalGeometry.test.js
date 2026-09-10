@@ -25,7 +25,7 @@ test('the default projection starts with fifteen equally sized physical marks', 
 });
 
 test('every density slot represents two unique antipodal ellipses', () => {
-    assert.equal(SPHERE_AXES.length, 1024);
+    assert.equal(SPHERE_AXES.length, 2048);
     SPHERE_AXES.forEach((axis) => {
         assert.ok(Math.abs(Math.hypot(axis.x, axis.y, axis.z) - 1) < 1e-9);
     });
@@ -41,16 +41,16 @@ test('every density slot represents two unique antipodal ellipses', () => {
     }
 });
 
-test('the maximum density builds all 1024 antipodal ellipse pairs', () => {
+test('the maximum density builds all 2048 antipodal ellipse pairs', () => {
     ['packed', 'tessellated', 'progressive', 'rings'].forEach((topologyMode) => {
         const scene = buildGlobalScene({
             ...defaultSettings(),
-            ellipseCount: 1024,
+            ellipseCount: 2048,
             topologyMode,
             showBackside: true
         });
-        assert.equal(scene.axes.length, 1024);
-        assert.equal(scene.elements.length, 2048);
+        assert.equal(scene.axes.length, 2048);
+        assert.equal(scene.elements.length, 4096);
     });
 });
 
