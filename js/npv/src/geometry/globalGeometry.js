@@ -1,6 +1,6 @@
 export const ARTBOARD_SIZE = 480;
 export const ARTBOARD_CENTER = ARTBOARD_SIZE / 2;
-export const MAX_ELLIPSES = 48;
+export const MAX_ELLIPSES = 256;
 
 const TAU = Math.PI * 2;
 const EPSILON = 1e-7;

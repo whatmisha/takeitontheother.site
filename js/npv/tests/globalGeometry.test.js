@@ -25,7 +25,7 @@ test('the default projection starts with fifteen equally sized physical marks', 
 });
 
 test('every density slot represents two unique antipodal ellipses', () => {
-    assert.equal(SPHERE_AXES.length, 48);
+    assert.equal(SPHERE_AXES.length, 256);
     SPHERE_AXES.forEach((axis) => {
         assert.ok(Math.abs(Math.hypot(axis.x, axis.y, axis.z) - 1) < 1e-9);
     });
