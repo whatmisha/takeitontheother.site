@@ -39,6 +39,7 @@ export function projectTrajectory(trajectory, settings, width, height) {
     const ax = radians(settings.rotationX);
     const ay = radians(settings.rotationY);
     const az = radians(settings.rotationZ);
+    const depthStretch = Math.max(0.5, Math.min(3, Number(settings.depthStretch) || 1));
     const perspective = Math.max(0, Math.min(100, Number(settings.perspective || 0)));
     const cameraDistance = 8 - perspective * 0.052;
 
@@ -46,7 +47,7 @@ export function projectTrajectory(trajectory, settings, width, height) {
         // Lorenz's x/z plane is the familiar butterfly view; y supplies depth.
         const nx = (x - centerX) * normalize;
         const ny = (z - centerZ) * normalize;
-        const nz = (y - centerY) * normalize;
+        const nz = (y - centerY) * normalize * depthStretch;
         const rotated = rotatePoint(nx, ny, nz, ax, ay, az);
         const denominator = Math.max(0.25, cameraDistance - rotated[2]);
         const factor = perspective === 0 ? 1 : cameraDistance / denominator;
@@ -97,5 +98,12 @@ export function projectTrajectory(trajectory, settings, width, height) {
         };
     };
 
-    return { points: screen, projectRawPoint, rawBounds: bounds, width, height };
+    return {
+        points: screen,
+        pointCount: count,
+        projectRawPoint,
+        rawBounds: bounds,
+        width,
+        height
+    };
 }

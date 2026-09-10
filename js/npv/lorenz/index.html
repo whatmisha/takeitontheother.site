@@ -38,9 +38,17 @@
             <aside class="controls-panel controls-panel-left" id="systemPanel">
                 <div class="panel-header" id="systemPanelHeader"><span>System</span><span class="collapse-icon" aria-hidden="true">⌄</span></div>
                 <div class="panel-content"><section class="control-section">
+                    <fieldset class="system-fieldset">
+                        <legend class="sr-only">Attractor system</legend>
+                        <div class="segmented-control segmented-control-compact">
+                            <input type="radio" id="systemLorenz63" name="attractorSystem" value="lorenz63" checked><label for="systemLorenz63">Lorenz-63</label>
+                            <input type="radio" id="systemProtoLorenz" name="attractorSystem" value="protoLorenz"><label for="systemProtoLorenz">Proto-Lorenz</label>
+                        </div>
+                    </fieldset>
                     <div class="control-group"><label for="sigmaSlider"><span>Sigma</span><input type="text" class="value-display" id="sigmaValue" value="10"></label><input type="range" id="sigmaSlider" min="0.1" max="30" step="0.1" value="10"></div>
                     <div class="control-group"><label for="rhoSlider"><span>Rho</span><input type="text" class="value-display" id="rhoValue" value="28"></label><input type="range" id="rhoSlider" min="0" max="100" step="0.1" value="28"></div>
                     <div class="control-group"><label for="betaSlider"><span>Beta</span><input type="text" class="value-display" id="betaValue" value="2.667"></label><input type="range" id="betaSlider" min="0.1" max="10" step="0.001" value="2.667"></div>
+                    <div class="control-group disabled"><label for="wingCountSlider"><span>Wings</span><input type="text" class="value-display" id="wingCountValue" value="3"></label><input type="range" id="wingCountSlider" min="3" max="8" step="1" value="3" disabled></div>
                     <button class="panel-button" id="classicValuesBtn" type="button">Classic values</button>
                 </section></div>
             </aside>
@@ -48,10 +56,11 @@
             <aside class="controls-panel" id="viewPanel">
                 <div class="panel-header" id="viewPanelHeader"><span>View</span><span class="collapse-icon" aria-hidden="true">⌄</span></div>
                 <div class="panel-content"><section class="control-section">
-                    <div class="control-group"><label for="rotationXSlider"><span>Rotation X <span class="unit">°</span></span><input type="text" class="value-display" id="rotationXValue" value="-8"></label><input type="range" id="rotationXSlider" min="-180" max="180" step="1" value="-8"></div>
-                    <div class="control-group"><label for="rotationYSlider"><span>Rotation Y <span class="unit">°</span></span><input type="text" class="value-display" id="rotationYValue" value="15"></label><input type="range" id="rotationYSlider" min="-180" max="180" step="1" value="15"></div>
+                    <div class="control-group"><label for="rotationXSlider"><span>Rotation X <span class="unit">°</span></span><input type="text" class="value-display" id="rotationXValue" value="12"></label><input type="range" id="rotationXSlider" min="-180" max="180" step="1" value="12"></div>
+                    <div class="control-group"><label for="rotationYSlider"><span>Rotation Y <span class="unit">°</span></span><input type="text" class="value-display" id="rotationYValue" value="120"></label><input type="range" id="rotationYSlider" min="-180" max="180" step="1" value="120"></div>
                     <div class="control-group"><label for="rotationZSlider"><span>Rotation Z <span class="unit">°</span></span><input type="text" class="value-display" id="rotationZValue" value="0"></label><input type="range" id="rotationZSlider" min="-180" max="180" step="1" value="0"></div>
-                    <div class="control-group"><label for="perspectiveSlider"><span>Perspective</span><input type="text" class="value-display" id="perspectiveValue" value="34"></label><input type="range" id="perspectiveSlider" min="0" max="100" step="1" value="34"></div>
+                    <div class="control-group"><label for="perspectiveSlider"><span>Perspective</span><input type="text" class="value-display" id="perspectiveValue" value="100"></label><input type="range" id="perspectiveSlider" min="0" max="100" step="1" value="100"></div>
+                    <div class="control-group"><label for="depthStretchSlider"><span>Depth stretch</span><input type="text" class="value-display" id="depthStretchValue" value="1"></label><input type="range" id="depthStretchSlider" min="0.5" max="3" step="0.05" value="1"></div>
                     <div class="control-group"><label for="viewScaleSlider"><span>Scale</span><input type="text" class="value-display" id="viewScaleValue" value="1"></label><input type="range" id="viewScaleSlider" min="0.4" max="1.3" step="0.01" value="1"></div>
                     <div class="control-group pill-toggle-row"><label class="pill-toggle" for="showAxes"><input type="checkbox" id="showAxes" class="sr-only" data-setting="showAxes"><span>Axes</span></label></div>
                     <button class="panel-button" id="resetViewBtn" type="button">Reset position</button>
@@ -64,13 +73,23 @@
                     <div class="control-group"><label for="pointCountSlider"><span>Detail</span><input type="text" class="value-display value-display-wide" id="pointCountValue" value="24000"></label><input type="range" id="pointCountSlider" min="1000" max="100000" step="1000" value="24000"></div>
                     <div class="control-group"><label for="sampleStrideSlider"><span>Spacing</span><input type="text" class="value-display" id="sampleStrideValue" value="1"></label><input type="range" id="sampleStrideSlider" min="1" max="12" step="1" value="1"></div>
                     <output class="generation-meta" id="pixelCountLabel">Calculating vector pixels</output>
+                    <div class="motion-section">
+                        <div class="section-divider-label">Animation</div>
+                        <div class="motion-actions">
+                            <button class="panel-button motion-play-button" id="motionPlayBtn" type="button" aria-pressed="false">▶ Play</button>
+                            <button class="panel-button motion-restart-button" id="restartMotionBtn" type="button" disabled>Restart</button>
+                        </div>
+                        <div class="control-group"><label for="motionSpeedSlider"><span>Speed</span><input type="text" class="value-display" id="motionSpeedValue" value="1"></label><input type="range" id="motionSpeedSlider" min="0.01" max="4" step="0.01" value="1"></div>
+                        <div class="control-group"><label for="particleCountSlider"><span>Particles</span><input type="text" class="value-display value-display-wide" id="particleCountValue" value="600"></label><input type="range" id="particleCountSlider" min="100" max="3000" step="100" value="600"></div>
+                        <div class="control-group"><label for="trailLengthSlider"><span>Trail</span><input type="text" class="value-display" id="trailLengthValue" value="8"></label><input type="range" id="trailLengthSlider" min="0" max="24" step="1" value="8"></div>
+                    </div>
                     <details class="advanced-controls">
                         <summary>Advanced</summary>
                         <div class="advanced-controls-body">
                             <div class="control-group"><label for="dtSlider"><span>Time step</span><input type="text" class="value-display" id="dtValue" value="0.005"></label><input type="range" id="dtSlider" min="0.001" max="0.02" step="0.001" value="0.005"></div>
                             <div class="control-group"><label for="warmupStepsSlider"><span>Warm-up</span><input type="text" class="value-display value-display-wide" id="warmupStepsValue" value="1800"></label><input type="range" id="warmupStepsSlider" min="0" max="10000" step="100" value="1800"></div>
-                            <div class="control-group"><label for="x0Slider"><span>Initial X</span><input type="text" class="value-display" id="x0Value" value="0"></label><input type="range" id="x0Slider" min="-30" max="30" step="0.1" value="0"></div>
-                            <div class="control-group"><label for="y0Slider"><span>Initial Y</span><input type="text" class="value-display" id="y0Value" value="1"></label><input type="range" id="y0Slider" min="-30" max="30" step="0.1" value="1"></div>
+                            <div class="control-group"><label for="x0Slider"><span id="initialXLabel">Initial X</span><input type="text" class="value-display" id="x0Value" value="0"></label><input type="range" id="x0Slider" min="-30" max="30" step="0.1" value="0"></div>
+                            <div class="control-group"><label for="y0Slider"><span id="initialYLabel">Initial Y</span><input type="text" class="value-display" id="y0Value" value="1"></label><input type="range" id="y0Slider" min="-30" max="30" step="0.1" value="1"></div>
                             <div class="control-group"><label for="z0Slider"><span>Initial Z</span><input type="text" class="value-display" id="z0Value" value="1.05"></label><input type="range" id="z0Slider" min="-10" max="60" step="0.05" value="1.05"></div>
                         </div>
                     </details>
@@ -80,18 +99,9 @@
             <aside class="controls-panel controls-panel-presets" id="appearancePanel">
                 <div class="panel-header" id="appearancePanelHeader"><span>Appearance</span><span class="collapse-icon" aria-hidden="true">⌄</span></div>
                 <div class="panel-content"><section class="control-section">
-                    <fieldset class="format-fieldset">
-                        <legend>Format</legend>
-                        <div class="segmented-control segmented-control-compact">
-                            <input type="radio" id="formatSquare" name="artboardFormat" value="square" checked><label for="formatSquare">1:1</label>
-                            <input type="radio" id="formatPortrait" name="artboardFormat" value="portrait"><label for="formatPortrait">4:5</label>
-                            <input type="radio" id="formatWide" name="artboardFormat" value="wide"><label for="formatWide">16:9</label>
-                        </div>
-                    </fieldset>
                     <div class="control-group"><label for="pixelWidthSlider"><span>Pixel width <span class="unit">px</span></span><input type="text" class="value-display" id="pixelWidthValue" value="2"></label><input type="range" id="pixelWidthSlider" min="0.5" max="16" step="0.25" value="2"></div>
                     <div class="control-group"><label for="pixelHeightSlider"><span>Pixel height <span class="unit">px</span></span><input type="text" class="value-display" id="pixelHeightValue" value="2"></label><input type="range" id="pixelHeightSlider" min="0.5" max="16" step="0.25" value="2"></div>
                     <div class="control-group"><label for="gridStepSlider"><span>Raster grid <span class="unit">px</span></span><input type="text" class="value-display" id="gridStepValue" value="2"></label><input type="range" id="gridStepSlider" min="0" max="16" step="0.25" value="2"></div>
-                    <div class="control-group"><label for="opacitySlider"><span>Opacity <span class="unit">%</span></span><input type="text" class="value-display" id="opacityValue" value="90"></label><input type="range" id="opacitySlider" min="5" max="100" step="1" value="90"></div>
                     <div class="color-swatches-compact">
                         <div class="color-swatch-row">
                             <div class="color-swatch-compact" id="pixelColorItem" data-color-type="pixel">
@@ -116,6 +126,13 @@
             <button class="btn-fixed btn-intro-help" id="helpBtn" type="button" aria-label="About">?</button>
             <button class="btn-fixed" id="exportPngBtn" type="button">Export PNG</button>
             <button class="btn-fixed" id="exportSvgBtn" type="button">Export SVG ⌘E</button>
+            <label class="toggle-label" for="transparentExport">
+                <span class="toggle-label-text">Transparent</span>
+                <span class="toggle-switch">
+                    <input type="checkbox" id="transparentExport" data-setting="transparentExport">
+                    <span class="toggle-slider" aria-hidden="true"></span>
+                </span>
+            </label>
         </nav>
 
         <dialog id="dialog" class="modal"><div class="modal-content"><h2 id="dialogTitle" class="modal-title"></h2><div id="dialogText" class="modal-text"></div><input id="dialogInput" class="modal-input" type="text" style="display:none;"><div id="dialogButtons" class="modal-buttons"></div></div></dialog>

@@ -17,31 +17,65 @@ export function lorenzDerivative(x, y, z, sigma, rho, beta) {
     ];
 }
 
-export function rk4Step(x, y, z, dt, sigma, rho, beta) {
-    const k1 = lorenzDerivative(x, y, z, sigma, rho, beta);
-    const k2 = lorenzDerivative(
+function complexPower(real, imaginary, exponent) {
+    let resultReal = 1;
+    let resultImaginary = 0;
+    for (let index = 0; index < exponent; index++) {
+        const nextReal = resultReal * real - resultImaginary * imaginary;
+        resultImaginary = resultReal * imaginary + resultImaginary * real;
+        resultReal = nextReal;
+    }
+    return [resultReal, resultImaginary];
+}
+
+export function protoLorenzDerivative(p, q, z, sigma, rho, beta, wingCount = 3) {
+    const wings = Math.max(2, Math.min(8, Math.round(finiteNumber(wingCount, 3))));
+    const radius = Math.hypot(p, q);
+    if (radius < 1e-12) return [0, 0, -beta * z];
+
+    // The n-fold cover w ↦ wⁿ of Miranda and Stone's proto-Lorenz system.
+    const [u, v] = complexPower(p, q, wings);
+    const norm = Math.hypot(u, v);
+    const protoU = -(sigma + 1) * u + (sigma - rho + z) * v + (1 - sigma) * norm;
+    const protoV = (rho - sigma - z) * u - (sigma + 1) * v + (rho + sigma - z) * norm;
+    const [powerReal, powerImaginary] = complexPower(p, q, wings - 1);
+    const denominator = wings * (powerReal * powerReal + powerImaginary * powerImaginary);
+
+    return [
+        (protoU * powerReal + protoV * powerImaginary) / denominator,
+        (protoV * powerReal - protoU * powerImaginary) / denominator,
+        0.5 * v - beta * z
+    ];
+}
+
+function rk4SystemStep(x, y, z, dt, derivative, sigma, rho, beta, wingCount) {
+    const k1 = derivative(x, y, z, sigma, rho, beta, wingCount);
+    const k2 = derivative(
         x + k1[0] * dt * 0.5,
         y + k1[1] * dt * 0.5,
         z + k1[2] * dt * 0.5,
         sigma,
         rho,
-        beta
+        beta,
+        wingCount
     );
-    const k3 = lorenzDerivative(
+    const k3 = derivative(
         x + k2[0] * dt * 0.5,
         y + k2[1] * dt * 0.5,
         z + k2[2] * dt * 0.5,
         sigma,
         rho,
-        beta
+        beta,
+        wingCount
     );
-    const k4 = lorenzDerivative(
+    const k4 = derivative(
         x + k3[0] * dt,
         y + k3[1] * dt,
         z + k3[2] * dt,
         sigma,
         rho,
-        beta
+        beta,
+        wingCount
     );
 
     const sixth = dt / 6;
@@ -50,6 +84,14 @@ export function rk4Step(x, y, z, dt, sigma, rho, beta) {
         y + sixth * (k1[1] + 2 * k2[1] + 2 * k3[1] + k4[1]),
         z + sixth * (k1[2] + 2 * k2[2] + 2 * k3[2] + k4[2])
     ];
+}
+
+export function rk4Step(x, y, z, dt, sigma, rho, beta) {
+    return rk4SystemStep(x, y, z, dt, lorenzDerivative, sigma, rho, beta);
+}
+
+export function rk4ProtoLorenzStep(p, q, z, dt, sigma, rho, beta, wingCount = 3) {
+    return rk4SystemStep(p, q, z, dt, protoLorenzDerivative, sigma, rho, beta, wingCount);
 }
 
 export function integrateLorenz(options = {}) {
@@ -61,6 +103,9 @@ export function integrateLorenz(options = {}) {
     const warmupSteps = Math.max(0, Math.min(100000, Math.round(finiteNumber(options.warmupSteps, 1800))));
     const sampleStride = Math.max(1, Math.min(100, Math.round(finiteNumber(options.sampleStride, 1))));
     const divergenceLimit = Math.max(100, finiteNumber(options.divergenceLimit, 1e6));
+    const systemType = options.systemType === 'protoLorenz' ? 'protoLorenz' : 'lorenz63';
+    const wingCount = Math.max(3, Math.min(8, Math.round(finiteNumber(options.wingCount, 3))));
+    const stepper = systemType === 'protoLorenz' ? rk4ProtoLorenzStep : rk4Step;
 
     let x = finiteNumber(options.x0, CLASSIC_LORENZ.x0);
     let y = finiteNumber(options.y0, CLASSIC_LORENZ.y0);
@@ -75,7 +120,7 @@ export function integrateLorenz(options = {}) {
     let totalSteps = 0;
     const requestedSteps = warmupSteps + pointCount * sampleStride;
     for (let step = 0; step < requestedSteps; step++) {
-        [x, y, z] = rk4Step(x, y, z, dt, sigma, rho, beta);
+        [x, y, z] = stepper(x, y, z, dt, sigma, rho, beta, wingCount);
         totalSteps++;
 
         if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)
@@ -104,7 +149,8 @@ export function integrateLorenz(options = {}) {
         pointCount: written,
         requestedPointCount: pointCount,
         totalSteps,
-        diverged: written < pointCount
+        diverged: written < pointCount,
+        systemType,
+        wingCount
     };
 }
-

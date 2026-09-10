@@ -2,32 +2,51 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-import { CLASSIC_LORENZ, integrateLorenz, lorenzDerivative, rk4Step } from '../lorenz/src/lorenz.js';
+import {
+    CLASSIC_LORENZ,
+    integrateLorenz,
+    lorenzDerivative,
+    protoLorenzDerivative,
+    rk4Step
+} from '../lorenz/src/lorenz.js';
 import { projectTrajectory } from '../lorenz/src/projection.js';
-import { preparePixelPositions, renderLorenzSvg } from '../lorenz/src/renderer.js';
+import { prepareAnimatedPixelPositions, preparePixelPositions, renderLorenzSvg } from '../lorenz/src/renderer.js';
 
 const defaults = {
     ...CLASSIC_LORENZ,
+    systemType: 'lorenz63',
+    wingCount: 3,
     dt: 0.005,
     pointCount: 4000,
     warmupSteps: 1000,
     sampleStride: 1,
-    rotationX: -8,
-    rotationY: 15,
+    rotationX: 12,
+    rotationY: 120,
     rotationZ: 0,
-    perspective: 34,
+    perspective: 100,
     viewScale: 1,
     pixelWidth: 2,
     pixelHeight: 2,
     gridStep: 2,
-    opacity: 90,
     pixelColor: '#ffffff',
     backgroundColor: '#000000',
+    transparentExport: false,
+    depthStretch: 1,
+    animateParticles: false,
+    motionSpeed: 1,
+    particleCount: 600,
+    trailLength: 8,
     showAxes: false
 };
 
 test('Lorenz derivative matches the canonical equations', () => {
     assert.deepEqual(lorenzDerivative(1, 2, 3, 10, 28, 8 / 3), [10, 23, -6]);
+});
+
+test('the two-fold proto-Lorenz cover reproduces the Lorenz equations', () => {
+    const classic = lorenzDerivative(1, 2, 3, 10, 28, 8 / 3);
+    const covered = protoLorenzDerivative(1, 2, 3, 10, 28, 8 / 3, 2);
+    covered.forEach((value, index) => assert.ok(Math.abs(value - classic[index]) < 1e-12));
 });
 
 test('the non-zero equilibria have zero derivative', () => {
@@ -63,6 +82,28 @@ test('projection fits the requested artboard', () => {
     }
 });
 
+test('Proto-Lorenz generates one bounded trajectory through every requested wing', () => {
+    for (let wingCount = 3; wingCount <= 8; wingCount++) {
+        const trajectory = integrateLorenz({
+            ...defaults,
+            systemType: 'protoLorenz',
+            wingCount,
+            pointCount: 6000
+        });
+        assert.equal(trajectory.diverged, false);
+        assert.equal(trajectory.systemType, 'protoLorenz');
+        assert.equal(trajectory.wingCount, wingCount);
+
+        const visited = new Set();
+        for (let index = 0; index < trajectory.pointCount; index++) {
+            let angle = Math.atan2(trajectory.points[index * 3 + 1], trajectory.points[index * 3]);
+            if (angle < 0) angle += Math.PI * 2;
+            visited.add(Math.floor(angle / (Math.PI * 2 / wingCount)));
+        }
+        assert.equal(visited.size, wingCount);
+    }
+});
+
 test('raster snapping keeps only the foremost sample in each cell', () => {
     const projected = {
         points: new Float32Array([1.1, 1.1, -1, 1.4, 1.4, 2, 5, 5, 0])
@@ -70,6 +111,19 @@ test('raster snapping keeps only the foremost sample in each cell', () => {
     const pixels = preparePixelPositions(projected, { gridStep: 2 });
     assert.equal(pixels.pixelCount, 2);
     assert.deepEqual([...pixels.points], [6, 6, 0, 2, 2, 2]);
+});
+
+test('particle motion samples deterministic moving trails along the trajectory', () => {
+    const projectionSettings = { ...defaults, depthStretch: 1.5 };
+    const trajectory = integrateLorenz({ ...projectionSettings, pointCount: 1000 });
+    const projected = projectTrajectory(trajectory, projectionSettings, 960, 960);
+    const motionSettings = { ...defaults, gridStep: 0, particleCount: 90, trailLength: 4 };
+    const first = prepareAnimatedPixelPositions(projected, motionSettings, 0.1);
+    const repeat = prepareAnimatedPixelPositions(projected, motionSettings, 0.1);
+    const moved = prepareAnimatedPixelPositions(projected, motionSettings, 0.2);
+    assert.equal(first.pixelCount, 90 * 5);
+    assert.deepEqual(first.points, repeat.points);
+    assert.notDeepEqual(first.points, moved.points);
 });
 
 test('SVG export uses one compact path for all vector pixels', () => {
@@ -81,12 +135,74 @@ test('SVG export uses one compact path for all vector pixels', () => {
     assert.equal((svg.match(/<path /g) || []).length, 1);
 });
 
+test('transparent SVG export omits the background and keeps pixels fully opaque', () => {
+    const settings = { ...defaults, transparentExport: true };
+    const trajectory = integrateLorenz({ ...settings, pointCount: 500 });
+    const svg = renderLorenzSvg(960, 960, settings, trajectory);
+    assert.doesNotMatch(svg, /<rect/);
+    assert.doesNotMatch(svg, /opacity=/);
+    assert.match(svg, /<path d="M[^>]+fill="#ffffff"\/>/);
+});
+
+test('animated SVG export captures the current particle frame as vector pixels', () => {
+    const settings = {
+        ...defaults,
+        animateParticles: true,
+        gridStep: 0,
+        particleCount: 100,
+        trailLength: 0
+    };
+    const trajectory = integrateLorenz({ ...settings, pointCount: 500 });
+    const svg = renderLorenzSvg(960, 960, settings, trajectory, { motionPhase: 0.25 });
+    const pixelPath = svg.match(/<path d="([^"]+)" fill="#ffffff"\/>/)[1];
+    assert.equal((pixelPath.match(/M/g) || []).length, 100);
+});
+
 test('Lorenz is a standalone tool with no YF Tools navigation button', () => {
     const html = readFileSync(new URL('../lorenz/index.html', import.meta.url), 'utf8');
+    const source = readFileSync(new URL('../lorenz/tool.js', import.meta.url), 'utf8');
     assert.doesNotMatch(html, /YF Tools|Othersite UI|href="\.\.\/"/);
-    assert.match(html, /name="artboardFormat" value="square"/);
+    assert.doesNotMatch(html, /artboardFormat|>Format</);
+    assert.doesNotMatch(source, /FORMAT_DIMENSIONS|format: 'square'/);
     assert.match(html, /id="gridStepSlider"/);
     assert.match(html, /id="unifiedColorPickerContainer"/);
+    assert.doesNotMatch(html, /opacitySlider|Opacity/);
+    assert.match(html, /id="exportSvgBtn"[\s\S]+id="transparentExport"/);
+    assert.match(html, /class="toggle-label"[\s\S]+class="toggle-switch"[\s\S]+class="toggle-slider"/);
+    assert.doesNotMatch(html, /export-transparency-toggle/);
+    assert.match(html, /name="attractorSystem" value="lorenz63"/);
+    assert.match(html, /name="attractorSystem" value="protoLorenz"/);
+    assert.match(html, /segmented-control segmented-control-compact/);
+    assert.match(html, /id="wingCountSlider"[^>]+min="3"[^>]+max="8"/);
+    assert.doesNotMatch(html, /Copies|Plane spread|Layer offset|copyCount|planeSpread|layerOffset/);
+    assert.match(html, /id="depthStretchSlider"/);
+    assert.match(html, /id="motionPlayBtn"[^>]+aria-pressed="false"/);
+    assert.match(html, /id="particleCountSlider"/);
+    assert.match(html, /id="motionSpeedSlider"[^>]+min="0\.01"[^>]+step="0\.01"/);
+    assert.match(source, /setting: 'motionSpeed', min: 0\.01, max: 4, decimals: 2/);
+});
+
+test('the requested view is the default in code and built-in presets', () => {
+    const source = readFileSync(new URL('../lorenz/tool.js', import.meta.url), 'utf8');
+    assert.match(source, /rotationX: 12, rotationY: 120, rotationZ: 0, perspective: 100/);
+    ['classic', 'fine', 'blocks', 'proto3'].forEach((name) => {
+        const preset = JSON.parse(readFileSync(new URL(`../lorenz/presets/${name}.json`, import.meta.url), 'utf8'));
+        assert.equal(preset.rotationX, 12);
+        assert.equal(preset.rotationY, 120);
+        assert.equal(preset.rotationZ, 0);
+        assert.equal(preset.perspective, 100);
+        assert.equal(preset.transparentExport, false);
+        assert.equal(typeof preset.depthStretch, 'number');
+        assert.equal(preset.animateParticles, false);
+        assert.equal('opacity' in preset, false);
+        assert.equal('format' in preset, false);
+        assert.equal('copyCount' in preset, false);
+        assert.equal('planeSpread' in preset, false);
+        assert.equal('layerOffset' in preset, false);
+    });
+    const proto = JSON.parse(readFileSync(new URL('../lorenz/presets/proto3.json', import.meta.url), 'utf8'));
+    assert.equal(proto.systemType, 'protoLorenz');
+    assert.equal(proto.wingCount, 3);
 });
 
 test('all registered Lorenz controls exist in the standalone document', () => {

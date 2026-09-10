@@ -1,6 +1,7 @@
 {
   "presets": [
     { "name": "Classic", "file": "classic.json" },
+    { "name": "Proto 3-wing", "file": "proto3.json" },
     { "name": "Fine", "file": "fine.json" },
     { "name": "Blocks", "file": "blocks.json" }
   ]
