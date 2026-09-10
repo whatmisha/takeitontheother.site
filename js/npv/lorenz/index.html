@@ -79,7 +79,8 @@
                             <button class="panel-button motion-play-button" id="motionPlayBtn" type="button" aria-pressed="false">▶ Play</button>
                             <button class="panel-button motion-restart-button" id="restartMotionBtn" type="button" disabled>Restart</button>
                         </div>
-                        <div class="control-group"><label for="motionSpeedSlider"><span>Speed</span><input type="text" class="value-display" id="motionSpeedValue" value="1"></label><input type="range" id="motionSpeedSlider" min="0.01" max="4" step="0.01" value="1"></div>
+                        <div class="control-group"><label for="motionSpeedSlider"><span>Speed</span><input type="text" class="value-display" id="motionSpeedValue" value="0.01"></label><input type="range" id="motionSpeedSlider" min="0.01" max="4" step="0.01" value="0.01"></div>
+                        <div class="control-group"><label for="motionDurationSlider"><span>Duration</span><input type="text" class="value-display" id="motionDurationValue" value="10"></label><input type="range" id="motionDurationSlider" min="1" max="30" step="1" value="10"></div>
                         <div class="control-group"><label for="particleCountSlider"><span>Particles</span><input type="text" class="value-display value-display-wide" id="particleCountValue" value="600"></label><input type="range" id="particleCountSlider" min="100" max="3000" step="100" value="600"></div>
                         <div class="control-group"><label for="trailLengthSlider"><span>Trail</span><input type="text" class="value-display" id="trailLengthValue" value="8"></label><input type="range" id="trailLengthSlider" min="0" max="24" step="1" value="8"></div>
                     </div>
@@ -122,10 +123,12 @@
             </aside>
         </main>
 
-        <nav class="bottom-buttons" aria-label="Export actions">
+        <nav class="bottom-buttons" id="bottomButtons" aria-label="Export actions">
             <button class="btn-fixed btn-intro-help" id="helpBtn" type="button" aria-label="About">?</button>
             <button class="btn-fixed" id="exportPngBtn" type="button">Export PNG</button>
             <button class="btn-fixed" id="exportSvgBtn" type="button">Export SVG ⌘E</button>
+            <button class="btn-fixed" id="exportPngSequenceBtn" type="button" title="Uses the Transparent export setting">Export PNG sequence</button>
+            <button class="btn-fixed" id="exportMp4Btn" type="button" title="MP4 includes the selected background color">Export MP4</button>
             <label class="toggle-label" for="transparentExport">
                 <span class="toggle-label-text">Transparent</span>
                 <span class="toggle-switch">
@@ -133,6 +136,11 @@
                     <span class="toggle-slider" aria-hidden="true"></span>
                 </span>
             </label>
+            <div class="animation-export-status" id="animationExportStatus" hidden data-state="idle" aria-live="polite">
+                <progress id="animationExportProgress" max="1" value="0"></progress>
+                <span id="animationExportMessage">Preparing</span>
+                <button id="cancelAnimationExport" type="button" aria-label="Cancel export" title="Cancel export">×</button>
+            </div>
         </nav>
 
         <dialog id="dialog" class="modal"><div class="modal-content"><h2 id="dialogTitle" class="modal-title"></h2><div id="dialogText" class="modal-text"></div><input id="dialogInput" class="modal-input" type="text" style="display:none;"><div id="dialogButtons" class="modal-buttons"></div></div></dialog>

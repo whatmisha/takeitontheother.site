@@ -11,6 +11,13 @@ import {
 } from '../lorenz/src/lorenz.js';
 import { projectTrajectory } from '../lorenz/src/projection.js';
 import { prepareAnimatedPixelPositions, preparePixelPositions, renderLorenzSvg } from '../lorenz/src/renderer.js';
+import {
+    MOTION_EXPORT_FPS,
+    MOTION_EXPORT_SIZE,
+    advanceMotionPhase,
+    motionExportFrameCount,
+    motionPhaseAtTime
+} from '../lorenz/src/motion.js';
 
 const defaults = {
     ...CLASSIC_LORENZ,
@@ -33,7 +40,8 @@ const defaults = {
     transparentExport: false,
     depthStretch: 1,
     animateParticles: false,
-    motionSpeed: 1,
+    motionSpeed: 0.01,
+    motionDuration: 10,
     particleCount: 600,
     trailLength: 8,
     showAxes: false
@@ -126,6 +134,14 @@ test('particle motion samples deterministic moving trails along the trajectory',
     assert.notDeepEqual(first.points, moved.points);
 });
 
+test('animation export matches preview timing at 1080 square and 60 fps', () => {
+    assert.equal(MOTION_EXPORT_SIZE, 1080);
+    assert.equal(MOTION_EXPORT_FPS, 60);
+    assert.equal(motionExportFrameCount(defaults), 600);
+    assert.ok(Math.abs(motionPhaseAtTime(10, 0.01) - 0.0025) < 1e-12);
+    assert.equal(advanceMotionPhase(0, 1000, 0.01), motionPhaseAtTime(1, 0.01));
+});
+
 test('SVG export uses one compact path for all vector pixels', () => {
     const trajectory = integrateLorenz({ ...defaults, pointCount: 500 });
     const svg = renderLorenzSvg(960, 960, defaults, trajectory);
@@ -179,7 +195,25 @@ test('Lorenz is a standalone tool with no YF Tools navigation button', () => {
     assert.match(html, /id="motionPlayBtn"[^>]+aria-pressed="false"/);
     assert.match(html, /id="particleCountSlider"/);
     assert.match(html, /id="motionSpeedSlider"[^>]+min="0\.01"[^>]+step="0\.01"/);
+    assert.match(html, /id="motionDurationSlider"[^>]+min="1"[^>]+max="30"/);
+    assert.match(html, /id="exportPngSequenceBtn"[^>]*>Export PNG sequence/);
+    assert.match(html, /id="exportMp4Btn"[^>]*>Export MP4/);
+    assert.match(html, /id="animationExportStatus"[^>]+aria-live="polite"/);
     assert.match(source, /setting: 'motionSpeed', min: 0\.01, max: 4, decimals: 2/);
+    assert.match(source, /setting: 'motionDuration', min: 1, max: 30/);
+    assert.match(source, /motionSpeed: 0\.01/);
+    assert.match(source, /storageKey: 'othersiteLorenzAttractorV6'/);
+});
+
+test('animation export supports H.264 MP4 and transparent PNG frames', () => {
+    const exporter = readFileSync(new URL('../lorenz/src/animationExporter.js', import.meta.url), 'utf8');
+    const worker = readFileSync(new URL('../lorenz/src/animationExportWorker.js', import.meta.url), 'utf8');
+    assert.match(exporter, /new Worker\(new URL\('\.\/animationExportWorker\.js'/);
+    assert.match(worker, /VideoEncoder\.isConfigSupported/);
+    assert.match(worker, /muxAvcToMp4/);
+    assert.match(worker, /StoredZipBlobBuilder/);
+    assert.match(worker, /transparent = Boolean\(job\.settings\.transparentExport\)/);
+    assert.match(worker, /animateParticles: true/);
 });
 
 test('the requested view is the default in code and built-in presets', () => {
@@ -194,6 +228,7 @@ test('the requested view is the default in code and built-in presets', () => {
         assert.equal(preset.transparentExport, false);
         assert.equal(typeof preset.depthStretch, 'number');
         assert.equal(preset.animateParticles, false);
+        assert.equal(preset.motionDuration, 10);
         assert.equal('opacity' in preset, false);
         assert.equal('format' in preset, false);
         assert.equal('copyCount' in preset, false);

@@ -1,11 +1,19 @@
 import { defineTool } from '../framework/src/core/defineTool.js';
+import { LorenzAnimationExporter } from './src/animationExporter.js';
 import { CLASSIC_LORENZ, integrateLorenz } from './src/lorenz.js';
+import { advanceMotionPhase } from './src/motion.js';
 import { renderLorenzCanvas, renderLorenzSvg } from './src/renderer.js';
 
 const DEFAULT_VIEW = Object.freeze({ rotationX: 12, rotationY: 120, rotationZ: 0, perspective: 100 });
 const DYNAMIC_KEYS = ['systemType', 'wingCount', 'sigma', 'rho', 'beta', 'x0', 'y0', 'z0', 'dt', 'pointCount', 'warmupSteps', 'sampleStride'];
 
 const wrapDegrees = (value) => ((Number(value) + 180) % 360 + 360) % 360 - 180;
+const pad = (value) => String(value).padStart(2, '0');
+
+function animationBaseName(date = new Date()) {
+    return `lorenz_${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}`
+        + `_${pad(date.getHours())}-${pad(date.getMinutes())}-${pad(date.getSeconds())}`;
+}
 
 let trajectoryCache = null;
 let trajectoryKey = '';
@@ -87,8 +95,7 @@ function startMotion(shell) {
             return;
         }
         const elapsed = Math.max(0, Math.min(64, time - motionLastTime));
-        const speed = Math.max(0.01, Math.min(4, Number(shell.settings.motionSpeed) || 1));
-        motionPhase = (motionPhase + elapsed * speed / 40000) % 1;
+        motionPhase = advanceMotionPhase(motionPhase, elapsed, shell.settings.motionSpeed);
         motionLastTime = time;
         shell.renderNow();
         motionFrameId = requestAnimationFrame(tick);
@@ -134,7 +141,8 @@ const app = defineTool({
         transparentExport: false,
         depthStretch: 1,
         animateParticles: false,
-        motionSpeed: 1,
+        motionSpeed: 0.01,
+        motionDuration: 10,
         particleCount: 600,
         trailLength: 8,
         viewScale: 1,
@@ -157,6 +165,7 @@ const app = defineTool({
             { id: 'pointCountSlider', valueId: 'pointCountValue', setting: 'pointCount', min: 1000, max: 100000, decimals: 0, baseStep: 1000, shiftStep: 10000 },
             { id: 'sampleStrideSlider', valueId: 'sampleStrideValue', setting: 'sampleStride', min: 1, max: 12, decimals: 0, baseStep: 1 },
             { id: 'motionSpeedSlider', valueId: 'motionSpeedValue', setting: 'motionSpeed', min: 0.01, max: 4, decimals: 2, baseStep: 0.01, shiftStep: 0.1, suffix: '×' },
+            { id: 'motionDurationSlider', valueId: 'motionDurationValue', setting: 'motionDuration', min: 1, max: 30, decimals: 0, baseStep: 1, shiftStep: 5, suffix: ' s' },
             { id: 'particleCountSlider', valueId: 'particleCountValue', setting: 'particleCount', min: 100, max: 3000, decimals: 0, baseStep: 100, shiftStep: 500 },
             { id: 'trailLengthSlider', valueId: 'trailLengthValue', setting: 'trailLength', min: 0, max: 24, decimals: 0, baseStep: 1 },
             { id: 'dtSlider', valueId: 'dtValue', setting: 'dt', min: 0.001, max: 0.02, decimals: 3, baseStep: 0.001, shiftStep: 0.005 },
@@ -184,7 +193,7 @@ const app = defineTool({
         ]
     },
     presets: {
-        storageKey: 'othersiteLorenzAttractorV5',
+        storageKey: 'othersiteLorenzAttractorV6',
         basePath: 'presets',
         defaultName: 'Classic',
         colorDots: (blob) => [{ kind: 'solid', value: blob.pixelColor || '#ffffff' }]
@@ -218,8 +227,40 @@ const app = defineTool({
         syncMotion(shell);
     },
     onReady(shell) {
-        document.getElementById('exportPngBtn')?.addEventListener('click', () => shell.exportPNG());
-        document.getElementById('exportSvgBtn')?.addEventListener('click', () => shell.exportSVG());
+        const exportPngButton = document.getElementById('exportPngBtn');
+        const exportSvgButton = document.getElementById('exportSvgBtn');
+        const exportSequenceButton = document.getElementById('exportPngSequenceBtn');
+        const exportMp4Button = document.getElementById('exportMp4Btn');
+        const animationExporter = new LorenzAnimationExporter({
+            container: document.getElementById('bottomButtons'),
+            status: document.getElementById('animationExportStatus'),
+            progress: document.getElementById('animationExportProgress'),
+            message: document.getElementById('animationExportMessage'),
+            cancelButton: document.getElementById('cancelAnimationExport'),
+            buttons: [
+                exportPngButton,
+                exportSvgButton,
+                exportSequenceButton,
+                exportMp4Button,
+                document.getElementById('transparentExport')
+            ],
+            onError: (error) => shell.dialog?.alert({
+                title: 'Export failed',
+                text: error.message
+            })
+        });
+        const exportAnimation = (format) => animationExporter.export({
+            format,
+            settings: shell.settingsStore.toObject(),
+            baseName: animationBaseName()
+        }).catch((error) => {
+            if (error.name !== 'AbortError') console.error(error);
+        });
+
+        exportPngButton?.addEventListener('click', () => shell.exportPNG());
+        exportSvgButton?.addEventListener('click', () => shell.exportSVG());
+        exportSequenceButton?.addEventListener('click', () => exportAnimation('png-sequence'));
+        exportMp4Button?.addEventListener('click', () => exportAnimation('mp4'));
         document.getElementById('classicValuesBtn')?.addEventListener('click', () => {
             applySettings(shell, CLASSIC_LORENZ);
         });
@@ -239,7 +280,7 @@ const app = defineTool({
         document.getElementById('helpBtn')?.addEventListener('click', () => {
             shell.dialog?.alert({
                 title: 'Lorenz',
-                text: 'Lorenz-63 and multi-wing Proto-Lorenz trajectories built from vector pixels. Drag to rotate, use the trackpad to pan, and Cmd/Ctrl + wheel to zoom.'
+                text: 'Lorenz-63 and multi-wing Proto-Lorenz trajectories built from vector pixels. Drag to rotate, use the trackpad to pan, and Cmd/Ctrl + wheel to zoom. MP4 includes the selected background; PNG sequence follows the Transparent toggle.'
             });
         });
 
