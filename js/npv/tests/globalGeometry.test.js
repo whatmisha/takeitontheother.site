@@ -25,7 +25,7 @@ test('the default projection starts with fifteen equally sized physical marks', 
 });
 
 test('every density slot represents two unique antipodal ellipses', () => {
-    assert.equal(SPHERE_AXES.length, 256);
+    assert.equal(SPHERE_AXES.length, 1024);
     SPHERE_AXES.forEach((axis) => {
         assert.ok(Math.abs(Math.hypot(axis.x, axis.y, axis.z) - 1) < 1e-9);
     });
@@ -39,6 +39,19 @@ test('every density slot represents two unique antipodal ellipses', () => {
             assert.ok(dot < 0.99999, `axes ${a} and ${b} must not duplicate one another`);
         }
     }
+});
+
+test('the maximum density builds all 1024 antipodal ellipse pairs', () => {
+    ['packed', 'tessellated', 'progressive', 'rings'].forEach((topologyMode) => {
+        const scene = buildGlobalScene({
+            ...defaultSettings(),
+            ellipseCount: 1024,
+            topologyMode,
+            showBackside: true
+        });
+        assert.equal(scene.axes.length, 1024);
+        assert.equal(scene.elements.length, 2048);
+    });
 });
 
 test('the regular 18-point core gives every mark the same nearest-neighbor distance', () => {

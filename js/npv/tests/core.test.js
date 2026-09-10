@@ -215,9 +215,9 @@ test('dependent geometry values move without changing fixed slider ranges', asyn
     assert.match(app, /move Diameter to the nearest usable value without changing its range/);
 });
 
-test('ellipse density accepts up to 256 marks', async () => {
+test('ellipse density accepts up to 1024 marks', async () => {
     const html = await readFile(new URL('../index.html', import.meta.url), 'utf8');
-    assert.match(html, /id="ellipseCount"[^>]*max="256"/);
+    assert.match(html, /id="ellipseCount"[^>]*max="1024"/);
 });
 
 test('Iconic Five preserves the supplied settings as a built-in preset', () => {

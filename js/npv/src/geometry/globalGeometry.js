@@ -1,6 +1,6 @@
 export const ARTBOARD_SIZE = 480;
 export const ARTBOARD_CENTER = ARTBOARD_SIZE / 2;
-export const MAX_ELLIPSES = 256;
+export const MAX_ELLIPSES = 1024;
 
 const TAU = Math.PI * 2;
 const EPSILON = 1e-7;
@@ -50,7 +50,7 @@ function rotateVector(source, rotationX, rotationY, rotationZ) {
     };
 }
 
-function candidateAxes(count = 2048) {
+function candidateAxes(count = Math.max(2048, MAX_ELLIPSES * 8)) {
     const goldenAngle = Math.PI * (3 - Math.sqrt(5));
     const candidates = [];
     for (let index = 0; index < count; index += 1) {
@@ -142,33 +142,67 @@ const ICOSIDODECAHEDRON_AXES = Object.freeze(icosidodecahedronAxes());
 function buildAxisSequence() {
     const chosen = regularCoreAxes();
     const candidates = candidateAxes();
+    const separations = [Math.PI];
+    for (let index = 1; index < chosen.length; index += 1) {
+        separations[index] = Math.min(
+            separations[index - 1],
+            projectiveDistanceScore(chosen[index], chosen.slice(0, index))
+        );
+    }
+    const scores = candidates.map((candidate) => projectiveDistanceScore(candidate, chosen));
     while (chosen.length < MAX_ELLIPSES) {
-        let best = null;
+        let bestIndex = -1;
         let bestScore = -Infinity;
-        for (const candidate of candidates) {
-            const score = projectiveDistanceScore(candidate, chosen);
-            if (score > bestScore) {
-                best = candidate;
-                bestScore = score;
+        for (let index = 0; index < candidates.length; index += 1) {
+            if (scores[index] > bestScore) {
+                bestIndex = index;
+                bestScore = scores[index];
             }
         }
+        const best = candidates[bestIndex];
         chosen.push(best);
+        separations.push(Math.min(separations.at(-1), bestScore));
+        for (let index = 0; index < candidates.length; index += 1) {
+            const candidate = candidates[index];
+            const dotProduct = Math.abs(
+                candidate.x * best.x + candidate.y * best.y + candidate.z * best.z
+            );
+            scores[index] = Math.min(scores[index], Math.acos(clamp(dotProduct, -1, 1)));
+        }
     }
-    return Object.freeze(chosen.map((axis, index) => Object.freeze({
-        ...axis,
-        group: index === 0 ? 'center' : index < 9 ? 'core' : 'field',
-        pairIndex: index
-    })));
+    return {
+        axes: Object.freeze(chosen.map((axis, index) => Object.freeze({
+            ...axis,
+            group: index === 0 ? 'center' : index < 9 ? 'core' : 'field',
+            pairIndex: index
+        }))),
+        separations: Object.freeze(separations)
+    };
 }
 
-export const SPHERE_AXES = buildAxisSequence();
+const AXIS_SEQUENCE = buildAxisSequence();
+export const SPHERE_AXES = AXIS_SEQUENCE.axes;
 
 const TESSELLATION_CACHE = new Map();
+const PROGRESSIVE_CACHE = new Map();
 const RING_CACHE = new Map();
 const SEPARATION_CACHE = new WeakMap();
 
+function progressiveAxes(count) {
+    if (PROGRESSIVE_CACHE.has(count)) return PROGRESSIVE_CACHE.get(count);
+    const axes = Object.freeze(SPHERE_AXES.slice(0, count));
+    SEPARATION_CACHE.set(axes, AXIS_SEQUENCE.separations[count - 1]);
+    PROGRESSIVE_CACHE.set(count, axes);
+    return axes;
+}
+
 function relaxedTessellationAxes(count) {
     if (TESSELLATION_CACHE.has(count)) return TESSELLATION_CACHE.get(count);
+    if (count > 128) {
+        const result = progressiveAxes(count);
+        TESSELLATION_CACHE.set(count, result);
+        return result;
+    }
     let axes = SPHERE_AXES.slice(0, count).map((axis) => ({ x: axis.x, y: axis.y, z: axis.z }));
     const iterations = 90;
     for (let iteration = 0; iteration < iterations; iteration += 1) {
@@ -257,7 +291,7 @@ function ringTopologyAxes(count) {
 
 function axesForSettings(settings) {
     const count = Math.ceil(settings.ellipseCount);
-    if (settings.topologyMode === 'progressive') return SPHERE_AXES.slice(0, count);
+    if (settings.topologyMode === 'progressive') return progressiveAxes(count);
     if (settings.topologyMode === 'rings') return ringTopologyAxes(count);
     if (settings.topologyMode === 'packed' && count === 15) return ICOSIDODECAHEDRON_AXES;
     return relaxedTessellationAxes(count);
