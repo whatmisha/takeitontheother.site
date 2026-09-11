@@ -155,6 +155,21 @@ test('rotation animation exports MP4 and a transparent PNG sequence at 60 fps', 
     assert.match(worker, /transparent: true/);
 });
 
+test('MP4 export can render the complete animation four times slower', async () => {
+    const html = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+    const app = await readFile(new URL('../src/GlobalApp.js', import.meta.url), 'utf8');
+    const exporter = await readFile(new URL('../src/export/AnimationExporter.js', import.meta.url), 'utf8');
+    const worker = await readFile(new URL('../src/export/animationExportWorker.js', import.meta.url), 'utf8');
+    assert.ok(html.indexOf('id="exportVideo"') < html.indexOf('id="slowVideoExport"'));
+    assert.match(html, /id="slowVideoExport"[^>]*type="checkbox"/);
+    assert.match(html, /Slow ×4/);
+    assert.match(app, /slowVideoExport'\)\.checked \? 4 : 1/);
+    assert.match(app, /exportRotationAnimation\('mp4', \{ slowMotionFactor \}\)/);
+    assert.match(exporter, /duration \* 60 \* videoSlowMotionFactor/);
+    assert.match(worker, /baseFrameCount \* slowMotionFactorForJob\(job\)/);
+    assert.match(worker, /frameIndex \/ \(FPS \* slowMotionFactorForJob\(job\)\)/);
+});
+
 test('rotation animation settings survive JSON and old states receive safe defaults', () => {
     const settings = defaultSettings();
     assert.deepEqual(JSON.parse(JSON.stringify(settings)).rotationAnimation, {

@@ -103,7 +103,8 @@ export class GlobalApp {
                 document.getElementById('exportPng'),
                 document.getElementById('exportPrimary'),
                 document.getElementById('exportPngSequence'),
-                document.getElementById('exportVideo')
+                document.getElementById('exportVideo'),
+                document.getElementById('slowVideoExport')
             ],
             onError: (error) => this.alert('Export failed', error.message)
         });
@@ -843,14 +844,16 @@ export class GlobalApp {
             this.exportRotationAnimation('png-sequence');
         });
         document.getElementById('exportVideo').addEventListener('click', () => {
-            this.exportRotationAnimation('mp4');
+            const slowMotionFactor = document.getElementById('slowVideoExport').checked ? 4 : 1;
+            this.exportRotationAnimation('mp4', { slowMotionFactor });
         });
     }
 
-    exportRotationAnimation(format) {
+    exportRotationAnimation(format, { slowMotionFactor = 1 } = {}) {
         return this.animationExporter.export({
             format,
             animationKind: 'rotation',
+            slowMotionFactor,
             settings: this.exportSnapshot(),
             baseName: exportBaseName()
         }).catch((error) => {

@@ -931,12 +931,61 @@ input[type="range"]:disabled {
     gap: 10px;
 }
 
+.video-export-group {
+    display: flex;
+    gap: 10px;
+}
+
+.video-export-group .action-button {
+    flex: 1;
+}
+
+.export-slow-toggle {
+    display: inline-flex;
+    height: var(--button-height);
+    align-items: center;
+    justify-content: center;
+    padding: 0 14px;
+    border-radius: var(--button-radius);
+    background: var(--panel);
+    color: var(--text);
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+    user-select: none;
+    white-space: nowrap;
+    transition: color 160ms ease, background 160ms ease, opacity 160ms ease;
+}
+
+.export-slow-toggle input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.export-slow-toggle:hover,
+.export-slow-toggle:has(input:checked) {
+    background: var(--text);
+    color: #000000;
+}
+
+.export-slow-toggle:has(input:focus-visible) {
+    outline: 2px solid var(--text);
+    outline-offset: 2px;
+}
+
+.export-slow-toggle:has(input:disabled) {
+    cursor: default;
+    opacity: 0.5;
+}
+
 .action-button {
     min-width: 126px;
     padding: 0 20px;
 }
 
-.export-actions.is-exporting > .action-button {
+.export-actions.is-exporting > .action-button,
+.export-actions.is-exporting > .video-export-group {
     visibility: hidden;
 }
 
@@ -1103,5 +1152,9 @@ input[type="range"]:disabled {
     .export-actions .action-button {
         min-width: 0;
         padding: 0 12px;
+    }
+
+    .export-slow-toggle {
+        padding: 0 10px;
     }
 }

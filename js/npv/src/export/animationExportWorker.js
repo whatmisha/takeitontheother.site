@@ -11,10 +11,17 @@ function postProgress(jobId, completed, total, message) {
     self.postMessage({ type: 'progress', jobId, completed, total, message });
 }
 
+function slowMotionFactorForJob(job) {
+    return job.format === 'mp4'
+        ? Math.max(1, Number(job.slowMotionFactor) || 1)
+        : 1;
+}
+
 function frameCountForJob(job) {
-    return job.animationKind === 'rotation'
+    const baseFrameCount = job.animationKind === 'rotation'
         ? rotationFrameCount(job.settings, FPS)
         : Math.max(1, Math.round(job.settings.duration * FPS));
+    return Math.max(1, Math.round(baseFrameCount * slowMotionFactorForJob(job)));
 }
 
 function sceneForFrame(job, frameIndex, frameCount) {
@@ -24,7 +31,9 @@ function sceneForFrame(job, frameIndex, frameCount) {
             rotationFrameOptions(job.settings, frameIndex, frameCount)
         );
     }
-    return buildGlobalScene(job.settings, { timeSeconds: frameIndex / FPS });
+    return buildGlobalScene(job.settings, {
+        timeSeconds: frameIndex / (FPS * slowMotionFactorForJob(job))
+    });
 }
 
 function drawFrame(context, job, frameIndex, frameCount) {
