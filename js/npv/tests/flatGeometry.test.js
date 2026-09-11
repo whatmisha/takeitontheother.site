@@ -461,11 +461,13 @@ test('Flat UI exposes pinned fields and brush-radius shortcuts without editable 
     assert.match(app, /setSurfaceSize\(targetScene\.width, targetScene\.height\)/);
     assert.match(app, /field\.mode === 'person' \? 'P ' : ''/);
     assert.match(app, /syncHoveredStaticFieldGuide/);
+    assert.match(app, /this\.canvas\.classList\.toggle\('is-person-mode', person\)/);
     assert.doesNotMatch(app, /button\.textContent = '✓'/);
     assert.match(renderer, /'data-field-id': field\.id/);
     assert.match(css, /\.guide-field,[\s\S]*?stroke-dasharray: 2 4/);
     assert.match(css, /\.guide-field\.is-pinned-hover\s*\{[\s\S]*?stroke-dasharray: none/);
     assert.match(css, /\.is-pinned-hover/);
+    assert.match(css, /\.canvas-container\.is-person-mode[\s\S]*?cursor: none/);
     assert.doesNotMatch(app, /canvas\.addEventListener\('pointerleave'/);
     assert.match(app, /patch\.fieldX = this\.transientField\.x/);
 });

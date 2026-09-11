@@ -595,6 +595,7 @@ export class FlatApp {
         });
 
         const person = this.settings.mode === 'person';
+        this.canvas.classList.toggle('is-person-mode', person);
         document.getElementById('basicGrowthGroup').hidden = person;
         document.getElementById('personSizeGroup').hidden = !person;
         document.getElementById('personReductionGroup').hidden = !person;

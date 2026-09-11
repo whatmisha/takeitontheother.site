@@ -336,6 +336,11 @@ button {
     cursor: grabbing;
 }
 
+.canvas-container.is-person-mode,
+.canvas-container.is-person-mode:active {
+    cursor: none;
+}
+
 .canvas-container,
 #mainSvg,
 #mainSvg * {
