@@ -19,6 +19,7 @@ import {
     motionLoopDuration
 } from '../cascade/src/motion.js';
 import { renderCascadeSvgString } from '../cascade/src/renderer.js';
+import { buildCascadeSphereScene, sphereGuidePathData } from '../cascade/src/sphereGeometry.js';
 
 test('reference cascade resolves 32 candidates into one result plus a terminal empty stage', () => {
     assert.equal(cascadeLevelCount(CASCADE_DEFAULTS), 6);
@@ -88,6 +89,39 @@ test('all pattern and layout mappings remain finite and stay in the artboard', (
     }
 });
 
+test('Sphere wraps both Cascade and Sierpinski as clipped vector surface patches', () => {
+    for (const patternType of ['stripes', 'sierpinski']) {
+        const scene = buildCascadeSphereScene({
+            ...CASCADE_DEFAULTS,
+            surfaceType: 'sphere',
+            patternType,
+            sphereBackside: true,
+            sphereGuides: true
+        }, { width: 960, height: 960 });
+        assert.ok(scene.frontPolygons.length > 0);
+        assert.ok(scene.backPolygons.length > 0);
+        assert.ok(scene.guides.front.length > 0);
+        assert.ok(scene.guides.back.length > 0);
+        [...scene.frontPolygons, ...scene.backPolygons].flatMap((polygon) => polygon.points).forEach((point) => {
+            assert.ok(Number.isFinite(point.x) && Number.isFinite(point.y));
+            assert.ok(point.x >= -1e-5 && point.x <= 960 + 1e-5);
+            assert.ok(point.y >= -1e-5 && point.y <= 960 + 1e-5);
+        });
+        assert.match(sphereGuidePathData(scene.guides.front), /^M/);
+    }
+});
+
+test('Sphere rotation changes the projection and Back side remains optional', () => {
+    const settings = { ...CASCADE_DEFAULTS, surfaceType: 'sphere' };
+    const first = buildCascadeSphereScene(settings, { width: 720, height: 720 });
+    const rotated = buildCascadeSphereScene({ ...settings, sphereRotationX: 37, sphereRotationY: -24 }, { width: 720, height: 720 });
+    const backside = buildCascadeSphereScene({ ...settings, sphereBackside: true }, { width: 720, height: 720 });
+    assert.equal(first.backPolygons.length, 0);
+    assert.ok(backside.backPolygons.length > 0);
+    assert.notDeepEqual(first.frontPolygons[0].points, rotated.frontPolygons[0].points);
+    assert.equal(normalizeCascadeSettings({ surfaceType: 'invalid' }).surfaceType, 'flat');
+});
+
 test('animation changes the complete remaining field one discrete generation at a time', () => {
     const start = buildCascadeScene(CASCADE_DEFAULTS, { generation: 0 });
     const second = buildCascadeScene(CASCADE_DEFAULTS, { generation: 1 });
@@ -127,6 +161,12 @@ test('SVG output keeps the black reference background and supports transparency'
     assert.match(opaque, /<path[^>]+fill="#ffffff"/);
     const transparent = renderCascadeSvgString(768, 1000, { ...CASCADE_DEFAULTS, transparentExport: true });
     assert.doesNotMatch(transparent, /<rect/);
+    const sphere = renderCascadeSvgString(720, 720, {
+        ...CASCADE_DEFAULTS,
+        surfaceType: 'sphere',
+        sphereBackside: true
+    });
+    assert.match(sphere, /opacity="0\.2"/);
 });
 
 test('Cascade is a standalone framework v3 tool with static and motion export controls', () => {
@@ -140,6 +180,14 @@ test('Cascade is a standalone framework v3 tool with static and motion export co
     assert.match(html, /value="fan"/);
     assert.match(html, /name="patternType" value="stripes"/);
     assert.match(html, /name="patternType" value="sierpinski"/);
+    assert.match(html, /name="surfaceType" value="flat"/);
+    assert.match(html, /name="surfaceType" value="sphere"/);
+    assert.match(html, /id="sphereRotationXSlider"/);
+    assert.match(html, /id="sphereRotationYSlider"/);
+    assert.match(html, /id="sphereRotationZSlider"/);
+    assert.match(html, /id="sphereGuides"/);
+    assert.match(html, /id="sphereBackside"/);
+    assert.doesNotMatch(html, />Magnet</);
     assert.match(html, /id="exportPngSequenceBtn"/);
     assert.match(html, /id="exportMp4Btn"/);
     assert.match(source, /defineTool/);

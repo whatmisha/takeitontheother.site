@@ -52,11 +52,15 @@
             <aside class="controls-panel" id="mappingPanel">
                 <div class="panel-header" id="mappingPanelHeader"><span>Mapping</span><span class="collapse-icon" aria-hidden="true">⌄</span></div>
                 <div class="panel-content"><section class="control-section">
+                    <fieldset class="surface-fieldset"><legend class="sr-only">Surface</legend><div class="segmented-control segmented-control-compact">
+                        <input type="radio" id="surfaceFlat" name="surfaceType" value="flat" checked><label for="surfaceFlat">Flat</label>
+                        <input type="radio" id="surfaceSphere" name="surfaceType" value="sphere"><label for="surfaceSphere">Sphere</label>
+                    </div></fieldset>
                     <fieldset class="pattern-fieldset"><legend class="sr-only">Pattern</legend><div class="segmented-control segmented-control-compact">
                         <input type="radio" id="patternStripes" name="patternType" value="stripes" checked><label for="patternStripes">Cascade</label>
                         <input type="radio" id="patternSierpinski" name="patternType" value="sierpinski"><label for="patternSierpinski">Sierpinski</label>
                     </div></fieldset>
-                    <fieldset class="layout-fieldset cascade-only"><legend class="sr-only">Layout mode</legend><div class="segmented-control segmented-control-compact segmented-control-three">
+                    <fieldset class="layout-fieldset cascade-only flat-mapping-only"><legend class="sr-only">Layout mode</legend><div class="segmented-control segmented-control-compact segmented-control-three">
                         <input type="radio" id="layoutLinear" name="layoutMode" value="linear" checked><label for="layoutLinear">Linear</label>
                         <input type="radio" id="layoutRadial" name="layoutMode" value="radial"><label for="layoutRadial">Radial</label>
                         <input type="radio" id="layoutFan" name="layoutMode" value="fan"><label for="layoutFan">Fan</label>
@@ -70,6 +74,18 @@
                         <div class="control-group"><label for="fanConvergenceSlider"><span>Convergence <span class="unit">%</span></span><input type="text" class="value-display" id="fanConvergenceValue" value="76"></label><input type="range" id="fanConvergenceSlider" min="0" max="95" step="1" value="76"></div>
                         <div class="control-group"><label for="fanCurveSlider"><span>Curve</span><input type="text" class="value-display" id="fanCurveValue" value="1.35"></label><input type="range" id="fanCurveSlider" min="0.25" max="3" step="0.05" value="1.35"></div>
                         <div class="control-group"><label for="fanOffsetSlider"><span>Result offset <span class="unit">%</span></span><input type="text" class="value-display" id="fanOffsetValue" value="0"></label><input type="range" id="fanOffsetSlider" min="-50" max="50" step="1" value="0"></div>
+                    </div>
+                    <div class="mode-group sphere-only" hidden>
+                        <div class="control-group"><label for="sphereSizeSlider"><span>Sphere size <span class="unit">%</span></span><input type="text" class="value-display" id="sphereSizeValue" value="93"></label><input type="range" id="sphereSizeSlider" min="20" max="98" step="1" value="93"></div>
+                        <div class="control-group"><label for="spherePerspectiveSlider"><span>Perspective</span><input type="text" class="value-display" id="spherePerspectiveValue" value="50"></label><input type="range" id="spherePerspectiveSlider" min="0" max="100" step="1" value="50"></div>
+                        <div class="control-group"><label for="sphereRotationXSlider"><span>Rotation X <span class="unit">°</span></span><input type="text" class="value-display" id="sphereRotationXValue" value="0"></label><input type="range" id="sphereRotationXSlider" min="-180" max="180" step="1" value="0"></div>
+                        <div class="control-group"><label for="sphereRotationYSlider"><span>Rotation Y <span class="unit">°</span></span><input type="text" class="value-display" id="sphereRotationYValue" value="0"></label><input type="range" id="sphereRotationYSlider" min="-180" max="180" step="1" value="0"></div>
+                        <div class="control-group"><label for="sphereRotationZSlider"><span>Rotation Z <span class="unit">°</span></span><input type="text" class="value-display" id="sphereRotationZValue" value="0"></label><input type="range" id="sphereRotationZSlider" min="-180" max="180" step="1" value="0"></div>
+                        <div class="pill-toggle-row sphere-toggle-row">
+                            <label class="pill-toggle"><input id="sphereGuides" type="checkbox" data-setting="sphereGuides"><span>Guides</span></label>
+                            <label class="pill-toggle"><input id="sphereBackside" type="checkbox" data-setting="sphereBackside"><span>Back side</span></label>
+                        </div>
+                        <button class="panel-button sphere-reset-button" id="resetSphereTransform" type="button">Reset position</button>
                     </div>
                     <p class="mapping-hint" id="mappingHint">The reference cascade halves the number of channels at every stage.</p>
                 </section></div>

@@ -37,11 +37,13 @@
     margin-bottom: 15px;
 }
 
+.surface-fieldset,
 .pattern-fieldset,
 .layout-fieldset {
     margin-bottom: 18px;
 }
 
+.surface-fieldset .segmented-control,
 .pattern-fieldset .segmented-control {
     margin-top: 0;
 }
@@ -79,6 +81,21 @@
 .cascade-only[hidden],
 .sierpinski-only[hidden] {
     display: none;
+}
+
+.sphere-toggle-row {
+    margin: 2px 0 14px;
+}
+
+.sphere-toggle-row .pill-toggle input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+}
+
+.sphere-reset-button {
+    margin-bottom: 15px;
 }
 
 .mapping-hint {

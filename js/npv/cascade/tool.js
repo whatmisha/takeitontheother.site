@@ -91,24 +91,34 @@ function syncCustomControls(shell) {
         });
     }
     if (phaseSelect) phaseSelect.value = shell.settings.phaseMode;
+    document.querySelectorAll('input[name="surfaceType"]').forEach((input) => {
+        input.checked = input.value === shell.settings.surfaceType;
+    });
     document.querySelectorAll('input[name="patternType"]').forEach((input) => {
         input.checked = input.value === shell.settings.patternType;
     });
     const isSierpinski = shell.settings.patternType === 'sierpinski';
+    const isSphere = shell.settings.surfaceType === 'sphere';
     document.querySelectorAll('.cascade-only').forEach((element) => {
         element.hidden = isSierpinski;
     });
     document.querySelectorAll('.sierpinski-only').forEach((element) => {
         element.hidden = !isSierpinski;
     });
+    document.querySelectorAll('.flat-mapping-only').forEach((element) => {
+        element.hidden = isSphere || isSierpinski;
+    });
+    document.querySelectorAll('.sphere-only').forEach((element) => {
+        element.hidden = !isSphere;
+    });
     document.querySelectorAll('input[name="layoutMode"]').forEach((input) => {
         input.checked = input.value === shell.settings.layoutMode;
     });
     document.querySelectorAll('.radial-only').forEach((element) => {
-        element.hidden = isSierpinski || shell.settings.layoutMode !== 'radial';
+        element.hidden = isSphere || isSierpinski || shell.settings.layoutMode !== 'radial';
     });
     document.querySelectorAll('.fan-only').forEach((element) => {
-        element.hidden = isSierpinski || shell.settings.layoutMode !== 'fan';
+        element.hidden = isSphere || isSierpinski || shell.settings.layoutMode !== 'fan';
     });
     const seedGroup = document.getElementById('seedGroup');
     if (seedGroup) seedGroup.hidden = isSierpinski || shell.settings.phaseMode !== 'random';
@@ -126,7 +136,11 @@ function syncCustomControls(shell) {
     }
     const hint = document.getElementById('mappingHint');
     if (hint) {
-        hint.textContent = isSierpinski
+        hint.textContent = isSphere && isSierpinski
+            ? 'The complete Sierpinski gasket is wrapped through longitude and latitude, then clipped at the spherical horizon.'
+            : isSphere
+                ? 'The flat selection cascade is wrapped through longitude and latitude, then clipped at the spherical horizon.'
+                : isSierpinski
             ? 'A downward Sierpinski gasket: each recursion retains three corner triangles and removes the inverted center.'
             : shell.settings.layoutMode === 'radial'
             ? 'Candidates enter as channels around the outside and resolve through concentric stages toward the center.'
@@ -154,6 +168,11 @@ const app = defineTool({
             { id: 'fanConvergenceSlider', valueId: 'fanConvergenceValue', setting: 'fanConvergence', min: 0, max: 95, decimals: 0, baseStep: 1, suffix: '%' },
             { id: 'fanCurveSlider', valueId: 'fanCurveValue', setting: 'fanCurve', min: 0.25, max: 3, decimals: 2, baseStep: 0.05, shiftStep: 0.25 },
             { id: 'fanOffsetSlider', valueId: 'fanOffsetValue', setting: 'fanOffset', min: -50, max: 50, decimals: 0, baseStep: 1, suffix: '%' },
+            { id: 'sphereSizeSlider', valueId: 'sphereSizeValue', setting: 'sphereSize', min: 20, max: 98, decimals: 0, baseStep: 1, suffix: '%' },
+            { id: 'spherePerspectiveSlider', valueId: 'spherePerspectiveValue', setting: 'spherePerspective', min: 0, max: 100, decimals: 0, baseStep: 1 },
+            { id: 'sphereRotationXSlider', valueId: 'sphereRotationXValue', setting: 'sphereRotationX', min: -180, max: 180, decimals: 0, baseStep: 1, suffix: '°' },
+            { id: 'sphereRotationYSlider', valueId: 'sphereRotationYValue', setting: 'sphereRotationY', min: -180, max: 180, decimals: 0, baseStep: 1, suffix: '°' },
+            { id: 'sphereRotationZSlider', valueId: 'sphereRotationZValue', setting: 'sphereRotationZ', min: -180, max: 180, decimals: 0, baseStep: 1, suffix: '°' },
             { id: 'stepDurationSlider', valueId: 'stepDurationValue', setting: 'stepDuration', min: 0.1, max: 2, decimals: 1, baseStep: 0.1, shiftStep: 0.5, suffix: ' s' },
             { id: 'canvasWidthSlider', valueId: 'canvasWidthValue', setting: 'width', min: 320, max: 1920, decimals: 0, baseStep: 1, shiftStep: 100, suffix: ' px' },
             { id: 'canvasHeightSlider', valueId: 'canvasHeightValue', setting: 'height', min: 320, max: 1920, decimals: 0, baseStep: 1, shiftStep: 100, suffix: ' px' }
@@ -249,6 +268,11 @@ const app = defineTool({
         document.getElementById('phaseModeSelect')?.addEventListener('change', (event) => {
             applySettings(shell, { phaseMode: event.target.value });
         });
+        document.querySelectorAll('input[name="surfaceType"]').forEach((input) => {
+            input.addEventListener('change', () => {
+                if (input.checked) applySettings(shell, { surfaceType: input.value });
+            });
+        });
         document.querySelectorAll('input[name="patternType"]').forEach((input) => {
             input.addEventListener('change', () => {
                 if (input.checked) applySettings(shell, { patternType: input.value });
@@ -258,6 +282,9 @@ const app = defineTool({
             input.addEventListener('change', () => {
                 if (input.checked) applySettings(shell, { layoutMode: input.value });
             });
+        });
+        document.getElementById('resetSphereTransform')?.addEventListener('click', () => {
+            applySettings(shell, { sphereRotationX: 0, sphereRotationY: 0, sphereRotationZ: 0 });
         });
         document.getElementById('motionPlayBtn')?.addEventListener('click', () => {
             if (!shell.settings.animate) {
@@ -275,11 +302,12 @@ const app = defineTool({
         document.getElementById('helpBtn')?.addEventListener('click', () => {
             shell.dialog?.alert({
                 title: 'Cascade',
-                text: 'Two related selection structures. Cascade halves continuous channels at every stage. Sierpinski recursively keeps three corner triangles and removes the inverted center, with the complete construction pointing downward. Candidates and Finalists control its recursion depth and number of final root triangles. When one finalist remains, the black area after its apex acts as the final empty stage.'
+                text: 'Two related selection structures. Cascade halves continuous channels at every stage. Sierpinski recursively keeps three corner triangles and removes the inverted center. Surface switches between the flat construction and a true spherical projection with XYZ rotation, perspective, optional guides, and a low-opacity back side. The sphere has no Magnet.'
             });
         });
 
         shell.settingsStore.subscribe('animate', () => syncMotion(shell));
+        shell.settingsStore.subscribe('surfaceType', () => syncCustomControls(shell));
         shell.settingsStore.subscribe('patternType', () => syncCustomControls(shell));
         shell.settingsStore.subscribe('layoutMode', () => syncCustomControls(shell));
         shell.settingsStore.subscribe('phaseMode', () => syncCustomControls(shell));

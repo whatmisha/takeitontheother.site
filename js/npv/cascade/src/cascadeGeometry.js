@@ -1,5 +1,6 @@
 export const CASCADE_LAYOUTS = Object.freeze(['linear', 'radial', 'fan']);
 export const CASCADE_PATTERNS = Object.freeze(['stripes', 'sierpinski']);
+export const CASCADE_SURFACES = Object.freeze(['flat', 'sphere']);
 export const CASCADE_PHASE_MODES = Object.freeze(['right', 'left', 'alternate', 'center', 'random']);
 export const CASCADE_POWERS = Object.freeze([1, 2, 4, 8, 16, 32, 64, 128, 256]);
 const CANDIDATE_POWERS = CASCADE_POWERS.filter((value) => value >= 4);
@@ -12,6 +13,7 @@ const modulo = (value, divisor) => ((value % divisor) + divisor) % divisor;
 export const CASCADE_DEFAULTS = Object.freeze({
     width: 768,
     height: 1000,
+    surfaceType: 'flat',
     patternType: 'stripes',
     layoutMode: 'linear',
     candidateCount: 32,
@@ -28,6 +30,13 @@ export const CASCADE_DEFAULTS = Object.freeze({
     fanConvergence: 76,
     fanCurve: 1.35,
     fanOffset: 0,
+    sphereSize: 93,
+    spherePerspective: 50,
+    sphereRotationX: 0,
+    sphereRotationY: 0,
+    sphereRotationZ: 0,
+    sphereGuides: false,
+    sphereBackside: false,
     foregroundColor: '#ffffff',
     backgroundColor: '#000000',
     transparentExport: false,
@@ -54,6 +63,7 @@ export function normalizeCascadeSettings(source = {}) {
         ...merged,
         width: Math.round(clamp(finiteNumber(merged.width, CASCADE_DEFAULTS.width), 320, 1920)),
         height: Math.round(clamp(finiteNumber(merged.height, CASCADE_DEFAULTS.height), 320, 1920)),
+        surfaceType: CASCADE_SURFACES.includes(merged.surfaceType) ? merged.surfaceType : CASCADE_DEFAULTS.surfaceType,
         patternType: CASCADE_PATTERNS.includes(requestedPattern) ? requestedPattern : CASCADE_DEFAULTS.patternType,
         layoutMode: CASCADE_LAYOUTS.includes(merged.layoutMode) ? merged.layoutMode : CASCADE_DEFAULTS.layoutMode,
         candidateCount,
@@ -70,6 +80,13 @@ export function normalizeCascadeSettings(source = {}) {
         fanConvergence: clamp(finiteNumber(merged.fanConvergence, CASCADE_DEFAULTS.fanConvergence), 0, 95),
         fanCurve: clamp(finiteNumber(merged.fanCurve, CASCADE_DEFAULTS.fanCurve), 0.25, 3),
         fanOffset: clamp(finiteNumber(merged.fanOffset, CASCADE_DEFAULTS.fanOffset), -50, 50),
+        sphereSize: clamp(finiteNumber(merged.sphereSize, CASCADE_DEFAULTS.sphereSize), 20, 98),
+        spherePerspective: clamp(finiteNumber(merged.spherePerspective, CASCADE_DEFAULTS.spherePerspective), 0, 100),
+        sphereRotationX: clamp(finiteNumber(merged.sphereRotationX, CASCADE_DEFAULTS.sphereRotationX), -180, 180),
+        sphereRotationY: clamp(finiteNumber(merged.sphereRotationY, CASCADE_DEFAULTS.sphereRotationY), -180, 180),
+        sphereRotationZ: clamp(finiteNumber(merged.sphereRotationZ, CASCADE_DEFAULTS.sphereRotationZ), -180, 180),
+        sphereGuides: Boolean(merged.sphereGuides),
+        sphereBackside: Boolean(merged.sphereBackside),
         foregroundColor: typeof merged.foregroundColor === 'string' ? merged.foregroundColor : CASCADE_DEFAULTS.foregroundColor,
         backgroundColor: typeof merged.backgroundColor === 'string' ? merged.backgroundColor : CASCADE_DEFAULTS.backgroundColor,
         transparentExport: Boolean(merged.transparentExport),
