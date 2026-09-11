@@ -1,0 +1,9 @@
+{
+  "presets": [
+    { "name": "Reference 32→1", "file": "reference.json" },
+    { "name": "Radial", "file": "radial.json" },
+    { "name": "Spiral", "file": "spiral.json" },
+    { "name": "Centered Funnel", "file": "funnel.json" },
+    { "name": "Alternating", "file": "alternating.json" }
+  ]
+}

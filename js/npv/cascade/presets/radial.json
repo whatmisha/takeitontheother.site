@@ -1,0 +1,23 @@
+{
+  "width": 960,
+  "height": 960,
+  "layoutMode": "radial",
+  "candidateCount": 64,
+  "finalistCount": 1,
+  "fill": 46,
+  "phaseMode": "right",
+  "phaseAmount": 50,
+  "stageBalance": 0,
+  "seed": 17,
+  "radialRotation": 0,
+  "radialInner": 8,
+  "radialTwist": 0,
+  "fanConvergence": 76,
+  "fanCurve": 1.35,
+  "fanOffset": 0,
+  "foregroundColor": "#ffffff",
+  "backgroundColor": "#000000",
+  "transparentExport": false,
+  "animate": false,
+  "stepDuration": 0.5
+}

@@ -1,0 +1,23 @@
+{
+  "width": 768,
+  "height": 1000,
+  "layoutMode": "fan",
+  "candidateCount": 64,
+  "finalistCount": 1,
+  "fill": 44,
+  "phaseMode": "center",
+  "phaseAmount": 50,
+  "stageBalance": 15,
+  "seed": 17,
+  "radialRotation": 0,
+  "radialInner": 0,
+  "radialTwist": 0,
+  "fanConvergence": 82,
+  "fanCurve": 1.45,
+  "fanOffset": 0,
+  "foregroundColor": "#ffffff",
+  "backgroundColor": "#000000",
+  "transparentExport": false,
+  "animate": false,
+  "stepDuration": 0.5
+}

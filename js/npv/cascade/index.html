@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#000000">
+    <meta name="description" content="Cascade — a parametric selection cascade generator.">
+    <title>Cascade — Selection Pattern Generator</title>
+    <link rel="stylesheet" href="../framework/css/othersite-styles.css">
+    <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+    <div class="container">
+        <header class="top-links" aria-label="Tool controls">
+            <div class="preset-toolbar-cluster">
+                <div class="preset-dropdown" id="presetDropdown">
+                    <button class="preset-dropdown-toggle" id="presetDropdownToggle" type="button" aria-haspopup="listbox" aria-expanded="false" aria-controls="presetDropdownMenu">
+                        <span class="preset-dropdown-text">Reference 32→1</span>
+                        <svg class="preset-dropdown-arrow" width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+                    <ul class="preset-dropdown-menu" id="presetDropdownMenu" role="listbox"></ul>
+                </div>
+                <button type="button" id="presetToolbarShareBtn" class="preset-toolbar-share-btn" aria-label="Copy share link" data-tooltip="Copy share link">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" width="18" height="18" fill="none" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2" d="M5.74 3.43l.61-.61a2 2 0 0 1 2.83 2.83l-.61.61M6.26 8.57l-.61.61a2 2 0 0 1-2.83-2.83l.61-.61M7.52 4.48 4.48 7.52"/></svg>
+                </button>
+            </div>
+            <button class="top-link" id="savePresetBtn" type="button" style="display:none;">Save preset</button>
+            <button class="zoom-indicator" id="zoomIndicator" type="button" data-tooltip="Fit to screen">100%</button>
+        </header>
+
+        <main class="main-content" id="mainContent">
+            <h1 class="sr-only">Cascade parametric selection pattern generator</h1>
+            <div class="canvas-container cascade-canvas" id="canvasContainer">
+                <svg id="mainSvg" role="img" aria-label="Cascade pattern preview"></svg>
+            </div>
+
+            <aside class="controls-panel controls-panel-left" id="structurePanel">
+                <div class="panel-header" id="structurePanelHeader"><span>Structure</span><span class="collapse-icon" aria-hidden="true">⌄</span></div>
+                <div class="panel-content"><section class="control-section">
+                    <div class="select-control"><label for="candidateCountSelect">Candidates</label><select class="select-input" id="candidateCountSelect"><option>4</option><option>8</option><option>16</option><option selected>32</option><option>64</option><option>128</option><option>256</option></select></div>
+                    <div class="select-control"><label for="finalistCountSelect">Finalists</label><select class="select-input" id="finalistCountSelect"><option selected>1</option><option>2</option><option>4</option><option>8</option><option>16</option><option>32</option><option>64</option><option>128</option><option>256</option></select></div>
+                    <output class="cascade-sequence" id="cascadeSequence">32 → 16 → 8 → 4 → 2 → 1 → 0</output>
+                    <div class="control-group"><label for="fillSlider"><span>Fill <span class="unit">%</span></span><input type="text" class="value-display" id="fillValue" value="50"></label><input type="range" id="fillSlider" min="10" max="90" step="1" value="50"></div>
+                    <div class="select-control"><label for="phaseModeSelect">Selection path</label><select class="select-input" id="phaseModeSelect"><option value="right">Right</option><option value="left">Left</option><option value="alternate">Alternate</option><option value="center">Center</option><option value="random">Random</option></select></div>
+                    <div class="control-group" id="phaseAmountGroup"><label for="phaseAmountSlider"><span>Phase shift <span class="unit">%</span></span><input type="text" class="value-display" id="phaseAmountValue" value="50"></label><input type="range" id="phaseAmountSlider" min="0" max="100" step="1" value="50"></div>
+                    <div class="control-group"><label for="stageBalanceSlider"><span>Stage balance</span><input type="text" class="value-display" id="stageBalanceValue" value="0"></label><input type="range" id="stageBalanceSlider" min="-100" max="100" step="1" value="0"><div class="range-legend" aria-hidden="true"><span>Input</span><span>Equal</span><span>Result</span></div></div>
+                    <div class="control-group" id="seedGroup" hidden><label for="seedSlider"><span>Seed</span><input type="text" class="value-display" id="seedValue" value="17"></label><input type="range" id="seedSlider" min="0" max="9999" step="1" value="17"></div>
+                </section></div>
+            </aside>
+
+            <aside class="controls-panel" id="mappingPanel">
+                <div class="panel-header" id="mappingPanelHeader"><span>Mapping</span><span class="collapse-icon" aria-hidden="true">⌄</span></div>
+                <div class="panel-content"><section class="control-section">
+                    <fieldset class="layout-fieldset"><legend class="sr-only">Layout mode</legend><div class="segmented-control segmented-control-compact segmented-control-three">
+                        <input type="radio" id="layoutLinear" name="layoutMode" value="linear" checked><label for="layoutLinear">Linear</label>
+                        <input type="radio" id="layoutRadial" name="layoutMode" value="radial"><label for="layoutRadial">Radial</label>
+                        <input type="radio" id="layoutFan" name="layoutMode" value="fan"><label for="layoutFan">Fan</label>
+                    </div></fieldset>
+                    <div class="mode-group radial-only" hidden>
+                        <div class="control-group"><label for="radialRotationSlider"><span>Rotation <span class="unit">°</span></span><input type="text" class="value-display" id="radialRotationValue" value="0"></label><input type="range" id="radialRotationSlider" min="-180" max="180" step="1" value="0"></div>
+                        <div class="control-group"><label for="radialInnerSlider"><span>Inner radius <span class="unit">%</span></span><input type="text" class="value-display" id="radialInnerValue" value="0"></label><input type="range" id="radialInnerSlider" min="0" max="85" step="1" value="0"></div>
+                        <div class="control-group"><label for="radialTwistSlider"><span>Spiral <span class="unit">°</span></span><input type="text" class="value-display" id="radialTwistValue" value="0"></label><input type="range" id="radialTwistSlider" min="-360" max="360" step="1" value="0"></div>
+                    </div>
+                    <div class="mode-group fan-only" hidden>
+                        <div class="control-group"><label for="fanConvergenceSlider"><span>Convergence <span class="unit">%</span></span><input type="text" class="value-display" id="fanConvergenceValue" value="76"></label><input type="range" id="fanConvergenceSlider" min="0" max="95" step="1" value="76"></div>
+                        <div class="control-group"><label for="fanCurveSlider"><span>Curve</span><input type="text" class="value-display" id="fanCurveValue" value="1.35"></label><input type="range" id="fanCurveSlider" min="0.25" max="3" step="0.05" value="1.35"></div>
+                        <div class="control-group"><label for="fanOffsetSlider"><span>Result offset <span class="unit">%</span></span><input type="text" class="value-display" id="fanOffsetValue" value="0"></label><input type="range" id="fanOffsetSlider" min="-50" max="50" step="1" value="0"></div>
+                    </div>
+                    <p class="mapping-hint" id="mappingHint">The reference cascade halves the number of channels at every stage.</p>
+                </section></div>
+            </aside>
+
+            <aside class="controls-panel controls-panel-text" id="motionPanel">
+                <div class="panel-header" id="motionPanelHeader"><span>Motion</span><span class="collapse-icon" aria-hidden="true">⌄</span></div>
+                <div class="panel-content"><section class="control-section">
+                    <div class="motion-actions"><button class="panel-button motion-play-button" id="motionPlayBtn" type="button" aria-pressed="false">▶ Play</button><button class="panel-button" id="restartMotionBtn" type="button">Restart</button></div>
+                    <output class="cascade-sequence motion-generation" id="motionGeneration">Static cascade</output>
+                    <div class="control-group"><label for="stepDurationSlider"><span>Step duration</span><input type="text" class="value-display" id="stepDurationValue" value="0.5"></label><input type="range" id="stepDurationSlider" min="0.1" max="2" step="0.1" value="0.5"></div>
+                    <p class="mapping-hint">Every beat switches the complete remaining field to the next generation. The two endpoint generations are held for one extra beat.</p>
+                </section></div>
+            </aside>
+
+            <aside class="controls-panel controls-panel-presets" id="appearancePanel">
+                <div class="panel-header" id="appearancePanelHeader"><span>Appearance</span><span class="collapse-icon" aria-hidden="true">⌄</span></div>
+                <div class="panel-content"><section class="control-section">
+                    <details class="advanced-controls"><summary>Artboard</summary><div class="advanced-controls-body">
+                        <div class="control-group"><label for="canvasWidthSlider"><span>Width <span class="unit">px</span></span><input type="text" class="value-display value-display-wide" id="canvasWidthValue" value="768"></label><input type="range" id="canvasWidthSlider" min="320" max="1920" step="1" value="768"></div>
+                        <div class="control-group"><label for="canvasHeightSlider"><span>Height <span class="unit">px</span></span><input type="text" class="value-display value-display-wide" id="canvasHeightValue" value="1000"></label><input type="range" id="canvasHeightSlider" min="320" max="1920" step="1" value="1000"></div>
+                    </div></details>
+                    <div class="color-swatches-compact">
+                        <div class="color-swatch-row"><div class="color-swatch-compact" id="foregroundColorItem" data-color-type="foreground"><button type="button" class="color-dot color-dot--expandable" id="foregroundColorPreview" aria-label="Open Foreground color controls"></button><span class="color-label">Foreground</span><input type="text" class="color-swatch-hex" id="foregroundColorHex" value="#ffffff" maxlength="7" aria-label="Foreground color hex"></div><div class="color-hsb-slot" id="foregroundColorHsbSlot"><div id="unifiedColorPickerContainer"></div></div></div>
+                        <div class="color-swatch-row"><div class="color-swatch-compact" id="backgroundColorItem" data-color-type="background"><button type="button" class="color-dot color-dot--expandable" id="backgroundColorPreview" aria-label="Open Background color controls"></button><span class="color-label">Background</span><input type="text" class="color-swatch-hex" id="backgroundColorHex" value="#000000" maxlength="7" aria-label="Background color hex"></div><div class="color-hsb-slot" id="backgroundColorHsbSlot"></div></div>
+                    </div>
+                </section></div>
+            </aside>
+        </main>
+
+        <nav class="bottom-buttons" id="bottomButtons" aria-label="Export actions">
+            <button class="btn-fixed btn-intro-help" id="helpBtn" type="button" aria-label="About">?</button>
+            <button class="btn-fixed" id="exportPngBtn" type="button">Export PNG</button>
+            <button class="btn-fixed" id="exportSvgBtn" type="button">Export SVG ⌘E</button>
+            <button class="btn-fixed" id="exportPngSequenceBtn" type="button">Export PNG sequence</button>
+            <button class="btn-fixed" id="exportMp4Btn" type="button">Export MP4</button>
+            <label class="toggle-label" for="transparentExport"><span class="toggle-label-text">Transparent</span><span class="toggle-switch"><input type="checkbox" id="transparentExport" data-setting="transparentExport"><span class="toggle-slider" aria-hidden="true"></span></span></label>
+            <div class="animation-export-status" id="animationExportStatus" hidden data-state="idle" aria-live="polite"><progress id="animationExportProgress" max="1" value="0"></progress><span id="animationExportMessage">Preparing</span><button id="cancelAnimationExport" type="button" aria-label="Cancel export" title="Cancel export">×</button></div>
+        </nav>
+
+        <dialog id="dialog" class="modal"><div class="modal-content"><h2 id="dialogTitle" class="modal-title"></h2><div id="dialogText" class="modal-text"></div><input id="dialogInput" class="modal-input" type="text" style="display:none;"><div id="dialogButtons" class="modal-buttons"></div></div></dialog>
+    </div>
+    <script type="module" src="./tool.js"></script>
+</body>
+</html>
