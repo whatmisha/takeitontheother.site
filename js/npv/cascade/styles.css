@@ -37,8 +37,13 @@
     margin-bottom: 15px;
 }
 
+.pattern-fieldset,
 .layout-fieldset {
     margin-bottom: 18px;
+}
+
+.pattern-fieldset .segmented-control {
+    margin-top: 0;
 }
 
 .segmented-control-three label {
@@ -70,7 +75,9 @@
 
 .mode-group[hidden],
 #seedGroup[hidden],
-#phaseAmountGroup[hidden] {
+#phaseAmountGroup[hidden],
+.cascade-only[hidden],
+.sierpinski-only[hidden] {
     display: none;
 }
 

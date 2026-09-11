@@ -1,4 +1,5 @@
 export const CASCADE_LAYOUTS = Object.freeze(['linear', 'radial', 'fan']);
+export const CASCADE_PATTERNS = Object.freeze(['stripes', 'sierpinski']);
 export const CASCADE_PHASE_MODES = Object.freeze(['right', 'left', 'alternate', 'center', 'random']);
 export const CASCADE_POWERS = Object.freeze([1, 2, 4, 8, 16, 32, 64, 128, 256]);
 const CANDIDATE_POWERS = CASCADE_POWERS.filter((value) => value >= 4);
@@ -11,10 +12,12 @@ const modulo = (value, divisor) => ((value % divisor) + divisor) % divisor;
 export const CASCADE_DEFAULTS = Object.freeze({
     width: 768,
     height: 1000,
+    patternType: 'stripes',
     layoutMode: 'linear',
     candidateCount: 32,
     finalistCount: 1,
     fill: 50,
+    sierpinskiScale: 100,
     phaseMode: 'right',
     phaseAmount: 50,
     stageBalance: 0,
@@ -41,6 +44,7 @@ function nearestPower(value, fallback, choices = CASCADE_POWERS) {
 
 export function normalizeCascadeSettings(source = {}) {
     const merged = { ...CASCADE_DEFAULTS, ...source };
+    const requestedPattern = merged.patternType === 'triangles' ? 'sierpinski' : merged.patternType;
     const candidateCount = nearestPower(merged.candidateCount, CASCADE_DEFAULTS.candidateCount, CANDIDATE_POWERS);
     const finalistCount = Math.min(
         candidateCount,
@@ -50,10 +54,12 @@ export function normalizeCascadeSettings(source = {}) {
         ...merged,
         width: Math.round(clamp(finiteNumber(merged.width, CASCADE_DEFAULTS.width), 320, 1920)),
         height: Math.round(clamp(finiteNumber(merged.height, CASCADE_DEFAULTS.height), 320, 1920)),
+        patternType: CASCADE_PATTERNS.includes(requestedPattern) ? requestedPattern : CASCADE_DEFAULTS.patternType,
         layoutMode: CASCADE_LAYOUTS.includes(merged.layoutMode) ? merged.layoutMode : CASCADE_DEFAULTS.layoutMode,
         candidateCount,
         finalistCount,
         fill: clamp(finiteNumber(merged.fill, CASCADE_DEFAULTS.fill), 10, 90),
+        sierpinskiScale: clamp(finiteNumber(merged.sierpinskiScale, CASCADE_DEFAULTS.sierpinskiScale), 25, 100),
         phaseMode: CASCADE_PHASE_MODES.includes(merged.phaseMode) ? merged.phaseMode : CASCADE_DEFAULTS.phaseMode,
         phaseAmount: clamp(finiteNumber(merged.phaseAmount, CASCADE_DEFAULTS.phaseAmount), 0, 100),
         stageBalance: clamp(finiteNumber(merged.stageBalance, CASCADE_DEFAULTS.stageBalance), -100, 100),
@@ -246,17 +252,95 @@ function mapCell(cell, settings, width, height) {
     return linearPolygon(cell);
 }
 
+function midpoint(first, second) {
+    return {
+        x: (first.x + second.x) / 2,
+        y: (first.y + second.y) / 2
+    };
+}
+
+function scaleTriangle(points, percent) {
+    if (percent >= 100) return points;
+    const scale = percent / 100;
+    const center = points.reduce((result, point) => ({
+        x: result.x + point.x / points.length,
+        y: result.y + point.y / points.length
+    }), { x: 0, y: 0 });
+    return points.map((point) => ({
+        x: center.x + (point.x - center.x) * scale,
+        y: center.y + (point.y - center.y) * scale
+    }));
+}
+
+function subdivideSierpinski(points, depth, output, level, scale) {
+    if (depth <= 0) {
+        output.push({ level, points: scaleTriangle(points, scale) });
+        return;
+    }
+    const [left, right, apex] = points;
+    const top = midpoint(left, right);
+    const leftSide = midpoint(left, apex);
+    const rightSide = midpoint(right, apex);
+    subdivideSierpinski([left, top, leftSide], depth - 1, output, level, scale);
+    subdivideSierpinski([top, right, rightSide], depth - 1, output, level, scale);
+    subdivideSierpinski([leftSide, rightSide, apex], depth - 1, output, level, scale);
+}
+
+function buildSierpinskiPolygons(settings, width, height, bands, generation) {
+    const levelCount = cascadeLevelCount(settings);
+    if (generation >= levelCount) return [];
+
+    const depth = Math.max(0, levelCount - generation - 1);
+    const rootCount = settings.finalistCount;
+    const padding = Math.min(width, height) * 0.04;
+    const terminalTop = settings.finalistCount === 1 ? bands.at(-1).y0 : height;
+    const availableWidth = Math.max(1, width - padding * 2);
+    const availableHeight = Math.max(1, terminalTop - padding * 2);
+    const totalWidth = Math.min(
+        availableWidth,
+        availableHeight * 2 / Math.sqrt(3) * rootCount
+    );
+    const rootWidth = totalWidth / rootCount;
+    const rootHeight = rootWidth * Math.sqrt(3) / 2;
+    const startX = (width - totalWidth) / 2;
+    const topY = padding + (availableHeight - rootHeight) / 2;
+    const polygons = [];
+
+    for (let root = 0; root < rootCount; root += 1) {
+        const x0 = startX + root * rootWidth;
+        const x1 = x0 + rootWidth;
+        subdivideSierpinski([
+            { x: x0, y: topY },
+            { x: x1, y: topY },
+            { x: (x0 + x1) / 2, y: topY + rootHeight }
+        ], depth, polygons, generation, settings.sierpinskiScale);
+    }
+    return polygons;
+}
+
 export function buildCascadeScene(source = {}, options = {}) {
     const settings = normalizeCascadeSettings(source);
     const width = finiteNumber(options.width, settings.width);
     const height = finiteNumber(options.height, settings.height);
     const bands = buildStageBands(settings, height);
     const generation = options.generation == null
-        ? bands.length - 1
+        ? (settings.patternType === 'sierpinski' ? 0 : bands.length - 1)
         : Math.round(clamp(finiteNumber(options.generation, 0), 0, bands.length - 1));
     const polygons = [];
     const segments = [];
     const levelCount = cascadeLevelCount(settings);
+
+    if (settings.patternType === 'sierpinski') {
+        return {
+            settings,
+            width,
+            height,
+            generation,
+            bands,
+            segments,
+            polygons: buildSierpinskiPolygons(settings, width, height, bands, generation)
+        };
+    }
 
     for (const band of bands) {
         const terminalIsActive = band.empty && generation >= band.stage;

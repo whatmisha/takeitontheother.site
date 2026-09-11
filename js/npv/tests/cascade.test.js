@@ -46,15 +46,45 @@ test('candidate and finalist values normalize to compatible powers of two', () =
     assert.equal(cascadeStageCount(settings), 1);
 });
 
-test('all layout mappings remain finite and radial points stay in the artboard', () => {
-    for (const layoutMode of ['linear', 'radial', 'fan']) {
-        const scene = buildCascadeScene({ ...CASCADE_DEFAULTS, width: 960, height: 960, layoutMode });
-        assert.ok(scene.polygons.length > 0);
-        scene.polygons.flatMap((polygon) => polygon.points).forEach((point) => {
-            assert.ok(Number.isFinite(point.x) && Number.isFinite(point.y));
-            assert.ok(point.x >= -1e-6 && point.x <= 960 + 1e-6);
-            assert.ok(point.y >= -1e-6 && point.y <= 960 + 1e-6);
-        });
+test('Sierpinski pattern recursively keeps three downward corner triangles', () => {
+    const settings = { ...CASCADE_DEFAULTS, patternType: 'sierpinski', candidateCount: 8 };
+    const detailed = buildCascadeScene(settings);
+    const coarse = buildCascadeScene(settings, { generation: 2 });
+    const finalist = buildCascadeScene(settings, { generation: 3 });
+    const empty = buildCascadeScene(settings, { generation: 4 });
+    assert.equal(detailed.settings.patternType, 'sierpinski');
+    assert.equal(detailed.polygons.length, 27);
+    assert.equal(coarse.polygons.length, 3);
+    assert.equal(finalist.polygons.length, 1);
+    assert.equal(empty.polygons.length, 0);
+    detailed.polygons.forEach((polygon) => {
+        assert.equal(polygon.points.length, 3);
+        const [left, right, apex] = polygon.points;
+        assert.equal(left.y, right.y);
+        assert.ok(apex.y > left.y);
+        assert.equal(apex.x, (left.x + right.x) / 2);
+    });
+    assert.equal(normalizeCascadeSettings({ patternType: 'triangles' }).patternType, 'sierpinski');
+    assert.equal(normalizeCascadeSettings({ patternType: 'invalid' }).patternType, 'stripes');
+});
+
+test('Sierpinski finalists remain separate roots while recursion preserves the input edge count', () => {
+    const settings = { ...CASCADE_DEFAULTS, patternType: 'sierpinski', candidateCount: 8, finalistCount: 2 };
+    assert.equal(buildCascadeScene(settings).polygons.length, 18);
+    assert.equal(buildCascadeScene(settings, { generation: 2 }).polygons.length, 2);
+});
+
+test('all pattern and layout mappings remain finite and stay in the artboard', () => {
+    for (const patternType of ['stripes', 'sierpinski']) {
+        for (const layoutMode of ['linear', 'radial', 'fan']) {
+            const scene = buildCascadeScene({ ...CASCADE_DEFAULTS, width: 960, height: 960, patternType, layoutMode });
+            assert.ok(scene.polygons.length > 0);
+            scene.polygons.flatMap((polygon) => polygon.points).forEach((point) => {
+                assert.ok(Number.isFinite(point.x) && Number.isFinite(point.y));
+                assert.ok(point.x >= -1e-6 && point.x <= 960 + 1e-6);
+                assert.ok(point.y >= -1e-6 && point.y <= 960 + 1e-6);
+            });
+        }
     }
 });
 
@@ -108,6 +138,8 @@ test('Cascade is a standalone framework v3 tool with static and motion export co
     assert.match(html, /value="linear"/);
     assert.match(html, /value="radial"/);
     assert.match(html, /value="fan"/);
+    assert.match(html, /name="patternType" value="stripes"/);
+    assert.match(html, /name="patternType" value="sierpinski"/);
     assert.match(html, /id="exportPngSequenceBtn"/);
     assert.match(html, /id="exportMp4Btn"/);
     assert.match(source, /defineTool/);

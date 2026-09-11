@@ -26,7 +26,9 @@ export function renderCascadeSvgDom(svg, create, width, height, source = {}, opt
         fill: settings.foregroundColor,
         'fill-rule': 'nonzero'
     });
-    if (settings.layoutMode === 'linear') path.setAttribute('shape-rendering', 'crispEdges');
+    if (settings.layoutMode === 'linear' && settings.patternType === 'stripes') {
+        path.setAttribute('shape-rendering', 'crispEdges');
+    }
     svg.appendChild(path);
     return scene;
 }
@@ -59,7 +61,9 @@ export function renderCascadeSvgString(width, height, source = {}, options = {})
     const background = settings.transparentExport && !options.forceBackground
         ? ''
         : `<rect width="${round(width)}" height="${round(height)}" fill="${settings.backgroundColor}"/>`;
-    const crisp = settings.layoutMode === 'linear' ? ' shape-rendering="crispEdges"' : '';
+    const crisp = settings.layoutMode === 'linear' && settings.patternType === 'stripes'
+        ? ' shape-rendering="crispEdges"'
+        : '';
     return `<svg xmlns="${XML_NS}" width="${round(width)}" height="${round(height)}" viewBox="0 0 ${round(width)} ${round(height)}">`
         + background
         + `<path d="${cascadePathData(scene.polygons)}" fill="${settings.foregroundColor}"${crisp}/>`

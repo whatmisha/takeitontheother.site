@@ -91,19 +91,29 @@ function syncCustomControls(shell) {
         });
     }
     if (phaseSelect) phaseSelect.value = shell.settings.phaseMode;
+    document.querySelectorAll('input[name="patternType"]').forEach((input) => {
+        input.checked = input.value === shell.settings.patternType;
+    });
+    const isSierpinski = shell.settings.patternType === 'sierpinski';
+    document.querySelectorAll('.cascade-only').forEach((element) => {
+        element.hidden = isSierpinski;
+    });
+    document.querySelectorAll('.sierpinski-only').forEach((element) => {
+        element.hidden = !isSierpinski;
+    });
     document.querySelectorAll('input[name="layoutMode"]').forEach((input) => {
         input.checked = input.value === shell.settings.layoutMode;
     });
     document.querySelectorAll('.radial-only').forEach((element) => {
-        element.hidden = shell.settings.layoutMode !== 'radial';
+        element.hidden = isSierpinski || shell.settings.layoutMode !== 'radial';
     });
     document.querySelectorAll('.fan-only').forEach((element) => {
-        element.hidden = shell.settings.layoutMode !== 'fan';
+        element.hidden = isSierpinski || shell.settings.layoutMode !== 'fan';
     });
     const seedGroup = document.getElementById('seedGroup');
-    if (seedGroup) seedGroup.hidden = shell.settings.phaseMode !== 'random';
+    if (seedGroup) seedGroup.hidden = isSierpinski || shell.settings.phaseMode !== 'random';
     const phaseAmountGroup = document.getElementById('phaseAmountGroup');
-    if (phaseAmountGroup) phaseAmountGroup.hidden = shell.settings.phaseMode === 'center';
+    if (phaseAmountGroup) phaseAmountGroup.hidden = isSierpinski || shell.settings.phaseMode === 'center';
     const sequence = document.getElementById('cascadeSequence');
     if (sequence) {
         const values = [];
@@ -116,10 +126,12 @@ function syncCustomControls(shell) {
     }
     const hint = document.getElementById('mappingHint');
     if (hint) {
-        hint.textContent = shell.settings.layoutMode === 'radial'
-            ? 'Candidates enter around the outside and resolve through concentric stages toward the center.'
+        hint.textContent = isSierpinski
+            ? 'A downward Sierpinski gasket: each recursion retains three corner triangles and removes the inverted center.'
+            : shell.settings.layoutMode === 'radial'
+            ? 'Candidates enter as channels around the outside and resolve through concentric stages toward the center.'
             : shell.settings.layoutMode === 'fan'
-                ? 'The same binary cascade is progressively drawn toward a result point.'
+                ? 'The same binary cascade of channels is progressively drawn toward a result point.'
                 : 'The reference cascade halves the number of channels at every stage.';
     }
 }
@@ -132,6 +144,7 @@ const app = defineTool({
     controls: {
         sliders: [
             { id: 'fillSlider', valueId: 'fillValue', setting: 'fill', min: 10, max: 90, decimals: 0, baseStep: 1, suffix: '%' },
+            { id: 'sierpinskiScaleSlider', valueId: 'sierpinskiScaleValue', setting: 'sierpinskiScale', min: 25, max: 100, decimals: 0, baseStep: 1, suffix: '%' },
             { id: 'phaseAmountSlider', valueId: 'phaseAmountValue', setting: 'phaseAmount', min: 0, max: 100, decimals: 0, baseStep: 1, suffix: '%' },
             { id: 'stageBalanceSlider', valueId: 'stageBalanceValue', setting: 'stageBalance', min: -100, max: 100, decimals: 0, baseStep: 1 },
             { id: 'seedSlider', valueId: 'seedValue', setting: 'seed', min: 0, max: 9999, decimals: 0, baseStep: 1, shiftStep: 100 },
@@ -236,6 +249,11 @@ const app = defineTool({
         document.getElementById('phaseModeSelect')?.addEventListener('change', (event) => {
             applySettings(shell, { phaseMode: event.target.value });
         });
+        document.querySelectorAll('input[name="patternType"]').forEach((input) => {
+            input.addEventListener('change', () => {
+                if (input.checked) applySettings(shell, { patternType: input.value });
+            });
+        });
         document.querySelectorAll('input[name="layoutMode"]').forEach((input) => {
             input.addEventListener('change', () => {
                 if (input.checked) applySettings(shell, { layoutMode: input.value });
@@ -257,11 +275,12 @@ const app = defineTool({
         document.getElementById('helpBtn')?.addEventListener('click', () => {
             shell.dialog?.alert({
                 title: 'Cascade',
-                text: 'A binary selection cascade: each stage halves the number of channels and doubles their width. When one finalist remains, a final empty stage removes that last foreground element. Linear reproduces the reference, Radial wraps the stages into rings, and Fan draws them toward a result point. Animation switches the complete remaining field to a new generation on every beat, then runs back to the input state.'
+                text: 'Two related selection structures. Cascade halves continuous channels at every stage. Sierpinski recursively keeps three corner triangles and removes the inverted center, with the complete construction pointing downward. Candidates and Finalists control its recursion depth and number of final root triangles. When one finalist remains, the black area after its apex acts as the final empty stage.'
             });
         });
 
         shell.settingsStore.subscribe('animate', () => syncMotion(shell));
+        shell.settingsStore.subscribe('patternType', () => syncCustomControls(shell));
         shell.settingsStore.subscribe('layoutMode', () => syncCustomControls(shell));
         shell.settingsStore.subscribe('phaseMode', () => syncCustomControls(shell));
         syncCustomControls(shell);
