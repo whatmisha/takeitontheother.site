@@ -68,7 +68,7 @@ export class AnimationExporter {
         const worker = new Worker(new URL('./animationExportWorker.js', import.meta.url), { type: 'module' });
         const duration = animationKind === 'rotation'
             ? settings.rotationAnimation.duration
-            : settings.duration;
+            : animationKind === 'person-search' ? settings.searchDuration : settings.duration;
         const videoSlowMotionFactor = format === 'mp4'
             ? Math.max(1, Number(slowMotionFactor) || 1)
             : 1;

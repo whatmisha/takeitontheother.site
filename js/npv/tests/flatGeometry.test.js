@@ -433,7 +433,7 @@ test('Flat UI exposes pinned fields and brush-radius shortcuts without editable 
     assert.match(html, /id="canvasWidth"[^>]*value="960"[^>]*data-flat-setting="width"/);
     assert.match(html, /id="canvasHeight"[^>]*value="540"[^>]*data-flat-setting="height"/);
     assert.match(html, /id="flatPresetToggle"/);
-    assert.match(html, /id="flatPresetName">Basic/);
+    assert.match(html, /id="flatPresetName">Talent/);
     assert.match(html, /id="flatPresetList"[^>]*role="listbox"/);
     assert.doesNotMatch(html, /id="resetFlat"/);
     assert.doesNotMatch(html, /id="columns"|id="rows"/);
@@ -467,7 +467,8 @@ test('Flat UI exposes pinned fields and brush-radius shortcuts without editable 
     assert.match(css, /\.guide-field,[\s\S]*?stroke-dasharray: 2 4/);
     assert.match(css, /\.guide-field\.is-pinned-hover\s*\{[\s\S]*?stroke-dasharray: none/);
     assert.match(css, /\.is-pinned-hover/);
-    assert.match(css, /\.canvas-container\.is-person-mode[\s\S]*?cursor: none/);
+    assert.match(css, /\.canvas-container\.is-person-mode #mainSvg\s*\{\s*cursor: none;\s*overflow: hidden;/);
+    assert.doesNotMatch(css, /\.canvas-container\.is-person-mode(?::active)?\s*\{\s*cursor: none/);
     assert.doesNotMatch(app, /canvas\.addEventListener\('pointerleave'/);
     assert.match(app, /patch\.fieldX = this\.transientField\.x/);
 });
@@ -484,8 +485,8 @@ test('Flat uses a 960×540 artboard with immutable center-origin field coordinat
     assert.equal(scene.field.y, FLAT_ARTBOARD_CENTER_Y);
 });
 
-test('Flat exposes Basic as default and Talent as the supplied Person preset', () => {
-    assert.equal(FLAT_DEFAULT_PRESET_NAME, 'Basic');
+test('Flat exposes Talent as default and Basic as the alternate preset', () => {
+    assert.equal(FLAT_DEFAULT_PRESET_NAME, 'Talent');
     assert.deepEqual(Object.keys(FLAT_PRESETS), ['Basic', 'Talent']);
     const basic = normalizeFlatSettings(getFlatPreset('Basic'));
     const talent = normalizeFlatSettings(getFlatPreset('Talent'));
@@ -494,16 +495,29 @@ test('Flat exposes Basic as default and Talent as the supplied Person preset', (
     assert.equal(basic.height, 540);
     assert.equal(basic.mode, 'basic');
     assert.equal(basic.personIconScale, 100);
-    assert.equal(talent.width, 960);
-    assert.equal(talent.height, 540);
+    assert.equal(talent.width, 1080);
+    assert.equal(talent.height, 600);
     assert.equal(talent.mode, 'person');
-    assert.equal(talent.ellipseWidth, 18);
-    assert.equal(talent.ellipseHeight, 18);
-    assert.equal(talent.spacingX, 30);
-    assert.equal(talent.spacingY, 30);
-    assert.equal(talent.personMinimumScale, 10);
-    assert.equal(talent.personIconScale, 100);
-    assert.equal(talent.fieldRadius, 200);
+    assert.equal(talent.personAnimation, 'interactive');
+    assert.equal(talent.distribution, 'grid');
+    assert.equal(talent.ellipseWidth, 8);
+    assert.equal(talent.ellipseHeight, 8);
+    assert.equal(talent.spacingX, 24);
+    assert.equal(talent.spacingY, 24);
+    assert.equal(talent.personMinimumScale, 25);
+    assert.equal(talent.personIconScale, 150);
+    assert.equal(talent.fieldRadius, 100);
+    assert.equal(talent.falloffCurve, -25);
+    assert.equal(talent.fieldX, 334.1);
+    assert.equal(talent.fieldY, -270.6);
+    assert.equal(talent.fieldFollow, true);
+    assert.equal(talent.showField, false);
+});
+
+test('ordinary openings restore settings but start Person Interactive before explicit shared state', async () => {
+    const app = await readFile(new URL('../src/FlatApp.js', import.meta.url), 'utf8');
+    assert.match(app, /this\.settings = normalizeFlatSettings\(\{ \.\.\.this\.settings, mode: 'person', personAnimation: 'interactive' \}\)/);
+    assert.ok(app.indexOf('this.loadSessionState();') < app.indexOf('this.loadSharedState();'));
 });
 
 test('legacy top-left field coordinates migrate once into the center-origin space', () => {

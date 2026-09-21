@@ -3,6 +3,8 @@ import { drawSceneOnContext } from '../render/globalRenderer.js';
 import { muxAvcToMp4 } from './mp4Muxer.js';
 import { StoredZipBlobBuilder } from './zipStore.js';
 import { rotationFrameCount, rotationFrameOptions } from '../animation/rotationAnimation.js';
+import { createPersonSearchPlan, buildPersonSearchScene } from '../animation/personSearch.js';
+import { drawFlatSceneOnContext } from '../render/flatRenderer.js';
 
 const FPS = 60;
 const SIZE = 1080;
@@ -18,6 +20,7 @@ function slowMotionFactorForJob(job) {
 }
 
 function frameCountForJob(job) {
+    if (job.animationKind === 'person-search') return Math.max(1, Math.round(job.settings.searchDuration * FPS));
     const baseFrameCount = job.animationKind === 'rotation'
         ? rotationFrameCount(job.settings, FPS)
         : Math.max(1, Math.round(job.settings.duration * FPS));
@@ -25,6 +28,10 @@ function frameCountForJob(job) {
 }
 
 function sceneForFrame(job, frameIndex, frameCount) {
+    if (job.animationKind === 'person-search') {
+        job.searchPlan ??= createPersonSearchPlan(job.settings);
+        return buildPersonSearchScene(job.settings, job.searchPlan, frameIndex / frameCount);
+    }
     if (job.animationKind === 'rotation') {
         return buildGlobalScene(
             { ...job.settings, animationMode: 'static' },
@@ -36,21 +43,30 @@ function sceneForFrame(job, frameIndex, frameCount) {
     });
 }
 
-function drawFrame(context, job, frameIndex, frameCount) {
+function dimensionsForJob(job) {
+    if (job.animationKind !== 'person-search') return { width: SIZE, height: SIZE };
+    const scale = SIZE / Math.max(job.settings.width, job.settings.height);
+    return { width: Math.max(2, Math.round(job.settings.width * scale / 2) * 2),
+        height: Math.max(2, Math.round(job.settings.height * scale / 2) * 2) };
+}
+
+function drawFrame(context, job, frameIndex, frameCount, { transparent = false } = {}) {
     const scene = sceneForFrame(job, frameIndex, frameCount);
-    drawSceneOnContext(context, scene, { size: SIZE, transparent: false });
+    if (job.animationKind === 'person-search') {
+        drawFlatSceneOnContext(context, scene, { ...dimensionsForJob(job), transparent });
+    } else drawSceneOnContext(context, scene, { size: SIZE, transparent });
 }
 
 async function exportPngSequence(job) {
     const frameCount = frameCountForJob(job);
-    const canvas = new OffscreenCanvas(SIZE, SIZE);
+    const { width, height } = dimensionsForJob(job);
+    const canvas = new OffscreenCanvas(width, height);
     const context = canvas.getContext('2d', { alpha: true });
     const archive = new StoredZipBlobBuilder();
     const digits = Math.max(4, String(frameCount).length);
 
     for (let index = 0; index < frameCount; index += 1) {
-        const scene = sceneForFrame(job, index, frameCount);
-        drawSceneOnContext(context, scene, { size: SIZE, transparent: true });
+        drawFrame(context, job, index, frameCount, { transparent: true });
         const blob = await canvas.convertToBlob({ type: 'image/png' });
         archive.add(
             `${job.baseName}_${String(index + 1).padStart(digits, '0')}.png`,
@@ -69,15 +85,15 @@ async function exportPngSequence(job) {
     };
 }
 
-async function supportedAvcConfig() {
+async function supportedAvcConfig(width, height) {
     if (typeof VideoEncoder === 'undefined') {
         throw new Error('This browser does not support WebCodecs H.264 export.');
     }
     for (const codec of ['avc1.640028', 'avc1.4d4028', 'avc1.42E028']) {
         const config = {
             codec,
-            width: SIZE,
-            height: SIZE,
+            width,
+            height,
             framerate: FPS,
             bitrate: 16_000_000,
             bitrateMode: 'variable',
@@ -91,7 +107,7 @@ async function supportedAvcConfig() {
             // Try the next AVC profile.
         }
     }
-    throw new Error('H.264 encoding is unavailable at 1080×1080 and 60 fps.');
+    throw new Error(`H.264 encoding is unavailable at ${width}×${height} and 60 fps. Try PNG sequence export.`);
 }
 
 async function waitForCapacity(encoder) {
@@ -109,7 +125,8 @@ async function waitForCapacity(encoder) {
 
 async function exportMp4(job) {
     const frameCount = frameCountForJob(job);
-    const canvas = new OffscreenCanvas(SIZE, SIZE);
+    const { width, height } = dimensionsForJob(job);
+    const canvas = new OffscreenCanvas(width, height);
     const context = canvas.getContext('2d', { alpha: false });
     const chunks = [];
     let decoderConfig = null;
@@ -127,7 +144,7 @@ async function exportMp4(job) {
             }
         }
     });
-    encoder.configure(await supportedAvcConfig());
+    encoder.configure(await supportedAvcConfig(width, height));
     const frameDuration = 1_000_000 / FPS;
 
     try {
@@ -155,8 +172,8 @@ async function exportMp4(job) {
     const video = muxAvcToMp4({
         chunks,
         decoderConfig,
-        width: SIZE,
-        height: SIZE,
+        width,
+        height,
         fps: FPS
     });
     return {

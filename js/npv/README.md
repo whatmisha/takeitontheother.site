@@ -36,13 +36,18 @@ All numeric slider values are editable text fields. Enter or blur applies a type
 
 ## Flat model
 
-- Flat opens on the built-in `Basic` preset at 960×540. `Talent` reproduces the supplied 09:39 Person configuration; both presets are available from the header menu.
+- Flat opens on the built-in `Talent` preset at 960×540, reproducing the supplied 09:39 Person configuration. `Basic` remains available from the header menu.
 - `Basic` enlarges the ellipse under the cursor and spreads a distance-based influence to its neighbors.
 - `Maximum size`, `Field radius`, and `Falloff curve` separately control the peak, affected area, and the soft/linear/tight shape of that transition.
 - `Person` snaps the field to a vertical pair whose radii and center spacing use the exact proportions from `references/person_01.svg`, independent of the base ellipse aspect ratio.
 - `Person size` scales the complete head-and-shoulders icon as one rigid group without changing the Pattern settings. A geometry-aware exclusion zone automatically shrinks intersecting neighbors instead of moving their centers, preserving a 2 px clearance around the icon.
 - Person reverses the field: surrounding ellipses shrink toward `Minimum size`. `Field radius` and `Falloff curve` control the complete transition back to the regular pattern.
 - Person targets use a short temporal interpolation, so entering and leaving a snapped pair never changes its size in a single frame.
+- In Person, the Animation panel offers `Interactive` and `Search`. Search runs a 10-second loop with 12 candidates by default: staggered edge arrivals, weighted Dijkstra routes, collision-aware elimination, one enlarged central match, a field pulse and a smooth reset. Candidates (2–12), duration (4–20 seconds), pause, restart and a scrubbable timeline are available. Small artboards or large icons use fewer candidates when necessary to keep them apart.
+- Search temporarily replaces the cursor and pinned fields; returning to Interactive restores them. Pattern/Person size changes rebuild the routes and restart the cycle. Animation controls persist with settings and share links; playback time is transient.
+- `Start randomness` (default 100%) varies perimeter spacing and depth within the outer third; `Path randomness` (default 0%) adds up to three search waypoints, terrain variation and probabilistic selection at meetings. At 0%, placement is regular and routes are shortest paths. At 100%, people explore sideways and sometimes away from the center before converging. The winner emerges from successive meetings, not a preassigned candidate.
+- `Shuffle` saves a new seed and restarts the search. Each seed reproduces the same positions, routes and outcome in previews, loops, share links and exports. Restart and scrubbing keep the current seed. Candidate separation is preserved at every randomness setting.
+- Search exports one deterministic cycle as H.264 MP4 or a transparent PNG sequence at 60 fps, with a 1080 px longest edge (even dimensions for H.264). SVG/PNG still export the currently displayed frame, without guides.
 - `Canvas width/height` controls the artboard from 80 to 1920 px; the Basic default is 960×540. The lattice lives in a permanent center-origin coordinate space, so resizing reveals or clips cells on every edge without changing any existing mark coordinates. `Spacing X/Y` remains center-to-center.
 - `Paired tiles` offsets complete two-row bands instead of individual rows. This produces a brick/hex-like rhythm while keeping every potential head exactly above its shoulders.
 - Click the artboard to pin any number of field points while retaining the live cursor field. Every point freezes its mode, radius, falloff, and size limit; later control changes apply only to the live field and future pins. Each point can be disabled or deleted from its coordinate pill.

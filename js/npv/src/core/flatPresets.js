@@ -1,4 +1,4 @@
-export const FLAT_DEFAULT_PRESET_NAME = 'Basic';
+export const FLAT_DEFAULT_PRESET_NAME = 'Talent';
 
 export const FLAT_PRESETS = Object.freeze({
     Basic: Object.freeze({
@@ -26,22 +26,23 @@ export const FLAT_PRESETS = Object.freeze({
         backgroundColor: '#000000'
     }),
     Talent: Object.freeze({
-        width: 960,
-        height: 540,
+        width: 1080,
+        height: 600,
         mode: 'person',
+        personAnimation: 'interactive',
         distribution: 'grid',
-        ellipseWidth: 18,
-        ellipseHeight: 18,
-        spacingX: 30,
-        spacingY: 30,
+        ellipseWidth: 8,
+        ellipseHeight: 8,
+        spacingX: 24,
+        spacingY: 24,
         stagger: 50,
         basicScale: 215,
-        personIconScale: 100,
-        personMinimumScale: 10,
-        fieldRadius: 200,
-        falloffCurve: 0,
-        fieldX: 0,
-        fieldY: 0,
+        personIconScale: 150,
+        personMinimumScale: 25,
+        fieldRadius: 100,
+        falloffCurve: -25,
+        fieldX: 334.1,
+        fieldY: -270.6,
         coordinateSpace: 'center',
         fieldFollow: true,
         showField: false,

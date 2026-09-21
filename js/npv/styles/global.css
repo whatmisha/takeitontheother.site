@@ -336,9 +336,9 @@ button {
     cursor: grabbing;
 }
 
-.canvas-container.is-person-mode,
-.canvas-container.is-person-mode:active {
+.canvas-container.is-person-mode #mainSvg {
     cursor: none;
+    overflow: hidden;
 }
 
 .canvas-container,
@@ -870,6 +870,80 @@ input[type="range"]:disabled {
 
 #animationControls[hidden] {
     display: none;
+}
+
+#flatFieldPanel {
+    --flat-field-height: calc(100vh - 180px);
+    max-height: var(--flat-field-height);
+}
+
+#flatFieldPanel .panel-content {
+    max-height: calc(var(--flat-field-height) - 44px);
+}
+
+.flat-search-mode #flatFieldPanel {
+    --flat-field-height: max(120px, calc(100vh - 495px));
+}
+
+#flatAnimationPanel {
+    max-height: calc(100vh - 170px);
+}
+
+#flatAnimationPanel .panel-content {
+    max-height: calc(100vh - 214px);
+}
+
+#flatSearchControls .control-group {
+    margin-bottom: 14px;
+}
+
+#flatSearchControls .animation-actions {
+    grid-template-columns: 1fr 1fr 34px;
+}
+
+#flatAnimationPanel[hidden],
+#flatSearchControls[hidden],
+#flatFieldPositionControls[hidden],
+#flatExportActions > [hidden] {
+    display: none;
+}
+
+#flatSearchControls {
+    padding-top: 10px;
+}
+
+.flat-animation-error:empty {
+    display: none;
+}
+
+.flat-animation-error {
+    color: #ffb5b5;
+}
+
+@media (max-width: 900px) {
+    #flatAnimationPanel:not([hidden]) {
+        display: block;
+        bottom: 88px;
+        right: 12px;
+        width: 230px;
+        max-height: calc(100vh - 160px);
+    }
+
+    #flatAnimationPanel .panel-content {
+        max-height: calc(100vh - 204px);
+    }
+
+    #flatExportActions {
+        flex-wrap: wrap;
+        justify-content: center;
+        max-width: calc(100vw - 64px);
+    }
+
+    #flatExportActions .action-button {
+        min-width: 0;
+        font-size: 11px;
+        padding: 0 10px;
+    }
 }
 
 .action-dock {

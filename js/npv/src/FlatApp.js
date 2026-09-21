@@ -13,6 +13,9 @@ import {
 import { PanelManager } from './ui/PanelManager.js';
 import { ZoomPanManager } from './ui/ZoomPanManager.js';
 import { flatSceneToSvgString, renderFlatSceneToSvg } from './render/flatRenderer.js';
+import { buildPersonSearchScene, createPersonSearchPlan, personSearchKey } from './animation/personSearch.js';
+import { AnimationExporter } from './export/AnimationExporter.js';
+import { PERSON_RESPONSE_MS } from './animation/personMotion.js';
 
 const pad = (value) => String(value).padStart(2, '0');
 const FLAT_SESSION_KEY = 'yfToolsFlatSessionV1';
@@ -69,14 +72,28 @@ export class FlatApp {
         this.personMotion = new Map();
         this.personMotionTime = null;
         this.hoveredStaticFieldId = null;
+        this.searchPlan = null;
+        this.searchPlanKey = null;
+        this.searchElapsed = 0;
+        this.searchStartedAt = performance.now();
+        this.searchPlaying = true;
         this.history = new HistoryManager(this.settings, { limit: 100, debounceMs: 160 });
-        this.panels = new PanelManager(['flatPatternPanel', 'flatFieldPanel', 'flatColorsPanel']);
+        this.panels = new PanelManager(['flatPatternPanel', 'flatFieldPanel', 'flatColorsPanel', 'flatAnimationPanel']);
         this.zoom = new ZoomPanManager(
             this.canvas,
             this.svg,
             document.getElementById('zoomDisplay'),
             { width: FLAT_ARTBOARD_WIDTH, height: FLAT_ARTBOARD_HEIGHT }
         );
+        this.animationExporter = new AnimationExporter({
+            container: document.getElementById('flatExportActions'),
+            status: document.getElementById('flatExportStatus'),
+            progress: document.getElementById('flatExportProgress'),
+            message: document.getElementById('flatExportMessage'),
+            cancelButton: document.getElementById('flatCancelExport'),
+            buttons: ['exportPng', 'exportSvg', 'flatExportVideo', 'flatExportSequence'].map((id) => document.getElementById(id)),
+            onError: (error) => { document.getElementById('flatAnimationError').textContent = error.message; }
+        });
     }
 
     init() {
@@ -85,6 +102,7 @@ export class FlatApp {
         this.bindCanvas();
         this.bindChrome();
         this.bindShortcuts();
+        this.bindSearchAnimation();
         this.loadSharedState();
         this.syncControls();
         this.renderNow();
@@ -93,7 +111,10 @@ export class FlatApp {
     }
 
     update(patch, { history = true, markDirty = true } = {}) {
+        const previousKey = personSearchKey(this.settings);
         this.settings = normalizeFlatSettings({ ...this.settings, ...patch });
+        if ('personAnimation' in patch || 'mode' in patch
+            || previousKey !== personSearchKey(this.settings)) this.resetSearchAnimation();
         if (history) this.history.schedule(this.settings);
         if (markDirty) {
             this.presetDirty = true;
@@ -112,14 +133,113 @@ export class FlatApp {
     }
 
     renderNow(time = performance.now()) {
-        const targetScene = buildFlatScene(this.settings, { transientField: this.transientField });
+        const animated = this.isSearchAnimation();
+        const targetScene = animated ? this.searchScene(time)
+            : buildFlatScene(this.settings, { transientField: this.transientField });
         this.zoom.setSurfaceSize(targetScene.width, targetScene.height);
-        const transition = this.interpolatePersonScene(targetScene, time);
+        const transition = animated ? { scene: targetScene, settled: true }
+            : this.interpolatePersonScene(targetScene, time);
         this.scene = transition.scene;
         renderFlatSceneToSvg(this.svg, this.scene);
         this.syncHoveredStaticFieldGuide();
         document.documentElement.style.setProperty('--bg', this.settings.backgroundColor);
-        if (!transition.settled) this.requestRender();
+        if (animated) this.syncSearchProgress();
+        if (!transition.settled || (animated && this.searchPlaying && !document.hidden)) this.requestRender();
+    }
+
+    isSearchAnimation() {
+        return this.settings.mode === 'person' && this.settings.personAnimation === 'search';
+    }
+
+    resetSearchAnimation() {
+        this.searchElapsed = 0;
+        this.searchStartedAt = performance.now();
+        this.searchPlaying = true;
+        this.personMotion.clear();
+        this.personMotionTime = null;
+        this.clickCandidate = null;
+    }
+
+    searchScene(time = performance.now()) {
+        const key = personSearchKey(this.settings);
+        if (key !== this.searchPlanKey) {
+            this.searchPlan = createPersonSearchPlan(this.settings);
+            this.searchPlanKey = key;
+        }
+        const elapsed = this.searchElapsed + (this.searchPlaying ? Math.max(0, time - this.searchStartedAt) : 0);
+        const progress = (elapsed / (this.settings.searchDuration * 1000)) % 1;
+        return buildPersonSearchScene(this.settings, this.searchPlan, progress);
+    }
+
+    bindSearchAnimation() {
+        document.querySelectorAll('input[name="personAnimation"]').forEach((input) => {
+            input.addEventListener('change', () => {
+                if (!input.checked) return;
+                this.update({ personAnimation: input.value });
+                this.syncControls();
+            });
+        });
+        document.getElementById('flatSearchPlay').addEventListener('click', () => {
+            const now = performance.now();
+            if (this.searchPlaying) this.searchElapsed += now - this.searchStartedAt;
+            this.searchStartedAt = now;
+            this.searchPlaying = !this.searchPlaying;
+            this.syncSearchControls();
+            this.requestRender();
+        });
+        document.getElementById('flatSearchRestart').addEventListener('click', () => {
+            this.resetSearchAnimation();
+            this.syncSearchControls();
+            this.requestRender();
+        });
+        document.getElementById('flatSearchShuffle').addEventListener('click', () => {
+            const seed = crypto.getRandomValues(new Uint32Array(1))[0];
+            this.update({ searchSeed: seed === this.settings.searchSeed ? (seed + 1) >>> 0 : seed });
+            this.syncControls();
+        });
+        document.getElementById('flatSearchTimeline').addEventListener('input', (event) => {
+            this.searchElapsed = Number(event.target.value) / 1000 * this.settings.searchDuration * 1000;
+            this.searchPlaying = false;
+            this.syncSearchControls();
+            this.requestRender();
+        });
+        document.getElementById('flatExportVideo').addEventListener('click', () => this.exportSearch('mp4'));
+        document.getElementById('flatExportSequence').addEventListener('click', () => this.exportSearch('png-sequence'));
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) this.requestRender();
+        });
+    }
+
+    syncSearchControls() {
+        const active = this.isSearchAnimation();
+        document.documentElement.classList.toggle('flat-search-mode', active);
+        document.getElementById('flatAnimationPanel').hidden = this.settings.mode !== 'person';
+        document.getElementById('flatSearchControls').hidden = !active;
+        document.getElementById('flatSearchPlay').textContent = this.searchPlaying ? 'Pause' : 'Play';
+        document.getElementById('flatExportVideo').hidden = !active;
+        document.getElementById('flatExportSequence').hidden = !active;
+        document.getElementById('flatFieldPositionControls').hidden = active;
+        document.getElementById('flatStaticFieldsHint').hidden = !active || !this.settings.staticFields.length;
+        document.querySelectorAll('input[name="personAnimation"]').forEach((input) => {
+            input.checked = input.value === this.settings.personAnimation;
+        });
+    }
+
+    syncSearchProgress() {
+        const frame = this.scene.search;
+        document.getElementById('flatSearchTimeline').value = String(Math.min(999, Math.round(frame.progress * 1000)));
+        document.getElementById('flatSearchPhase').textContent = this.searchPlan.target
+            ? `${frame.phase} · ${frame.count}` : 'Not enough room for a Person pair';
+    }
+
+    async exportSearch(format) {
+        document.getElementById('flatAnimationError').textContent = '';
+        try {
+            await this.animationExporter.export({ format, settings: structuredClone(this.settings),
+                baseName: exportBaseName(), animationKind: 'person-search' });
+        } catch (error) {
+            if (error.name !== 'AbortError') document.getElementById('flatAnimationError').textContent = error.message;
+        }
     }
 
     interpolatePersonScene(targetScene, time) {
@@ -131,7 +251,7 @@ export class FlatApp {
 
         const firstFrame = this.personMotionTime == null;
         const elapsed = firstFrame ? 0 : Math.min(64, Math.max(0, time - this.personMotionTime));
-        const amount = firstFrame ? 1 : 1 - Math.exp(-elapsed / 95);
+        const amount = firstFrame ? 1 : 1 - Math.exp(-elapsed / PERSON_RESPONSE_MS);
         const activeIds = new Set();
         let settled = true;
         const elements = targetScene.elements.map((target) => {
@@ -279,7 +399,7 @@ export class FlatApp {
         this.canvas.addEventListener('selectstart', (event) => event.preventDefault());
         this.canvas.addEventListener('dragstart', (event) => event.preventDefault());
         this.canvas.addEventListener('pointerdown', (event) => {
-            if (event.button !== 0 || this.zoom.spaceDown) return;
+            if (this.isSearchAnimation() || event.button !== 0 || this.zoom.spaceDown) return;
             const point = this.clientToArtboard(event.clientX, event.clientY);
             if (!point) return;
             this.clickCandidate = {
@@ -291,6 +411,7 @@ export class FlatApp {
             };
         });
         this.canvas.addEventListener('pointermove', (event) => {
+            if (this.isSearchAnimation()) return;
             if (this.clickCandidate?.pointerId === event.pointerId
                 && Math.hypot(
                     event.clientX - this.clickCandidate.startX,
@@ -406,6 +527,7 @@ export class FlatApp {
         this.currentPresetName = name;
         this.presetDirty = false;
         this.settings = normalizeFlatSettings(preset);
+        this.resetSearchAnimation();
         this.transientField = null;
         this.hoveredStaticFieldId = null;
         this.personMotion.clear();
@@ -450,6 +572,7 @@ export class FlatApp {
                 const restored = event.shiftKey ? this.history.redo() : this.history.undo();
                 if (restored) {
                     this.settings = normalizeFlatSettings(restored);
+                    this.resetSearchAnimation();
                     this.transientField = null;
                     this.presetDirty = true;
                     this.saveSessionState();
@@ -472,6 +595,7 @@ export class FlatApp {
     }
 
     exportScene() {
+        if (this.isSearchAnimation()) return this.scene || this.searchScene();
         const settings = { ...this.settings };
         if (this.transientField) {
             settings.fieldX = this.transientField.x;
@@ -554,6 +678,9 @@ export class FlatApp {
                 const basic = normalizeFlatSettings(getFlatPreset(FLAT_DEFAULT_PRESET_NAME));
                 this.presetDirty = JSON.stringify(this.settings) !== JSON.stringify(basic);
             }
+            // Ordinary openings start in hover mode; explicit shared links load afterwards.
+            this.presetDirty ||= this.settings.mode !== 'person' || this.settings.personAnimation !== 'interactive';
+            this.settings = normalizeFlatSettings({ ...this.settings, mode: 'person', personAnimation: 'interactive' });
             this.history.reset(this.settings);
         } catch {
             // Session persistence is optional when browser storage is unavailable.
@@ -595,6 +722,7 @@ export class FlatApp {
         });
 
         const person = this.settings.mode === 'person';
+        this.syncSearchControls();
         this.canvas.classList.toggle('is-person-mode', person);
         document.getElementById('basicGrowthGroup').hidden = person;
         document.getElementById('personSizeGroup').hidden = !person;
@@ -604,7 +732,8 @@ export class FlatApp {
             ? 'Canvas size reveals more fixed paired tiles without moving existing marks.'
             : 'Canvas size reveals more of the fixed lattice; ellipse size and spacing stay unchanged.';
         document.getElementById('flatFieldHint').textContent = person
-            ? 'The reference-ratio Person stays fixed while nearby ellipses shrink across the field radius.'
+            ? this.isSearchAnimation() ? 'People follow routes to the center. Field settings shape the space around them.'
+                : 'The reference-ratio Person stays fixed while nearby ellipses shrink across the field radius.'
             : 'Basic scales every ellipse by distance from the field. Click the artboard to pin fields.';
         this.syncPresetChrome();
         this.syncFieldCoordinates();
@@ -629,7 +758,7 @@ export class FlatApp {
         const list = document.getElementById('staticFieldList');
         const count = document.getElementById('staticFieldCount');
         if (!section || !list || !count) return;
-        section.hidden = this.settings.staticFields.length === 0;
+        section.hidden = this.isSearchAnimation() || this.settings.staticFields.length === 0;
         count.textContent = String(this.settings.staticFields.length);
         list.replaceChildren();
         this.settings.staticFields.forEach((field) => {

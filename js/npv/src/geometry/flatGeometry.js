@@ -33,6 +33,12 @@ export function defaultFlatSettings() {
         basicScale: 215,
         personIconScale: 100,
         personMinimumScale: 48,
+        personAnimation: 'interactive',
+        searchDuration: 10,
+        searchCandidates: 12,
+        searchStartRandomness: 100,
+        searchPathRandomness: 0,
+        searchSeed: 1,
         fieldRadius: 78,
         falloffCurve: 0,
         fieldX: 0,
@@ -86,6 +92,12 @@ export function normalizeFlatSettings(source = {}) {
         100
     );
     delete settings.personScale;
+    settings.personAnimation = settings.personAnimation === 'search' ? 'search' : 'interactive';
+    settings.searchDuration = clamp(finiteOr(settings.searchDuration, defaults.searchDuration), 4, 20);
+    settings.searchCandidates = Math.round(clamp(finiteOr(settings.searchCandidates, defaults.searchCandidates), 2, 12));
+    settings.searchStartRandomness = clamp(finiteOr(settings.searchStartRandomness, defaults.searchStartRandomness), 0, 100);
+    settings.searchPathRandomness = clamp(finiteOr(settings.searchPathRandomness, defaults.searchPathRandomness), 0, 100);
+    settings.searchSeed = Math.round(clamp(finiteOr(settings.searchSeed, defaults.searchSeed), 0, 0xffffffff));
     settings.fieldRadius = clamp(finiteOr(settings.fieldRadius, defaults.fieldRadius), 5, 240);
     settings.falloffCurve = clamp(finiteOr(settings.falloffCurve, defaults.falloffCurve), -100, 100);
     const legacyCoordinates = source.coordinateSpace !== 'center';
@@ -305,7 +317,7 @@ function buildBasicElements(layout, fields) {
     });
 }
 
-function referencePersonShapes(pair, baseDiameter, iconScale) {
+export function referencePersonShapes(pair, baseDiameter, iconScale) {
     const baseRadius = baseDiameter / 2;
     const pairCenterY = pair.y + baseDiameter * PERSON_PAIR_CENTER_SHIFT_RATIO * iconScale;
     const pairDistance = baseDiameter * PERSON_PAIR_DISTANCE_RATIO * iconScale;
@@ -333,7 +345,7 @@ function ellipseSupportInDirection(ellipse, dx, dy) {
     return Math.hypot(ellipse.rx * nx, ellipse.ry * ny);
 }
 
-function nonContactScale(source, shape) {
+export function nonContactScale(source, shape) {
     const dx = source.cx - shape.cx;
     const dy = source.cy - shape.cy;
     const distance = Math.hypot(dx, dy);

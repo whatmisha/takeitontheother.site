@@ -19,7 +19,7 @@
                 <div class="preset-menu" id="flatPresetMenu">
                     <button class="top-button preset-toggle" id="flatPresetToggle" type="button"
                             aria-haspopup="listbox" aria-expanded="false" aria-controls="flatPresetList">
-                        <span id="flatPresetName">Basic</span>
+                        <span id="flatPresetName">Talent</span>
                         <svg class="preset-dropdown-arrow" width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                             <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
@@ -51,8 +51,8 @@
                     <div class="topology-control">
                         <div class="control-caption">Mode</div>
                         <div class="segmented-control" role="group" aria-label="Flat distortion mode">
-                            <label><input type="radio" name="flatMode" value="basic" checked><span>Basic</span></label>
-                            <label><input type="radio" name="flatMode" value="person"><span>Person</span></label>
+                            <label><input type="radio" name="flatMode" value="basic"><span>Basic</span></label>
+                            <label><input type="radio" name="flatMode" value="person" checked><span>Person</span></label>
                         </div>
                     </div>
                     <div class="topology-control">
@@ -120,6 +120,7 @@
                         <input id="falloffCurve" type="range" min="-100" max="100" step="1" value="0" data-flat-setting="falloffCurve">
                         <div class="range-legend" aria-hidden="true"><span>Soft</span><span>Linear</span><span>Tight</span></div>
                     </div>
+                    <div id="flatFieldPositionControls">
                     <div class="control-group">
                         <label for="fieldX"><span>Field X <span class="unit">px</span></span><input type="text" class="value-display" id="fieldXValue" value="0" inputmode="decimal" autocomplete="off" aria-label="Center-relative field X value"></label>
                         <input id="fieldX" type="range" min="-960" max="960" step="1" value="0" data-flat-coordinate="x">
@@ -130,14 +131,58 @@
                     </div>
                     <div class="pill-row">
                         <label class="pill"><input id="fieldFollow" type="checkbox" data-flat-setting="fieldFollow" checked><span>Follows cursor</span></label>
+                    </div>
+                    </div>
+                    <div class="pill-row">
                         <label class="pill"><input id="showField" type="checkbox" data-flat-setting="showField"><span>Guide</span></label>
                     </div>
                     <p class="panel-hint" id="flatFieldHint"></p>
+                    <p class="panel-hint" id="flatStaticFieldsHint" hidden>Pinned fields return in Interactive mode.</p>
                     <div class="static-fields-section" id="staticFieldsSection" hidden>
                         <div class="section-rule"></div>
                         <div class="static-fields-caption"><span>Pinned fields</span><span id="staticFieldCount">0</span></div>
                         <div class="static-field-list" id="staticFieldList"></div>
                     </div>
+                </div>
+            </aside>
+
+            <aside class="controls-panel controls-panel--right-bottom" id="flatAnimationPanel" hidden>
+                <button class="panel-header" type="button" aria-expanded="true">
+                    <span>Animation</span><span class="panel-chevron" aria-hidden="true">⌄</span>
+                </button>
+                <div class="panel-content">
+                    <div class="segmented-control" role="group" aria-label="Person animation mode">
+                        <label><input type="radio" name="personAnimation" value="interactive" checked><span>Interactive</span></label>
+                        <label><input type="radio" name="personAnimation" value="search"><span>Search</span></label>
+                    </div>
+                    <div id="flatSearchControls" hidden>
+                        <div class="control-group">
+                            <label for="searchCandidates"><span>Candidates</span><input class="value-display" type="text" id="searchCandidatesValue" value="12" inputmode="numeric" aria-label="Search candidate count"></label>
+                            <input id="searchCandidates" type="range" min="2" max="12" step="1" value="12" data-flat-setting="searchCandidates">
+                        </div>
+                        <div class="control-group">
+                            <label for="searchDuration"><span>Duration <span class="unit">sec</span></span><input class="value-display" type="text" id="searchDurationValue" value="10" inputmode="decimal" aria-label="Search duration value"></label>
+                            <input id="searchDuration" type="range" min="4" max="20" step="0.5" value="10" data-flat-setting="searchDuration">
+                        </div>
+                        <div class="control-group">
+                            <label for="searchStartRandomness"><span>Start randomness <span class="unit">%</span></span><input class="value-display" type="text" id="searchStartRandomnessValue" value="100" inputmode="numeric" aria-label="Start randomness value"></label>
+                            <input id="searchStartRandomness" type="range" min="0" max="100" step="1" value="100" data-flat-setting="searchStartRandomness">
+                        </div>
+                        <div class="control-group">
+                            <label for="searchPathRandomness"><span>Path randomness <span class="unit">%</span></span><input class="value-display" type="text" id="searchPathRandomnessValue" value="0" inputmode="numeric" aria-label="Path randomness value"></label>
+                            <input id="searchPathRandomness" type="range" min="0" max="100" step="1" value="0" data-flat-setting="searchPathRandomness">
+                        </div>
+                        <div class="control-group">
+                            <label for="flatSearchTimeline"><span id="flatSearchPhase">Appearing · 0</span><span class="unit">Loop</span></label>
+                            <input id="flatSearchTimeline" type="range" min="0" max="999" step="1" value="0" aria-label="Search animation timeline">
+                        </div>
+                        <div class="animation-actions">
+                            <button id="flatSearchPlay" type="button">Pause</button>
+                            <button id="flatSearchShuffle" type="button" title="New starting positions, routes and selection">Shuffle</button>
+                            <button id="flatSearchRestart" type="button" aria-label="Restart search animation" title="Restart">↺</button>
+                        </div>
+                    </div>
+                    <p class="panel-hint flat-animation-error" id="flatAnimationError" role="alert"></p>
                 </div>
             </aside>
 
@@ -176,9 +221,16 @@
                     </ul>
                 </div>
             </div>
-            <div class="export-actions">
+            <div class="export-actions" id="flatExportActions">
                 <button class="action-button" id="exportPng" type="button">Export PNG</button>
                 <button class="action-button" id="exportSvg" type="button">Export SVG ⌘E</button>
+                <button class="action-button" id="flatExportVideo" type="button" hidden>Export MP4</button>
+                <button class="action-button" id="flatExportSequence" type="button" hidden>PNG sequence</button>
+                <div class="export-status" id="flatExportStatus" hidden data-state="idle" aria-live="polite">
+                    <progress id="flatExportProgress" max="1" value="0"></progress>
+                    <span id="flatExportMessage">Preparing</span>
+                    <button id="flatCancelExport" type="button" aria-label="Cancel export" title="Cancel export">×</button>
+                </div>
             </div>
         </nav>
     </div>
