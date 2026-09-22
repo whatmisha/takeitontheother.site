@@ -309,18 +309,25 @@ assert.match(sparkyTool, /PNG ZIP/u);
 assert.match(sparkyTool, /MP4 ⌘E/u);
 assert.match(sparkyTool, /animationExportCancelBtn/u);
 
-for (const marker of ['exportSVG()', 'exportPNG()', 'exportPDF()', 'exportModelJSON']) {
-    assert.ok(keyboarderTool.includes(marker), `Keyboarder lost ${marker}`);
+const keyboarderExportActions = await read('keyboarder/app/export-actions.js');
+assert.match(keyboarderTool, /import \{ bindKeyboarderExportActions \} from '\.\/export-actions\.js/u);
+assert.match(keyboarderTool, /bindKeyboarderExportActions\(\{\s*app: readyApp, ExportFeedbackController, exportJSON: exportModelJSON/u);
+for (const [buttonId, method] of [['exportSvgBtn', 'exportSVG'], ['exportPngBtn', 'exportPNG'], ['exportPdfBtn', 'exportPDF']]) {
+    assert.ok(keyboarderExportActions.includes(`'${buttonId}'`) && keyboarderExportActions.includes(`app.${method}()`), `Keyboarder lost ${buttonId} → ${method}`);
 }
+assert.match(keyboarderExportActions, /'exportJsonBtn', 'JSON', \(\) => exportJSON\(app\)/u);
 assert.match(keyboarderTool, /convertToOutlinesCheckbox/u);
-assert.match(wordplayerControls, /setAttribute\('aria-busy', 'true'\)/u);
-assert.match(wordplayerControls, /exportPng\(this\.getScene\(\)/u);
-assert.match(wordplayerControls, /exportCurvedSvg\(this\.getScene\(\)\)/u);
+assert.match(wordplayerControls, /new this\.ExportFeedbackController\(/u);
+assert.match(wordplayerControls, /feedback\.run\(async \(\) =>/u);
+assert.match(wordplayerControls, /exportPng\(scene,/u);
+assert.match(wordplayerControls, /exportCurvedSvg\(scene\)/u);
+assert.match(wordplayerControls, /const scene = this\.getScene\(\);[\s\S]*?await operation\(scene\)/u);
 
 for (const marker of ['function downloadSvg()', 'async function downloadPng()', 'function copySvg()', 'function verify()']) {
     assert.ok(pulsarScript.includes(marker), `Pulsar lost ${marker}`);
 }
-assert.match(pulsarScript, /btn\.textContent = '✓ Copied!'/u);
+assert.match(pulsarScript, /await navigator\.clipboard\.writeText\(currentSvg\)/u);
+assert.match(pulsarScript, /button\.textContent = '✓ Copied!'/u);
 assert.match(wanderScript, /areaBoundary\.remove\(\)/u);
 assert.match(wanderScript, /downloadWanderSvg\(svgElement, \{ rays: settings\.get\('rays'\) \}\)/u);
 assert.match(wanderExport, /filename: `wander-bender-\$\{rays\}-rays\.svg`/u);

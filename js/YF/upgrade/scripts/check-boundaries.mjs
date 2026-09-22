@@ -14,6 +14,7 @@ const appDirectories = runtimeTools(catalog).map(tool => tool.id);
 const entrypoints = [
     'index.html',
     'qa/ui-audit/index.html',
+    'qa/ui-host/index.html',
     ...appDirectories.map(directory => `${directory}/index.html`)
 ];
 
@@ -69,7 +70,7 @@ async function walk(directory) {
         if (!entry.isFile()) continue;
         const topLevelDirectory = relativePath.split('/')[0];
         if (
-            (appDirectories.includes(topLevelDirectory) || ['framework', 'catalog'].includes(topLevelDirectory) || relativePath.startsWith('qa/ui-audit/'))
+            (appDirectories.includes(topLevelDirectory) || ['framework', 'catalog'].includes(topLevelDirectory) || relativePath.startsWith('qa/ui-audit/') || relativePath.startsWith('qa/ui-host/'))
             && runtimeExtensions.has(path.extname(entry.name).toLowerCase())
             && !isThirdPartyBundle(relativePath)
         ) {

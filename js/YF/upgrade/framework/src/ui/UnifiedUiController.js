@@ -1,3 +1,8 @@
+import { installDocumentObserver } from './ObservedControllerLifecycle.js';
+import { commandKey, visibleDialog } from './CommandPolicy.js';
+
+const escapeHtml = value => String(value).replace(/[&<>"']/gu, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
+
 const TOOL_NAMES = Object.freeze({
     sparky: 'Sparky',
     grid_generator: 'Pizza Boxer',
@@ -84,12 +89,16 @@ function summaryConfig(tool) {
 }
 
 export class UnifiedUiController {
-    constructor({ ownerDocument = globalThis.document, ownerWindow = globalThis.window } = {}) {
+    constructor({ ownerDocument = globalThis.document, ownerWindow = globalThis.window, profile = null } = {}) {
         this.document = ownerDocument;
         this.window = ownerWindow;
         this.tool = '';
         this.expandedPanels = null;
-        this.exportTimers = new WeakMap();
+        this.profile = profile;
+        this.readyListener = null;
+        this.exportTimers = new Map();
+        this.summaryMeasurements = new WeakMap();
+        this.helpContents = new WeakMap();
         this.bound = false;
         this.handleClick = this.handleClick.bind(this);
         this.handleKeydown = this.handleKeydown.bind(this);
@@ -102,6 +111,19 @@ export class UnifiedUiController {
 
     init() {
         if (!this.document || this.bound) return this;
+        if (!this.document.body) {
+            if (!this.readyListener) {
+                this.readyListener = () => {
+                    this.document.removeEventListener('DOMContentLoaded', this.readyListener);
+                    this.readyListener = null;
+                    this.init();
+                };
+                this.document.addEventListener('DOMContentLoaded', this.readyListener, { once: true });
+            }
+            return this;
+        }
+        if (this.readyListener) this.document.removeEventListener('DOMContentLoaded', this.readyListener);
+        this.readyListener = null;
         this.tool = this.detectTool();
         this.sync();
         this.document.addEventListener('click', this.handleClick, true);
@@ -111,12 +133,9 @@ export class UnifiedUiController {
         this.document.addEventListener('zoomchange', this.handleZoomChange, true);
         this.document.addEventListener('input', this.handleSummaryChange, true);
         this.document.addEventListener('change', this.handleSummaryChange, true);
-        this.observer = new this.window.MutationObserver(this.handleMutation);
-        this.observer.observe(this.document.body, {
-            childList: true,
-            subtree: true,
-            attributes: true,
-            attributeFilter: ['disabled', 'aria-busy']
+        this.observer = installDocumentObserver(this, {
+            ownerDocument: this.document,
+            options: { childList: true, subtree: true, attributes: true, attributeFilter: ['disabled', 'aria-busy'] }
         });
         this.summaryInterval = this.window.setInterval(() => this.refreshSummaries(), 500);
         this.bound = true;
@@ -124,6 +143,8 @@ export class UnifiedUiController {
     }
 
     destroy() {
+        if (this.readyListener) this.document?.removeEventListener('DOMContentLoaded', this.readyListener);
+        this.readyListener = null;
         if (!this.bound) return;
         this.document.removeEventListener('click', this.handleClick, true);
         this.document.removeEventListener('keydown', this.handleKeydown, true);
@@ -134,10 +155,18 @@ export class UnifiedUiController {
         this.document.removeEventListener('change', this.handleSummaryChange, true);
         this.observer?.disconnect();
         this.window.clearInterval?.(this.summaryInterval);
+        for (const [button, timers] of this.exportTimers) {
+            timers.forEach(timer => this.window.clearTimeout(timer));
+            delete button.dataset.exportFeedbackState;
+        }
+        this.exportTimers.clear();
+        this.summaryMeasurements = new WeakMap();
+        this.helpContents = new WeakMap();
         this.bound = false;
     }
 
     detectTool() {
+        if (this.profile) return this.profile.id;
         const path = String(this.window?.location?.pathname || '');
         return Object.keys(TOOL_NAMES).find(name => path.includes(`/${name}/`)) || '';
     }
@@ -212,13 +241,25 @@ export class UnifiedUiController {
         popup.dataset.shortcutHelpPopup = 'true';
         popup.className = 'ui-shortcut-help__popup';
         popup.setAttribute('role', 'dialog');
-        popup.setAttribute('aria-label', `${TOOL_NAMES[this.tool] || 'Tool'} keyboard shortcuts`);
-        const rows = this.shortcutRows();
-        const content = `<dl class="ui-shortcut-help__list">${rows.map(([label, keys]) => `<dt>${label}</dt><dd>${keys}</dd>`).join('')}</dl>`;
-        if (popup.innerHTML !== content) popup.innerHTML = content;
+        popup.setAttribute('aria-label', `${this.profile?.title || TOOL_NAMES[this.tool] || 'Tool'} keyboard shortcuts`);
+        this.renderShortcutHelp(popup, this.shortcutRows());
+    }
+
+    renderShortcutHelp(popup, rows) {
+        const content = `<dl class="ui-shortcut-help__list">${rows.map(([label, keys]) => `<dt>${escapeHtml(label)}</dt><dd>${escapeHtml(keys)}</dd>`).join('')}</dl>`;
+        // innerHTML serializes entities differently (e.g. &#39; becomes ').
+        // Comparing its serialization with our escaped source can trigger a loop.
+        if (this.helpContents.get(popup) === content) return;
+        popup.innerHTML = content;
+        this.helpContents.set(popup, content);
     }
 
     shortcutRows() {
+        if (this.profile) {
+            const rows = [...(this.profile.shortcuts?.() || [])];
+            if (this.eligiblePanels().length) rows.push(['Collapse panels', '⌘\\']);
+            return [...rows, ['Shortcuts', '?']];
+        }
         const rows = [];
         if (this.tool === 'sparky') {
             rows.push(['Play / pause', 'Space'], ['Guides', 'G']);
@@ -305,7 +346,7 @@ export class UnifiedUiController {
     }
 
     ensureSummaries() {
-        const config = summaryConfig(this.tool);
+        const config = this.profile?.summaries || summaryConfig(this.tool);
         Object.keys(config).forEach(panelId => {
             const panel = this.document.getElementById(panelId);
             const title = panel?.querySelector(':scope > .panel-header > span:first-child');
@@ -329,21 +370,28 @@ export class UnifiedUiController {
     }
 
     refreshSummaries() {
-        const config = summaryConfig(this.tool);
+        const config = this.profile?.summaries || summaryConfig(this.tool);
         Object.entries(config).forEach(([panelId, provider]) => {
             const panel = this.document.getElementById(panelId);
             const target = panel?.querySelector(':scope > .panel-header .panel-params');
             if (!target) return;
             const fullSummary = String(provider(this.document) || '').trim();
+            const previous = this.summaryMeasurements.get(target);
+            // Re-measure only changed text/available width. Replacing a compact
+            // string with its full version on every mutation causes a feedback loop.
+            if (previous?.full === fullSummary && previous.width === target.clientWidth
+                && previous.text === target.textContent) return;
             if (target.textContent !== fullSummary) target.textContent = fullSummary;
             const summary = this.compactSummary(fullSummary, target);
             if (target.textContent !== summary) target.textContent = summary;
             if (summary !== fullSummary) target.title = fullSummary;
             else target.removeAttribute?.('title');
+            this.summaryMeasurements.set(target, { full: fullSummary, width: target.clientWidth, text: summary });
         });
     }
 
     showExportFeedback(button) {
+        if (this.profile) return; // Explicit command owners decide what is an export and when it succeeds.
         if (!button || button.disabled || button.dataset.exportFeedback === 'explicit') return;
         const timers = this.exportTimers.get(button) || [];
         timers.forEach(id => this.window.clearTimeout(id));
@@ -385,6 +433,7 @@ export class UnifiedUiController {
     }
 
     exportButtons() {
+        if (this.profile) return [];
         return [...this.document.querySelectorAll(
             '.action-dock button[data-action-dock-primary-export], '
             + '.action-dock button[data-action-dock-json-export], '
@@ -427,13 +476,17 @@ export class UnifiedUiController {
     }
 
     handleKeydown(event) {
-        if (event.repeat || event.defaultPrevented) return;
+        if (event.repeat || event.defaultPrevented || event.isComposing || event.keyCode === 229) return;
         if (event.target?.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(event.target?.tagName)) return;
-        const key = String(event.key || '').toLowerCase();
+        const key = this.profile && event.key !== '?' ? commandKey(event) : String(event.key || '').toLowerCase();
+        if (this.profile) {
+            const dialog = visibleDialog(this.document);
+            if (dialog && (dialog !== this.helpPopup() || !['escape', '?'].includes(key))) return;
+        }
         const command = event.metaKey || event.ctrlKey;
         if (command && !event.altKey && !event.shiftKey && key === '\\') {
             if (!this.togglePanels()) return;
-        } else if (command && !event.altKey && !event.shiftKey && (key === 'o' || key === 'i')) {
+        } else if (!this.profile && command && !event.altKey && !event.shiftKey && (key === 'o' || key === 'i')) {
             const action = this.fileShortcuts().find(action => action.key === key && !action.button.disabled);
             if (!action) return;
             action.button.click();

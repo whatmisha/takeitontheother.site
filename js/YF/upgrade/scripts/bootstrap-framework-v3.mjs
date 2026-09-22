@@ -12,6 +12,9 @@ const upstreamRoot = path.join(upgradeRoot, 'framework', 'upstream-v3');
 const workingRoot = path.join(upgradeRoot, 'framework');
 const sourcePrefix = 'takeitontheother.site/js/othersite-ui-framework/v3/';
 const checkOnly = process.argv.includes('--check');
+// Routine verification must work with upgrade alone. Auditing/copying the donor
+// is a separate, explicitly requested operation, never a runtime prerequisite.
+const verifyOriginals = !checkOnly || process.argv.includes('--verify-originals');
 
 const manifest = JSON.parse(await readFile(path.join(upgradeRoot, 'SOURCE_MANIFEST.json'), 'utf8'));
 const entries = (manifest.entries || [])
@@ -56,7 +59,7 @@ let upstreamCopied = 0;
 let workingCopied = 0;
 let workingModified = 0;
 const records = [];
-const realSourceRoot = await realpath(sourceRoot);
+const realSourceRoot = verifyOriginals ? await realpath(sourceRoot) : null;
 
 for (const entry of entries) {
     if (!entry.source.startsWith(sourcePrefix)) throw new Error(`Unexpected framework source path: ${entry.source}`);
@@ -64,11 +67,11 @@ for (const entry of entries) {
     const sourcePath = path.resolve(sourceRoot, ...relativePath.split('/'));
     const upstreamPath = path.resolve(upstreamRoot, ...relativePath.split('/'));
     const workingPath = path.resolve(workingRoot, ...relativePath.split('/'));
-    if (!isInside(realSourceRoot, await realpath(sourcePath))) throw new Error(`Source escapes framework v3: ${entry.source}`);
+    if (verifyOriginals && !isInside(realSourceRoot, await realpath(sourcePath))) throw new Error(`Source escapes framework v3: ${entry.source}`);
     if (!isInside(upstreamRoot, upstreamPath) || !isInside(workingRoot, workingPath)) {
         throw new Error(`Framework target escapes upgrade: ${relativePath}`);
     }
-    if (await sha256(sourcePath) !== entry.sha256) throw new Error(`Framework v3 source changed: ${entry.source}`);
+    if (verifyOriginals && await sha256(sourcePath) !== entry.sha256) throw new Error(`Framework v3 source changed: ${entry.source}`);
 
     const upstreamMetadata = await metadataOrNull(upstreamPath);
     if (upstreamMetadata) {
@@ -116,7 +119,7 @@ const serialized = `${JSON.stringify(provenance, null, 2)}\n`;
 
 if (checkOnly) {
     if (await readFile(provenancePath, 'utf8') !== serialized) throw new Error('framework/UPSTREAM_V3.json is stale');
-    console.log(`Framework v3 provenance passed: ${records.length} immutable files, ${workingModified} working modifications.`);
+    console.log(`Framework v3 provenance passed: ${records.length} immutable files, ${workingModified} working modifications; ${verifyOriginals ? 'original donor verified' : 'local snapshot only, no donor access'}.`);
 } else {
     await writeFile(provenancePath, serialized, 'utf8');
     console.log(`Framework v3 bootstrapped: ${upstreamCopied} upstream files copied, ${workingCopied} working files copied, ${workingModified} working files preserved.`);

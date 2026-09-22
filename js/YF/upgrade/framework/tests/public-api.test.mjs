@@ -33,7 +33,8 @@ test('public barrel exports the documented framework surface', async () => {
     assert.match(source, /PanelManager\.js\?v=g6-panel-1/u);
     assert.match(source, /FileIntakeController\.js\?v=g6-file-intake-1/u);
     assert.match(source, /ActionDockController\.js\?v=g7-keyboard-2/u);
-    assert.match(source, /UnifiedUiController\.js\?v=uiq-4/u);
+    assert.equal(typeof api.ToolUiController, 'function');
+    assert.match(source, /UnifiedUiController\.js\?v=int-02/u);
     assert.match(source, /PresetMenuKeyboardController\.js\?v=g7-keyboard-2/u);
     assert.match(source, /defineTool\.js\?v=uiq-3/u);
     assert.match(source, /ApplicationShell\.js\?v=uiq-3/u);
@@ -74,7 +75,7 @@ test('framework source graph stays local and application-agnostic', async () => 
             assert.ok(resolved.startsWith(`${frameworkRoot}${path.sep}`));
         }
     }
-    assert.equal(files.length, 48); // Includes the explicit export lifecycle controller.
+    assert.equal(files.length, 50); // Includes CommandPolicy and opt-in ToolUiController.
 });
 
 test('working CSS and exporters use checked-in same-origin assets', async () => {

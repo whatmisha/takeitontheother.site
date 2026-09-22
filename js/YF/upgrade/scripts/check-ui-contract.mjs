@@ -49,8 +49,9 @@ assert.doesNotMatch(contractCss, /Arial|TT Commons|CoFo Sans/u);
 entrypoints.forEach((html, index) => {
     const app = applications[index];
     const version = app === 'dither' ? 'uiq-4' : 'uiq-2';
+    const controllerVersion = app === 'pulsar_coder' ? 'uiq-3' : version;
     assert.ok(html.includes(`framework/css/ui-contract.css?v=${version}`), `${app}: missing final UI CSS`);
-    assert.ok(html.includes(`framework/src/ui/unifiedUiAutoInit.js?v=${version}`), `${app}: missing shared UI controller`);
+    assert.ok(html.includes(`framework/src/ui/unifiedUiAutoInit.js?v=${controllerVersion}`), `${app}: missing shared UI controller`);
     if (app !== 'grid_generator') {
         assert.match(html, /←\s+Upgrade Tools/u, `${app}: back link needs a readable arrow gap`);
     }

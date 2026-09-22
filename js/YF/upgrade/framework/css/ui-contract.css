@@ -30,6 +30,7 @@ body,
 .mode-nav-back {
     background: var(--ui-foreground) !important;
     color: #000 !important;
+    line-height: normal;
 }
 
 .top-link:hover,

@@ -57,10 +57,12 @@ export function installDocumentObserver(controller, {
         return { disconnect() {} };
     }
 
-    const observer = new Observer(() => controller.sync?.());
+    let destroyed = false;
+    const observer = new Observer(() => { if (!destroyed) controller.sync?.(); });
     let connected = false;
     let retryTimer = null;
     const connect = () => {
+        if (destroyed) return false;
         if (connected) return true;
         try {
             const root = ownerDocument.documentElement;
@@ -82,6 +84,7 @@ export function installDocumentObserver(controller, {
 
     return {
         disconnect() {
+            destroyed = true;
             if (retryTimer != null) view.clearTimeout(retryTimer);
             retryTimer = null;
             observer.disconnect();

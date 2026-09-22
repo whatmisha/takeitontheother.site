@@ -54,7 +54,7 @@ assert.deepEqual(
         ['Sticky Fingers', 0, 0, 6],
         ['Keyboarder', 0, 3, 0],
         ['Wordplayer', 20, 3, 0],
-        ['Pulsar Coder', 8, 0, 0],
+        ['Pulsar Coder', 7, 0, 0],
         ['Dither', 0, 0, 13],
         ['Wander Bender', 19, 0, 0]
     ],
@@ -64,10 +64,19 @@ assert.deepEqual(
 const sharedOrdinary = inventory.reduce((sum, item) => sum + item.staticOrdinary, 0);
 const sharedHsb = inventory.reduce((sum, item) => sum + item.sharedHsb, 0);
 const privateRanges = inventory.reduce((sum, item) => sum + item.privateCount, 0);
-assert.equal(sharedOrdinary, 97);
+// Pulsar v2 (783113e) replaced configurable preamble length with a fixed framed codec.
+assert.deepEqual([...pulsarHtml.matchAll(/<input\b(?=[^>]*type="range")[^>]*id="([^"]+)"/gu)].map(match => match[1]), [
+    'rayCountSlider', 'rayLengthSlider', 'bitStepSlider', 'strokeWidthSlider', 'tickShortSlider', 'tickLongSlider', 'marginSlider'
+]);
+assert.doesNotMatch(pulsarHtml, /preambleLengthSlider/u);
+const pulsarCodec = await import('../pulsar_coder/js/codec/PulsarCodec.js');
+assert.equal(pulsarCodec.CODEC_VERSION, 2);
+assert.equal(pulsarCodec.GLOBAL_MAGIC_BITS, 12);
+assert.equal(pulsarCodec.RAY_PREFIX_BITS, 10);
+assert.equal(sharedOrdinary, 96);
 assert.equal(sharedHsb, 9);
 assert.equal(privateRanges, 22);
-assert.equal(sharedOrdinary + sharedHsb + privateRanges, 128);
+assert.equal(sharedOrdinary + sharedHsb + privateRanges, 127);
 
 const sharedOrdinaryApps = await Promise.all([
     ['Sparky', 'sparky/styles/sparky.css'],
@@ -96,5 +105,5 @@ assert.match(ditherCss, /\.control-group input\[type="range"\]::-webkit-slider-t
 assert.match(stripComments(stickyCss), /\.control-group input\[type="range"\]\s*\{/u);
 
 console.log(
-    `Range contract passed: ${sharedOrdinary} shared ordinary + ${sharedHsb} shared HSB + ${privateRanges} private = 128 static; Sticky Fingers also owns dynamic custom-column ranges.`
+    `Range contract passed: ${sharedOrdinary} shared ordinary + ${sharedHsb} shared HSB + ${privateRanges} private = 127 static; Pulsar v2 has seven named ranges; Sticky Fingers also owns dynamic custom-column ranges.`
 );

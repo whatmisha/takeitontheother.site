@@ -289,7 +289,8 @@ assert.match(pulsarScript, /new OverlayDialogHost\(\{/u,
 assert.match(pulsarScript, /verifyModalHost\.open\(\);/u);
 assert.doesNotMatch(pulsarScript, /verifyModal[^\n]*classList\.(?:add|remove)\('active'\)/u,
     'Pulsar duplicated shared overlay class lifecycle');
-assert.match(pulsarScript, /btn\.textContent = '✓ Copied!'/u);
+assert.match(pulsarScript, /await navigator\.clipboard\.writeText\(currentSvg\)/u);
+assert.match(pulsarScript, /button\.textContent = '✓ Copied!'/u);
 
 assert.doesNotMatch(ditherScript, /OverlayDialogHost/u,
     'Dither removed instructions overlay unexpectedly returned');

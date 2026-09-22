@@ -87,6 +87,37 @@ test('overflowing summaries drop expendable units before CSS ellipsis', () => {
     );
 });
 
+test('compact summary refresh settles without a self-triggering mutation loop and remeasures on resize', () => {
+    let text = '', writes = 0, full = '104 keys · 412.5 mm';
+    const target = { clientWidth: 100, get scrollWidth() { return text.length * 10; },
+        get textContent() { return text; }, set textContent(value) { text = value; writes++; }, removeAttribute() {} };
+    const controller = new UnifiedUiController({ ownerDocument: { getElementById: () => ({ querySelector: () => target }) },
+        ownerWindow: {}, profile: { summaries: { panel: () => full } } });
+    controller.refreshSummaries();
+    assert.equal(text, '104 · 412.5');
+    const settledWrites = writes;
+    for (let i = 0; i < 50; i++) controller.refreshSummaries();
+    assert.equal(writes, settledWrites);
+    target.clientWidth = 500;
+    controller.refreshSummaries();
+    assert.equal(text, full);
+    full = '8 rays';
+    controller.refreshSummaries();
+    assert.equal(text, full);
+});
+
+test('escaped shortcut labels cannot keep rewriting their normalized HTML serialization', () => {
+    let html = '', writes = 0;
+    const popup = { get innerHTML() { return html; }, set innerHTML(value) { html = value.replaceAll('&#39;', "'"); writes++; } };
+    const controller = new UnifiedUiController({ ownerDocument: {}, ownerWindow: {} });
+    const rows = [["Editor's <SVG>", '⌘E']];
+    for (let i = 0; i < 50; i++) controller.renderShortcutHelp(popup, rows);
+    assert.equal(writes, 1);
+    assert.match(html, /&lt;SVG&gt;/u);
+    controller.renderShortcutHelp(popup, [['PNG', '⌘E']]);
+    assert.equal(writes, 2);
+});
+
 test('file command metadata drives both help and a single keyboard activation', () => {
     const image = { dataset: { fileShortcut: 'o', fileShortcutLabel: 'Open image' }, clicks: 0, click() { this.clicks++; } };
     const layout = { dataset: { fileShortcut: 'i', fileShortcutLabel: 'Open layout' }, clicks: 0, click() { this.clicks++; } };
