@@ -14,7 +14,7 @@ const [toolSource, htmlSource, stylesSource, frameworkStylesSource, controlsSour
 
 assert.match(
     toolSource,
-    /import\s*\{\s*defineTool,\s*FileIntakeController\s*\}\s*from\s*['"]\.\.\/framework\/src\/index\.js\?v=g6-capabilities-1['"];/,
+    /import\s*\{\s*defineTool,\s*FileIntakeController,\s*ExportFeedbackController\s*\}\s*from\s*['"]\.\.\/framework\/src\/index\.js\?v=uiq-3['"];/,
     'Wordplayer must consume the shared framework through its public barrel'
 );
 assert.doesNotMatch(
@@ -24,7 +24,7 @@ assert.doesNotMatch(
 );
 assert.match(
     toolSource,
-    /import\s*\{\s*WordplayerExporter\s*\}\s*from\s*['"]\.\/src\/export\/exporters\.js['"];/,
+    /import\s*\{\s*WordplayerExporter\s*\}\s*from\s*['"]\.\/src\/export\/exporters\.js\?v=uiq-3['"];/,
     'Wordplayer-specific exporter must remain application-owned'
 );
 assert.match(toolSource, /storageKey:\s*['"]upgrade:wordplayer:presets:v1['"]/, 'storage namespace changed');
@@ -35,7 +35,7 @@ const applicationCss = htmlSource.indexOf('href="styles.css');
 assert.ok(frameworkCss >= 0, 'shared framework stylesheet is missing');
 assert.ok(applicationCss > frameworkCss, 'application stylesheet must load after framework CSS');
 assert.match(htmlSource, /othersite-styles\.css\?v=g6-choice-1/u, 'shared CSS cache boundary changed');
-assert.match(htmlSource, /tool\.js\?v=g6-capabilities-1/u, 'ApplicationShell JS cache boundary changed');
+assert.match(htmlSource, /tool\.js\?v=uiq-3/u, 'ApplicationShell JS cache boundary changed');
 assert.doesNotMatch(htmlSource, /href=["']foundation\.css["']/, 'retired local foundation CSS is still linked');
 assert.doesNotMatch(htmlSource, /CoFoSans-(?:Regular|Medium)\.woff2/, 'system UI must not preload the retired CoFo files');
 assert.match(
@@ -52,11 +52,17 @@ assert.match(htmlSource, /<nav class="bottom-buttons action-dock" role="toolbar"
 assert.match(htmlSource, /action-dock__slot action-dock__slot--utility[\s\S]*?\bid="shortcutHelpBtn"/u);
 assert.match(htmlSource, /action-dock__slot action-dock__slot--primary[\s\S]*?\bid="exportPngBtn"[\s\S]*?\bid="exportSvgBtn"/u);
 assert.match(htmlSource, /action-dock__slot action-dock__slot--options[\s\S]*?\bid="transparentPngCheckbox"/u);
+for (const id of ['exportPngBtn', 'exportSvgBtn']) {
+    assert.match(htmlSource, new RegExp(`id="${id}"[^>]*data-export-feedback="explicit"[^>]*aria-describedby="${id}Status"`));
+    assert.match(htmlSource, new RegExp(`id="${id}Status"[^>]*role="status"[^>]*aria-live="polite"`));
+}
+assert.match(controlsSource, /new this\.ExportFeedbackController/u);
+assert.match(controlsSource, /this\.bindExportActions\(app\)/u);
 assert.equal(htmlSource.match(/class="control-section image-load-section file-intake"/gu)?.length, 2);
 assert.equal(htmlSource.match(/file-intake__trigger/gu)?.length, 2);
 assert.equal(htmlSource.match(/file-intake__status/gu)?.length, 2);
 assert.match(toolSource, /FileIntakeController/u, 'Wordplayer must receive FileIntake from the public barrel');
-assert.match(toolSource, /src\/ui\/controls\.js\?v=g6-file-intake-1/u);
+assert.match(toolSource, /src\/ui\/controls\.js\?v=uiq-3/u);
 assert.match(toolSource, /src\/io\/assets\.js\?v=g6-file-intake-2/u);
 assert.match(controlsSource, /new this\.FileIntakeController/u);
 assert.match(controlsSource, /dropzone:\s*input\?\.closest\('\.file-intake'\)/u);

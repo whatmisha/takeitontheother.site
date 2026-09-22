@@ -4,11 +4,13 @@ const AVAILABLE_MODES = new Set(['dither', 'forms']);
 export const normalizeMode = (mode) => AVAILABLE_MODES.has(mode) ? mode : 'dither';
 
 export class WordplayerUI {
-    constructor({ assets, exporter, getScene, FileIntakeController }) {
+    constructor({ assets, exporter, getScene, FileIntakeController, ExportFeedbackController }) {
         this.assets = assets;
         this.exporter = exporter;
         this.getScene = getScene;
         this.FileIntakeController = FileIntakeController;
+        this.ExportFeedbackController = ExportFeedbackController;
+        this.exportFeedback = new Map();
         this.fileIntakes = [];
         this.bound = false;
     }
@@ -118,6 +120,37 @@ export class WordplayerUI {
         app.dialog?.alert({ title, text: `Could not prepare ${title.toLowerCase()} in this browser session.` });
     }
 
+    bindExportActions(app) {
+        const actions = [
+            ['exportPngBtn', 'png', 'PNG export', scene => this.exporter.exportPng(scene, {
+                transparent: app.settings.exportTransparent, scale: 3
+            })],
+            ['exportSvgBtn', 'curves', 'SVG export', scene => this.exporter.exportCurvedSvg(scene)]
+        ];
+        for (const [id, name, title, operation] of actions) {
+            const button = document.getElementById(id);
+            if (!button || this.exportFeedback.has(id)) continue;
+            const feedback = new this.ExportFeedbackController({
+                button, status: document.getElementById(`${id}Status`)
+            });
+            this.exportFeedback.set(id, feedback);
+            button.addEventListener('click', () => feedback.run(async () => {
+                window.wordplayerLastAction = `${name}-export-start`;
+                try {
+                    const scene = this.getScene();
+                    if (!scene) throw new Error('The scene is not ready yet.');
+                    const result = await operation(scene);
+                    window.wordplayerLastAction = `${name}-export-complete`;
+                    return result;
+                } catch (error) {
+                    window.wordplayerLastAction = `${name}-export-error`;
+                    this.showExportError(app, title, error);
+                    throw error;
+                }
+            }));
+        }
+    }
+
     bindTextPanelScrollbar() {
         const panel = document.getElementById('textPanel');
         const content = panel?.querySelector('.panel-content');
@@ -217,27 +250,7 @@ export class WordplayerUI {
 
         this.bindFileIntakes();
 
-        const pngButton = document.getElementById('exportPngBtn');
-        pngButton?.addEventListener('click', () => {
-            window.wordplayerLastAction = 'png-export-start';
-            pngButton.setAttribute('aria-busy', 'true');
-            void this.exporter.exportPng(this.getScene(), {
-                transparent: app.settings.exportTransparent,
-                scale: 3
-            }).then(() => {
-                window.wordplayerLastAction = 'png-export-complete';
-            }).catch((error) => this.showExportError(app, 'PNG export', error))
-                .finally(() => pngButton.setAttribute('aria-busy', 'false'));
-        });
-        const svgButton = document.getElementById('exportSvgBtn');
-        svgButton?.addEventListener('click', () => {
-            window.wordplayerLastAction = 'curves-export-start';
-            svgButton.setAttribute('aria-busy', 'true');
-            void this.exporter.exportCurvedSvg(this.getScene()).then(() => {
-                window.wordplayerLastAction = 'curves-export-complete';
-            }).catch((error) => this.showExportError(app, 'SVG export', error))
-                .finally(() => svgButton.setAttribute('aria-busy', 'false'));
-        });
+        this.bindExportActions(app);
         app.settingsStore.subscribe('mode', () => this.sync(app));
         this.sync(app);
     }

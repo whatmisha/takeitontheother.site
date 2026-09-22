@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="css/framework-base.css?v=g6-choice-1">
     <link rel="stylesheet" href="css/yf-styles.css?v=g5-reset-1">
     <link rel="stylesheet" href="css/wander-bender.css?v=g13-ui-repair-1">
-    <link rel="stylesheet" href="../framework/css/ui-contract.css?v=g14-panel-spacing-1">
+    <link rel="stylesheet" href="../framework/css/ui-contract.css?v=uiq-2">
     <script src="../framework/vendor/paper/0.12.17/paper-full.min.js"></script>
 </head>
 <body>
@@ -56,8 +56,8 @@
                     </section>
 
                     <!-- Shape Parameters (Global) -->
-                    <section class="control-section control-field-group">
-                        <h3 class="control-field-heading">Shape</h3>
+                    <section class="control-section control-field-group" role="group" aria-labelledby="shapeGroupLabel">
+                        <h3 class="control-field-heading" id="shapeGroupLabel">Shape</h3>
                         
                         <div class="control-group">
                             <label for="lengthSlider">
@@ -109,8 +109,8 @@
                     </section>
 
                     <!-- Distribution Parameters (Mode-specific) -->
-                    <section class="control-section control-field-group">
-                        <h3 class="control-field-heading">Distribution</h3>
+                    <section class="control-section control-field-group" role="group" aria-labelledby="distributionGroupLabel">
+                        <h3 class="control-field-heading" id="distributionGroupLabel">Distribution</h3>
                         
                         <!-- Radial Mode Controls -->
                         <div id="radialControls">
@@ -268,6 +268,6 @@
 
     <script type="module" src="../framework/src/ui/actionDockAutoInit.js?v=g7-resilience-4"></script>
     <script type="module" src="js/wander-bender.js?v=g13-ui-repair-1"></script>
-    <script type="module" src="../framework/src/ui/unifiedUiAutoInit.js?v=g13-ui-repair-2"></script>
+    <script type="module" src="../framework/src/ui/unifiedUiAutoInit.js?v=uiq-2"></script>
 </body>
 </html>

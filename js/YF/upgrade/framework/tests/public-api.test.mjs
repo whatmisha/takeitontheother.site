@@ -22,7 +22,7 @@ test('public barrel exports the documented framework surface', async () => {
     const source = await readFile(path.join(srcRoot, 'index.js'), 'utf8');
     const expected = [
         'ActionDockController', 'ApplicationShell', 'CanvasTarget', 'ColorPicker', 'DOMCache', 'DialogHost',
-        'ExportGuard', 'FileIntakeController', 'GradientStrokeEffect', 'HistoryBridge', 'HistoryManager',
+        'ExportFeedbackController', 'ExportGuard', 'FileIntakeController', 'GradientStrokeEffect', 'HistoryBridge', 'HistoryManager',
         'MathUtils', 'MobileBootstrap', 'NoiseGenerator', 'OverlayDialogHost', 'PanelManager', 'PresetMenuKeyboardController', 'PresetSession', 'PresetStore',
         'RenderTarget', 'SVGExporter', 'SHARED_SLOT',
         'SeededRandom', 'ShareCodec', 'ShortcutRouter', 'SliderController', 'StripeGeometry',
@@ -33,10 +33,10 @@ test('public barrel exports the documented framework surface', async () => {
     assert.match(source, /PanelManager\.js\?v=g6-panel-1/u);
     assert.match(source, /FileIntakeController\.js\?v=g6-file-intake-1/u);
     assert.match(source, /ActionDockController\.js\?v=g7-keyboard-2/u);
-    assert.match(source, /UnifiedUiController\.js\?v=g13-ui-repair-2/u);
+    assert.match(source, /UnifiedUiController\.js\?v=uiq-4/u);
     assert.match(source, /PresetMenuKeyboardController\.js\?v=g7-keyboard-2/u);
-    assert.match(source, /defineTool\.js\?v=g6-capabilities-1/u);
-    assert.match(source, /ApplicationShell\.js\?v=g6-capabilities-1/u);
+    assert.match(source, /defineTool\.js\?v=uiq-3/u);
+    assert.match(source, /ApplicationShell\.js\?v=uiq-3/u);
 });
 
 test('unadopted controls live on the optional framework surface', async () => {
@@ -74,7 +74,7 @@ test('framework source graph stays local and application-agnostic', async () => 
             assert.ok(resolved.startsWith(`${frameworkRoot}${path.sep}`));
         }
     }
-    assert.equal(files.length, 47);
+    assert.equal(files.length, 48); // Includes the explicit export lifecycle controller.
 });
 
 test('working CSS and exporters use checked-in same-origin assets', async () => {

@@ -1,5 +1,17 @@
 # Dither shared-framework migration
 
+## Current UIQ 3 update — 2026-09-21
+
+Sources now live in Texture → Sources, not the export dock. Load/remove and Reset
+use the shared opt-in panel-action presentation. The dock contains help, PNG,
+transparency and scale only. The historical parity records below describe earlier
+revisions, not the current layout. Current checks and known limitations:
+[UIQ 3 acceptance](../docs/UIQ_ITERATION_3_ACCEPTANCE.md).
+
+The preview overlay follows the main canvas CSS scale; pointer coordinates are
+converted back to buffer pixels. The output sheet has a shared CSS-only edge,
+never an exported stroke. Raster algorithms and export buffer sizes are unchanged.
+
 Dither remains a classic-script Canvas application. Its image transforms,
 overlay interaction, preprocessing, dithering algorithms and PNG export were
 not rewritten during the shared-framework switch.

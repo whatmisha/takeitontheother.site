@@ -1,4 +1,5 @@
 let ColorUtils;
+let ExportFeedbackController;
 let FileIntakeController;
 let PanelManager;
 
@@ -49,6 +50,10 @@ class DitheringTool {
         
         // Cache DOM elements
         this.dom = this.cacheDOMElements();
+        this.exportFeedback = new ExportFeedbackController({
+            button: this.dom.exportBtn,
+            status: document.getElementById('exportStatus')
+        });
         
         // Debounced version of applyEffects
         this.debouncedApplyEffects = this.debounce(
@@ -581,25 +586,12 @@ class DitheringTool {
             });
         }
         
-        // Keyboard shortcuts
-        document.addEventListener('keydown', (e) => {
-            if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
-                e.preventDefault();
-                this.exportImage();
-            }
-            if ((e.ctrlKey || e.metaKey) && e.key === 'o') {
-                e.preventDefault();
-                this.imageFileIntake.open();
-            }
-            if ((e.ctrlKey || e.metaKey) && e.key === 'i') {
-                e.preventDefault();
-                this.sampleFileIntake.open();
-            }
-        });
+        // Export and file shortcuts are owned by the shared dock/UI controllers.
     }
 
     initFileIntakes() {
         this.imageFileIntake = new FileIntakeController({
+            root: 'imageSourceIntake',
             input: this.dom.imageInput,
             trigger: 'uploadBtnFixed',
             dropzone: document.querySelector('.canvas-container'),
@@ -608,6 +600,7 @@ class DitheringTool {
             accept: 'image/*',
             initialState: 'ready',
             initialStatus: 'Default image loaded.',
+            emptyText: 'No image loaded.',
             typeErrorText: 'Choose a supported image file.',
             errorText: 'Could not load this image.',
             onSelect: async file => {
@@ -618,6 +611,8 @@ class DitheringTool {
         }).init();
 
         this.sampleFileIntake = new FileIntakeController({
+            root: 'layoutSourceIntake',
+            dropzone: 'layoutSourceIntake',
             input: this.dom.sampleInput,
             trigger: 'uploadSampleBtn',
             status: 'sampleInputStatus',
@@ -625,6 +620,7 @@ class DitheringTool {
             accept: 'image/*',
             initialState: 'ready',
             initialStatus: 'Default layout loaded.',
+            emptyText: 'No layout loaded.',
             typeErrorText: 'Choose a supported image file.',
             errorText: 'Could not load this layout image.',
             onSelect: async file => {
@@ -787,6 +783,9 @@ class DitheringTool {
     }
     
     initCanvasInteraction() {
+        // Overflow padding and artwork must use the same display scale.
+        this.canvasResizeObserver = new ResizeObserver(() => this.syncOverlaySize());
+        this.canvasResizeObserver.observe(this.canvas);
         // Enable pointer events on overlay when sample is loaded
         this.overlayCanvas.addEventListener('mousedown', (e) => this.handleMouseDown(e));
         this.overlayCanvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
@@ -965,10 +964,8 @@ class DitheringTool {
     
     handleMouseDown(e) {
         if (!this.originalImage) return; // Only require original image for transform controls
-        
-        const rect = this.overlayCanvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
+
+        const { x, y } = this.getOverlayPoint(e);
         
         const rotateHandle = this.getRotateHandle(x, y);
         const resizeHandle = this.getResizeHandle(x, y);
@@ -998,9 +995,7 @@ class DitheringTool {
     }
     
     handleMouseMove(e) {
-        const rect = this.overlayCanvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
+        const { x, y } = this.getOverlayPoint(e);
         
         // Update cursor
         if (!this.interaction.isDragging && !this.interaction.isResizing && !this.interaction.isRotating && this.originalImage) {
@@ -1615,6 +1610,21 @@ class DitheringTool {
         });
     }
     
+    syncOverlaySize() {
+        const rect = this.canvas.getBoundingClientRect();
+        if (!rect.width || !rect.height || !this.canvas.width || !this.canvas.height) return;
+        this.overlayCanvas.style.width = `${this.overlayCanvas.width * rect.width / this.canvas.width}px`;
+        this.overlayCanvas.style.height = `${this.overlayCanvas.height * rect.height / this.canvas.height}px`;
+    }
+
+    getOverlayPoint(event) {
+        const rect = this.overlayCanvas.getBoundingClientRect();
+        return {
+            x: (event.clientX - rect.left) * (rect.width ? this.overlayCanvas.width / rect.width : 1),
+            y: (event.clientY - rect.top) * (rect.height ? this.overlayCanvas.height / rect.height : 1)
+        };
+    }
+
     updateCanvasSize() {
         // Canvas size is determined by sample image if it exists, otherwise by processed image
         const referenceImage = this.sampleImage || this.originalImage;
@@ -1639,6 +1649,7 @@ class DitheringTool {
         const padding = DitheringTool.CONSTANTS.OVERLAY_PADDING;
         this.overlayCanvas.width = width + padding * 2;
         this.overlayCanvas.height = height + padding * 2;
+        this.syncOverlaySize();
         
         // Initialize or reset transform for the processed image
         // Reset if: no transform exists, no sample, or original image dimensions changed
@@ -2056,6 +2067,10 @@ class DitheringTool {
     
     exportImage() {
         if (!this.originalImage) return;
+        return this.exportFeedback.run(() => this.createAndDownloadExport());
+    }
+
+    async createAndDownloadExport() {
         
         // Determine export scale through the app-private artifact contract.
         const exportScale = globalThis.DitherPngExport.resolveScale(this.settings);
@@ -2165,14 +2180,16 @@ class DitheringTool {
         }
         
         // Keep Safari-compatible DOM insertion and delayed URL cleanup private.
-        void globalThis.DitherPngExport.downloadCanvas(exportCanvas);
+        const artifact = await globalThis.DitherPngExport.downloadCanvas(exportCanvas);
+        if (!artifact) throw new Error('PNG encoder returned no image.');
+        return artifact;
     }
 }
 
 // Initialize the tool when the page loads
 document.addEventListener('DOMContentLoaded', async () => {
-    ({ ColorUtils, FileIntakeController, PanelManager } = await import(
-        './js/framework/FrameworkAdapter.js?v=g6-file-intake-1'
+    ({ ColorUtils, ExportFeedbackController, FileIntakeController, PanelManager } = await import(
+        './js/framework/FrameworkAdapter.js?v=uiq-2'
     ));
     new DitheringTool();
 });

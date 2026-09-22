@@ -6,8 +6,8 @@
  */
 
 // Engine
-export { defineTool } from './core/defineTool.js?v=g6-capabilities-1';
-export { ApplicationShell } from './core/ApplicationShell.js?v=g6-capabilities-1';
+export { defineTool } from './core/defineTool.js?v=uiq-3';
+export { ApplicationShell } from './core/ApplicationShell.js?v=uiq-3';
 export { resolveApplicationCapabilities } from './core/ApplicationCapabilities.js?v=g6-capabilities-1';
 
 // Core
@@ -21,6 +21,7 @@ export { SvgTarget } from './render/SvgTarget.js';
 export { CanvasTarget } from './render/CanvasTarget.js';
 
 // UI components
+export { ExportFeedbackController } from './ui/ExportFeedbackController.js?v=uiq-1';
 export { SliderController } from './ui/SliderController.js';
 export { PanelManager } from './ui/PanelManager.js?v=g6-panel-1';
 export { ColorPicker } from './ui/ColorPicker.js';
@@ -30,7 +31,7 @@ export { OverlayDialogHost } from './ui/OverlayDialogHost.js?v=g5-overlay-1';
 export { TooltipService } from './ui/TooltipService.js?v=g5-feedback-1';
 export { FileIntakeController, fileMatchesAccept } from './ui/FileIntakeController.js?v=g6-file-intake-1';
 export { ActionDockController, initActionDocks } from './ui/ActionDockController.js?v=g7-keyboard-2';
-export { UnifiedUiController, initUnifiedUi } from './ui/UnifiedUiController.js?v=g13-ui-repair-2';
+export { UnifiedUiController, initUnifiedUi } from './ui/UnifiedUiController.js?v=uiq-4';
 export { PresetMenuKeyboardController, initPresetMenuKeyboards } from './ui/PresetMenuKeyboardController.js?v=g7-keyboard-2';
 export { ZoomPanManager } from './ui/ZoomPanManager.js';
 

@@ -10,8 +10,10 @@
 import {
     defineTool,
     FileIntakeController,
+    ExportFeedbackController,
     SVGExporter
-} from '../../framework/src/index.js?v=g6-capabilities-1';
+} from '../../framework/src/index.js?v=uiq-3';
+import { bindKeyboarderExportActions } from './export-actions.js?v=uiq-3';
 import { installKeyboarderPerf, perfEnabled, perfMarkStartup, perfNow, perfRecord, perfSince } from './perf.js';
 import { buildLayout, gapOf, widthInU } from './kb/grid.js';
 import { attachGuides } from './kb/guides.js';
@@ -1355,13 +1357,9 @@ const app = defineTool({
         initCompensationTableEditor(readyApp);
         installFileIntakes(readyApp);
 
-        document.getElementById('exportSvgBtn')?.addEventListener('click', () => readyApp.exportSVG());
-        document.getElementById('exportPngBtn')?.addEventListener('click', () => readyApp.exportPNG());
-        document.getElementById('exportPdfBtn')?.addEventListener('click', () => {
-            void readyApp.exportPDF();
-        });
-        document.getElementById('exportJsonBtn')?.addEventListener('click', () => {
-            exportModelJSON(readyApp);
+        readyApp.exportFeedback?.destroy();
+        readyApp.exportFeedback = bindKeyboarderExportActions({
+            app: readyApp, ExportFeedbackController, exportJSON: exportModelJSON
         });
 
         document.getElementById('resetGridBtn')?.addEventListener('click', () => {
@@ -6266,7 +6264,7 @@ function installPdfExport(app) {
                 text: e?.message || 'Could not export PDF.',
                 okText: 'Close'
             });
-            return { ok: false, error: e?.message || 'Could not export PDF.' };
+            return { ok: false, reported: Boolean(app.dialog), error: e?.message || 'Could not export PDF.' };
         }
     };
     app.__keyboarderPdfExport = true;

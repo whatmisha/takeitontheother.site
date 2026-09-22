@@ -153,7 +153,7 @@ test('shared CSS is layered below the frozen Pulsar skin', async () => {
     );
     assert.equal(
         [...html.matchAll(/<input\b[^>]*\btype="range"[^>]*>/gu)].length,
-        8,
+        7,
         'Pulsar range inventory must remain stable'
     );
     assert.equal(

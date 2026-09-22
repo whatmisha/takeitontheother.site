@@ -600,7 +600,7 @@ export class ApplicationShell {
                 } else {
                     octx.drawImage(this.target.element, 0, 0, width, height);
                 }
-                off.toBlob((blob) => this._downloadBlob(blob, name));
+                await this._downloadCanvasPNG(off, name);
             } else {
                 const svgString = await this.target.toSVGString();
                 await this._rasterizeSVG(svgString, width * scale, height * scale, name);
@@ -1106,30 +1106,49 @@ export class ApplicationShell {
     /* ------------------------------- internals -------------------------------- */
 
     _downloadBlob(blob, filename) {
+        if (!blob || !blob.size) throw new Error('The export produced an empty file.');
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        try {
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+        } finally {
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }
     }
 
     _downloadText(text, filename, mime) {
         this._downloadBlob(new Blob([text], { type: mime }), filename);
     }
 
+    async _downloadCanvasPNG(canvas, filename) {
+        const blob = await new Promise((resolve, reject) => {
+            try { canvas.toBlob(resolve, 'image/png'); }
+            catch (error) { reject(error); }
+        });
+        this._downloadBlob(blob, filename);
+    }
+
     async _rasterizeSVG(svgString, w, h, filename) {
         const blob = new Blob([svgString], { type: 'image/svg+xml' });
         const url = URL.createObjectURL(blob);
-        const img = new Image();
-        await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = url; });
-        const canvas = document.createElement('canvas');
-        canvas.width = w; canvas.height = h;
-        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-        URL.revokeObjectURL(url);
-        canvas.toBlob((b) => this._downloadBlob(b, filename));
+        try {
+            const img = new Image();
+            await new Promise((resolve, reject) => {
+                img.onload = resolve;
+                img.onerror = () => reject(new Error('Could not render SVG for PNG export.'));
+                img.src = url;
+            });
+            const canvas = document.createElement('canvas');
+            canvas.width = w; canvas.height = h;
+            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+            await this._downloadCanvasPNG(canvas, filename);
+        } finally {
+            URL.revokeObjectURL(url);
+        }
     }
 
     destroy() {

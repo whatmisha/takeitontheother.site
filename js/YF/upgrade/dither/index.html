@@ -13,8 +13,8 @@
     
     <title>Dither - Image Dithering Tool</title>
     <link rel="stylesheet" href="framework-base.css?v=g6-choice-1">
-    <link rel="stylesheet" href="style.css?v=g11-controls-1">
-    <link rel="stylesheet" href="../framework/css/ui-contract.css?v=g14-panel-spacing-1">
+    <link rel="stylesheet" href="style.css?v=uiq-4">
+    <link rel="stylesheet" href="../framework/css/ui-contract.css?v=uiq-4">
 </head>
 <body>
     <div class="container">
@@ -23,15 +23,13 @@
         </div>
         <div class="main-content">
             <div class="canvas-container">
-                <canvas id="canvas"></canvas>
+                <canvas id="canvas" class="ui-artboard" aria-label="Output image"></canvas>
                 <canvas id="overlayCanvas"></canvas>
-                <input type="file" id="imageInput" accept="image/*" style="display: none;">
-                <input type="file" id="sampleInput" accept="image/*" style="display: none;">
             </div>
 
             <aside class="controls-panel controls-panel-left" id="transformPanel" role="complementary" aria-label="Transform controls">
                 <div class="panel-header" id="transformPanelHeader">
-                    <span>Texture Transform <span class="panel-params" id="textureTransformParams"></span></span>
+                    <span>Texture <span class="panel-params" id="textureTransformParams"></span></span>
                     <button class="collapse-icon" type="button" aria-label="Collapse panel" aria-expanded="true">
                         <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                             <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -39,7 +37,27 @@
                     </button>
                 </div>
                 <div class="panel-content">
-                    <section class="control-section">
+                    <section class="control-section control-field-group control-field-group--flush" role="group" aria-labelledby="sourcesHeading">
+                        <h3 class="control-field-heading" id="sourcesHeading">Sources</h3>
+                        <div class="file-intake file-intake--panel" id="imageSourceIntake">
+                            <input type="file" id="imageInput" accept="image/*" hidden>
+                            <div class="file-intake__actions">
+                                <button type="button" class="btn-secondary panel-action file-intake__trigger" id="uploadBtnFixed" aria-label="Load image (Command/Control + O)" data-file-shortcut="o" data-file-shortcut-label="Open image" data-file-shortcut-persistent="true">Load image ⌘O</button>
+                                <button type="button" class="btn-secondary panel-action file-intake__remove btn-remove" id="removeImageBtn" aria-label="Remove image">Remove</button>
+                            </div>
+                            <span class="file-intake__status" id="imageInputStatus">Default image loaded.</span>
+                        </div>
+                        <div class="file-intake file-intake--panel" id="layoutSourceIntake">
+                            <input type="file" id="sampleInput" accept="image/*" hidden>
+                            <div class="file-intake__actions">
+                                <button type="button" class="btn-secondary panel-action file-intake__trigger" id="uploadSampleBtn" aria-label="Load layout (Command/Control + I)" data-file-shortcut="i" data-file-shortcut-label="Open layout" data-file-shortcut-persistent="true">Load layout ⌘I</button>
+                                <button type="button" class="btn-secondary panel-action file-intake__remove btn-remove" id="removeSampleBtn" aria-label="Remove layout">Remove</button>
+                            </div>
+                            <span class="file-intake__status" id="sampleInputStatus">Default layout loaded.</span>
+                        </div>
+                    </section>
+                    <section class="control-section control-field-group" role="group" aria-labelledby="transformHeading">
+                        <h3 class="control-field-heading" id="transformHeading">Transform</h3>
                         <div class="control-group">
                             <label for="positionX">
                                 <span>Position X</span>
@@ -73,7 +91,7 @@
                         </div>
                         
                         <div class="control-group transform-reset-group">
-                            <button class="btn-secondary btn-full" id="resetTransform" aria-label="Reset transform settings">Reset</button>
+                            <button type="button" class="btn-secondary panel-action btn-full" id="resetTransform" aria-label="Reset transform settings">Reset</button>
                         </div>
                     </section>
                 </div>
@@ -230,25 +248,12 @@
     <nav class="bottom-buttons action-dock dither-action-dock" role="toolbar" aria-label="Main actions">
         <div class="action-dock__slot action-dock__slot--utility">
             <button class="btn-fixed btn-intro-help" id="shortcutHelpBtn" aria-label="Keyboard shortcuts">?</button>
-            <button class="btn-fixed file-intake__trigger" id="uploadBtnFixed" aria-label="Add image (Command/Control + O)">
-                Image ⌘O
-            </button>
-            <button class="btn-fixed btn-remove" id="removeImageBtn" aria-label="Remove image">
-                ‒
-            </button>
-            <span class="sr-only file-intake__status" id="imageInputStatus">Default image loaded.</span>
-            <button class="btn-fixed file-intake__trigger" id="uploadSampleBtn" aria-label="Add layout sample (Command/Control + I)">
-                Layout ⌘I
-            </button>
-            <button class="btn-fixed btn-remove" id="removeSampleBtn" aria-label="Remove layout">
-                ‒
-            </button>
-            <span class="sr-only file-intake__status" id="sampleInputStatus">Default layout loaded.</span>
         </div>
         <div class="action-dock__slot action-dock__slot--primary">
-            <button class="btn-fixed btn-export" id="exportBtn" disabled aria-label="Export PNG (Command/Control + E)" data-action-dock-primary-export>
+            <button class="btn-fixed btn-export" id="exportBtn" disabled aria-label="Export PNG (Command/Control + E)" aria-describedby="exportStatus" data-action-dock-primary-export data-export-feedback="explicit">
                 PNG ⌘E
             </button>
+            <span class="sr-only" id="exportStatus" role="status" aria-live="polite"></span>
         </div>
         <div class="action-dock__slot action-dock__slot--options">
             <label class="toggle-label">
@@ -272,8 +277,8 @@
     </nav>
 
     <script type="module" src="../framework/src/ui/actionDockAutoInit.js?v=g7-resilience-4"></script>
-    <script src="js/export/DitherPngExport.js?v=g7-export-1" defer></script>
-    <script src="dither.js?v=g7-export-1" defer></script>
-    <script type="module" src="../framework/src/ui/unifiedUiAutoInit.js?v=g13-ui-repair-2"></script>
+    <script src="js/export/DitherPngExport.js?v=uiq-2" defer></script>
+    <script src="dither.js?v=uiq-4" defer></script>
+    <script type="module" src="../framework/src/ui/unifiedUiAutoInit.js?v=uiq-4"></script>
 </body>
 </html>

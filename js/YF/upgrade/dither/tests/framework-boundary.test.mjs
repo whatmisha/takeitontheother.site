@@ -18,9 +18,10 @@ test('Dither reaches shared UI and color behavior through one public-barrel faca
         readFile(new URL('dither.js', appRoot), 'utf8')
     ]);
 
-    assert.match(adapter, /from '\.\.\/\.\.\/\.\.\/framework\/src\/index\.js\?v=g6-file-intake-1';/u);
+    assert.match(adapter, /from '\.\.\/\.\.\/\.\.\/framework\/src\/index\.js\?v=uiq-2';/u);
     assert.deepEqual(DITHER_FRAMEWORK_ADAPTER.sharedCapabilities, [
         'ColorUtils',
+        'ExportFeedbackController',
         'FileIntakeController',
         'OverlayDialogHost',
         'PanelManager'
@@ -30,7 +31,10 @@ test('Dither reaches shared UI and color behavior through one public-barrel faca
     assert.equal(typeof ColorUtils.hexToRgb, 'function');
     assert.equal(typeof FileIntakeController, 'function');
 
-    assert.match(app, /\.\/js\/framework\/FrameworkAdapter\.js\?v=g6-file-intake-1/u);
+    assert.match(app, /\.\/js\/framework\/FrameworkAdapter\.js\?v=uiq-2/u);
+    assert.match(app, /return this\.exportFeedback\.run\(\(\) => this\.createAndDownloadExport\(\)\)/u);
+    assert.match(app, /const artifact = await globalThis\.DitherPngExport\.downloadCanvas/u);
+    assert.match(app, /if \(!artifact\) throw new Error/u);
     assert.equal((app.match(/new FileIntakeController\(\{/gu) || []).length, 2);
     assert.match(app, /dropzone:\s*document\.querySelector\('\.canvas-container'\)/u);
     assert.doesNotMatch(app, /imageInput\.addEventListener\('change'/u);
@@ -68,9 +72,13 @@ test('shared CSS stays below the Dither compatibility skin', async () => {
         'shared CSS must load before Dither compatibility CSS'
     );
     assert.match(html, /framework-base\.css\?v=g6-choice-1/u);
-    assert.match(html, /style\.css\?v=g11-controls-1/u);
-    assert.match(html, /js\/export\/DitherPngExport\.js\?v=g7-export-1/u);
-    assert.match(html, /dither\.js\?v=g7-export-1/u);
+    assert.match(html, /style\.css\?v=uiq-4/u);
+    assert.match(html, /js\/export\/DitherPngExport\.js\?v=uiq-2/u);
+    assert.match(html, /dither\.js\?v=uiq-4/u);
+    assert.match(html, /data-export-feedback="explicit"/u);
+    assert.match(html, /id="uploadBtnFixed"[^>]*data-file-shortcut="o"/u);
+    assert.match(html, /id="uploadSampleBtn"[^>]*data-file-shortcut="i"/u);
+    assert.doesNotMatch(app, /document\.addEventListener\('keydown'/u, 'Shared controllers must be the only owners of Dither dock shortcuts');
     assert.doesNotMatch(skin, /^\s*\*\s*\{/mu, 'Dither must consume the shared universal reset');
     assert.match(skin, /Shared-framework parity bridge/u);
     assert.match(skin, /\.main-content\s*\{\s*height: auto;\s*flex: 0 1 auto;/u);
@@ -96,8 +104,8 @@ test('shared CSS stays below the Dither compatibility skin', async () => {
     assert.doesNotMatch(bridge, /\.bottom-buttons\s*\{/u, 'Dither must retire its private left action anchor');
     assert.match(
         html,
-        /action-dock__slot--utility[\s\S]*?id="uploadBtnFixed"[\s\S]*?id="removeImageBtn"[\s\S]*?id="uploadSampleBtn"[\s\S]*?id="removeSampleBtn"[\s\S]*?action-dock__slot--primary[\s\S]*?id="exportBtn"[\s\S]*?action-dock__slot--options[\s\S]*?id="exportWithAlpha"[\s\S]*?class="segmented-control action-dock__segment"[\s\S]*?id="export1x"[\s\S]*?id="export2x"[\s\S]*?id="export4x"[\s\S]*?id="export8x"/u,
-        'Dither must separate source actions, PNG export and raster options in ActionDock'
+        /action-dock__slot--utility[\s\S]*?id="shortcutHelpBtn"[\s\S]*?action-dock__slot--primary[\s\S]*?id="exportBtn"[\s\S]*?action-dock__slot--options[\s\S]*?id="exportWithAlpha"[\s\S]*?class="segmented-control action-dock__segment"[\s\S]*?id="export1x"[\s\S]*?id="export2x"[\s\S]*?id="export4x"[\s\S]*?id="export8x"/u,
+        'Dither dock contains only help, PNG export and raster export options'
     );
     assert.match(html, /\bid="shortcutHelpBtn"[^>]*>\?<\/button>/u,
         'Dither shortcuts must live inside the shared ActionDock');
@@ -133,7 +141,8 @@ test('shared CSS stays below the Dither compatibility skin', async () => {
     assert.match(sharedStyles, /(?:^|\n)\.panel-header\s*\{/u);
     assert.match(sharedStyles, /(?:^|\n)\.collapse-icon\s*\{/u);
     assert.match(sharedStyles, /(?:^|\n)\.panel-params\s*\{/u);
-    assert.match(skinWithoutComments, /\.btn-remove\s*\{/u);
+    assert.doesNotMatch(skinWithoutComments, /\.btn-remove\s*\{/u);
+    assert.match(skinWithoutComments, /#transformPanel \.file-intake__remove:not\(\.visible\)/u);
     assert.doesNotMatch(skinWithoutComments, /\.export-transparency-label\b/u);
     const privateValueDisplaySelectors = Array.from(
         skinWithoutComments.matchAll(/(?:^|\})\s*([^{}]*\.value-display(?![\w-])[^{}]*)\{/gu),

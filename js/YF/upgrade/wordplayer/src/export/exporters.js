@@ -15,12 +15,15 @@ function escapeXml(value) {
 function downloadBlob(blob, filename) {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    try {
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+    } finally {
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
 }
 
 function downloadText(content, filename, mimeType) {
@@ -54,7 +57,10 @@ export class WordplayerExporter {
                     resolve(font);
                 }
             });
-        }));
+        })).catch(error => {
+            this.fontPromises.delete(rounded);
+            throw error;
+        });
         this.fontPromises.set(rounded, promise);
         return promise;
     }

@@ -24,21 +24,30 @@
         filename = FILENAME,
         timeout = scope.setTimeout
     } = {}) {
-        return new Promise(resolve => {
+        return new Promise((resolve, reject) => {
             canvas.toBlob(blob => {
-                if (!blob) {
-                    resolve(null);
-                    return;
+                try {
+                    if (!blob) {
+                        resolve(null);
+                        return;
+                    }
+                    const url = URLRef.createObjectURL(blob);
+                    try {
+                        const link = documentRef.createElement('a');
+                        link.download = filename;
+                        link.href = url;
+                        documentRef.body.appendChild(link);
+                        try { link.click(); }
+                        finally { documentRef.body.removeChild(link); }
+                    } finally {
+                        timeout(() => URLRef.revokeObjectURL(url), 100);
+                    }
+                    resolve({ blob, filename, mimeType: MIME_TYPE });
+                } catch (error) {
+                    // Exceptions inside an asynchronous encoder callback must reject
+                    // the export promise instead of leaving the UI busy forever.
+                    reject(error);
                 }
-                const url = URLRef.createObjectURL(blob);
-                const link = documentRef.createElement('a');
-                link.download = filename;
-                link.href = url;
-                documentRef.body.appendChild(link);
-                link.click();
-                documentRef.body.removeChild(link);
-                timeout(() => URLRef.revokeObjectURL(url), 100);
-                resolve({ blob, filename, mimeType: MIME_TYPE });
             }, MIME_TYPE);
         });
     }

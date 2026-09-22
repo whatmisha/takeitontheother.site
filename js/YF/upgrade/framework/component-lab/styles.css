@@ -80,7 +80,7 @@ body {
 }
 
 .lab-hover {
-    background: var(--color-bg);
+    background: #2a2a2a;
     color: var(--color-text);
 }
 
@@ -98,6 +98,13 @@ body {
     position: static !important;
     transform: none !important;
     margin: 20px auto 0;
+}
+
+.component-lab__feedback {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 16px;
 }
 
 .component-lab__columns {

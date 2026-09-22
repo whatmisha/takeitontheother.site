@@ -157,14 +157,76 @@ unlayered resets оформляется узким app bridge с `revert-layer` 
 проверяется exact before/after capture; копировать component declarations
 обратно в приложение запрещено.
 
-`ActionDock` — CSS-only layout contract: `.bottom-buttons.action-dock` содержит
-до трёх `.action-dock__slot` с модификаторами `--utility`, `--primary` и
-`--options`. Primary всегда остаётся в центре viewport независимо от ширины
-соседних slots; utility растёт вправо от левого края, options — влево от
-правого. Dock и пустое
-пространство не перехватывают pointer events, интерактивны только slots.
-Framework владеет layout/spacing, приложение — составом controls, handlers,
-busy/error state, export pipeline, filename и output.
+`ActionDock`: `.bottom-buttons.action-dock` — единая центрированная группа
+с `.action-dock__slot--utility`, `--primary`, `--options`. Центрируется весь dock,
+а не отдельно primary; slots переносятся при нехватке ширины. Связанные действия
+при необходимости объединяются в `.action-dock__cluster`, но загрузка/удаление
+исходных изображений находятся в панели управления, а не в export dock. Токен
+`--color-text` внутри dock равен `--ui-foreground`, не меняя палитру artwork.
+Framework владеет layout/spacing, приложение — составом действий и экспортом.
+
+### Кнопки панели и источники (UIQ 3, opt-in)
+
+`.controls-panel .panel-action` — общий вид Reset/Load/Remove: 36px, 16px/500,
+фон #000 и текст #d2d2d2; hover инвертирует цвета, focus-visible получает
+2px outline, disabled отдельный приглушённый вид. `[hidden]` всегда скрыт.
+Приложение не копирует эти CSS-правила, а владеет enabled/hidden и операцией.
+
+`.file-intake--panel` содержит `.file-intake__actions` с trigger/remove и
+`.file-intake__status`. Используется существующий FileIntakeController; отдельный
+код декодирования файлов остаётся частным. Длинные имена переносятся внутри панели.
+`data-file-shortcut-persistent="true"` явно разрешает команду импорта из свёрнутой
+панели. Это не обходит disabled/hidden и не включает прочие скрытые действия.
+
+### Экранная граница листа (UIQ 3, opt-in)
+
+`.ui-artboard` — CSS outline 1px / #333 только для DOM-элемента, точно совпадающего
+с выходным листом; сейчас Dither. Не применять к viewport целиком или к transform
+overlay. Для логического листа внутри pan/zoom SVG/Canvas нужен отдельный
+preview-only адаптер; его геометрия и hit-testing не должны попадать в экспорт.
+Граница листа не заменяет направляющие, выделение или печатные контуры.
+
+### Группы контролов (UIQ)
+
+`.control-field-group` содержит `.control-field-heading` независимо от тега
+`h3`/`div`. Заголовок: 12px / 400, normal letter-spacing, верхний padding 12px,
+нижний margin 24px и полный по ширине разделитель. Для группы в начале панели
+используется `.control-field-group--flush`. Обычные h3-правила обязаны исключать
+этот компонент. Разметка должна связывать группу и заголовок через aria-labelledby.
+
+### Явный жизненный цикл экспорта (UIQ, opt-in)
+
+`ExportFeedbackController({ button, status, ownerWindow })` импортируется из
+публичного barrel. В HTML кнопка заранее помечается `data-export-feedback="explicit"`;
+это отключает старую DOM-эвристику ещё до инициализации приложения.
+`status` — необязательный элемент `role="status" aria-live="polite"`.
+
+`run(() => exporter())` принимает sync-функцию либо функцию, возвращающую Promise.
+Promise операции должен завершаться после создания артефакта и запуска скачивания;
+ошибки должны отклонять его, а не проглатываться. Значение `null`/отмена должны быть
+проверены адаптером **до успешного завершения**. Это не подтверждение физической
+записи файла браузером на диск.
+
+Контроллер возвращает `{ status: 'success', value }`, `{ status: 'error', error }`
+или `{ status: 'unavailable' }`. Не меняет disabled; pending-вызовы объединяются,
+после завершения повторный запуск доступен сразу. Успех показывается 620ms,
+ошибка — 2200ms; 140ms fade определён общим CSS с учётом reduced-motion.
+`destroy()` очищает feedback и не даёт позднему результату оживить UI, но не
+отменяет сам exporter. Переведены Dither (PNG), Wordplayer (PNG / SVG) и Keyboarder
+(SVG / PNG / PDF / JSON). Legacy feedback остальных инструментов удаляется после
+явной адаптации каждого. Частный прогресс/отмена анимационного Sparky пока не
+заменяется этим контроллером.
+
+Общий `ApplicationShell.exportPNG()` теперь ждёт `toBlob()` и запуск скачивания в
+обоих путях — canvas и SVG rasterization. Пустой Blob, ошибка декодирования SVG,
+кодирования или скачивания отклоняют Promise; временный URL очищается и при
+ошибке. Нельзя возвращать успех из адаптера раньше завершения этого Promise.
+Keyboarder нормализует `{ ok: false }` своего PDF-экспортера в rejection перед
+feedback; `{ reported: true }` предотвращает повторное сообщение о той же ошибке.
+
+Дополнительные file-команды задаются на видимом trigger через
+`data-file-shortcut="o|i"` и `data-file-shortcut-label`. Эти данные используются
+общим обработчиком Cmd/Ctrl и справкой; частный keydown-handler дублировать нельзя.
 
 ## 9. Compatibility and versioning
 

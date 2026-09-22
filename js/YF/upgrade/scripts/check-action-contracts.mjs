@@ -71,9 +71,11 @@ assert.match(
 );
 assert.match(
     bars.Dither,
-    /action-dock__slot--utility[\s\S]*?\bid=["']uploadBtnFixed["'][\s\S]*?\bid=["']removeImageBtn["'][\s\S]*?\bid=["']uploadSampleBtn["'][\s\S]*?\bid=["']removeSampleBtn["'][\s\S]*?action-dock__slot--primary[\s\S]*?\bid=["']exportBtn["'][\s\S]*?action-dock__slot--options[\s\S]*?\bid=["']exportWithAlpha["'][\s\S]*?action-dock__segment[\s\S]*?\bid=["']export1x["'][\s\S]*?\bid=["']export2x["'][\s\S]*?\bid=["']export4x["'][\s\S]*?\bid=["']export8x["']/u,
-    'Dither must keep source actions, PNG export and raster options in their ActionDock slots'
+    /action-dock__slot--utility[\s\S]*?\bid=["']shortcutHelpBtn["'][\s\S]*?action-dock__slot--primary[\s\S]*?\bid=["']exportBtn["'][\s\S]*?action-dock__slot--options[\s\S]*?\bid=["']exportWithAlpha["'][\s\S]*?action-dock__segment[\s\S]*?\bid=["']export1x["'][\s\S]*?\bid=["']export2x["'][\s\S]*?\bid=["']export4x["'][\s\S]*?\bid=["']export8x["']/u,
+    'Dither must keep help, PNG export and raster options in their ActionDock slots'
 );
+assert.doesNotMatch(bars.Dither, /id="(?:uploadBtnFixed|removeImageBtn|uploadSampleBtn|removeSampleBtn)"/u,
+    'Dither source management belongs in the Texture panel, not the export dock');
 
 const expected = {
     Sparky: {
@@ -117,10 +119,10 @@ const expected = {
         ids: ['verifyBtn', 'copyBtn', 'downloadBtn']
     },
     Dither: {
-        buttons: 6,
-        fixed: 6,
+        buttons: 2,
+        fixed: 2,
         labels: 5,
-        ids: ['shortcutHelpBtn', 'uploadBtnFixed', 'removeImageBtn', 'uploadSampleBtn', 'removeSampleBtn',
+        ids: ['shortcutHelpBtn',
             'exportBtn', 'exportWithAlpha', 'export1x', 'export2x', 'export4x', 'export8x']
     },
     'Wander Bender': {
@@ -153,10 +155,10 @@ for (const [name, contract] of Object.entries(expected)) {
 const buttonCount = Object.values(bars).reduce((total, bar) => total + count(bar, /<button\b/gu), 0);
 const fixedCount = Object.values(bars).reduce((total, bar) => total + countClass(bar, 'btn-fixed'), 0);
 const labelCount = Object.values(bars).reduce((total, bar) => total + count(bar, /<label\b/gu), 0);
-assert.equal(buttonCount, 35);
-assert.equal(fixedCount, 34);
+assert.equal(buttonCount, 31);
+assert.equal(fixedCount, 30);
 assert.equal(labelCount, 10);
-assert.equal(buttonCount + labelCount, 45);
+assert.equal(buttonCount + labelCount, 41);
 
 for (const [name, bar] of Object.entries(bars)) {
     assert.match(bar, /data-action-dock-primary-export/u, `${name} canonical primary export missing`);
@@ -290,7 +292,7 @@ assert.match(
 );
 assert.doesNotMatch(stripComments(ditherBridge), /\.bottom-buttons\s*\{/u,
     'Dither must not retain its private left action anchor');
-assert.match(stripComments(ditherCss), /\.btn-remove\s*\{/u);
+assert.doesNotMatch(stripComments(ditherCss), /\.btn-remove\s*\{/u);
 assert.match(bars.Dither, /class=["']toggle-label["'][\s\S]*?id=["']exportWithAlpha["']/u);
 assert.doesNotMatch(stripComments(pulsarBridge), /all:\s*revert-layer/u,
     'Pulsar must consume the canonical shared action presentation without reset promotions');

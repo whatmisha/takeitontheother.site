@@ -12,13 +12,19 @@ const [toolSource, htmlSource, themeSource, typographySource, frameworkStylesSou
 
 assert.match(
     toolSource,
-    /import\s*\{[\s\S]*?defineTool[\s\S]*?FileIntakeController[\s\S]*?SVGExporter[\s\S]*?\}\s*from\s*['"]\.\.\/\.\.\/framework\/src\/index\.js\?v=g6-capabilities-1['"];/,
+    /import\s*\{[\s\S]*?defineTool[\s\S]*?FileIntakeController[\s\S]*?ExportFeedbackController[\s\S]*?SVGExporter[\s\S]*?\}\s*from\s*['"]\.\.\/\.\.\/framework\/src\/index\.js\?v=uiq-3['"];/,
     'Keyboarder must consume shared infrastructure through the public barrel'
 );
 assert.doesNotMatch(toolSource, /vendor\/framework/, 'Keyboarder runtime still imports its retired framework copy');
 assert.match(toolSource, /readyApp\.exporter\s*=\s*new SVGExporter/, 'Keyboarder custom exporter initialization changed');
 assert.match(toolSource, /installPdfExport\(readyApp\)/, 'editable PDF integration changed');
 assert.match(toolSource, /installCleanExports\(readyApp\)/, 'clean export wrapper changed');
+assert.match(toolSource, /readyApp\.exportFeedback = bindKeyboarderExportActions/u);
+assert.match(htmlSource, /app\/tool\.js\?v=uiq-3/u);
+for (const id of ['exportSvgBtn', 'exportPngBtn', 'exportPdfBtn', 'exportJsonBtn']) {
+    assert.match(htmlSource, new RegExp(`id="${id}"[^>]*data-export-feedback="explicit"[^>]*aria-describedby="${id}Status"`));
+    assert.match(htmlSource, new RegExp(`id="${id}Status"[^>]*role="status"[^>]*aria-live="polite"`));
+}
 assert.match(toolSource, /storageKey:\s*['"]upgrade:keyboarder:presets:v1['"]/, 'preset namespace changed');
 assert.match(toolSource, /upgrade:keyboarder:svg-export-mode:v1/, 'SVG mode namespace changed');
 assert.match(toolSource, /upgrade:keyboarder:ui-mode:v1/, 'UI mode namespace changed');
@@ -44,7 +50,7 @@ assert.match(
     'Keyboarder must keep document utilities, primary exports and Outline in their ActionDock slots'
 );
 assert.doesNotMatch(themeSource, /CoFoSans-(?:Regular|Medium)\.woff2/u, 'Keyboarder UI must use the shared system stack');
-assert.match(htmlSource, /framework\/css\/ui-contract\.css\?v=g14-panel-spacing-1/u, 'Keyboarder must load the shared system-font UI contract');
+assert.match(htmlSource, /framework\/css\/ui-contract\.css\?v=uiq-2/u, 'Keyboarder must load the shared system-font UI contract');
 assert.match(themeSource, /\.\.\/fonts\/YS%20Text%20Variable\/YSText-Upright-weight-VF\.ttf/, 'application YS Text font changed');
 assert.match(typographySource, /\.\.\/\.\.\/vendor\/lib\/opentype\.module\.js/, 'Keyboarder typography dependency changed');
 assert.match(

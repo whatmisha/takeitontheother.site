@@ -1,0 +1,36 @@
+:root { color-scheme: dark; font-family: -apple-system, BlinkMacSystemFont, Inter, "Segoe UI", Roboto, sans-serif; color: #d2d2d2; background: #101010; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+main { margin: 0 auto; padding: 28px; max-width: 1600px; }
+h1, h2, strong, button, summary { font-weight: 500; }
+h1 { font-size: 28px; margin: 22px 0 8px; }
+h2 { font-size: 18px; margin: 24px 0 12px; }
+p, li { font-size: 14px; line-height: 1.5; }
+p { margin: 8px 0; }
+a { color: #d2d2d2; text-underline-offset: 3px; }
+.toolbar { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin: 24px 0 16px; }
+label { display: grid; gap: 7px; font-size: 13px; }
+select, button, textarea { font: inherit; font-size: 14px; border: 1px solid #444; border-radius: 8px; padding: 9px 12px; background: #1a1a1a; color: inherit; }
+button { cursor: pointer; min-height: 38px; }
+button[type=submit] { background: #d2d2d2; color: #000; border-color: #d2d2d2; }
+button:hover:not(:disabled) { background: #333; color: #fff; }
+button:disabled { opacity: .4; cursor: default; }
+:focus-visible { outline: 2px solid #b0c4ff; outline-offset: 3px; }
+#status { font-size: 16px; }
+.notice { color: #a0a0a0; max-width: 1050px; }
+details { padding: 13px 16px; border: 1px solid #333; border-radius: 8px; margin: 8px 0; background: #181818; }
+summary { cursor: pointer; font-size: 14px; }
+details[data-result=diff] { border-left: 3px solid #ee9c87; }
+details[data-result=review], details[data-result=unavailable] { border-left: 3px solid #c5b883; }
+details[data-result=match] { border-left: 3px solid #89ae99; }
+table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 13px; }
+th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #333; overflow-wrap: anywhere; }
+th { color: #999; font-weight: 400; }
+td { vertical-align: top; }
+.table-scroll { overflow: auto; }
+.notes { margin-bottom: 24px; }
+textarea { display: block; width: 100%; resize: vertical; margin-top: 8px; }
+.preview { overflow: auto; max-height: 940px; border: 1px solid #333; border-radius: 10px; background: #000; }
+iframe { width: 1440px; height: 900px; display: block; border: 0; }
+.references { position: fixed; top: 0; left: -20000px; pointer-events: none; }
+@media(max-width: 650px) { main { padding: 16px; } .toolbar label { width: 100%; } }

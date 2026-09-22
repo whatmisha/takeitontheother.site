@@ -163,6 +163,24 @@
     max-height: 1000px;
 }
 
+.canvas-container.is-file-dragover {
+    outline: 2px solid var(--color-text);
+    outline-offset: -8px;
+}
+
+.canvas-container.is-file-dragover::after {
+    content: 'Drop Pulsar v2 SVG or image to decode';
+    position: absolute;
+    inset: 50% auto auto 50%;
+    transform: translate(-50%, -50%);
+    padding: var(--spacing-lg) var(--spacing-2xl);
+    border-radius: var(--radius-input);
+    background: var(--color-bg-panel);
+    color: var(--color-text);
+    pointer-events: none;
+    z-index: 20;
+}
+
 /* Pulse animation for Generate button */
 @keyframes pulse {
     0%, 100% {

@@ -143,3 +143,30 @@ test('Wordplayer PNG export preserves scale, MIME, signature and filename', asyn
         harness.restore();
     }
 });
+
+test('Wordplayer retries a failed font load instead of caching rejection forever', async () => {
+    const exporter = new WordplayerExporter();
+    const font = { unitsPerEm: 1000 };
+    let attempts = 0;
+    exporter.getOpenType = async () => ({ load(_url, callback) {
+        attempts++;
+        callback(attempts === 1 ? new Error('font unavailable') : null, font);
+    } });
+    await assert.rejects(exporter.loadFont(400), /font unavailable/);
+    assert.equal(await exporter.loadFont(400), font);
+    assert.equal(attempts, 2);
+});
+
+test('Wordplayer releases a download URL even if the click fails', async () => {
+    const harness = installDownloadHarness();
+    const originalCreate = document.createElement;
+    document.createElement = tag => {
+        const element = originalCreate(tag);
+        if (tag === 'a') element.click = () => { throw new Error('download failed'); };
+        return element;
+    };
+    try {
+        await assert.rejects(new WordplayerExporter().exportPng({ width: 20, height: 20, glyphs: [] }), /download failed/);
+        assert.equal(harness.downloads[0].revoked, true);
+    } finally { harness.restore(); }
+});

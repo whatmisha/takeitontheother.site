@@ -1,4 +1,4 @@
-import { initUnifiedUi } from './UnifiedUiController.js?v=g13-ui-repair-2';
+import { initUnifiedUi } from './UnifiedUiController.js?v=uiq-5';
 
 const key = Symbol.for('lunnen.unifiedUiController');
 globalThis[key]?.destroy?.();

@@ -5,12 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Upgrade Framework — Component Lab</title>
     <link rel="stylesheet" href="../css/othersite-styles.css?v=g6-choice-1">
-    <link rel="stylesheet" href="./styles.css?v=g6-component-lab-1">
+    <link rel="stylesheet" href="./styles.css?v=uiq-1">
+    <link rel="stylesheet" href="../css/ui-contract.css?v=uiq-4">
 </head>
 <body>
     <main class="component-lab">
         <header class="component-lab__header">
-            <a class="top-link" href="../../">←Upgrade Tools</a>
+            <a class="top-link" href="../../">← Upgrade Tools</a>
             <div>
                 <p class="component-lab__eyebrow">Framework QA</p>
                 <h1>Component Lab</h1>
@@ -20,13 +21,24 @@
 
         <section class="component-lab__section" aria-labelledby="buttonStatesTitle">
             <h2 id="buttonStatesTitle">Action states</h2>
-            <div class="component-lab__states">
+            <div class="component-lab__states action-dock">
                 <article data-state="normal"><span>Normal</span><button class="btn-fixed">SVG ⌘E</button></article>
                 <article data-state="hover"><span>Hover</span><button class="btn-fixed lab-hover">SVG ⌘E</button></article>
                 <article data-state="focus"><span>Focus</span><button class="btn-fixed lab-focus">SVG ⌘E</button></article>
                 <article data-state="disabled"><span>Disabled</span><button class="btn-fixed" disabled>SVG ⌘E</button></article>
                 <article data-state="loading"><span>Loading</span><button class="btn-fixed lab-loading" aria-busy="true">Preparing…</button></article>
                 <article data-state="error"><span>Error</span><button class="btn-fixed btn-fixed--danger">Try again</button></article>
+            </div>
+        </section>
+
+        <section class="component-lab__section" aria-labelledby="feedbackTitle">
+            <h2 id="feedbackTitle">Export feedback — live demo</h2>
+            <p>No files are created. Test a successful operation, failure, unavailable state and repeated clicks.</p>
+            <label><input id="labFeedbackFail" type="checkbox"> Simulate failure</label>
+            <label><input id="labFeedbackUnavailable" type="checkbox"> Unavailable</label>
+            <div class="action-dock component-lab__feedback">
+                <button id="labFeedbackButton" class="btn-fixed" data-export-feedback="explicit" aria-describedby="labFeedbackStatus">Test export</button>
+                <span id="labFeedbackStatus" role="status" aria-live="polite"></span>
             </div>
         </section>
 
@@ -81,13 +93,35 @@
                     </button>
                 </div>
                 <div class="panel-content">
-                    <div class="control-group">
-                        <label for="labRange"><span>Intensity</span><output class="value-display">50</output></label>
-                        <input id="labRange" type="range" min="0" max="100" value="50">
+                    <div class="file-intake file-intake--panel" data-file-state="ready">
+                        <div class="file-intake__actions">
+                            <button class="panel-action file-intake__trigger" type="button">Load image ⌘O</button>
+                            <button class="panel-action file-intake__remove" type="button">Remove</button>
+                        </div>
+                        <span class="file-intake__status">Example image loaded.</span>
                     </div>
+                    <div class="control-group">
+                        <button class="panel-action" type="button">Reset</button>
+                        <button class="panel-action" type="button" disabled>Unavailable</button>
+                    </div>
+                    <section class="control-section control-field-group control-field-group--flush" role="group" aria-labelledby="labGroupA">
+                        <h3 class="control-field-heading" id="labGroupA">Group heading (h3)</h3>
+                        <div class="control-group">
+                            <label for="labRange"><span>Intensity</span><output class="value-display">50</output></label>
+                            <input id="labRange" type="range" min="0" max="100" value="50">
+                        </div>
+                    </section>
+                    <section class="control-section control-field-group" role="group" aria-labelledby="labGroupB">
+                        <div class="control-field-heading" id="labGroupB">Group heading (div)</div>
+                        <div class="control-group">
+                            <label for="labRangeB"><span>Density</span><output class="value-display">25</output></label>
+                            <input id="labRangeB" type="range" min="0" max="100" value="25">
+                        </div>
+                    </section>
                 </div>
             </aside>
         </section>
     </main>
+    <script type="module" src="./feedback-demo.js?v=uiq-1"></script>
 </body>
 </html>

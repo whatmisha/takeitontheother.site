@@ -32,6 +32,8 @@ assert.match(contractCss, /\.controls-panel \.control-group:not\(\[data-ui-custo
 assert.match(contractCss, /\.controls-panel \.ui-control-stack > \.control-group:last-child[\s\S]*?margin-bottom:\s*0\s*!important/u);
 assert.match(contractCss, /\.controls-panel \.stacked-select-label[\s\S]*?flex-direction:\s*column/u);
 assert.match(contractCss, /\.controls-panel \.control-field-heading[\s\S]*?border-top:\s*1px solid var\(--color-border\)/u);
+assert.match(contractCss, /\.control-section > h3:not\(\.control-field-heading\)/u, 'Ordinary heading overrides must exclude group headings');
+assert.match(contractCss, /\.action-dock\s*\{\s*--color-text:\s*var\(--ui-foreground\)/u, 'Dock colour token must not change the artwork palette');
 assert.match(contractCss, /\.ui-shortcut-help__list[\s\S]*?gap:\s*9px 18px/u);
 assert.match(contractCss, /\.controls-panel > \.panel-content::-webkit-scrollbar-thumb[\s\S]*?background:\s*#000/u);
 assert.match(contractCss, /\.controls-panel \.pill-toggle:has\(input:checked:not\(:disabled\)\)[\s\S]*?background:\s*var\(--ui-foreground\)\s*!important/u);
@@ -44,8 +46,9 @@ assert.doesNotMatch(contractCss, /Arial|TT Commons|CoFo Sans/u);
 
 entrypoints.forEach((html, index) => {
     const app = applications[index];
-    assert.match(html, /framework\/css\/ui-contract\.css\?v=g14-panel-spacing-1/u, `${app}: missing final UI CSS`);
-    assert.match(html, /framework\/src\/ui\/unifiedUiAutoInit\.js\?v=g13-ui-repair-2/u, `${app}: missing shared UI controller`);
+    const version = app === 'dither' ? 'uiq-4' : 'uiq-2';
+    assert.ok(html.includes(`framework/css/ui-contract.css?v=${version}`), `${app}: missing final UI CSS`);
+    assert.ok(html.includes(`framework/src/ui/unifiedUiAutoInit.js?v=${version}`), `${app}: missing shared UI controller`);
     if (app !== 'grid_generator') {
         assert.match(html, /←\s+Upgrade Tools/u, `${app}: back link needs a readable arrow gap`);
     }
@@ -98,6 +101,9 @@ const [wordplayerHtml, keyboarderCss, stickyHtml] = await Promise.all([
     read('keyboarder/app/theme.css'),
     read('label_generator/index.html')
 ]);
+const wordplayerStyles = await read('wordplayer/styles.css');
+assert.doesNotMatch(wordplayerStyles, /\.tone-group-heading\s*\{/u, 'Wordplayer must not fork the shared group heading');
+assert.equal(wordplayerHtml.match(/class="tone-group-heading control-field-heading"/gu)?.length || 0, 5, 'Both Wordplayer modes must use shared headings');
 const pizzaEditors = await read('grid_generator/src/ui/fragments/object-editors.html');
 assert.equal(pizzaEditors.match(/class="stacked-select-label"/gu)?.length || 0, 2);
 for (const html of [pizzaEditors, stickyHtml]) {
@@ -140,7 +146,9 @@ assert.match(
     pizzaEditors,
     /class="segmented-control segmented-control-compact"[^>]*>[\s\S]*?graphicsSizeModeWidth[\s\S]*?graphicsSizeModeHeight/u
 );
-assert.match(ditherCss, /#transformPanel \.btn-secondary\s*\{[^}]*border:\s*0;[^}]*height:\s*36px;/su);
-assert.match(ditherCss, /#transformPanel \.btn-secondary:focus-visible\s*\{[^}]*outline:\s*2px solid var\(--color-text\);/su);
+assert.doesNotMatch(ditherCss, /#transformPanel \.btn-secondary/u, 'Reset must not fork panel-action styles');
+assert.match(ditherHtml, /class="btn-secondary panel-action btn-full" id="resetTransform"/u);
+assert.match(contractCss, /\.controls-panel \.panel-action\s*\{[^}]*height:\s*36px;[^}]*border:\s*0;[^}]*background:\s*#000;/su);
+assert.match(contractCss, /\.controls-panel \.panel-action:focus-visible\s*\{[^}]*outline:\s*2px solid/u);
 
 console.log('Shared UI contract passed: 8 entrypoints, common swatches, controls, summaries, shortcuts and feedback are wired.');

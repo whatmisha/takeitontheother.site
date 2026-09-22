@@ -152,30 +152,6 @@ body,
     white-space: nowrap;
 }
 
-.tone-param-group {
-    border: 0;
-    padding: 0;
-    margin: 0;
-}
-
-.tone-param-group + .tone-param-group {
-    margin-top: var(--spacing-2xl);
-}
-
-.tone-group-heading {
-    margin: var(--spacing-2xl) calc(-1 * var(--spacing-3xl)) 24px;
-    padding: var(--spacing-xl) var(--spacing-3xl) 0;
-    border-top: 1px solid var(--color-border);
-    color: var(--color-text-muted);
-    font-size: 0.75rem;
-    font-weight: 500;
-    text-transform: uppercase;
-}
-
-#pixelsPanel .tone-param-group:first-child > .tone-group-heading {
-    margin-top: 0;
-}
-
 .tone-param-group .control-group:last-child,
 .pixel-toggle-row {
     margin-bottom: 0;

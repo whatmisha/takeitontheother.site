@@ -1,11 +1,11 @@
-import { defineTool, FileIntakeController } from '../framework/src/index.js?v=g6-capabilities-1';
+import { defineTool, FileIntakeController, ExportFeedbackController } from '../framework/src/index.js?v=uiq-3';
 import { DEFAULT_SETTINGS, SLIDER_DEFINITIONS } from './src/config/defaults.js';
-import { WordplayerExporter } from './src/export/exporters.js';
+import { WordplayerExporter } from './src/export/exporters.js?v=uiq-3';
 import { AssetController } from './src/io/assets.js?v=g6-file-intake-2';
 import { DitherEngine } from './src/modes/dither.js';
 import { FormsEngine } from './src/modes/forms.js';
 import { drawScene } from './src/render/canvas-renderer.js';
-import { normalizeMode, WordplayerUI } from './src/ui/controls.js?v=g6-file-intake-1';
+import { normalizeMode, WordplayerUI } from './src/ui/controls.js?v=uiq-3';
 
 let app = null;
 let currentScene = null;
@@ -17,7 +17,8 @@ const ui = new WordplayerUI({
     assets,
     exporter,
     getScene: () => currentScene,
-    FileIntakeController
+    FileIntakeController,
+    ExportFeedbackController
 });
 
 function snapshot(appInstance) {

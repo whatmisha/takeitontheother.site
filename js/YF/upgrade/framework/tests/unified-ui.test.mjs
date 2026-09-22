@@ -87,6 +87,65 @@ test('overflowing summaries drop expendable units before CSS ellipsis', () => {
     );
 });
 
+test('file command metadata drives both help and a single keyboard activation', () => {
+    const image = { dataset: { fileShortcut: 'o', fileShortcutLabel: 'Open image' }, clicks: 0, click() { this.clicks++; } };
+    const layout = { dataset: { fileShortcut: 'i', fileShortcutLabel: 'Open layout' }, clicks: 0, click() { this.clicks++; } };
+    const controller = new UnifiedUiController({
+        ownerDocument: {
+            querySelector: () => null,
+            querySelectorAll: selector => selector === '[data-file-shortcut]' ? [image, layout] : []
+        }, ownerWindow: {}
+    });
+    assert.deepEqual(controller.shortcutRows(), [['Open image', '⌘O'], ['Open layout', '⌘I'], ['Shortcuts', '?']]);
+    const event = {
+        key: 'i', metaKey: true, target: { tagName: 'BODY' },
+        preventDefault() { this.defaultPrevented = true; },
+        stopImmediatePropagation() { this.stopped = true; }
+    };
+    controller.handleKeydown(event);
+    controller.handleKeydown(event);
+    assert.equal(layout.clicks, 1);
+    assert.equal(image.clicks, 0);
+    assert.equal(event.stopped, true);
+
+    for (const override of [{ repeat: true }, { shiftKey: true }, { altKey: true }, { target: { tagName: 'INPUT' } }, { target: { isContentEditable: true } }]) {
+        controller.handleKeydown({ ...event, defaultPrevented: false, ...override });
+    }
+    assert.equal(layout.clicks, 1);
+    layout.disabled = true;
+    controller.handleKeydown({ ...event, defaultPrevented: false });
+    assert.equal(layout.clicks, 1);
+});
+
+test('explicit file shortcuts survive a collapsed panel but never activate a disabled or hidden action', () => {
+    const image = {
+        dataset: { fileShortcut: 'o', fileShortcutLabel: 'Open image', fileShortcutPersistent: 'true' },
+        getClientRects: () => [], clicks: 0, click() { this.clicks++; }
+    };
+    const layout = { dataset: { fileShortcut: 'i' }, getClientRects: () => [] };
+    const controller = new UnifiedUiController({
+        ownerDocument: {
+            querySelector: () => null,
+            querySelectorAll: selector => selector === '[data-file-shortcut]' ? [image, layout] : []
+        }, ownerWindow: {}
+    });
+    assert.deepEqual(controller.shortcutRows(), [['Open image', '⌘O'], ['Shortcuts', '?']]);
+    const press = () => controller.handleKeydown({
+        key: 'o', metaKey: true, target: { tagName: 'BODY' },
+        preventDefault() {}, stopImmediatePropagation() {}
+    });
+    press();
+    assert.equal(image.clicks, 1);
+    image.disabled = true;
+    press();
+    assert.equal(image.clicks, 1);
+    image.disabled = false;
+    image.hidden = true;
+    press();
+    assert.equal(image.clicks, 1);
+    assert.deepEqual(controller.shortcutRows(), [['Shortcuts', '?']]);
+});
+
 test('fast export feedback is restartable and never disables its action', () => {
     const callbacks = [];
     const cleared = [];

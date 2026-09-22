@@ -74,7 +74,7 @@ function summaryConfig(tool) {
         pulsar_coder: {
             mainPanel: d => `${value(d, 'rayCountValue', '14')} · ${value(d, 'charCounter', '22 chars').replace(' characters', ' chars')}`,
             encodingPanel: d => `${checkedValue(d, 'eccMode') === 'none' ? 'No ECC' : titleCase(checkedValue(d, 'eccMode'))} · ${value(d, 'tickShortValue', '4')}/${value(d, 'tickLongValue', '12')}`,
-            visualPanel: d => `${value(d, 'marginValue', '50')} margin · ${value(d, 'preambleLengthValue', '16')} preamble`
+            visualPanel: d => `${value(d, 'marginValue', '50')} margin · ${value(d, 'seedInput', 'voyager1977')} seed`
         },
         wander_bender: {
             controlsPanel: d => `${titleCase(checkedValue(d, 'mode'))} · ${value(d, 'raysValue')} rays · ${value(d, 'lengthValue')}×${value(d, 'widthValue')}`
@@ -227,7 +227,7 @@ export class UnifiedUiController {
         if (this.document.querySelector('[data-action-dock-json-export]')) rows.push(['JSON export', '⌘J']);
         if (this.document.querySelector('[data-action-dock-json-import]')) rows.push(['JSON import', '⇧⌘J']);
         if (this.document.querySelector('[data-action-dock-extra]')) rows.push(['JSON actions', 'J']);
-        if (this.mainFileTrigger()) rows.push(['Open file', '⌘O']);
+        for (const { label, key } of this.fileShortcuts()) rows.push([label, `⌘${key.toUpperCase()}`]);
         if (this.document.querySelector('#undoBtn, [data-history-undo]') || this.tool === 'sparky') rows.push(['Undo / redo', '⌘Z / ⇧⌘Z']);
         if (this.eligiblePanels().length) rows.push(['Collapse panels', '⌘\\']);
         rows.push(['Shortcuts', '?']);
@@ -255,6 +255,24 @@ export class UnifiedUiController {
             this.window?.getComputedStyle?.(node).display !== 'none'
             && (typeof node.getClientRects !== 'function' || node.getClientRects().length > 0)
         )) || null;
+    }
+
+    fileShortcuts() {
+        const actions = [...this.document.querySelectorAll('[data-file-shortcut]')]
+            .filter(button => !button.hidden && (button.dataset.fileShortcutPersistent === 'true'
+                || typeof button.getClientRects !== 'function' || button.getClientRects().length > 0))
+            .map(button => ({
+                button,
+                key: String(button.dataset.fileShortcut || '').toLowerCase(),
+                label: button.dataset.fileShortcutLabel || 'Open file'
+            }))
+            .filter(action => /^[oi]$/.test(action.key));
+        // Existing consumers retain their primary import until they adopt metadata.
+        if (!actions.some(action => action.key === 'o')) {
+            const button = this.mainFileTrigger();
+            if (button) actions.unshift({ button, key: 'o', label: 'Open file' });
+        }
+        return actions;
     }
 
     eligiblePanels() {
@@ -326,7 +344,7 @@ export class UnifiedUiController {
     }
 
     showExportFeedback(button) {
-        if (!button || button.disabled) return;
+        if (!button || button.disabled || button.dataset.exportFeedback === 'explicit') return;
         const timers = this.exportTimers.get(button) || [];
         timers.forEach(id => this.window.clearTimeout(id));
         button.dataset.exportFeedbackState = 'success';
@@ -378,6 +396,7 @@ export class UnifiedUiController {
 
     syncExportStates() {
         this.exportButtons().forEach(button => {
+            if (button.dataset.exportFeedback === 'explicit') return;
             const busy = button.disabled || button.getAttribute('aria-busy') === 'true';
             const wasBusy = button.dataset.exportFeedbackObservedBusy === 'true';
             if (busy) {
@@ -408,15 +427,16 @@ export class UnifiedUiController {
     }
 
     handleKeydown(event) {
-        if (event.repeat) return;
+        if (event.repeat || event.defaultPrevented) return;
+        if (event.target?.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(event.target?.tagName)) return;
         const key = String(event.key || '').toLowerCase();
         const command = event.metaKey || event.ctrlKey;
         if (command && !event.altKey && !event.shiftKey && key === '\\') {
             if (!this.togglePanels()) return;
-        } else if (command && !event.altKey && !event.shiftKey && key === 'o') {
-            const trigger = this.mainFileTrigger();
-            if (!trigger) return;
-            trigger.click();
+        } else if (command && !event.altKey && !event.shiftKey && (key === 'o' || key === 'i')) {
+            const action = this.fileShortcuts().find(action => action.key === key && !action.button.disabled);
+            if (!action) return;
+            action.button.click();
         } else if (!command && !event.altKey && key === '?') {
             this.setHelpOpen(this.helpButton()?.getAttribute('aria-expanded') !== 'true');
         } else if (key === 'escape' && !this.helpPopup()?.hidden) {

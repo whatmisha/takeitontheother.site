@@ -63,3 +63,21 @@ test('Dither PNG download handles an encoder returning no Blob', async () => {
     });
     assert.equal(artifact, null);
 });
+
+test('Dither download rejects callback failures and still cleans up the link and URL', async () => {
+    let callback;
+    let removed = 0;
+    const revoked = [];
+    const pending = contract.downloadCanvas({ toBlob(done) { callback = done; } }, {
+        documentRef: {
+            createElement: () => ({ click() { throw new Error('download failed'); } }),
+            body: { appendChild() {}, removeChild() { removed++; } }
+        },
+        URLRef: { createObjectURL: () => 'blob:failure', revokeObjectURL: url => revoked.push(url) },
+        timeout: callback => callback()
+    });
+    callback(new Blob(['test']));
+    await assert.rejects(pending, /download failed/);
+    assert.equal(removed, 1);
+    assert.deepEqual(revoked, ['blob:failure']);
+});

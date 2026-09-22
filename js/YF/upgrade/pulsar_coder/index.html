@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="css/framework-base.css?v=g6-choice-1">
     <link rel="stylesheet" href="css/yf-styles.css?v=g5-reset-1">
     <link rel="stylesheet" href="pulsar-styles.css?v=g5-reset-1">
-    <link rel="stylesheet" href="../framework/css/ui-contract.css?v=g14-panel-spacing-1">
+    <link rel="stylesheet" href="../framework/css/ui-contract.css?v=uiq-2">
 </head>
 <body>
     <div class="container">
@@ -190,14 +190,6 @@
                             <input type="range" id="marginSlider" min="20" max="100" step="5" value="50">
                         </div>
 
-                        <div class="control-group">
-                            <label for="preambleLengthSlider">
-                                <span>Preamble Length <span class="unit">bits</span></span>
-                                <input type="text" class="value-display" id="preambleLengthValue" value="16">
-                            </label>
-                            <input type="range" id="preambleLengthSlider" min="8" max="32" step="8" value="16">
-                        </div>
-
                         <button class="btn-secondary" id="randomizeBtn" style="width: 100%; margin-top: 12px;">Randomize All</button>
                     </section>
 
@@ -226,6 +218,7 @@
     <!-- Bottom Action Buttons -->
     <nav class="bottom-buttons action-dock" role="toolbar" aria-label="Verify and export actions">
         <div class="action-dock__slot action-dock__slot--utility">
+            <button class="btn-fixed" id="decodeBtn">Decode file</button>
             <button class="btn-fixed" id="verifyBtn" aria-haspopup="dialog" aria-expanded="false" aria-controls="verifyModal">Verify</button>
             <button class="btn-fixed" id="copyBtn">Copy SVG</button>
         </div>
@@ -233,6 +226,7 @@
             <button class="btn-fixed btn-export" id="downloadBtn" data-action-dock-primary-export>SVG ⌘E</button>
         </div>
     </nav>
+    <input id="decodeInput" type="file" accept=".svg,image/svg+xml,image/png,image/jpeg,image/webp,image/bmp" hidden>
 
     <!-- Verification Modal -->
     <div class="modal-overlay" id="verifyModal" aria-hidden="true">
@@ -256,7 +250,7 @@
 
     <script type="module" src="../framework/src/ui/actionDockAutoInit.js?v=g7-resilience-4"></script>
     <script type="module" src="../framework/src/ui/presetMenuKeyboardAutoInit.js?v=g7-resilience-4"></script>
-    <script type="module" src="pulsar-main.js?v=g13-ui-repair-1"></script>
-    <script type="module" src="../framework/src/ui/unifiedUiAutoInit.js?v=g13-ui-repair-2"></script>
+    <script type="module" src="pulsar-main.js?v=pulsar-v2-1"></script>
+    <script type="module" src="../framework/src/ui/unifiedUiAutoInit.js?v=uiq-3"></script>
 </body>
 </html>
