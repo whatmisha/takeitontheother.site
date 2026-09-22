@@ -29,7 +29,7 @@ const expectedInputs = {
     Sparky: ['motionImportPathInput'],
     Dither: ['imageInput', 'sampleInput'],
     'Wander Bender': [],
-    'Pulsar Coder': []
+    'Pulsar Coder': ['decodeInput']
 };
 
 const html = Object.fromEntries(await Promise.all(
@@ -52,8 +52,8 @@ for (const [name, inputIds] of Object.entries(expectedInputs)) {
 
 assert.equal(
     Object.values(expectedInputs).flat().length,
-    14,
-    'UPG-062 must own exactly 14 file surfaces in six tools'
+    15,
+    'UPG-062 must own exactly 15 file surfaces in seven tools'
 );
 assert.match(html['Sticky Fingers'], /id=["']googleSheetsUrl["']/u,
     'Sticky Fingers must retain its private Google Sheets URL flow');

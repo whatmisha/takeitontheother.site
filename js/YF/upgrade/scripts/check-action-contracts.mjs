@@ -113,10 +113,10 @@ const expected = {
         ids: ['shortcutHelpBtn', 'exportPngBtn', 'exportSvgBtn', 'transparentPngCheckbox']
     },
     'Pulsar Coder': {
-        buttons: 3,
-        fixed: 3,
+        buttons: 5,
+        fixed: 5,
         labels: 0,
-        ids: ['verifyBtn', 'copyBtn', 'downloadBtn']
+        ids: ['decodeBtn', 'verifyBtn', 'copyBtn', 'pngBtn', 'downloadBtn']
     },
     Dither: {
         buttons: 2,
@@ -155,10 +155,10 @@ for (const [name, contract] of Object.entries(expected)) {
 const buttonCount = Object.values(bars).reduce((total, bar) => total + count(bar, /<button\b/gu), 0);
 const fixedCount = Object.values(bars).reduce((total, bar) => total + countClass(bar, 'btn-fixed'), 0);
 const labelCount = Object.values(bars).reduce((total, bar) => total + count(bar, /<label\b/gu), 0);
-assert.equal(buttonCount, 31);
-assert.equal(fixedCount, 30);
+assert.equal(buttonCount, 33);
+assert.equal(fixedCount, 32);
 assert.equal(labelCount, 10);
-assert.equal(buttonCount + labelCount, 41);
+assert.equal(buttonCount + labelCount, 43);
 
 for (const [name, bar] of Object.entries(bars)) {
     assert.match(bar, /data-action-dock-primary-export/u, `${name} canonical primary export missing`);
@@ -198,7 +198,8 @@ const [
     ditherScript,
     ditherExport,
     wanderExport,
-    pulsarExport
+    pulsarExport,
+    pulsarPngExport
 ] = await Promise.all([
     read('framework/css/othersite-styles.css'),
     read('sparky/styles/sparky.css'),
@@ -225,7 +226,8 @@ const [
     read('dither/dither.js'),
     read('dither/js/export/DitherPngExport.js'),
     read('wander_bender/js/export/WanderSvgExport.js'),
-    read('pulsar_coder/js/export/PulsarSvgExport.js')
+    read('pulsar_coder/js/export/PulsarSvgExport.js'),
+    read('pulsar_coder/js/export/PulsarPngExport.js')
 ]);
 
 const activeSharedCss = stripComments(sharedCss);
@@ -315,7 +317,7 @@ assert.match(wordplayerControls, /setAttribute\('aria-busy', 'true'\)/u);
 assert.match(wordplayerControls, /exportPng\(this\.getScene\(\)/u);
 assert.match(wordplayerControls, /exportCurvedSvg\(this\.getScene\(\)\)/u);
 
-for (const marker of ['function downloadSvg()', 'function copySvg()', 'function verify()']) {
+for (const marker of ['function downloadSvg()', 'async function downloadPng()', 'function copySvg()', 'function verify()']) {
     assert.ok(pulsarScript.includes(marker), `Pulsar lost ${marker}`);
 }
 assert.match(pulsarScript, /btn\.textContent = '✓ Copied!'/u);
@@ -323,7 +325,9 @@ assert.match(wanderScript, /areaBoundary\.remove\(\)/u);
 assert.match(wanderScript, /downloadWanderSvg\(svgElement, \{ rays: settings\.get\('rays'\) \}\)/u);
 assert.match(wanderExport, /filename: `wander-bender-\$\{rays\}-rays\.svg`/u);
 assert.match(pulsarScript, /downloadPulsarSvg\(currentSvg\)/u);
+assert.match(pulsarScript, /downloadPulsarPng\(currentSvg\)/u);
 assert.match(pulsarExport, /filename: `pulsar-code-\$\{timestamp\}\.svg`/u);
+assert.match(pulsarPngExport, /filename: `pulsar-code-\$\{timestamp\}\.png`/u);
 
 for (const marker of [
     'exportPDF()',

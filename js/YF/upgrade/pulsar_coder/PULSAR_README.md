@@ -12,7 +12,7 @@ outside the decoder's scope and are rejected rather than decoded heuristically.
 2. Type a message; the graphic updates automatically.
 3. Optionally change ray count, spacing, ECC, seed, or hide the radial axes.
 4. Drag the canvas to move the convergence point.
-5. Export or copy the SVG.
+5. Export SVG, copy its source, or export a high-resolution transparent PNG.
 6. Use **Decode file**, or drop a Pulsar v2 SVG/PNG/JPEG/WebP/BMP on the canvas.
 
 **Verify** checks the current in-memory encoding. Imported files are decoded

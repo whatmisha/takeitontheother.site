@@ -69,9 +69,9 @@
       "id": "pulsar_coder",
       "html": "pulsar_coder/index.html",
       "primary": [{ "id": "downloadBtn", "format": "svg", "label": "SVG ⌘E" }],
-      "additionalFormats": ["clipboard-svg"],
+      "additionalFormats": ["clipboard-svg", "png"],
       "json": { "exportId": null, "importId": null },
-      "implementation": ["pulsar_coder/pulsar-main.js", "pulsar_coder/js/export/PulsarSvgExport.js"],
+      "implementation": ["pulsar_coder/pulsar-main.js", "pulsar_coder/js/export/PulsarSvgExport.js", "pulsar_coder/js/export/PulsarPngExport.js"],
       "testEvidence": ["pulsar_coder/tests/framework-boundary.test.mjs", "pulsar_coder/tests/codec.test.mjs", "pulsar_coder/tests/export-artifact.test.mjs"],
       "artifactCoverage": true
     },

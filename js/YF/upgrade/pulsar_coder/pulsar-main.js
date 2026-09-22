@@ -15,8 +15,9 @@ import {
 } from './js/framework/FrameworkAdapter.js?v=g5-feedback-2';
 import { ZoomPanManager } from './js/ui/ZoomPanManager.js?v=g13-ui-repair-1';
 import { downloadPulsarSvg } from './js/export/PulsarSvgExport.js?v=g7-export-1';
+import { downloadPulsarPng } from './js/export/PulsarPngExport.js?v=v2-1';
 import * as PulsarCodec from './js/codec/PulsarCodec.js?v=v2-1';
-import { buildPulsarSvg, createPulsarGeometry } from './js/geometry/PulsarGeometry.js?v=v2-1';
+import { buildPulsarSvg, createPulsarGeometry } from './js/geometry/PulsarGeometry.js?v=v2-2';
 import { decodePulsarSvg } from './js/decode/PulsarSvgDecoder.js?v=v2-1';
 import { decodePulsarRaster } from './js/decode/PulsarRasterDecoder.js?v=v2-1';
 
@@ -100,6 +101,7 @@ const sliderDefinitions = Object.freeze([
 let currentSvg = '';
 let currentRaysBits = [];
 let currentGeometry = null;
+let currentMetadata = null;
 let feedbackDialogHost = null;
 let verifyModalHost = null;
 
@@ -127,25 +129,28 @@ function showGenerateFirst() {
     });
 }
 
-function render(preserveEndpoints = false) {
+function render(preserveEndpoints = false, { updateExport = true, viewBox = null } = {}) {
     const params = getParams();
     const payload = settings.get('payload') ?? '';
-    const encoded = PulsarCodec.encodePulsar(payload, params);
-    currentRaysBits = encoded.raysBits;
+    if (!preserveEndpoints || !currentRaysBits.length || !currentMetadata) {
+        const encoded = PulsarCodec.encodePulsar(payload, params);
+        currentRaysBits = encoded.raysBits;
+        currentMetadata = encoded.metadata;
+    }
     if (!preserveEndpoints) currentGeometry = null;
     currentGeometry = createPulsarGeometry(params, currentRaysBits, currentGeometry, preserveEndpoints);
 
-    const interfaceSvg = buildPulsarSvg(params, currentGeometry, encoded.metadata, { forExport: false });
-    currentSvg = buildPulsarSvg(params, currentGeometry, encoded.metadata, { forExport: true });
+    const interfaceSvg = buildPulsarSvg(params, currentGeometry, currentMetadata, { forExport: false });
+    if (updateExport) currentSvg = buildPulsarSvg(params, currentGeometry, currentMetadata, { forExport: true });
 
     const target = document.getElementById('pulsarSvg');
     const parsed = new DOMParser().parseFromString(interfaceSvg, 'image/svg+xml').documentElement;
-    target.setAttribute('viewBox', parsed.getAttribute('viewBox'));
+    target.setAttribute('viewBox', viewBox || parsed.getAttribute('viewBox'));
     target.innerHTML = parsed.innerHTML;
 
-    document.getElementById('infoPayloadBytes').textContent = `${encoded.metadata.payloadByteLength} bytes`;
-    document.getElementById('infoEncodedBits').textContent = `${encoded.metadata.encodedLength} bits`;
-    document.getElementById('infoCrc').textContent = encoded.metadata.crcHex;
+    document.getElementById('infoPayloadBytes').textContent = `${currentMetadata.payloadByteLength} bytes`;
+    document.getElementById('infoEncodedBits').textContent = `${currentMetadata.encodedLength} bits`;
+    document.getElementById('infoCrc').textContent = currentMetadata.crcHex;
 }
 
 function escapeHtml(value) {
@@ -207,6 +212,22 @@ function downloadSvg() {
         return;
     }
     downloadPulsarSvg(currentSvg);
+}
+
+async function downloadPng() {
+    if (!currentSvg) {
+        void showGenerateFirst();
+        return;
+    }
+    const button = document.getElementById('pngBtn');
+    button.disabled = true;
+    try {
+        await downloadPulsarPng(currentSvg);
+    } catch (error) {
+        await feedbackDialogHost.alert({ title: 'PNG export failed', text: error.message });
+    } finally {
+        button.disabled = false;
+    }
 }
 
 async function copySvg() {
@@ -283,25 +304,19 @@ function bindCenterDragging() {
     const svg = document.getElementById('pulsarSvg');
     const container = document.getElementById('canvasContainer');
     let drag = null;
-
-    const toSvgPoint = event => {
-        const matrix = svg.getScreenCTM();
-        if (!matrix) return null;
-        const point = svg.createSVGPoint();
-        point.x = event.clientX;
-        point.y = event.clientY;
-        return point.matrixTransform(matrix.inverse());
-    };
+    let renderFrame = 0;
 
     container.addEventListener('mousedown', event => {
         if (event.button !== 0) return;
-        const point = toSvgPoint(event);
-        if (!point) return;
+        const matrix = svg.getScreenCTM();
+        if (!matrix) return;
         drag = {
-            x: point.x,
-            y: point.y,
+            clientX: event.clientX,
+            clientY: event.clientY,
+            inverse: matrix.inverse(),
             offsetX: settings.get('centerOffsetX'),
-            offsetY: settings.get('centerOffsetY')
+            offsetY: settings.get('centerOffsetY'),
+            viewBox: svg.getAttribute('viewBox')
         };
         container.style.cursor = 'grabbing';
         event.preventDefault();
@@ -310,15 +325,28 @@ function bindCenterDragging() {
 
     document.addEventListener('mousemove', event => {
         if (!drag) return;
-        const point = toSvgPoint(event);
-        if (!point) return;
-        settings.set('centerOffsetX', drag.offsetX + point.x - drag.x);
-        settings.set('centerOffsetY', drag.offsetY + point.y - drag.y);
-        render(true);
+        const screenX = event.clientX - drag.clientX;
+        const screenY = event.clientY - drag.clientY;
+        const deltaX = drag.inverse.a * screenX + drag.inverse.c * screenY;
+        const deltaY = drag.inverse.b * screenX + drag.inverse.d * screenY;
+        settings.set('centerOffsetX', drag.offsetX + deltaX);
+        settings.set('centerOffsetY', drag.offsetY + deltaY);
+        if (!renderFrame) {
+            renderFrame = requestAnimationFrame(() => {
+                renderFrame = 0;
+                if (drag) render(true, { updateExport: false, viewBox: drag.viewBox });
+            });
+        }
     });
     document.addEventListener('mouseup', () => {
+        if (!drag) return;
+        if (renderFrame) {
+            cancelAnimationFrame(renderFrame);
+            renderFrame = 0;
+        }
         drag = null;
         container.style.cursor = 'grab';
+        render(true);
     });
     container.style.cursor = 'grab';
 }
@@ -419,6 +447,7 @@ function initialize() {
     });
 
     document.getElementById('downloadBtn').addEventListener('click', downloadSvg);
+    document.getElementById('pngBtn').addEventListener('click', () => void downloadPng());
     document.getElementById('copyBtn').addEventListener('click', () => void copySvg());
     document.getElementById('verifyBtn').addEventListener('click', verify);
     document.getElementById('resetCenterBtn').addEventListener('click', () => {

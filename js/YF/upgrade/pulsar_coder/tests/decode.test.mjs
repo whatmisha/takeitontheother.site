@@ -87,6 +87,7 @@ test('SVG round-trip works with visible or hidden axes and a moved center', () =
         assert.equal(result.crcMatch, true);
         assert.match(artifact.svg, /data-codec="pulsar-v2"/u);
         assert.equal((artifact.svg.match(/data-pulsar-role="axis"/gu) || []).length, showRays ? 14 : 0);
+        if (showRays) assert.match(artifact.svg, /data-pulsar-role="axis"[^>]*opacity="0\.8"/u);
     }
 });
 
@@ -135,7 +136,7 @@ test('clean raster with visible axes decodes', () => {
     const artwork = rasterizeGeometry(artifact.geometry, true);
     const data = new Uint8ClampedArray(artwork.width * artwork.height * 4);
     for (let index = 0; index < artwork.binary.length; index += 1) {
-        const value = marks.binary[index] ? 0 : artwork.binary[index] ? 184 : 255;
+        const value = marks.binary[index] ? 0 : artwork.binary[index] ? 51 : 255;
         data[index * 4] = value;
         data[index * 4 + 1] = value;
         data[index * 4 + 2] = value;

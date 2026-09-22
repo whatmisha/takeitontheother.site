@@ -684,7 +684,19 @@ export function imageDataToBinary(imageData) {
     }
     const histogram = new Uint32Array(256);
     for (const value of gray) histogram[value] += 1;
-    let centers = [0, 127, 255];
+    const occupied = [...histogram.keys()].filter(value => histogram[value] > 0);
+    const backgroundSeed = occupied.reduce((best, value) => histogram[value] > histogram[best] ? value : best, occupied[0]);
+    const foregroundSeed = occupied.reduce((best, value) => (
+        Math.abs(value - backgroundSeed) > Math.abs(best - backgroundSeed) ? value : best
+    ), occupied[0]);
+    const middleSeed = occupied.reduce((best, value) => {
+        const distance = Math.min(Math.abs(value - backgroundSeed), Math.abs(value - foregroundSeed));
+        const score = histogram[value] * distance * distance;
+        const bestDistance = Math.min(Math.abs(best - backgroundSeed), Math.abs(best - foregroundSeed));
+        const bestScore = histogram[best] * bestDistance * bestDistance;
+        return score > bestScore ? value : best;
+    }, occupied[0]);
+    let centers = [backgroundSeed, foregroundSeed, middleSeed];
     let weights = [0, 0, 0];
     for (let iteration = 0; iteration < 16; iteration += 1) {
         const sums = [0, 0, 0];

@@ -69,8 +69,8 @@
       "renderer": "svg",
       "frameworkMode": "adapter",
       "mobileRequired": false,
-      "shared": { "actionDock": true, "panelShell": true, "fileIntake": 0, "presetKeyboard": true, "zoomIndicatorButton": true },
-      "private": ["pulsarCodec", "rayRenderer", "zoomPan"]
+      "shared": { "actionDock": true, "panelShell": true, "fileIntake": 1, "presetKeyboard": true, "zoomIndicatorButton": true },
+      "private": ["pulsarCodec", "rayRenderer", "zoomPan", "rasterDecode", "rasterExport"]
     },
     {
       "id": "wander_bender",

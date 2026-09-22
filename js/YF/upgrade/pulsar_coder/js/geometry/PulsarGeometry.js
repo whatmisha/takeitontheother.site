@@ -165,7 +165,7 @@ export function buildPulsarSvg(params, geometry, metadata, { forExport = false }
                 y1: geometry.center.y,
                 x2: ray.endpoint.x,
                 y2: ray.endpoint.y
-            }, `class="pulsar-ray-line" data-pulsar-role="axis" ${common} opacity="0.28"`));
+            }, `class="pulsar-ray-line" data-pulsar-role="axis" ${common} opacity="0.8"`));
         }
         for (const mark of ray.marks) {
             const bitIndex = mark.bitIndex === null ? '' : ` data-bit-index="${mark.bitIndex}"`;

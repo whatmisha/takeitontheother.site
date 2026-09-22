@@ -87,5 +87,6 @@ geometry and are reported as decode failures rather than guessed data.
 - `js/geometry/PulsarGeometry.js`: deterministic geometry and SVG output.
 - `js/decode/PulsarSvgDecoder.js`: vector importer.
 - `js/decode/PulsarRasterDecoder.js`: raster segmentation and reconstruction.
+- `js/export/PulsarPngExport.js`: transparent high-resolution PNG export.
 - `tests/codec.test.mjs` and `tests/decode.test.mjs`: round-trip and corruption
   coverage, including moved-center, hidden-axis raster input.
