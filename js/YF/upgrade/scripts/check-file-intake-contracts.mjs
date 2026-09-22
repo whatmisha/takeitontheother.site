@@ -140,6 +140,6 @@ assert.match(dither, /dropzone:\s*document\.querySelector\('\.canvas-container'\
     'Dither source image must retain its Canvas drop target');
 
 console.log(
-    'FileIntake contract passed: 14 surfaces in six tools; 0 in Wander/Pulsar; '
+    'FileIntake contract passed: 15 surfaces in seven tools; 0 in Wander; '
     + 'shared picker/drop/state semantics; private parsers and Sticky Google Sheets retained.'
 );

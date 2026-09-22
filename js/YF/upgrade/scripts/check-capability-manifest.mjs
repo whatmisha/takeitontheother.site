@@ -16,7 +16,7 @@ assert.deepEqual(
 assert.equal(manifest.applications.filter(app => app.priority === 'primary').length, 5);
 assert.equal(manifest.applications.filter(app => app.mobileRequired).length, 1);
 assert.equal(manifest.applications.filter(app => app.shared.actionDock).length, 8);
-assert.equal(manifest.applications.reduce((sum, app) => sum + app.shared.fileIntake, 0), 14);
+assert.equal(manifest.applications.reduce((sum, app) => sum + app.shared.fileIntake, 0), 15);
 assert.equal(manifest.applications.filter(app => app.shared.presetKeyboard).length, 6);
 assert.equal(manifest.applications.filter(app => app.shared.zoomIndicatorButton).length, 5);
 
@@ -34,4 +34,4 @@ for (const component of manifest.optionalFrameworkSurface.components) {
     assert.match(optionalBarrel, new RegExp(`export \\{ ${component} \\}`, 'u'));
 }
 
-console.log('Capability manifest passed: 8 isolated apps; priority/mobile boundaries; 14 file surfaces; 6 preset keyboards; 2 optional components.');
+console.log('Capability manifest passed: 8 isolated apps; priority/mobile boundaries; 15 file surfaces; 6 preset keyboards; 2 optional components.');
