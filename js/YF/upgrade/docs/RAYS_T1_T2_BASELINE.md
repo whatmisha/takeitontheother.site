@@ -57,6 +57,7 @@
 ## Реально выполненные проверки
 
 - `npm run test:rays-baseline`: **22/22**. В том числе обе реализации проходят семь fixed golden-сценариев.
+- Те же **22/22** повторно пройдены с Node permission model: разрешено чтение только абсолютного каталога upgrade, `--test-isolation=none`; доступ к оригиналам и соседним папкам запрещён. Это проверка автономности тестов/fixtures, не замена будущей offline browser-приёмки.
 - `npm run test:catalog`: **11/11**; migrating входит в runtime inventory, accepted-only главная не получает ссылку.
 - `npm run test:tier1`, `npm run test:tier2`: пройдены на текущем рабочем дереве.
 - `npm run check:isolation`: пройден; boundary checker видит 9 runtime-приложений, 472 текстовых runtime-файла и не находит выходящих ссылок/symlink. Framework provenance проверяет локальный snapshot без чтения донора.
@@ -64,6 +65,8 @@
 - `npm run migration:sources:check`: повторно подтверждены все 8 оригиналов, 32 файла, 791667 bytes; никакие оригиналы не изменены этой работой.
 - Браузер: отдельная страница Rays в Codex IAB, 1280 × 720: рисунок виден; Gradient включает tone controls, Image выключает Gradient и показывает image controls; Reset возвращает defaults. Выявлено перекрытие controls старой нижней строкой. В прочитанном журнале error/warn нет.
 - UI-аудитор, viewport приложения 1440 × 900: Rays отображается как «перенос»; 2 группы с отклонениями, 2 совпадения эталонов, 12 групп требуют проверки. В этом запуске error/warn нет. **Это не UI pass.**
+
+Проверки выполнены 2026-09-22 около 13:30–13:35 Europe/Belgrade, Node v24.11.1, рабочее дерево на момент запуска dirty. Одновременно менялись отдельные файлы Pulsar/shared UI; результаты общей регрессии относятся к состоянию на момент запуска и не являются приёмкой последующих параллельных правок. Три файла Rays сверены с `COPY_MANIFEST.json` после проверок. Во время завершения отчёта HEAD внешним действием переместился на `e550eca`; команды commit/push эта задача не выполняла. Последнее дополнение отчёта осталось рабочим изменением.
 
 Локальные адреса: [изолированный Rays](http://localhost:8010/upgrade/rays_pattern_generator/) и [его аудит](http://localhost:8010/upgrade/qa/ui-audit/?tool=rays_pattern_generator). Сервер на порту 8010 работает из YF; сам runtime Rays не читает соседние оригиналы.
 
@@ -82,4 +85,4 @@ SVG в unit-тестах проходит настоящий legacy exporter/Blo
 5. Подключить модель к текущему adapter, пока оставив старый UI. T.2 identity-assert заменить адресной проверкой нового adapter, а frozen characterization tests оставить неизменными.
 6. После чистой parity — T.4 исправления restore/file/URL, затем T.5/T.6 общий UI/команды через opt-in ToolUiController. Не расширять shared framework предметной математикой Rays.
 
-Остальные семь новых инструментов остаются planned. До T.7 Rays не переводить в accepted и не включать ссылку на главной. Commit/push в этом этапе не выполнялись.
+Остальные семь новых инструментов остаются planned. До T.7 Rays не переводить в accepted и не включать ссылку на главной. Commit/push этой задачей не запускались.

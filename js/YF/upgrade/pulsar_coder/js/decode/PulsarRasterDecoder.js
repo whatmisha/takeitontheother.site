@@ -671,7 +671,7 @@ function otsuThreshold(gray) {
     return threshold;
 }
 
-export function imageDataToBinary(imageData) {
+function imageDataToGray(imageData) {
     const { data, width, height } = imageData;
     const gray = new Uint8Array(width * height);
     for (let index = 0; index < gray.length; index += 1) {
@@ -682,6 +682,35 @@ export function imageDataToBinary(imageData) {
         const blue = data[offset + 2] * alpha + 255 * (1 - alpha);
         gray[index] = Math.round(red * 0.2126 + green * 0.7152 + blue * 0.0722);
     }
+    return gray;
+}
+
+function extremeInkBinaries(gray) {
+    const histogram = new Uint32Array(256);
+    for (const value of gray) histogram[value] += 1;
+    const occupied = [...histogram.keys()].filter(value => histogram[value] > 0);
+    if (occupied.length < 2) return [];
+    const backgroundSeed = occupied.reduce((best, value) => histogram[value] > histogram[best] ? value : best, occupied[0]);
+    const foregroundSeed = occupied.reduce((best, value) => (
+        Math.abs(value - backgroundSeed) > Math.abs(best - backgroundSeed) ? value : best
+    ), occupied[0]);
+    const contrast = Math.abs(backgroundSeed - foregroundSeed);
+    if (contrast < 48) return [];
+    const foregroundIsDark = foregroundSeed < backgroundSeed;
+    return [0.08, 0.14, 0.18].map(fraction => {
+        const threshold = foregroundSeed + (backgroundSeed - foregroundSeed) * fraction;
+        const binary = new Uint8Array(gray.length);
+        for (let index = 0; index < gray.length; index += 1) {
+            binary[index] = foregroundIsDark
+                ? Number(gray[index] <= threshold)
+                : Number(gray[index] >= threshold);
+        }
+        return binary;
+    });
+}
+
+export function imageDataToBinary(imageData) {
+    const gray = imageDataToGray(imageData);
     const histogram = new Uint32Array(256);
     for (const value of gray) histogram[value] += 1;
     const occupied = [...histogram.keys()].filter(value => histogram[value] > 0);
@@ -746,10 +775,28 @@ export function imageDataToBinary(imageData) {
     return binary;
 }
 
+export function decodePulsarImageData(imageData) {
+    const gray = imageDataToGray(imageData);
+    const attempts = [imageDataToBinary(imageData), ...extremeInkBinaries(gray)];
+    let firstError = null;
+    const retryErrors = [];
+    for (const binary of attempts) {
+        try {
+            return decodePulsarBinaryImage(binary, imageData.width, imageData.height);
+        } catch (error) {
+            firstError ||= error;
+            retryErrors.push(error.message);
+        }
+    }
+    if (!firstError) throw new Error('The raster image could not be decoded');
+    if (retryErrors.length > 1) firstError.message += `; high-contrast retries: ${retryErrors.slice(1).join(' | ')}`;
+    throw firstError;
+}
+
 export async function decodePulsarRaster(file, {
     createImageBitmapFn = globalThis.createImageBitmap,
     documentRef = globalThis.document,
-    maxDimension = 1400
+    maxDimension = 2400
 } = {}) {
     if (typeof createImageBitmapFn !== 'function' || !documentRef) throw new Error('Raster decoding is not available in this browser');
     const bitmap = await createImageBitmapFn(file);
@@ -765,7 +812,7 @@ export async function decodePulsarRaster(file, {
         context.fillRect(0, 0, width, height);
         context.drawImage(bitmap, 0, 0, width, height);
         const imageData = context.getImageData(0, 0, width, height);
-        return decodePulsarBinaryImage(imageDataToBinary(imageData), width, height);
+        return decodePulsarImageData(imageData);
     } finally {
         bitmap.close?.();
     }

@@ -4,7 +4,7 @@ import test from 'node:test';
 import { encodePulsar } from '../js/codec/PulsarCodec.js';
 import { buildPulsarSvg, createPulsarGeometry } from '../js/geometry/PulsarGeometry.js';
 import { decodePulsarSvg } from '../js/decode/PulsarSvgDecoder.js';
-import { decodePulsarBinaryImage, imageDataToBinary } from '../js/decode/PulsarRasterDecoder.js';
+import { decodePulsarBinaryImage, decodePulsarImageData, imageDataToBinary } from '../js/decode/PulsarRasterDecoder.js';
 
 function params(overrides = {}) {
     return {
@@ -158,6 +158,39 @@ test('clean raster with visible axes decodes', () => {
     }
     const binary = imageDataToBinary({ data, width: artwork.width, height: artwork.height });
     const result = decodePulsarBinaryImage(binary, artwork.width, artwork.height);
+    assert.equal(result.payloadText, payload);
+    assert.equal(result.geometry.mode, 'ticks-only');
+});
+
+test('anti-aliased gray axes are excluded on a high-contrast retry', () => {
+    const payload = 'Gray axes must not join the ticks';
+    const artifact = makeArtifact(payload, { showRays: true, centerOffsetX: 90, centerOffsetY: -55 });
+    const marks = rasterizeGeometry(artifact.geometry, false);
+    const artwork = rasterizeGeometry(artifact.geometry, true);
+    const data = new Uint8ClampedArray(artwork.width * artwork.height * 4);
+    const halo = new Uint8Array(artwork.binary.length);
+    for (let index = 0; index < artwork.binary.length; index += 1) {
+        if (!artwork.binary[index]) continue;
+        const x = index % artwork.width;
+        const y = Math.floor(index / artwork.width);
+        for (let dy = -1; dy <= 1; dy += 1) {
+            for (let dx = -1; dx <= 1; dx += 1) {
+                const nx = x + dx;
+                const ny = y + dy;
+                if (nx >= 0 && ny >= 0 && nx < artwork.width && ny < artwork.height) {
+                    halo[ny * artwork.width + nx] = 1;
+                }
+            }
+        }
+    }
+    for (let index = 0; index < artwork.binary.length; index += 1) {
+        const value = marks.binary[index] ? 0 : artwork.binary[index] ? 51 : halo[index] ? 120 : 255;
+        data[index * 4] = value;
+        data[index * 4 + 1] = value;
+        data[index * 4 + 2] = value;
+        data[index * 4 + 3] = 255;
+    }
+    const result = decodePulsarImageData({ data, width: artwork.width, height: artwork.height });
     assert.equal(result.payloadText, payload);
     assert.equal(result.geometry.mode, 'ticks-only');
 });

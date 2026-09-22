@@ -19,7 +19,7 @@ import { downloadPulsarPng } from './js/export/PulsarPngExport.js?v=v2-1';
 import * as PulsarCodec from './js/codec/PulsarCodec.js?v=v2-1';
 import { buildPulsarSvg, createPulsarGeometry } from './js/geometry/PulsarGeometry.js?v=v2-3';
 import { decodePulsarSvg } from './js/decode/PulsarSvgDecoder.js?v=v2-1';
-import { decodePulsarRaster } from './js/decode/PulsarRasterDecoder.js?v=v2-1';
+import { decodePulsarRaster } from './js/decode/PulsarRasterDecoder.js?v=v2-2';
 
 const settings = {
     values: {
@@ -463,4 +463,4 @@ if (typeof document !== 'undefined') document.addEventListener('DOMContentLoaded
 export * from './js/codec/PulsarCodec.js';
 export { buildPulsarSvg, createPulsarGeometry, makeAngles, seededRandom } from './js/geometry/PulsarGeometry.js';
 export { decodePulsarSvg } from './js/decode/PulsarSvgDecoder.js';
-export { decodePulsarBinaryImage, imageDataToBinary } from './js/decode/PulsarRasterDecoder.js';
+export { decodePulsarBinaryImage, decodePulsarImageData, imageDataToBinary } from './js/decode/PulsarRasterDecoder.js?v=v2-2';
