@@ -1,0 +1,361 @@
+{
+  "schemaVersion": 1,
+  "scope": "isolated-copy-not-acceptance",
+  "note": "Original engines preserved except explicit storage namespaces. Only HTML/CSS dependency, UI font and preview-navigation edits. Full behavior/UI acceptance is pending.",
+  "namespaces": {
+    "randomLinesSettings": "upgrade:random-lines:settings:v1",
+    "controlsCollapsed": "upgrade:calendar-randomizer:controls-collapsed:v1"
+  },
+  "tools": [
+    {
+      "id": "hyperspace",
+      "sourceRoot": "lunnen/hyperspace",
+      "files": [
+        {
+          "path": "index.html",
+          "sourceSha256": "644bb6a230e534f4fe7917dc88bc7cb61eff0d2289c3a4bc90fb57132350c9b7",
+          "copySha256": "de5f721dd0c969fd4d667918ebfc68e7d06ff7ae0a63a61afd860efc319e95b3",
+          "bytes": 4377
+        },
+        {
+          "path": "styles.css",
+          "sourceSha256": "ebbf9dd22c4691a3a992ac06408680c17eeb86ca32725555e292944f46bc6c11",
+          "copySha256": "b5fa6b2583039153ce8b08fcbeb909ef03371494e8f03247d59c3fcf280c0a90",
+          "bytes": 2499
+        },
+        {
+          "path": "sketch.js",
+          "sourceSha256": "9df4a90687f6c9c6e90fd19ade7232a3edf4a3762b7059261a47a7621bc4fb7a",
+          "copySha256": "9df4a90687f6c9c6e90fd19ade7232a3edf4a3762b7059261a47a7621bc4fb7a",
+          "bytes": 32306
+        }
+      ],
+      "htmlControls": [
+        "<input type=\"range\" id=\"lineCount\" min=\"50\" max=\"500\" value=\"200\">",
+        "<input type=\"range\" id=\"opacity\" min=\"10\" max=\"100\" value=\"80\">",
+        "<input type=\"range\" id=\"fadeLength\" min=\"5\" max=\"50\" value=\"30\">",
+        "<input type=\"range\" id=\"segmentsCount\" min=\"5\" max=\"100\" value=\"10\">",
+        "<input type=\"range\" id=\"lineWidth\" min=\"1\" max=\"15\" value=\"2\" step=\"0.5\">",
+        "<input type=\"range\" id=\"widthGrowth\" min=\"0\" max=\"100\" value=\"25\" step=\"1\">",
+        "<input type=\"range\" id=\"circleRadius\" min=\"1.1\" max=\"3.0\" value=\"2.0\" step=\"0.1\">",
+        "<input type=\"range\" id=\"speed\" min=\"1\" max=\"10\" value=\"3\">",
+        "<input type=\"checkbox\" id=\"reverseWedge\">",
+        "<input type=\"color\" id=\"startColor\" value=\"#2353DB\">",
+        "<input type=\"text\" id=\"startColorHex\" value=\"#2353DB\" placeholder=\"HEX\" class=\"hex-input\">",
+        "<input type=\"color\" id=\"midColor\" value=\"#23DBD3\">",
+        "<input type=\"text\" id=\"midColorHex\" value=\"#23DBD3\" placeholder=\"HEX\" class=\"hex-input\">",
+        "<input type=\"color\" id=\"endColor\" value=\"#5723DB\">",
+        "<input type=\"text\" id=\"endColorHex\" value=\"#5723DB\" placeholder=\"HEX\" class=\"hex-input\">",
+        "<input type=\"checkbox\" id=\"useColorGradient\">",
+        "<button id=\"centerButton\" class=\"control-button\">",
+        "<button id=\"exportButton\" class=\"control-button\">"
+      ],
+      "inlineScriptHashes": []
+    },
+    {
+      "id": "pattern_generator",
+      "sourceRoot": "lunnen/pattern_generator",
+      "files": [
+        {
+          "path": "index.html",
+          "sourceSha256": "bd367f6adcb3dd175ee5a7d21f1caa44face7b1ab18ee3d32f882a05dd66bd6d",
+          "copySha256": "7490c790427fdd46fa4d2289b1759fafa722e1f12d7884b95a8b7ae13e4b4f4d",
+          "bytes": 10257
+        },
+        {
+          "path": "styles.css",
+          "sourceSha256": "ae8b3d75da7e4eabcbd03d0efd7ef8168bdb7982d6f7ec94ed842897f7880250",
+          "copySha256": "5d8066806c8b46db1e16c479eaffeb3cd8e2e42e6db4d2bcbde331062611b0b6",
+          "bytes": 5199
+        },
+        {
+          "path": "script.js",
+          "sourceSha256": "279125ff57fbc37731b8c2b6a1c8fc0d8f7e150810552120120843370963347a",
+          "copySha256": "279125ff57fbc37731b8c2b6a1c8fc0d8f7e150810552120120843370963347a",
+          "bytes": 4748
+        },
+        {
+          "path": "fibonacci.js",
+          "sourceSha256": "593098e4def102eb6abf3212eb1d1c9ba77f9bc736c4501a6343c50329453bf1",
+          "copySha256": "593098e4def102eb6abf3212eb1d1c9ba77f9bc736c4501a6343c50329453bf1",
+          "bytes": 8326
+        },
+        {
+          "path": "voronoi.js",
+          "sourceSha256": "b3c05188a94a9479c48b270ee513442233a0c6fe06e035b6db63120b46a18247",
+          "copySha256": "b3c05188a94a9479c48b270ee513442233a0c6fe06e035b6db63120b46a18247",
+          "bytes": 9232
+        },
+        {
+          "path": "rectangle.js",
+          "sourceSha256": "fd845ab3f680aa0ade94cc66ccdf59ab24e5c1ea4759682550cac0761beabf95",
+          "copySha256": "fd845ab3f680aa0ade94cc66ccdf59ab24e5c1ea4759682550cac0761beabf95",
+          "bytes": 9622
+        },
+        {
+          "path": "fibonacci-rectangle.js",
+          "sourceSha256": "dd005a06efce8e51c7b655b564daaaa9c6d819ad450b9c22c6f4491cd6f97241",
+          "copySha256": "dd005a06efce8e51c7b655b564daaaa9c6d819ad450b9c22c6f4491cd6f97241",
+          "bytes": 10985
+        },
+        {
+          "path": "magnetic-rectangle.js",
+          "sourceSha256": "757cb68b7eaa25f0022239ddcc41027e0c0736498c978b903b25fd9017a8090d",
+          "copySha256": "757cb68b7eaa25f0022239ddcc41027e0c0736498c978b903b25fd9017a8090d",
+          "bytes": 37731
+        }
+      ],
+      "htmlControls": [
+        "<button class=\"tab-button active\" data-tab=\"magnetic-rect\">",
+        "<button class=\"tab-button\" data-tab=\"fibonacci\">",
+        "<button class=\"tab-button\" data-tab=\"voronoi\">",
+        "<button class=\"tab-button\" data-tab=\"rectangle\">",
+        "<button class=\"tab-button\" data-tab=\"fibonacci-rect\">",
+        "<button id=\"magnetic-rect-exportSvgBtn\" class=\"export-btn\">",
+        "<input type=\"range\" id=\"fibonacci-pointCount\" min=\"50\" max=\"1000\" value=\"300\" step=\"10\">",
+        "<input type=\"range\" id=\"fibonacci-radius\" min=\"50\" max=\"400\" value=\"250\" step=\"10\">",
+        "<input type=\"range\" id=\"fibonacci-pointSize\" min=\"1\" max=\"10\" value=\"3\" step=\"0.5\">",
+        "<input type=\"range\" id=\"fibonacci-spiralFactor\" min=\"0\" max=\"2\" value=\"1\" step=\"0.01\">",
+        "<button id=\"fibonacci-resetBtn\">",
+        "<button id=\"fibonacci-exportSvgBtn\" class=\"export-btn\">",
+        "<input type=\"range\" id=\"voronoi-pointCount\" min=\"50\" max=\"400\" value=\"150\" step=\"5\">",
+        "<input type=\"range\" id=\"voronoi-radius\" min=\"50\" max=\"400\" value=\"200\" step=\"10\">",
+        "<input type=\"range\" id=\"voronoi-pointSize\" min=\"1\" max=\"10\" value=\"3\" step=\"0.5\">",
+        "<input type=\"range\" id=\"voronoi-iterations\" min=\"0\" max=\"50\" value=\"0\" step=\"1\">",
+        "<button id=\"voronoi-regenerateBtn\">",
+        "<button id=\"voronoi-exportSvgBtn\" class=\"export-btn\">",
+        "<input type=\"range\" id=\"rectangle-pointCount\" min=\"50\" max=\"400\" value=\"150\" step=\"5\">",
+        "<input type=\"range\" id=\"rectangle-ratio\" min=\"1\" max=\"3\" value=\"2\" step=\"0.1\">",
+        "<input type=\"range\" id=\"rectangle-pointSize\" min=\"1\" max=\"10\" value=\"3\" step=\"0.5\">",
+        "<input type=\"range\" id=\"rectangle-iterations\" min=\"0\" max=\"50\" value=\"0\" step=\"1\">",
+        "<button id=\"rectangle-regenerateBtn\">",
+        "<button id=\"rectangle-exportSvgBtn\" class=\"export-btn\">",
+        "<input type=\"range\" id=\"fibonacci-rect-pointCount\" min=\"50\" max=\"1000\" value=\"300\" step=\"10\">",
+        "<input type=\"range\" id=\"fibonacci-rect-ratio\" min=\"1\" max=\"3\" value=\"2\" step=\"0.1\">",
+        "<input type=\"range\" id=\"fibonacci-rect-pointSize\" min=\"1\" max=\"10\" value=\"3\" step=\"0.5\">",
+        "<input type=\"range\" id=\"fibonacci-rect-spiralFactor\" min=\"0\" max=\"2\" value=\"1\" step=\"0.01\">",
+        "<button id=\"fibonacci-rect-resetBtn\">",
+        "<button id=\"fibonacci-rect-exportSvgBtn\" class=\"export-btn\">"
+      ],
+      "inlineScriptHashes": []
+    },
+    {
+      "id": "pattern_generator_02",
+      "sourceRoot": "lunnen/pattern_generator_02/01",
+      "files": [
+        {
+          "path": "index.html",
+          "sourceSha256": "4d7eb58856c069c64498f2303056a929499e5e428a710c8c75d53a065a1eb744",
+          "copySha256": "29ae028671f2261c27e2a9b7d7e38fe41fd7549003ee0166bd9ed57fd36ba292",
+          "bytes": 3117
+        },
+        {
+          "path": "styles.css",
+          "sourceSha256": "f6325ac79aa523667372d57537e77bbac385dfef08eb0fed49ddebad6a70f90b",
+          "copySha256": "7d64cb97fd61b9f233f48cbfd57435277e71365528271b9b2f22ff60b7dfc984",
+          "bytes": 5133
+        },
+        {
+          "path": "script.js",
+          "sourceSha256": "c415c26e7a8a61c8cc05e7c6559074b46516a4a2f25a68e09de3dfc2655e7612",
+          "copySha256": "c415c26e7a8a61c8cc05e7c6559074b46516a4a2f25a68e09de3dfc2655e7612",
+          "bytes": 41797
+        }
+      ],
+      "htmlControls": [
+        "<input type=\"range\" id=\"radius-slider\" min=\"0\" max=\"100\" value=\"50\">",
+        "<input type=\"range\" id=\"length-slider\" min=\"0\" max=\"100\" value=\"50\">",
+        "<input type=\"range\" id=\"length-b-slider\" min=\"0\" max=\"100\" value=\"100\">",
+        "<input type=\"range\" id=\"thickness-slider\" min=\"1\" max=\"100\" value=\"3\">",
+        "<input type=\"range\" id=\"spacing-slider\" min=\"0\" max=\"100\" value=\"50\">",
+        "<input type=\"range\" id=\"size-slider\" min=\"10\" max=\"200\" value=\"20\">",
+        "<input type=\"checkbox\" id=\"caps-checkbox\" checked>",
+        "<input type=\"checkbox\" id=\"checkerboard-checkbox\" checked>",
+        "<input type=\"checkbox\" id=\"both-squares-checkbox\">",
+        "<button id=\"export-button\" class=\"export-btn\">"
+      ],
+      "inlineScriptHashes": []
+    },
+    {
+      "id": "random_lines_generator",
+      "sourceRoot": "lunnen/random_lines_generator/01",
+      "files": [
+        {
+          "path": "index.html",
+          "sourceSha256": "0340f332f5b200798ef67ae09575069ca331e0de990362e5c57513735a6e781a",
+          "copySha256": "6776946a686c1372d02b5cd2579507e8edb9257bee9988e91cdd038bf23319a3",
+          "bytes": 7714
+        },
+        {
+          "path": "styles.css",
+          "sourceSha256": "e198437282be3b330761f8abc23f3e6f0e6071730cb2e6f9ce9ba1a1a16797a3",
+          "copySha256": "ecf6aff03a9bac5cdf1121e5b21caca5159ba8effdbd3d310579a4fe40546d7b",
+          "bytes": 21643
+        },
+        {
+          "path": "script.js",
+          "sourceSha256": "b48776b32a617e0bf6f10f19a9902ade84db7065ca3ad36b6e84d8a47cffb5c0",
+          "copySha256": "e314c35e0b33dfe0b40bf8f264145bc5409a9b2d94880dfc932471e7bf430df9",
+          "bytes": 46109
+        }
+      ],
+      "htmlControls": [
+        "<input type=\"text\" id=\"lineLengthInput\" class=\"number-input\" value=\"24\" autocomplete=\"off\">",
+        "<input type=\"text\" id=\"lineWidthInput\" class=\"number-input\" value=\"8\" autocomplete=\"off\">",
+        "<input type=\"text\" id=\"safeFieldInput\" class=\"number-input\" value=\"12\" autocomplete=\"off\">",
+        "<input type=\"text\" id=\"lineCountInput\" class=\"number-input\" value=\"3000\" autocomplete=\"off\">",
+        "<input type=\"text\" id=\"scaleInput\" class=\"number-input\" value=\"1.0\" autocomplete=\"off\">",
+        "<input type=\"checkbox\" id=\"rasterModeCheckbox\">",
+        "<input type=\"checkbox\" id=\"imageRasterModeCheckbox\">",
+        "<input type=\"text\" id=\"zeroLineLengthInput\" class=\"number-input\" value=\"30\" autocomplete=\"off\">",
+        "<input type=\"text\" id=\"zeroLineWidthInput\" class=\"number-input\" value=\"1.0\" autocomplete=\"off\">",
+        "<input type=\"text\" id=\"hundredLineLengthInput\" class=\"number-input\" value=\"100\" autocomplete=\"off\">",
+        "<input type=\"text\" id=\"hundredLineWidthInput\" class=\"number-input\" value=\"2.0\" autocomplete=\"off\">",
+        "<input type=\"file\" id=\"imageUpload\" accept=\"image/*\" class=\"image-upload-input\">",
+        "<input type=\"text\" id=\"brightnessContrastInput\" class=\"number-input\" value=\"1.0\" autocomplete=\"off\">",
+        "<input type=\"checkbox\" id=\"imageInvertCheckbox\">",
+        "<input type=\"checkbox\" id=\"roundCapCheckbox\">",
+        "<input type=\"text\" id=\"settingsInput\" placeholder=\"Paste filename to restore settings\" class=\"settings-input\" autocomplete=\"off\" spellcheck=\"false\">",
+        "<button id=\"restoreSettingsBtn\" class=\"restore-btn\">",
+        "<button id=\"generateBtn\" class=\"generate-btn\">",
+        "<button id=\"resetBtn\" class=\"reset-btn\">",
+        "<button id=\"exportSvgBtn\" class=\"export-btn\">"
+      ],
+      "inlineScriptHashes": []
+    },
+    {
+      "id": "asterisk_pattern_generator",
+      "sourceRoot": "lunnen/asterisk_pattern_generator",
+      "files": [
+        {
+          "path": "index.html",
+          "sourceSha256": "68e417d22135c2f1cfa0fbbf1cca1a9dbb7484cbbbd9254512db062184dbc0ce",
+          "copySha256": "ca83a5168f482f6f4e1fb7bcd66ef39161adf55fe4634a015ca5445a7482f004",
+          "bytes": 2723
+        },
+        {
+          "path": "styles.css",
+          "sourceSha256": "38e7944f557ced6ed799f6fcf26f2c4914013f7cf1b5e83ef10a148c23d763a2",
+          "copySha256": "295ea21ea8e573510a56f78d8dd6e5325a6c1da2aeb9bcf854a11f8971767f09",
+          "bytes": 3202
+        },
+        {
+          "path": "script.js",
+          "sourceSha256": "ee4a2b4641a05e39d55e8f3e2352452f28b3455b3d35c30698c2db42ea087d62",
+          "copySha256": "ee4a2b4641a05e39d55e8f3e2352452f28b3455b3d35c30698c2db42ea087d62",
+          "bytes": 81379
+        }
+      ],
+      "htmlControls": [
+        "<input type=\"range\" id=\"lineThickness\" min=\"1\" max=\"100\" step=\"1\" value=\"50\">",
+        "<input type=\"range\" id=\"cornerRadius\" min=\"0\" max=\"360\" step=\"1\" value=\"120\">",
+        "<input type=\"range\" id=\"duplicateLayers\" min=\"0\" max=\"100\" step=\"1\" value=\"0\">",
+        "<input type=\"range\" id=\"scaleDown\" min=\"0\" max=\"7\" step=\"1\" value=\"0\">",
+        "<input type=\"checkbox\" id=\"roundedCaps\">",
+        "<input type=\"checkbox\" id=\"tessellationMode\" checked>",
+        "<input type=\"checkbox\" id=\"showGrid\" checked>",
+        "<button id=\"exportSVG\">"
+      ],
+      "inlineScriptHashes": []
+    },
+    {
+      "id": "calendar-randomizer",
+      "sourceRoot": "muted/calendar-randomizer",
+      "files": [
+        {
+          "path": "index.html",
+          "sourceSha256": "31735ddd97a4397ae3ca0b8e0b7d5ec260180f68989d115283d35906eaee97dc",
+          "copySha256": "e25c4f03db9d23ea140155558762b8434192baf0418a598a03a15532c43f662e",
+          "bytes": 40721
+        },
+        {
+          "path": "list-svgs.js",
+          "sourceSha256": "2285dcd0717865ef13b206f58321932c3fdff21bed78f39c433dabe25dc4ec5b",
+          "copySha256": "2285dcd0717865ef13b206f58321932c3fdff21bed78f39c433dabe25dc4ec5b",
+          "bytes": 1003
+        },
+        {
+          "path": "source/calend_01.svg",
+          "sourceSha256": "059c37a55912312e18a70ab90fe7b348d42dc8d882e4778105137245f008f2b4",
+          "copySha256": "059c37a55912312e18a70ab90fe7b348d42dc8d882e4778105137245f008f2b4",
+          "bytes": 129502
+        },
+        {
+          "path": "source/calend_02.svg",
+          "sourceSha256": "5b19d41f60550d70eae6ea543f2962d7a0b8c3de25f9d77b7b00ad70ec996c70",
+          "copySha256": "5b19d41f60550d70eae6ea543f2962d7a0b8c3de25f9d77b7b00ad70ec996c70",
+          "bytes": 44433
+        },
+        {
+          "path": "source/calend_03.svg",
+          "sourceSha256": "a5d5fd21c2cf6039422367694ba270b2abfa0c14b389bb242253c8f388d9f1fa",
+          "copySha256": "a5d5fd21c2cf6039422367694ba270b2abfa0c14b389bb242253c8f388d9f1fa",
+          "bytes": 41715
+        },
+        {
+          "path": "source/calend_04.svg",
+          "sourceSha256": "d49d876a59d3e0db90e299062d1f7a0aacd2f16692dc48ba2872fb1df9f45ebb",
+          "copySha256": "d49d876a59d3e0db90e299062d1f7a0aacd2f16692dc48ba2872fb1df9f45ebb",
+          "bytes": 44054
+        }
+      ],
+      "htmlControls": [
+        "<select id=\"svgSelector\" class=\"svg-select\">",
+        "<option value=\"\">",
+        "<input type=\"color\" id=\"colorPicker\" class=\"color-picker\" value=\"#d2d1c9\">",
+        "<input type=\"text\" id=\"hexInput\" class=\"hex-input\" value=\"#D2D1C9\" maxlength=\"7\" placeholder=\"#D2D1C9\">",
+        "<input type=\"color\" id=\"bgColorPicker\" class=\"color-picker\" value=\"#f7f6f2\">",
+        "<input type=\"text\" id=\"bgHexInput\" class=\"hex-input\" value=\"#F7F6F2\" maxlength=\"7\" placeholder=\"#F7F6F2\">",
+        "<input type=\"range\" min=\"1\" max=\"200\" value=\"30\" class=\"slider\" id=\"randomRange\">",
+        "<select id=\"easingSelect\" class=\"easing-select\">",
+        "<option value=\"linear\">",
+        "<option value=\"ease\" selected>",
+        "<option value=\"ease-in\">",
+        "<option value=\"ease-out\">",
+        "<option value=\"ease-in-out\">",
+        "<option value=\"cubic-bezier(0.34, 1.56, 0.64, 1)\">",
+        "<option value=\"cubic-bezier(0.68, -0.55, 0.265, 1.55)\">",
+        "<option value=\"cubic-bezier(0.175, 0.885, 0.32, 1.275)\">",
+        "<option value=\"cubic-bezier(0.6, -0.28, 0.735, 0.045)\">",
+        "<input type=\"range\" min=\"0.1\" max=\"3\" step=\"0.1\" value=\"1.2\" class=\"slider\" id=\"speedRange\">",
+        "<button id=\"randomize\">",
+        "<button id=\"reset\">",
+        "<button id=\"exportSVG\">"
+      ],
+      "inlineScriptHashes": [
+        "b7e63e0b6df4eb0c11b5ca4e7be7fb702d4d06daa6cf2ae56ce2f39a086330be"
+      ]
+    },
+    {
+      "id": "chladni-sound-pattern",
+      "sourceRoot": "muted/chladni-sound-pattern",
+      "files": [
+        {
+          "path": "index.html",
+          "sourceSha256": "fb1242cc8df3b1694daa2df6f573819b25aaec98d4adfd1eb41420f4aa464581",
+          "copySha256": "9384efd8bd6fb73abcc7cb17d9d5a4e4ec1f846f5795287be0070b290cc38f27",
+          "bytes": 4399
+        },
+        {
+          "path": "style.css",
+          "sourceSha256": "931a20faa46eb14db2f5d062aaef05fdbbd6de48e37c53bed6bfb536e55e8b84",
+          "copySha256": "1639d4dec19d0424f784eb6c954a7200004fe04ae609e33402990c0c14b2bbba",
+          "bytes": 4827
+        },
+        {
+          "path": "sketch.js",
+          "sourceSha256": "c9c83a51b6a3fb2c0694c4aa35ea02b4f3a37963cd5fd59368e0f016b0ff5e24",
+          "copySha256": "c9c83a51b6a3fb2c0694c4aa35ea02b4f3a37963cd5fd59368e0f016b0ff5e24",
+          "bytes": 27484
+        }
+      ],
+      "htmlControls": [
+        "<button id=\"start-button\">",
+        "<button id=\"stop-button\">",
+        "<button id=\"pause-button\">",
+        "<button id=\"export-png-button\">"
+      ],
+      "inlineScriptHashes": []
+    }
+  ]
+}

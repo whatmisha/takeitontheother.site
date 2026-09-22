@@ -121,7 +121,7 @@
       "name": "Hyperspace",
       "group": "lunnen",
       "entry": "tools/hyperspace/index.html",
-      "state": "planned",
+      "state": "migrating",
       "cohort": "migration",
       "referenceViewport": {
         "width": 1440,
@@ -134,7 +134,7 @@
       "name": "Pattern 01",
       "group": "lunnen",
       "entry": "tools/pattern_generator/index.html",
-      "state": "planned",
+      "state": "migrating",
       "cohort": "migration",
       "referenceViewport": {
         "width": 1440,
@@ -147,7 +147,7 @@
       "name": "Pattern 02",
       "group": "lunnen",
       "entry": "tools/pattern_generator_02/index.html",
-      "state": "planned",
+      "state": "migrating",
       "cohort": "migration",
       "referenceViewport": {
         "width": 1440,
@@ -160,7 +160,7 @@
       "name": "Random Lines",
       "group": "lunnen",
       "entry": "tools/random_lines_generator/index.html",
-      "state": "planned",
+      "state": "migrating",
       "cohort": "migration",
       "referenceViewport": {
         "width": 1440,
@@ -186,7 +186,7 @@
       "name": "Asterisk Pattern",
       "group": "lunnen",
       "entry": "tools/asterisk_pattern_generator/index.html",
-      "state": "planned",
+      "state": "migrating",
       "cohort": "migration",
       "referenceViewport": {
         "width": 1440,
@@ -199,7 +199,7 @@
       "name": "Calendar Randomizer",
       "group": "muted",
       "entry": "tools/calendar-randomizer/index.html",
-      "state": "planned",
+      "state": "migrating",
       "cohort": "migration",
       "referenceViewport": {
         "width": 1440,
@@ -212,7 +212,7 @@
       "name": "Chladni Sound Pattern",
       "group": "muted",
       "entry": "tools/chladni-sound-pattern/index.html",
-      "state": "planned",
+      "state": "migrating",
       "cohort": "migration",
       "referenceViewport": {
         "width": 1440,

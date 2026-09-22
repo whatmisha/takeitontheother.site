@@ -1,0 +1,13 @@
+:root { color-scheme: dark; }
+body { margin: 0; background: #151515; color: #d2d2d2; font: 400 16px/1.5 -apple-system, Inter, "Segoe UI", Roboto, sans-serif; }
+main { max-width: 960px; margin: 48px auto; padding: 0 24px; }
+h1 { font-size: 28px; font-weight: 500; }
+h2 { font-size: 20px; font-weight: 500; margin: 0; }
+p { max-width: 800px; color: #aaa; }
+a { color: #d2d2d2; text-underline-offset: 4px; }
+a:hover { color: #fff; }
+a:focus-visible { outline: 2px solid #69a5ff; outline-offset: 5px; }
+#tools { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-top: 32px; }
+article { border: 1px solid #383838; border-radius: 14px; padding: 20px; }
+article p { font-size: 14px; margin: 6px 0 20px; }
+.links { display: flex; gap: 20px; }

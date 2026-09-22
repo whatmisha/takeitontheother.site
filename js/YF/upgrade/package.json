@@ -9,6 +9,8 @@
     "test:catalog": "node --test catalog/tests/*.test.mjs",
     "migration:sources:check": "node scripts/check-migration-sources.mjs --verify-originals",
     "test:rays-baseline": "node --test qa/migrations/rays/*.test.mjs",
+    "test:migration-batch": "node --test qa/migrations/batch7/*.test.mjs",
+    "check:migration-vendor": "node scripts/vendor-migration-p5.mjs --check",
     "check:migration-foundation": "npm run test:catalog && npm run check:boundaries",
     "serve": "python3 -m http.server 8000 --bind 127.0.0.1",
     "manifest:generate": "node scripts/generate-source-manifest.mjs",

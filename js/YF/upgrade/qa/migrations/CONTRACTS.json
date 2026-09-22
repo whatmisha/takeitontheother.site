@@ -5,7 +5,7 @@
   "tools": [
     {
       "id": "hyperspace",
-      "status": "not-started",
+      "status": "isolated-copy",
       "sourceRenderer": "p5-1.4.0",
       "modes": [
         "animation"
@@ -30,7 +30,7 @@
     },
     {
       "id": "pattern_generator",
-      "status": "not-started",
+      "status": "isolated-copy",
       "sourceRenderer": "canvas",
       "modes": [
         "diagonal-grid",
@@ -60,7 +60,7 @@
     },
     {
       "id": "pattern_generator_02",
-      "status": "not-started",
+      "status": "isolated-copy",
       "sourceRenderer": "p5-1.7.0",
       "modes": [
         "grid"
@@ -83,7 +83,7 @@
     },
     {
       "id": "random_lines_generator",
-      "status": "not-started",
+      "status": "isolated-copy",
       "sourceRenderer": "canvas",
       "modes": [
         "ordinary",
@@ -143,7 +143,7 @@
     },
     {
       "id": "asterisk_pattern_generator",
-      "status": "not-started",
+      "status": "isolated-copy",
       "sourceRenderer": "canvas",
       "modes": [
         "tessellation",
@@ -169,7 +169,7 @@
     },
     {
       "id": "calendar-randomizer",
-      "status": "not-started",
+      "status": "isolated-copy",
       "sourceRenderer": "svg",
       "modes": [
         "calend_01",
@@ -199,7 +199,7 @@
     },
     {
       "id": "chladni-sound-pattern",
-      "status": "not-started",
+      "status": "isolated-copy",
       "sourceRenderer": "p5-1.9.0+sound",
       "modes": [
         "static",
