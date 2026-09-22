@@ -15,14 +15,24 @@
         </header>
         <form id="auditForm" class="toolbar">
             <label>Инструмент <select id="tool">
-                <option value="sparky">Sparky</option>
-                <option value="grid_generator">Pizza Boxer</option>
-                <option value="label_generator">Sticky Fingers</option>
-                <option value="keyboarder">Keyboarder</option>
-                <option value="wordplayer">Wordplayer</option>
-                <option value="dither">Dither</option>
-                <option value="wander_bender" selected>Wander Bender</option>
-                <option value="pulsar_coder">Pulsar Coder</option>
+<!-- catalog:audit:start -->
+                <option value="sparky" data-tool-state="accepted">Sparky</option>
+                <option value="grid_generator" data-tool-state="accepted">Pizza Boxer</option>
+                <option value="label_generator" data-tool-state="accepted">Sticky Fingers</option>
+                <option value="keyboarder" data-tool-state="accepted">Keyboarder</option>
+                <option value="wordplayer" data-tool-state="accepted">Wordplayer</option>
+                <option value="dither" data-tool-state="accepted">Dither Wizard</option>
+                <option value="wander_bender" data-tool-state="accepted" selected>Wander Bender</option>
+                <option value="pulsar_coder" data-tool-state="accepted">Pulsar Coder</option>
+                <option value="hyperspace" data-tool-state="planned" disabled>Hyperspace — запланирован</option>
+                <option value="pattern_generator" data-tool-state="planned" disabled>Pattern 01 — запланирован</option>
+                <option value="pattern_generator_02" data-tool-state="planned" disabled>Pattern 02 — запланирован</option>
+                <option value="random_lines_generator" data-tool-state="planned" disabled>Random Lines — запланирован</option>
+                <option value="rays_pattern_generator" data-tool-state="planned" disabled>Rays Pattern — запланирован</option>
+                <option value="asterisk_pattern_generator" data-tool-state="planned" disabled>Asterisk Pattern — запланирован</option>
+                <option value="calendar-randomizer" data-tool-state="planned" disabled>Calendar Randomizer — запланирован</option>
+                <option value="chladni-sound-pattern" data-tool-state="planned" disabled>Chladni Sound Pattern — запланирован</option>
+<!-- catalog:audit:end -->
             </select></label>
             <label>Окно инструмента <select id="viewport">
                 <option value="1440x900">1440 × 900</option>
@@ -69,6 +79,6 @@
             <iframe id="wordReference" title="Эталон Wordplayer" tabindex="-1"></iframe>
         </div>
     </main>
-    <script type="module" src="audit.js?v=uiq-4"></script>
+    <script type="module" src="audit.js?v=int-01"></script>
 </body>
 </html>

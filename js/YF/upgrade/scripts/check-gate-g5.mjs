@@ -75,8 +75,8 @@ const apps = [
 
 const hub = await read('index.html');
 const hubHrefs = [...hub.matchAll(/<a\s+href="([^"]+)"/gu)].map(match => match[1]);
-assert.deepEqual(hubHrefs, apps.map(app => app.href),
-    'Upgrade hub must expose exactly the eight accepted tools in priority order');
+assert.deepEqual(hubHrefs.filter(href => apps.some(app => app.href === href)), apps.map(app => app.href),
+    'Upgrade hub must preserve all eight original tools in priority order; new tools are checked by check:catalog');
 
 for (const app of apps) {
     const [entry, navigation, css, js] = await Promise.all([

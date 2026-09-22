@@ -1,0 +1,217 @@
+{
+  "schemaVersion": 1,
+  "scope": "source-reference-only",
+  "capturedAt": "2026-09-22T08:52:08.432Z",
+  "sourceBase": "YF",
+  "note": "Read-only migration provenance, never a runtime dependency. Recheck before copying. Does not replace SOURCE_MANIFEST.json.",
+  "tools": [
+    {
+      "id": "hyperspace",
+      "sourceRoot": "lunnen/hyperspace",
+      "files": [
+        {
+          "path": "index.html",
+          "bytes": 4117,
+          "sha256": "644bb6a230e534f4fe7917dc88bc7cb61eff0d2289c3a4bc90fb57132350c9b7"
+        },
+        {
+          "path": "styles.css",
+          "bytes": 2421,
+          "sha256": "ebbf9dd22c4691a3a992ac06408680c17eeb86ca32725555e292944f46bc6c11"
+        },
+        {
+          "path": "sketch.js",
+          "bytes": 32306,
+          "sha256": "9df4a90687f6c9c6e90fd19ade7232a3edf4a3762b7059261a47a7621bc4fb7a"
+        }
+      ]
+    },
+    {
+      "id": "pattern_generator",
+      "sourceRoot": "lunnen/pattern_generator",
+      "files": [
+        {
+          "path": "index.html",
+          "bytes": 10226,
+          "sha256": "bd367f6adcb3dd175ee5a7d21f1caa44face7b1ab18ee3d32f882a05dd66bd6d"
+        },
+        {
+          "path": "styles.css",
+          "bytes": 5067,
+          "sha256": "ae8b3d75da7e4eabcbd03d0efd7ef8168bdb7982d6f7ec94ed842897f7880250"
+        },
+        {
+          "path": "script.js",
+          "bytes": 4748,
+          "sha256": "279125ff57fbc37731b8c2b6a1c8fc0d8f7e150810552120120843370963347a"
+        },
+        {
+          "path": "fibonacci.js",
+          "bytes": 8326,
+          "sha256": "593098e4def102eb6abf3212eb1d1c9ba77f9bc736c4501a6343c50329453bf1"
+        },
+        {
+          "path": "voronoi.js",
+          "bytes": 9232,
+          "sha256": "b3c05188a94a9479c48b270ee513442233a0c6fe06e035b6db63120b46a18247"
+        },
+        {
+          "path": "rectangle.js",
+          "bytes": 9622,
+          "sha256": "fd845ab3f680aa0ade94cc66ccdf59ab24e5c1ea4759682550cac0761beabf95"
+        },
+        {
+          "path": "fibonacci-rectangle.js",
+          "bytes": 10985,
+          "sha256": "dd005a06efce8e51c7b655b564daaaa9c6d819ad450b9c22c6f4491cd6f97241"
+        },
+        {
+          "path": "magnetic-rectangle.js",
+          "bytes": 37731,
+          "sha256": "757cb68b7eaa25f0022239ddcc41027e0c0736498c978b903b25fd9017a8090d"
+        }
+      ]
+    },
+    {
+      "id": "pattern_generator_02",
+      "sourceRoot": "lunnen/pattern_generator_02/01",
+      "files": [
+        {
+          "path": "index.html",
+          "bytes": 2856,
+          "sha256": "4d7eb58856c069c64498f2303056a929499e5e428a710c8c75d53a065a1eb744"
+        },
+        {
+          "path": "styles.css",
+          "bytes": 5066,
+          "sha256": "f6325ac79aa523667372d57537e77bbac385dfef08eb0fed49ddebad6a70f90b"
+        },
+        {
+          "path": "script.js",
+          "bytes": 41797,
+          "sha256": "c415c26e7a8a61c8cc05e7c6559074b46516a4a2f25a68e09de3dfc2655e7612"
+        }
+      ]
+    },
+    {
+      "id": "random_lines_generator",
+      "sourceRoot": "lunnen/random_lines_generator/01",
+      "files": [
+        {
+          "path": "index.html",
+          "bytes": 7438,
+          "sha256": "0340f332f5b200798ef67ae09575069ca331e0de990362e5c57513735a6e781a"
+        },
+        {
+          "path": "styles.css",
+          "bytes": 21749,
+          "sha256": "e198437282be3b330761f8abc23f3e6f0e6071730cb2e6f9ce9ba1a1a16797a3"
+        },
+        {
+          "path": "script.js",
+          "bytes": 46083,
+          "sha256": "b48776b32a617e0bf6f10f19a9902ade84db7065ca3ad36b6e84d8a47cffb5c0"
+        }
+      ]
+    },
+    {
+      "id": "rays_pattern_generator",
+      "sourceRoot": "lunnen/rays_pattern_generator/01",
+      "files": [
+        {
+          "path": "index.html",
+          "bytes": 9747,
+          "sha256": "7ef386c705a69f566b6d4d746156b9bebfc959f1c1d4d32ce22ffd552e35738a"
+        },
+        {
+          "path": "styles.css",
+          "bytes": 22298,
+          "sha256": "4a699af3e16d98fc1782307f0b269b9f28bee16d50168f90f413a37a2eaa60d5"
+        },
+        {
+          "path": "script.js",
+          "bytes": 75352,
+          "sha256": "9762347d99c1bc8a6466abb839a7089d348bbc5a8b35e570e213f6f3a12436ec"
+        }
+      ]
+    },
+    {
+      "id": "asterisk_pattern_generator",
+      "sourceRoot": "lunnen/asterisk_pattern_generator",
+      "files": [
+        {
+          "path": "index.html",
+          "bytes": 2447,
+          "sha256": "68e417d22135c2f1cfa0fbbf1cca1a9dbb7484cbbbd9254512db062184dbc0ce"
+        },
+        {
+          "path": "styles.css",
+          "bytes": 3167,
+          "sha256": "38e7944f557ced6ed799f6fcf26f2c4914013f7cf1b5e83ef10a148c23d763a2"
+        },
+        {
+          "path": "script.js",
+          "bytes": 81379,
+          "sha256": "ee4a2b4641a05e39d55e8f3e2352452f28b3455b3d35c30698c2db42ea087d62"
+        }
+      ]
+    },
+    {
+      "id": "calendar-randomizer",
+      "sourceRoot": "muted/calendar-randomizer",
+      "files": [
+        {
+          "path": "index.html",
+          "bytes": 40395,
+          "sha256": "31735ddd97a4397ae3ca0b8e0b7d5ec260180f68989d115283d35906eaee97dc"
+        },
+        {
+          "path": "list-svgs.js",
+          "bytes": 1003,
+          "sha256": "2285dcd0717865ef13b206f58321932c3fdff21bed78f39c433dabe25dc4ec5b"
+        },
+        {
+          "path": "source/calend_01.svg",
+          "bytes": 129502,
+          "sha256": "059c37a55912312e18a70ab90fe7b348d42dc8d882e4778105137245f008f2b4"
+        },
+        {
+          "path": "source/calend_02.svg",
+          "bytes": 44433,
+          "sha256": "5b19d41f60550d70eae6ea543f2962d7a0b8c3de25f9d77b7b00ad70ec996c70"
+        },
+        {
+          "path": "source/calend_03.svg",
+          "bytes": 41715,
+          "sha256": "a5d5fd21c2cf6039422367694ba270b2abfa0c14b389bb242253c8f388d9f1fa"
+        },
+        {
+          "path": "source/calend_04.svg",
+          "bytes": 44054,
+          "sha256": "d49d876a59d3e0db90e299062d1f7a0aacd2f16692dc48ba2872fb1df9f45ebb"
+        }
+      ]
+    },
+    {
+      "id": "chladni-sound-pattern",
+      "sourceRoot": "muted/chladni-sound-pattern",
+      "files": [
+        {
+          "path": "index.html",
+          "bytes": 4153,
+          "sha256": "fb1242cc8df3b1694daa2df6f573819b25aaec98d4adfd1eb41420f4aa464581"
+        },
+        {
+          "path": "style.css",
+          "bytes": 4768,
+          "sha256": "931a20faa46eb14db2f5d062aaef05fdbbd6de48e37c53bed6bfb536e55e8b84"
+        },
+        {
+          "path": "sketch.js",
+          "bytes": 27484,
+          "sha256": "c9c83a51b6a3fb2c0694c4aa35ea02b4f3a37963cd5fd59368e0f016b0ff5e24"
+        }
+      ]
+    }
+  ]
+}

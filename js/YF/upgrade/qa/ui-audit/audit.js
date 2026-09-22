@@ -1,10 +1,13 @@
 // Development-only observer. No writes to application DOM, storage or settings.
+import { isAuditableState } from '../../catalog/registry.js';
+
 const $ = selector => document.querySelector(selector);
-const AUDITOR_VERSION = 'uiq-4';
+const AUDITOR_VERSION = 'int-01';
 const subject = $('#subject');
 const sparky = $('#sparkyReference');
 const word = $('#wordReference');
-const allowedTools = new Set([...$('#tool').options].map(option => option.value));
+const toolOptions = new Map([...$('#tool').options].map(option => [option.value, option]));
+const allowedTools = new Set([...toolOptions.values()].filter(option => !option.disabled && isAuditableState(option.dataset.toolState)).map(option => option.value));
 const params = new URLSearchParams(location.search);
 if (allowedTools.has(params.get('tool'))) $('#tool').value = params.get('tool');
 const typography = ['fontFamily', 'fontSize', 'fontWeight', 'lineHeight'];
@@ -97,6 +100,9 @@ function collect() {
     const ref = sparky.contentDocument;
     const wordDoc = word.contentDocument;
     const results = [];
+    if (toolOptions.get(loadedTool)?.dataset.toolState === 'migrating') {
+        results.push({ name: 'Инструмент в переносе', status: 'review', detail: 'Это рабочая копия без приёмки. Отсутствующие компоненты отмечаются как непроверенные; совпадение CSS не разрешает публикацию.', differences: [] });
+    }
     const primary = find(ref, '#exportSvgBtn')[0];
     const referenceHeading = find(wordDoc, '#lightToneGroupLabel')[0];
     results.push(pinned('Эталон кнопок Sparky', primary, { fontSize: '16px', fontWeight: '500', height: '36px', backgroundColor: 'rgb(210, 210, 210)' }));
@@ -168,7 +174,7 @@ function collect() {
     const hidden = [...doc.querySelectorAll('.controls-panel, .control-field-heading, .tone-group-heading, .hsb-picker')].filter(element => !visible(element));
     results.push({ name: 'Непокрытые состояния', status: 'review', detail: `Скрытых панелей, групп и пикеров: ${hidden.length}. Откройте нужный режим или Edit Mode и повторите замер. Hover, focus, экспорт, ошибки, содержимое файлов и мобильная версия требуют отдельных сценариев.`, differences: [] });
 
-    return { schemaVersion: 1, auditorVersion: AUDITOR_VERSION, tool: loadedTool, url: subject.contentWindow.location.href, recordedAt: new Date().toISOString(), viewport: { width: subject.contentWindow.innerWidth, height: subject.contentWindow.innerHeight }, stylesheets: [...doc.querySelectorAll('link[rel=stylesheet]')].map(link => link.href), scripts: [...doc.querySelectorAll('script[src]')].map(script => script.src), modes: [...doc.querySelectorAll('input[type=radio]:checked')].map(input => ({ name: input.name, value: input.value })), results };
+    return { schemaVersion: 1, auditorVersion: AUDITOR_VERSION, tool: loadedTool, toolState: toolOptions.get(loadedTool)?.dataset.toolState, url: subject.contentWindow.location.href, recordedAt: new Date().toISOString(), viewport: { width: subject.contentWindow.innerWidth, height: subject.contentWindow.innerHeight }, stylesheets: [...doc.querySelectorAll('link[rel=stylesheet]')].map(link => link.href), scripts: [...doc.querySelectorAll('script[src]')].map(script => script.src), modes: [...doc.querySelectorAll('input[type=radio]:checked')].map(input => ({ name: input.name, value: input.value })), results };
 }
 
 function element(tag, text) {
@@ -217,6 +223,7 @@ async function scan() {
 }
 
 async function openFrame(frame, tool, width, height) {
+    if (!allowedTools.has(tool)) throw new Error(`${tool}: инструмент ещё не перенесён или отсутствует в каталоге.`);
     frame.style.width = `${width}px`;
     frame.style.height = `${height}px`;
     const url = new URL(`../../${tool}/`, location.href);
@@ -227,7 +234,7 @@ async function openFrame(frame, tool, width, height) {
         frame.src = url.href;
     });
     const start = Date.now();
-    while (!frame.contentDocument?.querySelector('[data-shortcut-help-popup]')) {
+    while (toolOptions.get(tool).dataset.toolState === 'accepted' && !frame.contentDocument?.querySelector('[data-shortcut-help-popup]')) {
         if (Date.now() - start > 10000) throw new Error(`${tool}: общий UI не инициализирован; замер не принят.`);
         await new Promise(resolve => setTimeout(resolve, 100));
     }
@@ -237,6 +244,10 @@ async function openFrame(frame, tool, width, height) {
 async function load(event) {
     event?.preventDefault();
     if (busy) return;
+    if (!allowedTools.has($('#tool').value)) {
+        $('#status').textContent = 'Этот инструмент ещё не перенесён. Выберите доступный инструмент.';
+        return;
+    }
     if (loadedTool) notesByTool.set(loadedTool, $('#reproduction').value);
     busy = true; report = null; loadedTool = $('#tool').value;
     $('#reproduction').value = notesByTool.get(loadedTool) || '';
@@ -257,7 +268,7 @@ async function load(event) {
 function downloadReport() {
     if (!report) return;
     const escape = value => String(value).replaceAll('|', '\\|').replaceAll('\n', ' ');
-    const lines = ['# UI-аудит Upgrade', '', `Версия аудитора: ${report.auditorVersion}`, `Инструмент: ${report.tool}`, `URL: ${report.url}`, `Время: ${report.recordedAt}`, `Окно: ${report.viewport.width} × ${report.viewport.height}`, '', 'Это замер текущего состояния, не полная приёмка инструмента.', '', '## Наблюдения и шаги', '', $('#reproduction').value.trim() || 'Не записаны.', '', '## Режимы', '', JSON.stringify(report.modes), '', '## JS-точки входа (script src, без вложенных imports)', '', ...report.scripts.map(url => `- ${url}`), '', '## Результаты'];
+    const lines = ['# UI-аудит Upgrade', '', `Версия аудитора: ${report.auditorVersion}`, `Инструмент: ${report.tool}`, `Статус переноса: ${report.toolState}`, `URL: ${report.url}`, `Время: ${report.recordedAt}`, `Окно: ${report.viewport.width} × ${report.viewport.height}`, '', 'Это замер текущего состояния, не полная приёмка инструмента.', '', '## Наблюдения и шаги', '', $('#reproduction').value.trim() || 'Не записаны.', '', '## Режимы', '', JSON.stringify(report.modes), '', '## JS-точки входа (script src, без вложенных imports)', '', ...report.scripts.map(url => `- ${url}`), '', '## Результаты'];
     for (const result of report.results) {
         lines.push('', `### ${labels[result.status]} — ${result.name}`, '', result.detail);
         if (result.differences.length) {
@@ -280,4 +291,8 @@ $('#scanButton').addEventListener('click', async () => {
     finally { busy = false; $('#tool').disabled = $('#viewport').disabled = $('#loadButton').disabled = false; }
 });
 $('#reportButton').addEventListener('click', downloadReport);
-load();
+if (params.has('tool') && !allowedTools.has(params.get('tool'))) {
+    $('#status').textContent = 'Запрошенный инструмент ещё не перенесён или отсутствует в каталоге. Выберите доступный инструмент; рабочая страница не загружена.';
+} else {
+    load();
+}

@@ -1,0 +1,224 @@
+{
+  "schemaVersion": 1,
+  "scope": "upgrade-only",
+  "note": "Source-derived target contracts, not acceptance evidence. Existing eight retain their independent historical capability and acceptance manifests.",
+  "tools": [
+    {
+      "id": "hyperspace",
+      "status": "not-started",
+      "sourceRenderer": "p5-1.4.0",
+      "modes": [
+        "animation"
+      ],
+      "exports": [
+        "png"
+      ],
+      "requiredScenarios": [
+        "frame snapshot without regeneration",
+        "pause, Center, resize and drag outside UI",
+        "particle origins and inertial vanishing points"
+      ],
+      "knownSourceIssues": [
+        "global shortcuts need editable guards"
+      ],
+      "acceptance": {
+        "status": "not-run",
+        "unit": [],
+        "artifact": [],
+        "browser": []
+      }
+    },
+    {
+      "id": "pattern_generator",
+      "status": "not-started",
+      "sourceRenderer": "canvas",
+      "modes": [
+        "diagonal-grid",
+        "fibonacci-circle",
+        "voronoi-circle",
+        "voronoi-rectangle",
+        "fibonacci-rectangle"
+      ],
+      "exports": [
+        "svg"
+      ],
+      "requiredScenarios": [
+        "all five modes and export routes",
+        "magnetic points, cursor, undo and inactive mode keyboard guards",
+        "seeded random modes and resize/tab policy"
+      ],
+      "knownSourceIssues": [
+        "missing magnetic shortcut route",
+        "rectangle exportSvg missing from public module"
+      ],
+      "acceptance": {
+        "status": "not-run",
+        "unit": [],
+        "artifact": [],
+        "browser": []
+      }
+    },
+    {
+      "id": "pattern_generator_02",
+      "status": "not-started",
+      "sourceRenderer": "p5-1.7.0",
+      "modes": [
+        "grid"
+      ],
+      "exports": [
+        "svg"
+      ],
+      "requiredScenarios": [
+        "A/B geometry and three toggles",
+        "undo/redo mouse, touch and keyboard transactions",
+        "single canvas owner; viewport-sized export baseline"
+      ],
+      "knownSourceIssues": [],
+      "acceptance": {
+        "status": "not-run",
+        "unit": [],
+        "artifact": [],
+        "browser": []
+      }
+    },
+    {
+      "id": "random_lines_generator",
+      "status": "not-started",
+      "sourceRenderer": "canvas",
+      "modes": [
+        "ordinary",
+        "gradient",
+        "image"
+      ],
+      "exports": [
+        "svg"
+      ],
+      "requiredScenarios": [
+        "explicit Generate and stale-result state",
+        "safe field, count limit, fixed RNG stream",
+        "image intake and legacy filename"
+      ],
+      "knownSourceIssues": [
+        "sf parsed as scale: NaN"
+      ],
+      "acceptance": {
+        "status": "not-run",
+        "unit": [],
+        "artifact": [],
+        "browser": []
+      }
+    },
+    {
+      "id": "rays_pattern_generator",
+      "status": "not-started",
+      "sourceRenderer": "canvas",
+      "modes": [
+        "ordinary",
+        "gradient",
+        "image"
+      ],
+      "exports": [
+        "svg"
+      ],
+      "requiredScenarios": [
+        "allowed ray counts: 3,4,5,6,8,10,12,14,16,18,20,24",
+        "caps, connections, row offset and edge cells",
+        "tone, contrast/invert and repeated image selection"
+      ],
+      "knownSourceIssues": [
+        "export Object URL lifecycle"
+      ],
+      "acceptance": {
+        "status": "not-run",
+        "unit": [],
+        "artifact": [],
+        "browser": []
+      }
+    },
+    {
+      "id": "asterisk_pattern_generator",
+      "status": "not-started",
+      "sourceRenderer": "canvas",
+      "modes": [
+        "tessellation",
+        "axes"
+      ],
+      "exports": [
+        "svg"
+      ],
+      "requiredScenarios": [
+        "layers 0/1/2/7 and bounded stress",
+        "scale 1:1 through 1:128 and caps",
+        "preserve intentional exported grid"
+      ],
+      "knownSourceIssues": [
+        "axes preview and SVG differ in zero-layer copies"
+      ],
+      "acceptance": {
+        "status": "not-run",
+        "unit": [],
+        "artifact": [],
+        "browser": []
+      }
+    },
+    {
+      "id": "calendar-randomizer",
+      "status": "not-started",
+      "sourceRenderer": "svg",
+      "modes": [
+        "calend_01",
+        "calend_02",
+        "calend_03",
+        "calend_04"
+      ],
+      "exports": [
+        "svg"
+      ],
+      "requiredScenarios": [
+        "20 template switches: one action per click",
+        "nested groups, defs, colors and base transforms",
+        "Randomize/Reset and agreed export-during-transition semantics"
+      ],
+      "knownSourceIssues": [
+        "export re-randomizes composition",
+        "template changes multiply listeners",
+        "global SVG selectors may target UI icons"
+      ],
+      "acceptance": {
+        "status": "not-run",
+        "unit": [],
+        "artifact": [],
+        "browser": []
+      }
+    },
+    {
+      "id": "chladni-sound-pattern",
+      "status": "not-started",
+      "sourceRenderer": "p5-1.9.0+sound",
+      "modes": [
+        "static",
+        "microphone",
+        "paused"
+      ],
+      "exports": [
+        "png"
+      ],
+      "requiredScenarios": [
+        "manual X / reactive Y combinations",
+        "permission denied, retry, pause, stop and unload cleanup",
+        "recorded numeric FFT fixtures; identical export snapshot"
+      ],
+      "knownSourceIssues": [
+        "manual X disabled when only Y is reactive",
+        "mic readiness marked before capture success",
+        "running export threshold differs from preview"
+      ],
+      "acceptance": {
+        "status": "not-run",
+        "unit": [],
+        "artifact": [],
+        "browser": []
+      }
+    }
+  ]
+}

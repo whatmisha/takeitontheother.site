@@ -1,37 +1,23 @@
 import { lstat, readdir, readFile, realpath } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { readCatalog } from './lib/tool-catalog.mjs';
+import { runtimeTools, publishedTools, toolHref, validateDirectoryCoverage } from '../catalog/registry.js';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const upgradeRoot = path.dirname(scriptDir);
 const canonicalRoot = await realpath(upgradeRoot);
 
-const appDirectories = [
-    'dither',
-    'grid_generator',
-    'keyboarder',
-    'label_generator',
-    'pulsar_coder',
-    'sparky',
-    'wander_bender',
-    'wordplayer'
-];
+const catalog = await readCatalog();
+const appDirectories = runtimeTools(catalog).map(tool => tool.id);
 
 const entrypoints = [
     'index.html',
+    'qa/ui-audit/index.html',
     ...appDirectories.map(directory => `${directory}/index.html`)
 ];
 
-const expectedIndexLinks = [
-    'sparky/',
-    'grid_generator/',
-    'label_generator/',
-    'keyboarder/',
-    'wordplayer/',
-    'dither/',
-    'wander_bender/',
-    'pulsar_coder/'
-];
+const expectedIndexLinks = publishedTools(catalog).map(toolHref);
 
 const ignoredDirectoryNames = new Set([
     '.git',
@@ -46,7 +32,7 @@ const ignoredDirectoryNames = new Set([
 ]);
 const runtimeExtensions = new Set(['.css', '.html', '.js', '.json', '.mjs']);
 const errors = [];
-const runtimeFiles = [];
+const runtimeFiles = ['index.html', 'TOOL_CATALOG.json'].map(file => path.join(upgradeRoot, file));
 let internalSymlinkCount = 0;
 
 function relative(filePath) {
@@ -83,7 +69,7 @@ async function walk(directory) {
         if (!entry.isFile()) continue;
         const topLevelDirectory = relativePath.split('/')[0];
         if (
-            (appDirectories.includes(topLevelDirectory) || topLevelDirectory === 'framework')
+            (appDirectories.includes(topLevelDirectory) || ['framework', 'catalog'].includes(topLevelDirectory) || relativePath.startsWith('qa/ui-audit/'))
             && runtimeExtensions.has(path.extname(entry.name).toLowerCase())
             && !isThirdPartyBundle(relativePath)
         ) {
@@ -110,6 +96,8 @@ async function auditSymlinks(directory) {
     }
 }
 
+const existingDirectories = new Set((await readdir(upgradeRoot, { withFileTypes: true })).filter(entry => entry.isDirectory()).map(entry => entry.name));
+validateDirectoryCoverage(catalog, existingDirectories);
 for (const directory of appDirectories) {
     const metadata = await lstat(path.join(upgradeRoot, directory));
     if (!metadata.isDirectory()) errors.push(`Missing app directory: ${directory}`);
@@ -234,7 +222,7 @@ for (const entrypoint of entrypoints) {
 const indexHtml = await readFile(path.join(upgradeRoot, 'index.html'), 'utf8');
 const actualIndexLinks = [...indexHtml.matchAll(/<a\s+href=["']([^"']+)["']/g)].map(match => match[1]);
 if (JSON.stringify(actualIndexLinks) !== JSON.stringify(expectedIndexLinks)) {
-    errors.push(`Upgrade index links differ from the required eight-tool order: ${actualIndexLinks.join(', ')}`);
+    errors.push(`Upgrade index links differ from the accepted catalog order: ${actualIndexLinks.join(', ')}`);
 }
 
 if (errors.length) {

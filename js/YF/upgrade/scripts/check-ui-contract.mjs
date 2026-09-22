@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import { readCatalog } from './lib/tool-catalog.mjs';
+import { renderHub, replaceGeneratedRegion } from '../catalog/registry.js';
 
 const root = new URL('../', import.meta.url);
 const applications = [
@@ -79,13 +81,7 @@ assert.match(hub, /<title>YF Tools<\/title>/u);
 assert.match(hub, /<h1>YF Tools<\/h1>/u);
 assert.match(hub, /<h2 id="lunnen-heading">Lunnen<\/h2>/u);
 assert.match(hub, /<h2 id="muted-heading">Muted<\/h2>/u);
-for (const name of [
-    'Hyperspace', 'Pattern 01', 'Pattern 02', 'Random Lines',
-    'Rays Pattern', 'Asterisk Pattern', 'Calendar Randomizer', 'Chladni Sound Pattern'
-]) {
-    assert.match(hub, new RegExp(`<span class="tool-placeholder">${name}<\\/span>`, 'u'));
-    assert.doesNotMatch(hub, new RegExp(`<a[^>]*>${name}<\\/a>`, 'u'));
-}
+assert.equal(hub, replaceGeneratedRegion(hub, 'hub', renderHub(await readCatalog())), 'Hub links/placeholders must match catalog acceptance states');
 
 const [ditherHtml, keyboarderSource, wordplayerSource] = await Promise.all([
     read('dither/index.html'),
