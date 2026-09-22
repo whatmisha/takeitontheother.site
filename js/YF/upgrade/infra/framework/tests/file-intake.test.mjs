@@ -241,8 +241,46 @@ test('FileIntake destroy cancels late completion and clears busy semantics', asy
     controller.destroy();
     assert.equal(trigger.getAttribute('aria-busy'), 'false');
     assert.equal(controller.busy, false);
+    assert.equal(status.textContent, '', 'cancelled first load must not leave a Loading label');
 
     resolveSelection('late result');
     assert.equal((await pending).code, 'cancelled');
     assert.notEqual(controller.state, 'ready', 'late completion must not mutate destroyed UI');
+});
+
+test('FileIntake restores the previous source/status after an interrupted replacement and BFCache init', async () => {
+    const input = fakeElement('input'), trigger = fakeElement('button'), status = fakeElement('div'), removeButton = fakeElement('button');
+    let complete;
+    const first = { name: 'first.png', type: 'image/png' };
+    const controller = new FileIntakeController({ input, trigger, status, removeButton, accept: 'image/*',
+        onSelect: file => file === first ? { statusText: 'First image · 640 × 480' } : new Promise(resolve => { complete = resolve; })
+    }).init();
+    await controller.consume([first]);
+    const replacement = controller.consume([{ name: 'slow.png', type: 'image/png' }]);
+    assert.match(status.textContent, /Loading slow/);
+    controller.destroy(); controller.init();
+    assert.equal(controller.currentFile, first);
+    assert.equal(controller.state, 'ready'); assert.equal(removeButton.hidden, false);
+    assert.equal(status.textContent, 'First image · 640 × 480');
+    complete('must not replace previous status');
+    assert.equal((await replacement).code, 'cancelled');
+    assert.equal(status.textContent, 'First image · 640 × 480');
+    await controller.remove();
+    assert.equal(controller.currentFile, null); assert.equal(removeButton.hidden, true);
+});
+
+test('FileIntake owner reset cancels a pending decode without removing listeners or reviving its status', async () => {
+    const input = fakeElement('input'), trigger = fakeElement('button'), status = fakeElement('div'), removeButton = fakeElement('button');
+    let finish, removed = 0;
+    const controller = new FileIntakeController({ input, trigger, status, removeButton,
+        onSelect: () => new Promise(resolve => { finish = resolve; }), onRemove: () => removed++ }).init();
+    const pending = controller.consume([{name:'late.png',type:'image/png'}]);
+    const operationId = controller.operationId;
+    controller.reset();
+    assert.ok(controller.operationId > operationId);
+    assert.equal(controller.bound, true); assert.equal(controller.busy, false);
+    assert.equal(status.textContent, ''); assert.equal(removeButton.hidden, true);
+    assert.equal(input.listeners.get('change').size, 1); assert.equal(removed, 0);
+    finish('late result'); assert.equal((await pending).code, 'cancelled');
+    assert.equal(status.textContent, ''); assert.equal(controller.currentFile, null);
 });

@@ -68,3 +68,13 @@ test('empty image previews do not try to decode their own HTML document', async 
         assert.doesNotMatch(script, /imagePreview\.src\s*=\s*["']#["']/);
     }
 });
+
+test('minimal navigation reproduction has no framework, p5 or MutationObserver calls', async () => {
+    const parent = await readFile(new URL('observer-repro.html', import.meta.url), 'utf8');
+    const child = await readFile(new URL('observer-empty.html', import.meta.url), 'utf8');
+    const logic = await readFile(new URL('observer-repro.js', import.meta.url), 'utf8');
+    const scripts = html => [...html.matchAll(/<script[^>]*src="([^"]+)"/g)].map(match => match[1]);
+    assert.deepEqual(scripts(parent), ['runtime-probe.js?v=2', 'observer-repro.js']);
+    assert.deepEqual(scripts(child), ['runtime-probe.js?v=2']);
+    assert.doesNotMatch(source + logic, /\bMutationObserver\b|\bimport\s*\(|\bfetch\s*\(|createElement\(/);
+});

@@ -76,6 +76,7 @@ export function createLegacy({ script = source['script.js'], html = source['inde
                 const file = event.target.files[0]; event.target.value = '';
                 void onSelect(file, { controller: { bound: true } });
             });
+            return { reset() { input.intakeResetCount = (input.intakeResetCount || 0) + 1; } };
         },
         localStorage: { getItem: key => storage.get(key) ?? null, setItem: (key, val) => storage.set(key, val), removeItem: key => storage.delete(key) },
         URL: { createObjectURL(blob) { const id = `blob:test-${urls.size}`; urls.set(id, blob); return id; }, revokeObjectURL: id => { revoked.push(id); urls.delete(id); } },

@@ -1,7 +1,7 @@
 import { ToolUiController } from './ToolUiController.js';
 import { PanelManager } from './PanelManager.js';
 import { UnifiedColorPicker } from './UnifiedColorPicker.js';
-import { FileIntakeController } from './FileIntakeController.js';
+import { FileIntakeController } from './FileIntakeController.js?v=2';
 
 const owners = new WeakMap();
 

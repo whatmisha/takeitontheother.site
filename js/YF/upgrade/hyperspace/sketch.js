@@ -53,7 +53,7 @@ function setup() {
   setupSliderEvents();
   
   // Добавление обработчика клавиш
-  import('../infra/framework/src/ui/GeneratorHost.js?v=3').then(({ mountGenerator }) => mountGenerator({
+  import('../infra/framework/src/ui/GeneratorHost.js?v=4').then(({ mountGenerator }) => mountGenerator({
     id: 'hyperspace', title: 'Hyperspace',
     panels: [{ title: 'Animation', selectors: ['.controls'], summary: () => `${lineCount} · ${speed}×${isPaused ? ' · Paused' : ''}` }],
     actions: [
@@ -546,7 +546,7 @@ async function exportCanvas() {
   
   // Сохраняем изображение
   try {
-    const { downloadCanvas } = await import('../infra/framework/src/ui/GeneratorHost.js?v=3');
+    const { downloadCanvas } = await import('../infra/framework/src/ui/GeneratorHost.js?v=4');
     await downloadCanvas(tempCanvas.canvas, filename);
   } finally { tempCanvas.remove(); }
 }

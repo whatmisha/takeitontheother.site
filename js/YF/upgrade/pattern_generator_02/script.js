@@ -85,7 +85,7 @@ function setup() {
   setupHTMLControls();
   
   // Добавляем обработчик клавиатуры для хоткеев
-  import('../infra/framework/src/ui/GeneratorHost.js?v=3').then(({ mountGenerator }) => mountGenerator({
+  import('../infra/framework/src/ui/GeneratorHost.js?v=4').then(({ mountGenerator }) => mountGenerator({
     id: 'pattern_generator_02', title: 'Pattern 02',
     panels: [{ title: 'Pattern', selectors: ['#patternControls'], summary: () => `${squareSize} · ${cornerRadiusPercent}% · ${lineLengthPercent}%` }],
     actions: [

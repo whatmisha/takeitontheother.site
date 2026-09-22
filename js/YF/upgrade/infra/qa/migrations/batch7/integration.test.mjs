@@ -98,7 +98,7 @@ test('Hyperspace PNG rendering keeps particle origins/geometry; encoding finishe
             document: { getElementById: () => ({textContent:'PNG',style:{}}) }, setTimeout() {},
             testDownloadCanvas: canvas => { assert.equal(canvas, graphics.canvas); return new Promise(resolve => { finish = resolve; }); }
         });
-        const prepared = source.replaceAll("import('../infra/framework/src/ui/GeneratorHost.js?v=3')", 'Promise.resolve({downloadCanvas:testDownloadCanvas})');
+        const prepared = source.replaceAll("import('../infra/framework/src/ui/GeneratorHost.js?v=4')", 'Promise.resolve({downloadCanvas:testDownloadCanvas})');
         vm.runInContext(prepared, context);
         vm.runInContext('stars=[{active:true,origin:{x:71,y:92},angle:0.4,currentLength:120,resetLength:250}];opacity=80;fadeLength=30;segmentsCount=10;lineWidth=2;widthGrowth=25;reverseWedge=false;useColorGradient=false;', context);
         const operation = vm.runInContext('exportCanvas()', context);

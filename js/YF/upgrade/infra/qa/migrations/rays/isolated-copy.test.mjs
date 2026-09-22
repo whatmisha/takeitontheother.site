@@ -12,7 +12,7 @@ const [html, script, css] = await Promise.all(['index.html','script.js','styles.
 const fixtures = JSON.parse(await readFile(new URL('./geometry-fixtures.json', import.meta.url), 'utf8'));
 const storageKey = 'upgrade:rays-pattern:settings:v1';
 const migrated = options => createLegacy({ html, script: script.replace(/^import .*;\n/gmu, ''), storageKey,
-    dependencies: { buildRaysScene, paintRaysScene, raysSvgElement }, ...options });
+    ...options, dependencies: { buildRaysScene, paintRaysScene, raysSvgElement, ...options?.dependencies } });
 
 test('T.3b live preview and SVG consume the verified scene, not duplicate algorithms', () => {
     assert.match(script, /paintRaysScene\(ctx, scene\(\)/u);
@@ -48,6 +48,7 @@ test('isolated save/load/reset cannot read, overwrite or remove the original nam
     const reloaded = migrated({ saved: JSON.parse(app.storage.get(storageKey)) });
     assert.equal(+reloaded.nodes.get('rayCountSlider').value,8);
     reloaded.nodes.get('resetBtn').click();
+    assert.equal(reloaded.nodes.get('imageUpload').intakeResetCount, 1);
     assert.equal(reloaded.storage.has(storageKey),false);
     assert.equal(reloaded.storage.get('rayPatternSettings'),'original sentinel');
 });
@@ -94,6 +95,36 @@ test('removing an image clears decoded source and returns to the no-source geome
     assert.deepEqual(roundedGeometry(svgLines(app.export().svg)), before);
     assert.equal(app.nodes.get('imagePreview').style.display, 'none');
 });
+
+for (const stage of ['read', 'decode', 'late-decode-after-return']) {
+    test(`image ${stage} does not replace the model or preview`, async () => {
+        let select, reader, image;
+        const controller = { bound: true, operationId: 1 };
+        const app = migrated({ dependencies: {
+            connectFileInput({ onSelect }) { select = onSelect; },
+            FileReader: class { constructor() { reader = this; } readAsDataURL() {} },
+            Image: class { constructor() { image = this; } set src(value) {} }
+        } });
+        app.change('imageRasterModeCheckbox', true);
+        const before = roundedGeometry(svgLines(app.export().svg));
+        const pending = select({ type: 'image/png', name: 'fixture.png' }, { controller });
+        const rejected = assert.rejects(pending, stage === 'read' ? /Could not read/ : stage === 'decode' ? /Could not decode/ : /Cancelled/);
+        if (stage === 'read') reader.onerror();
+        else {
+            reader.onload({ target: { result: 'data:image/png;base64,fixture' } });
+            if (stage === 'decode') image.onerror();
+            else {
+                // Same document after pagehide/pageshow: bound alone is not enough.
+                controller.bound = false; controller.operationId++; controller.bound = true;
+                image.onload();
+            }
+        }
+        await rejected;
+        assert.equal(app.imageDecodes, 0);
+        assert.deepEqual(roundedGeometry(svgLines(app.export().svg)), before);
+        assert.equal(app.nodes.get('imagePreview').getAttribute('src'), null);
+    });
+}
 
 test('Rays enters runtime/audit while staying unpublished on the hub', async () => {
     const catalog = JSON.parse(await read('infra/TOOL_CATALOG.json'));

@@ -564,7 +564,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Обработчик для загрузки изображения
     if (imageUpload) {
-        import('../infra/framework/src/ui/GeneratorHost.js?v=3').then(({ connectFileInput }) => connectFileInput({
+        import('../infra/framework/src/ui/GeneratorHost.js?v=4').then(({ connectFileInput }) => connectFileInput({
             input: imageUpload,
             onSelect: (file, { controller }) => new Promise((resolve, reject) => {
             const operationId = controller.operationId;
@@ -814,7 +814,7 @@ document.addEventListener('DOMContentLoaded', function() {
     imageInvertCheckbox.addEventListener('change', updateAndSave);
     
     // Обработчики для кнопок
-    import('../infra/framework/src/ui/GeneratorHost.js?v=3').then(({ mountGenerator }) => mountGenerator({
+    import('../infra/framework/src/ui/GeneratorHost.js?v=4').then(({ mountGenerator }) => mountGenerator({
         id: 'random_lines_generator', title: 'Random Lines',
         panels: [
             { title: 'Pattern', selectors: ['.pattern-sliders', '.checkboxes-section', '#generateBtn', '#generationStatus', '#resetBtn'], summary: () => `${params.lineCount} · ${params.lineLength}×${params.lineWidth}` },

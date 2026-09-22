@@ -559,7 +559,7 @@ function setupInterface() {
     }
   });
   Promise.all([
-    import('../infra/framework/src/ui/GeneratorHost.js?v=3'),
+    import('../infra/framework/src/ui/GeneratorHost.js?v=4'),
     import('./capture-session.js')
   ]).then(([{ mountGenerator }, { CaptureSession }]) => {
     const session = new CaptureSession({
@@ -617,7 +617,7 @@ async function exportChladniPNG() {
     
     // Save image
     try {
-      const { downloadCanvas } = await import('../infra/framework/src/ui/GeneratorHost.js?v=3');
+      const { downloadCanvas } = await import('../infra/framework/src/ui/GeneratorHost.js?v=4');
       await downloadCanvas(tempCanvas.canvas, 'chladni_pattern.png');
     } finally { tempCanvas.remove(); }
 }

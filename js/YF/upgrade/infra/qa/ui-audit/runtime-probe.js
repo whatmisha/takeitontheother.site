@@ -1,7 +1,8 @@
 /* Passive, opt-in diagnostics. Load before application scripts; no telemetry,
  * storage, console interception, observer patches or swallowed errors. */
 (() => {
-    if (!new URLSearchParams(location.search).has('ui-audit') || window.__upgradeRuntimeProbe) return;
+    const explicit = typeof document !== 'undefined' && document.currentScript?.hasAttribute('data-audit-probe');
+    if ((!explicit && !new URLSearchParams(location.search).has('ui-audit')) || window.__upgradeRuntimeProbe) return;
     const records = [];
     let dropped = 0;
     const append = record => {
@@ -14,7 +15,7 @@
         append({
             kind: resource ? 'resource' : 'error',
             message: resource ? `Could not load ${event.target.tagName}` : text(event.message),
-            source: text(event.filename || (resource && (event.target.src || event.target.href))),
+            source: text(event.filename || (resource && (event.target.src || event.target.href)) || ''),
             line: event.lineno || 0, column: event.colno || 0,
             stack: text(event.error?.stack)
         });

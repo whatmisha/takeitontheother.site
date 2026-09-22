@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <script src="runtime-probe.js?v=2" data-audit-probe></script>
+    <title>Empty iframe navigation diagnostic</title>
+    <link rel="icon" href="data:,">
+    <style>
+        iframe { width:1440px; height:900px; display:block; border:0; }
+        .references { position:fixed; top:0; left:-20000px; pointer-events:none; }
+        body[data-layout="in-place"] .references { left:0; opacity:0; z-index:-1; }
+        body[data-layout="visible"] .references { position:static; }
+    </style>
+</head>
+<body>
+    <h1>Empty iframe navigation diagnostic</h1>
+    <p>Three plain HTML frames. No tool code, framework, p5, MutationObserver, storage or microphone.</p>
+    <label>Reference layout <select id="layout">
+        <option value="offscreen">Off screen (auditor baseline)</option>
+        <option value="in-place">Transparent in place</option>
+        <option value="visible">Visible</option>
+    </select></label>
+    <button id="navigate" type="button">Reload empty frames</button>
+    <p id="state" role="status">Ready</p>
+    <pre id="errors">No samples yet</pre>
+    <iframe title="Empty A" src="observer-empty.html"></iframe>
+    <div class="references" aria-hidden="true" inert>
+        <iframe title="Empty B" src="observer-empty.html" tabindex="-1"></iframe>
+        <iframe title="Empty C" src="observer-empty.html" tabindex="-1"></iframe>
+    </div>
+    <script type="module" src="observer-repro.js"></script>
+</body>
+</html>

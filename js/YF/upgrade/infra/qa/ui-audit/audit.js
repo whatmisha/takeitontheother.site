@@ -2,7 +2,7 @@
 import { isAuditableState } from '../../catalog/registry.js';
 
 const $ = selector => document.querySelector(selector);
-const AUDITOR_VERSION = 'int-05';
+const AUDITOR_VERSION = 'int-06';
 const subject = $('#subject');
 const sparky = $('#sparkyReference');
 const word = $('#wordReference');
@@ -176,7 +176,7 @@ function collect() {
     const hidden = [...doc.querySelectorAll('.controls-panel, .control-field-heading, .tone-group-heading, .hsb-picker')].filter(element => !visible(element));
     results.push({ name: 'Непокрытые состояния', status: 'review', detail: `Скрытых панелей, групп и пикеров: ${hidden.length}. Откройте нужный режим или Edit Mode и повторите замер. Hover, focus, экспорт, ошибки, содержимое файлов и мобильная версия требуют отдельных сценариев.`, differences: [] });
 
-    for (const [name, frame] of [['инструмент', subject], ['эталон Sparky', sparky], ['эталон Wordplayer', word]]) {
+    for (const [name, frame] of [['аудитор', { contentWindow: window }], ['инструмент', subject], ['эталон Sparky', sparky], ['эталон Wordplayer', word]]) {
         const probe = frame.contentWindow.__upgradeRuntimeProbe?.snapshot();
         results.push({ name: `Ошибки выполнения — ${name}`, status: !probe ? 'unavailable' : probe.records.length || probe.dropped ? 'diff' : 'review',
             detail: !probe ? 'Ранний сбор ошибок не подключён. Нельзя считать console gate пройденным.'

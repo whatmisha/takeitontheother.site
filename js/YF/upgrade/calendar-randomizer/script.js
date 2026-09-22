@@ -449,7 +449,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // Привязываем обработчик события к кнопке экспорта
-        import('../infra/framework/src/ui/GeneratorHost.js?v=3').then(({ mountGenerator }) => {
+        import('../infra/framework/src/ui/GeneratorHost.js?v=4').then(({ mountGenerator }) => {
             if (lifecycle.signal.aborted) return;
             mountGenerator({
                 id: 'calendar-randomizer', title: 'Calendar Randomizer',

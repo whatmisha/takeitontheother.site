@@ -80,6 +80,7 @@ export class FileIntakeController {
         this.bound = false;
         this.busy = false;
         this.operationId = 0;
+        this.beforeLoading = null;
         this.listeners = [];
     }
 
@@ -150,6 +151,7 @@ export class FileIntakeController {
 
         this.busy = true;
         const operationId = ++this.operationId;
+        this.beforeLoading = { state: this.state, text: this.status?.textContent ?? this.emptyText };
         this.setState('loading', {
             text: typeof this.loadingText === 'function'
                 ? this.loadingText(file)
@@ -178,6 +180,7 @@ export class FileIntakeController {
             return { ok: false, code: 'error', file, error };
         } finally {
             if (operationId === this.operationId) {
+                this.beforeLoading = null;
                 this.busy = false;
                 this._syncBusy();
             }
@@ -190,6 +193,17 @@ export class FileIntakeController {
         this.currentFile = null;
         this.setState('empty', { text: this.emptyText });
         return true;
+    }
+
+    /** Synchronize the intake after its owner resets the source model. This
+     * invalidates pending work but does not invoke onRemove or change the model. */
+    reset() {
+        this.operationId += 1;
+        this.beforeLoading = null;
+        this.busy = false;
+        this.currentFile = null;
+        if (this.input) this.input.value = '';
+        return this.setState('empty', { text: this.emptyText });
     }
 
     setState(state, { text = null, preserveText = false } = {}) {
@@ -217,8 +231,15 @@ export class FileIntakeController {
         this.bound = false;
         this.operationId += 1;
         this.busy = false;
-        if (this.state === 'loading') this.setState('empty', { preserveText: true });
+        // BFCache can restore this same controller. A cancelled replacement must
+        // keep the previous source removable, without a stale Loading message.
+        if (this.state === 'loading') {
+            this.setState(this.beforeLoading?.state || 'empty', {
+                text: this.beforeLoading?.text ?? this.emptyText
+            });
+        }
         else this._syncBusy();
+        this.beforeLoading = null;
     }
 
     _prepareSemantics() {

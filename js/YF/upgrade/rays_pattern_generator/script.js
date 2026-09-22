@@ -1,6 +1,6 @@
 import { buildRaysScene } from './engine/scene.js?layout=root-infra-1';
 import { paintRaysScene, raysSvgElement } from './engine/renderers.js';
-import { mountGenerator, connectFileInput } from '../infra/framework/src/ui/GeneratorHost.js?v=3';
+import { mountGenerator, connectFileInput } from '../infra/framework/src/ui/GeneratorHost.js?v=4';
 
 document.addEventListener('DOMContentLoaded', function() {
     const canvas = document.getElementById('patternCanvas');
@@ -520,6 +520,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Сбрасываем предпросмотр изображения
         imagePreview.removeAttribute('src');
         imagePreview.style.display = 'none';
+        imageIntake.reset();
         
         // Обновляем отображаемые значения
         lineWidthValueDisplay.textContent = defaultValues.lineWidth.toFixed(1);
@@ -967,7 +968,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Обработчик для загрузки изображения
-    connectFileInput({ input: imageUpload, onSelect: (file, { controller }) => new Promise((resolve, reject) => {
+    const imageIntake = connectFileInput({ input: imageUpload, onSelect: (file, { controller }) => new Promise((resolve, reject) => {
         const operationId = controller.operationId;
         
         if (file && file.type.match('image.*')) {
