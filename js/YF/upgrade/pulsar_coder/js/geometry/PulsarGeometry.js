@@ -70,38 +70,49 @@ export function createPulsarGeometry(params, raysBits, previousGeometry = null, 
     const angles = makeAngles(rayCount, params.seed);
     const lengthRng = seededRandom(`${params.seed}_lengths_v2`);
     const offsetRng = seededRandom(`${params.seed}_offsets_v2`);
+    const stepRng = seededRandom(`${params.seed}_steps_v3`);
+    const tailRng = seededRandom(`${params.seed}_tails_v3`);
+    const lengthVariation = Math.max(0, Math.min(100, Number(params.lengthVariation) || 0)) / 100;
+    const nominalLength = Number(params.rayLength);
     const syncLength = tickLong * 2.35;
     const padding = Math.max(16, tickLong);
     const rays = [];
     const bounds = { minX: center.x, minY: center.y, maxX: center.x, maxY: center.y };
 
     for (let index = 0; index < rayCount; index += 1) {
-        const baseLength = Number(params.rayLength) * (0.78 + lengthRng() * 0.44);
+        const baseLength = nominalLength * (1 + (lengthRng() - 0.5) * lengthVariation * 0.9);
+        const rayStep = canPreserve
+            ? previousGeometry.rays[index].bitStep
+            : bitStep * (0.88 + stepRng() * 0.24);
         const initialAngle = angles[index] * Math.PI / 180;
-        const initialEndpoint = pointOnRay(center, initialAngle, baseLength);
-        const sourceEndpoint = canPreserve ? previousGeometry.rays[index].sourceEndpoint : initialEndpoint;
         const offset = canPreserve
             ? previousGeometry.rays[index].offset
-            : Math.max(100, Number(params.margin) * 1.5, syncLength * 5) + offsetRng() * Math.max(20, baseLength * 0.18);
+            : Math.max(100, syncLength * 5) + offsetRng() * Math.max(20, baseLength * 0.18);
+        const bodyStart = offset + rayStep * 8;
+        const bodyEnd = bodyStart + Math.max(0, raysBits[index].length - 1) * rayStep;
+        const requiredLength = Math.max(offset + rayStep * 5, bodyEnd) + syncLength / 2 + padding;
+        const tailExtension = canPreserve
+            ? (previousGeometry.rays[index].tailExtension || 0)
+            : nominalLength * lengthVariation * (0.08 + tailRng() * 0.42);
 
-        let dx = sourceEndpoint.x - center.x;
-        let dy = sourceEndpoint.y - center.y;
-        let actualLength = Math.hypot(dx, dy);
-        let angle = actualLength > 0.001 ? Math.atan2(dy, dx) : initialAngle;
-        const bodyStart = offset + bitStep * 8;
-        const bodyEnd = bodyStart + Math.max(0, raysBits[index].length - 1) * bitStep;
-        const requiredLength = Math.max(offset + bitStep * 2, bodyEnd) + syncLength / 2 + padding;
-        const drawnLength = Math.max(actualLength, requiredLength, baseLength);
+        const sourceEndpoint = canPreserve
+            ? previousGeometry.rays[index].sourceEndpoint
+            : pointOnRay(center, initialAngle, Math.max(baseLength, requiredLength) + tailExtension);
+        const dx = sourceEndpoint.x - center.x;
+        const dy = sourceEndpoint.y - center.y;
+        const actualLength = Math.hypot(dx, dy);
+        const angle = actualLength > 0.001 ? Math.atan2(dy, dx) : initialAngle;
+        const drawnLength = Math.max(actualLength, requiredLength);
         const endpoint = pointOnRay(center, angle, drawnLength);
 
         const marks = [
             markSegment(center, angle, offset, syncLength, 'pilot'),
-            markSegment(center, angle, offset + bitStep * 2, syncLength, 'pilot'),
-            markSegment(center, angle, offset + bitStep * 5, syncLength, 'pilot')
+            markSegment(center, angle, offset + rayStep * 2, syncLength, 'pilot'),
+            markSegment(center, angle, offset + rayStep * 5, syncLength, 'pilot')
         ];
         raysBits[index].forEach((bit, bitIndex) => {
             const length = bit ? tickLong : tickShort;
-            marks.push(markSegment(center, angle, bodyStart + bitIndex * bitStep, length, 'bit', bitIndex));
+            marks.push(markSegment(center, angle, bodyStart + bitIndex * rayStep, length, 'bit', bitIndex));
         });
 
         addPoint(bounds, endpoint);
@@ -113,6 +124,8 @@ export function createPulsarGeometry(params, raysBits, previousGeometry = null, 
             index,
             angle,
             offset,
+            bitStep: rayStep,
+            tailExtension,
             sourceEndpoint,
             endpoint,
             length: drawnLength,
@@ -120,7 +133,7 @@ export function createPulsarGeometry(params, raysBits, previousGeometry = null, 
         });
     }
 
-    const viewPadding = Math.max(40, Number(params.margin) || 0, tickLong * 2);
+    const viewPadding = Math.max(40, tickLong * 2);
     const minX = bounds.minX - viewPadding;
     const minY = bounds.minY - viewPadding;
     const maxX = bounds.maxX + viewPadding;

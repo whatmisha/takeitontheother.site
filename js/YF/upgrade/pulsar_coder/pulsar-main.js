@@ -17,7 +17,7 @@ import { ZoomPanManager } from './js/ui/ZoomPanManager.js?v=g13-ui-repair-1';
 import { downloadPulsarSvg } from './js/export/PulsarSvgExport.js?v=g7-export-1';
 import { downloadPulsarPng } from './js/export/PulsarPngExport.js?v=v2-1';
 import * as PulsarCodec from './js/codec/PulsarCodec.js?v=v2-1';
-import { buildPulsarSvg, createPulsarGeometry } from './js/geometry/PulsarGeometry.js?v=v2-2';
+import { buildPulsarSvg, createPulsarGeometry } from './js/geometry/PulsarGeometry.js?v=v2-3';
 import { decodePulsarSvg } from './js/decode/PulsarSvgDecoder.js?v=v2-1';
 import { decodePulsarRaster } from './js/decode/PulsarRasterDecoder.js?v=v2-1';
 
@@ -33,7 +33,7 @@ const settings = {
         strokeWidth: 1.5,
         showRays: true,
         seed: 'voyager1977',
-        margin: 50,
+        lengthVariation: 55,
         centerOffsetX: 0,
         centerOffsetY: 0
     },
@@ -53,7 +53,7 @@ const presets = Object.freeze({
         tickShort: 4,
         tickLong: 8,
         strokeWidth: 1.5,
-        margin: 50,
+        lengthVariation: 55,
         seed: 'voyager1977'
     },
     dense: {
@@ -63,7 +63,7 @@ const presets = Object.freeze({
         tickShort: 3,
         tickLong: 7,
         strokeWidth: 1.2,
-        margin: 40,
+        lengthVariation: 38,
         seed: 'dense2024'
     },
     minimal: {
@@ -73,7 +73,7 @@ const presets = Object.freeze({
         tickShort: 5,
         tickLong: 10,
         strokeWidth: 2,
-        margin: 60,
+        lengthVariation: 24,
         seed: 'minimal'
     },
     accurate: {
@@ -83,7 +83,7 @@ const presets = Object.freeze({
         tickShort: 4,
         tickLong: 8,
         strokeWidth: 1.5,
-        margin: 50,
+        lengthVariation: 72,
         seed: 'accurate42'
     }
 });
@@ -91,11 +91,11 @@ const presets = Object.freeze({
 const sliderDefinitions = Object.freeze([
     { id: 'rayCountSlider', valueId: 'rayCountValue', setting: 'rayCount', decimals: 0, min: 8, max: 24, baseStep: 1, shiftStep: 2 },
     { id: 'rayLengthSlider', valueId: 'rayLengthValue', setting: 'rayLength', decimals: 0, min: 200, max: 500, baseStep: 10, shiftStep: 50 },
+    { id: 'lengthVariationSlider', valueId: 'lengthVariationValue', setting: 'lengthVariation', decimals: 0, min: 0, max: 100, baseStep: 1, shiftStep: 10 },
     { id: 'bitStepSlider', valueId: 'bitStepValue', setting: 'bitStep', decimals: 1, min: 4, max: 16, baseStep: 0.5, shiftStep: 2 },
     { id: 'tickShortSlider', valueId: 'tickShortValue', setting: 'tickShort', decimals: 1, min: 2, max: 12, baseStep: 0.5, shiftStep: 2 },
     { id: 'tickLongSlider', valueId: 'tickLongValue', setting: 'tickLong', decimals: 1, min: 4, max: 20, baseStep: 0.5, shiftStep: 2 },
-    { id: 'strokeWidthSlider', valueId: 'strokeWidthValue', setting: 'strokeWidth', decimals: 1, min: 0.5, max: 4, baseStep: 0.1, shiftStep: 0.5 },
-    { id: 'marginSlider', valueId: 'marginValue', setting: 'margin', decimals: 0, min: 20, max: 100, baseStep: 5, shiftStep: 10 }
+    { id: 'strokeWidthSlider', valueId: 'strokeWidthValue', setting: 'strokeWidth', decimals: 1, min: 0.5, max: 4, baseStep: 0.1, shiftStep: 0.5 }
 ]);
 
 let currentSvg = '';
@@ -116,7 +116,7 @@ function getParams() {
         strokeWidth: settings.get('strokeWidth'),
         showRays: settings.get('showRays'),
         seed: settings.get('seed'),
-        margin: settings.get('margin'),
+        lengthVariation: settings.get('lengthVariation'),
         centerOffsetX: settings.get('centerOffsetX'),
         centerOffsetY: settings.get('centerOffsetY')
     };
@@ -148,9 +148,6 @@ function render(preserveEndpoints = false, { updateExport = true, viewBox = null
     target.setAttribute('viewBox', viewBox || parsed.getAttribute('viewBox'));
     target.innerHTML = parsed.innerHTML;
 
-    document.getElementById('infoPayloadBytes').textContent = `${currentMetadata.payloadByteLength} bytes`;
-    document.getElementById('infoEncodedBits').textContent = `${currentMetadata.encodedLength} bits`;
-    document.getElementById('infoCrc').textContent = currentMetadata.crcHex;
 }
 
 function escapeHtml(value) {
@@ -269,7 +266,6 @@ function applyPreset(name) {
     const preset = presets[name];
     if (!preset) return;
     for (const [key, value] of Object.entries(preset)) setControlValue(key, value);
-    document.getElementById('seedInput').value = preset.seed;
     render();
 }
 
@@ -340,13 +336,14 @@ function bindCenterDragging() {
     });
     document.addEventListener('mouseup', () => {
         if (!drag) return;
+        const lockedViewBox = drag.viewBox;
         if (renderFrame) {
             cancelAnimationFrame(renderFrame);
             renderFrame = 0;
         }
         drag = null;
         container.style.cursor = 'grab';
-        render(true);
+        render(true, { viewBox: lockedViewBox });
     });
     container.style.cursor = 'grab';
 }
@@ -402,7 +399,6 @@ function initialize() {
     const panelManager = new PanelManager();
     panelManager.registerPanel('mainPanel', { headerId: 'mainPanelHeader', draggable: true, persistent: true });
     panelManager.registerPanel('encodingPanel', { headerId: 'encodingPanelHeader', draggable: true, persistent: true });
-    panelManager.registerPanel('visualPanel', { headerId: 'visualPanelHeader', draggable: true, persistent: true });
     panelManager.initCollapse();
 
     const container = document.getElementById('canvasContainer');
@@ -434,15 +430,9 @@ function initialize() {
     });
 
     const showRays = document.getElementById('showRays');
-    const seedInput = document.getElementById('seedInput');
     settings.set('showRays', showRays.checked);
-    settings.set('seed', seedInput.value || 'voyager1977');
     showRays.addEventListener('change', () => {
         settings.set('showRays', showRays.checked);
-        render();
-    });
-    seedInput.addEventListener('change', () => {
-        settings.set('seed', seedInput.value || 'voyager1977');
         render();
     });
 
@@ -455,13 +445,6 @@ function initialize() {
         settings.set('centerOffsetY', 0);
         render();
     });
-    document.getElementById('randomizeBtn').addEventListener('click', () => {
-        const seed = Math.random().toString(36).slice(2, 10);
-        seedInput.value = seed;
-        settings.set('seed', seed);
-        render();
-    });
-
     const decodeInput = document.getElementById('decodeInput');
     document.getElementById('decodeBtn').addEventListener('click', () => decodeInput.click());
     decodeInput.addEventListener('change', async () => {

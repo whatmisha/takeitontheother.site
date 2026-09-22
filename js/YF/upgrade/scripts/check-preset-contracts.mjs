@@ -244,10 +244,10 @@ assert.match(stickyScript, /async loadPreset\(filename\)/u);
 assert.match(stickyScript, /async loadDataFromGoogleSheets\(\)/u,
     'Sticky Google Sheets boundary changed');
 
-const pulsarPresetObject = pulsarScript.match(/const presets = \{([\s\S]*?)\n\};\n\nfunction applyPreset/u)?.[1] || '';
+const pulsarPresetObject = pulsarScript.match(/const presets = Object\.freeze\(\{([\s\S]*?)\n\}\);\n\nconst sliderDefinitions/u)?.[1] || '';
 assert.equal(count(pulsarPresetObject, /^\s{4}(?:voyager|dense|minimal|accurate):\s*\{/gmu), 4,
     'Pulsar inline preset inventory changed');
-assert.match(pulsarScript, /function applyPreset\(presetName\)/u);
+assert.match(pulsarScript, /function applyPreset\(name\)/u);
 assert.doesNotMatch(pulsarScript, /PresetStore|PresetSession|ShareCodec/u,
     'Pulsar data was coupled to shared CRUD before its dedicated task');
 

@@ -110,7 +110,7 @@
     },
     {
       "id": "rays_pattern_generator",
-      "status": "not-started",
+      "status": "isolated-copy",
       "sourceRenderer": "canvas",
       "modes": [
         "ordinary",
@@ -126,7 +126,13 @@
         "tone, contrast/invert and repeated image selection"
       ],
       "knownSourceIssues": [
-        "export Object URL lifecycle"
+        "export Object URL lifecycle",
+        "restored settings leave totalLength stale before the next gap edit",
+        "image filename omits tone values and saved image settings ignore them on restore",
+        "even ray counts repeat the vertical ray; preserve until a separate geometry decision",
+        "gradient can be enabled while image mode remains checked",
+        "image picker is not reset and decode/read errors have no recovery",
+        "export shortcut ignores editable, composition and repeat guards"
       ],
       "acceptance": {
         "status": "not-run",

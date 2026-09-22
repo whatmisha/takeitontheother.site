@@ -66,7 +66,7 @@ const sharedHsb = inventory.reduce((sum, item) => sum + item.sharedHsb, 0);
 const privateRanges = inventory.reduce((sum, item) => sum + item.privateCount, 0);
 // Pulsar v2 (783113e) replaced configurable preamble length with a fixed framed codec.
 assert.deepEqual([...pulsarHtml.matchAll(/<input\b(?=[^>]*type="range")[^>]*id="([^"]+)"/gu)].map(match => match[1]), [
-    'rayCountSlider', 'rayLengthSlider', 'bitStepSlider', 'strokeWidthSlider', 'tickShortSlider', 'tickLongSlider', 'marginSlider'
+    'rayCountSlider', 'rayLengthSlider', 'lengthVariationSlider', 'bitStepSlider', 'strokeWidthSlider', 'tickShortSlider', 'tickLongSlider'
 ]);
 assert.doesNotMatch(pulsarHtml, /preambleLengthSlider/u);
 const pulsarCodec = await import('../pulsar_coder/js/codec/PulsarCodec.js');

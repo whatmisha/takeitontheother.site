@@ -84,6 +84,14 @@
                         </div>
 
                         <div class="control-group">
+                            <label for="lengthVariationSlider">
+                                <span>Length Variation <span class="unit">%</span></span>
+                                <input type="text" class="value-display" id="lengthVariationValue" value="55">
+                            </label>
+                            <input type="range" id="lengthVariationSlider" min="0" max="100" step="1" value="55">
+                        </div>
+
+                        <div class="control-group">
                             <label for="bitStepSlider">
                                 <span>Bit Step <span class="unit">px</span></span>
                                 <input type="text" class="value-display" id="bitStepValue" value="8">
@@ -163,55 +171,6 @@
                 </div>
             </aside>
 
-            <!-- Visual & Info Panel (left side, bottom) -->
-            <aside class="controls-panel controls-panel-text panel-collapsed" id="visualPanel" style="left: 20px; bottom: 20px;">
-                <div class="panel-header" id="visualPanelHeader">
-                    <span>Visual & Info</span>
-                    <span class="collapse-icon collapsed">
-                        <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                    </span>
-                </div>
-                <div class="panel-content">
-                    <section class="control-section">
-                        <div class="control-group">
-                            <label for="seedInput">
-                                <span>Seed (for variation)</span>
-                            </label>
-                            <input type="text" id="seedInput" class="style-select" value="voyager1977" placeholder="Enter seed string">
-                        </div>
-
-                        <div class="control-group">
-                            <label for="marginSlider">
-                                <span>Margin <span class="unit">px</span></span>
-                                <input type="text" class="value-display" id="marginValue" value="50">
-                            </label>
-                            <input type="range" id="marginSlider" min="20" max="100" step="5" value="50">
-                        </div>
-
-                        <button class="btn-secondary" id="randomizeBtn" style="width: 100%; margin-top: 12px;">Randomize All</button>
-                    </section>
-
-                    <!-- Info Section -->
-                    <section class="control-section">
-                        <div class="info-display">
-                            <div class="info-row">
-                                <span class="info-label">Payload:</span>
-                                <span class="info-value" id="infoPayloadBytes">0 bytes</span>
-                            </div>
-                            <div class="info-row">
-                                <span class="info-label">Encoded:</span>
-                                <span class="info-value" id="infoEncodedBits">0 bits</span>
-                            </div>
-                            <div class="info-row">
-                                <span class="info-label">CRC32:</span>
-                                <span class="info-value" id="infoCrc">—</span>
-                            </div>
-                        </div>
-                    </section>
-                </div>
-            </aside>
         </div>
     </div>
 
@@ -251,7 +210,7 @@
 
     <script type="module" src="../framework/src/ui/actionDockAutoInit.js?v=g7-resilience-4"></script>
     <script type="module" src="../framework/src/ui/presetMenuKeyboardAutoInit.js?v=g7-resilience-4"></script>
-    <script type="module" src="pulsar-main.js?v=pulsar-v2-2"></script>
+    <script type="module" src="pulsar-main.js?v=pulsar-v2-3"></script>
     <script type="module" src="../framework/src/ui/unifiedUiAutoInit.js?v=uiq-3"></script>
 </body>
 </html>

@@ -16,7 +16,7 @@ function params(overrides = {}) {
         strokeWidth: 1.5,
         showRays: true,
         seed: 'pulsar-v2-tests',
-        margin: 45,
+        lengthVariation: 55,
         centerOffsetX: 0,
         centerOffsetY: 0,
         eccMode: 'none',
@@ -110,6 +110,20 @@ test('moving the center never drops a bit mark', () => {
         ) + mark.length / 2));
         assert.ok(ray.length >= farthest);
     });
+});
+
+test('ray spacing and visible lengths vary deterministically', () => {
+    const first = makeArtifact('Different rhythm on every ray');
+    const second = makeArtifact('Different rhythm on every ray');
+    const steps = first.geometry.rays.map(ray => Number(ray.bitStep.toFixed(4)));
+    const lengths = first.geometry.rays.map(ray => Number(ray.length.toFixed(4)));
+
+    assert.ok(new Set(steps).size > first.geometry.rays.length / 2);
+    assert.ok(Math.max(...lengths) - Math.min(...lengths) > 20);
+    assert.deepEqual(
+        first.geometry.rays.map(ray => [ray.bitStep, ray.length]),
+        second.geometry.rays.map(ray => [ray.bitStep, ray.length])
+    );
 });
 
 test('clean ticks-only rasters decode across moved centers, layouts, ECC, and sizes', () => {

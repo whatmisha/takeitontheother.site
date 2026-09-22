@@ -10,7 +10,8 @@ outside the decoder's scope and are rejected rather than decoded heuristically.
 
 1. Open `index.html` through a local web server.
 2. Type a message; the graphic updates automatically.
-3. Optionally change ray count, spacing, ECC, seed, or hide the radial axes.
+3. Optionally change ray count, average length, length variation, spacing, ECC,
+   or hide the radial axes.
 4. Drag the canvas to move the convergence point.
 5. Export SVG, copy its source, or export a high-resolution transparent PNG.
 6. Use **Decode file**, or drop a Pulsar v2 SVG/PNG/JPEG/WebP/BMP on the canvas.
@@ -23,6 +24,7 @@ from their geometry and validated independently.
 - Every ray contains a checksummed visual index.
 - Ray 0 contains version, ECC, ray count, byte length, and a header checksum.
 - Three pilot ticks on every ray recover spacing without visible ray lines.
+- Longitudinal spacing and decorative tail length vary deterministically by ray.
 - Short and long ticks encode zero and one.
 - Payload CRC32 prevents plausible-looking corrupted output.
 - SVG metadata is informative only; it is not the source of decoded bits.

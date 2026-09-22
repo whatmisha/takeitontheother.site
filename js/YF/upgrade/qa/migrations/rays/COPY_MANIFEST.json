@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "toolId": "rays_pattern_generator",
+  "capturedAt": "2026-09-22T11:31:16.400Z",
+  "phase": "T.2-isolated-copy",
+  "note": "Historical provenance; initial target hashes are not the contract for later intentional migrations.",
+  "sourceRoot": "lunnen/rays_pattern_generator/01",
+  "targetRoot": "rays_pattern_generator",
+  "storageNamespace": "upgrade:rays-pattern:settings:v1",
+  "files": [
+    {
+      "path": "index.html",
+      "sourceBytes": 9747,
+      "sourceSha256": "7ef386c705a69f566b6d4d746156b9bebfc959f1c1d4d32ce22ffd552e35738a",
+      "targetBytes": 9940,
+      "targetSha256": "de35a235626817fc6b215c5d1711e2bf4c4e2ae6b8df0b66ab829da00e37af55"
+    },
+    {
+      "path": "styles.css",
+      "sourceBytes": 22298,
+      "sourceSha256": "4a699af3e16d98fc1782307f0b269b9f28bee16d50168f90f413a37a2eaa60d5",
+      "targetBytes": 22524,
+      "targetSha256": "9a2c8a4ae915abaf6b43f42da1f2185b661b32a0387c46f74cccad01d86c807e"
+    },
+    {
+      "path": "script.js",
+      "sourceBytes": 75352,
+      "sourceSha256": "9762347d99c1bc8a6466abb839a7089d348bbc5a8b35e570e213f6f3a12436ec",
+      "targetBytes": 75394,
+      "targetSha256": "6c09caecf0f11a66dba968e6a61b778fc44c7fd14b59d7add54a29559819f3b4"
+    }
+  ],
+  "transformations": {
+    "script.js": [
+      "Only replace all three rayPatternSettings string literals with isolated namespace; normalize final newline. No algorithm changes."
+    ],
+    "index.html": [
+      "Migration-preview title, inline data favicon and visible legacy-UI notice with internal hub link; normalize final newline."
+    ],
+    "styles.css": [
+      "Remove two remote CoFo @font-face blocks; use approved system UI font stack; style migration notice; normalize final newline."
+    ]
+  }
+}
+

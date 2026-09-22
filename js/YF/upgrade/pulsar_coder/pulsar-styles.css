@@ -99,62 +99,6 @@
     font-weight: 600;
 }
 
-/* Info Display - Status information panel */
-.info-display {
-    background: var(--color-bg-input);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-input);
-    padding: var(--spacing-lg);
-    margin-top: var(--spacing-md);
-}
-
-.info-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: var(--spacing-md);
-    font-size: 0.85rem;
-}
-
-.info-row:last-child {
-    margin-bottom: 0;
-}
-
-.info-label {
-    color: var(--color-text-secondary);
-    font-weight: 400;
-}
-
-.info-value {
-    color: var(--color-text);
-    font-weight: 500;
-    font-family: monospace;
-    font-size: 0.8rem;
-}
-
-/* Seed Input Field */
-#seedInput {
-    width: 100%;
-    padding: 6px 12px;
-    background: var(--color-bg-input);
-    border: 1px solid var(--color-border);
-    color: var(--color-text);
-    font-family: monospace;
-    font-size: 0.85rem;
-    border-radius: var(--radius-input);
-    margin-top: var(--spacing-md);
-    transition: border-color var(--transition-normal);
-}
-
-#seedInput:focus {
-    outline: none;
-    border-color: var(--color-text-dim);
-}
-
-#seedInput::placeholder {
-    color: var(--color-text-muted);
-}
-
 /* Canvas specific */
 #pulsarSvg {
     width: 100%;
@@ -247,10 +191,6 @@
     max-height: calc(100vh - 500px);
 }
 
-#visualPanel {
-    max-height: calc(100vh - 100px);
-}
-
 /* Compact control sections for multiple panels */
 .controls-panel .control-section {
     margin-bottom: var(--spacing-2xl);
@@ -262,14 +202,6 @@
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
-    .info-display {
-        padding: var(--spacing-md);
-    }
-    
-    .info-row {
-        font-size: 0.8rem;
-    }
-    
     #mainPanel,
     #encodingPanel {
         top: auto !important;

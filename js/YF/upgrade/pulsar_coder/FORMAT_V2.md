@@ -44,6 +44,8 @@ tick lengths and the visual header rather than trusting the metadata.
 - Long ticks must be at least 1.5 times the short-tick length.
 - Each ray begins with three extra-long pilot ticks at lattice positions 0, 2,
   and 5. Data starts at lattice position 8.
+- The lattice step may differ between rays; each ray's pilots define its own
+  step, allowing varied tick rhythms without changing the encoded bits.
 - Visible radial axes are decorative. Exported axes use a lighter tone than
   the information ticks so raster preprocessing can remove them.
 - The SVG contains explicit ray groups and bit order, but never stores bit

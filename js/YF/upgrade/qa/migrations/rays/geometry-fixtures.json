@@ -1,0 +1,241 @@
+{
+  "schemaVersion": 1,
+  "note": "T.1 frozen legacy geometry; coordinates rounded to 8 decimals, preview/export colors intentionally excluded. Do not regenerate to accommodate migration drift.",
+  "cases": [
+    {
+      "id": "default",
+      "changes": [],
+      "expected": {
+        "filename": "ray_pattern_lw2.0_ll56_lc5_co19_sc1.0_hg20_vg10.svg",
+        "modules": 216,
+        "dividers": 210,
+        "lines": 1290,
+        "geometrySha256": "acdc95f1946bc8212c4b1380a8f62fe37c1937cb282bad160925d819caf56fa8",
+        "first": [
+          -6.5,
+          70,
+          -62.5,
+          70,
+          2,
+          "butt"
+        ],
+        "last": [
+          3072.5,
+          939.5,
+          3072.5,
+          995.5,
+          2,
+          "butt"
+        ]
+      }
+    },
+    {
+      "id": "classic",
+      "changes": [
+        [
+          "offsetRowsCheckbox",
+          true
+        ]
+      ],
+      "expected": {
+        "filename": "ray_pattern_lw2.0_ll56_lc5_co19_sc1.0_hg20_vg10_cm1.svg",
+        "modules": 216,
+        "dividers": 204,
+        "lines": 1284,
+        "geometrySha256": "44cf8a92400c701654aa52124d1640d427f6cbb9dc15e03aaef3f2596f6f5768",
+        "first": [
+          36,
+          70,
+          -20,
+          70,
+          2,
+          "butt"
+        ],
+        "last": [
+          2958.43502884,
+          991.56497116,
+          2998.03300859,
+          951.96699141,
+          2,
+          "butt"
+        ]
+      }
+    },
+    {
+      "id": "three-round-no-dividers",
+      "changes": [
+        [
+          "rayCountSlider",
+          3
+        ],
+        [
+          "roundCapCheckbox",
+          true
+        ],
+        [
+          "hideConnectingLinesCheckbox",
+          true
+        ]
+      ],
+      "expected": {
+        "filename": "ray_pattern_lw2.0_ll56_lc3_co19_sc1.0_hg20_vg10_rc1_hd1.svg",
+        "modules": 216,
+        "dividers": 0,
+        "lines": 648,
+        "geometrySha256": "51cd2b9720399ce6becf03bc2d931fac33ad17c1079416f2e2495e2385ccfcfc",
+        "first": [
+          -6.5,
+          70,
+          -62.5,
+          70,
+          2,
+          "round"
+        ],
+        "last": [
+          2987.5,
+          986,
+          2987.5,
+          930,
+          2,
+          "round"
+        ]
+      }
+    },
+    {
+      "id": "gradient",
+      "changes": [
+        [
+          "rasterModeCheckbox",
+          true
+        ]
+      ],
+      "expected": {
+        "filename": "ray_pattern_lw2.0_ll56_lc5_co19_sc1.0_hg20_vg10_rm1_hl30_hw1.0_sl100_sw2.0.svg",
+        "modules": 216,
+        "dividers": 210,
+        "lines": 1290,
+        "geometrySha256": "10501b295b915c9f0b6b97b1f81fda22c3dd88aac1928754ccb9f50301bb9d8e",
+        "first": [
+          -6.5,
+          70,
+          -36.5,
+          70,
+          1,
+          "butt"
+        ],
+        "last": [
+          3072.5,
+          916.77083333,
+          3072.5,
+          1018.22916667,
+          2.02083333,
+          "butt"
+        ]
+      }
+    },
+    {
+      "id": "wide-gaps",
+      "changes": [
+        [
+          "horizontalGapSlider",
+          100
+        ],
+        [
+          "verticalGapSlider",
+          100
+        ],
+        [
+          "rayCountSlider",
+          24
+        ]
+      ],
+      "expected": {
+        "filename": "ray_pattern_lw2.0_ll56_lc24_co19_sc1.0_hg100_vg100.svg",
+        "modules": 72,
+        "dividers": 69,
+        "lines": 1797,
+        "geometrySha256": "de80d7afecc8d25b51d7f0e3a4a33bf6af748924063dabe654b60ed5adae5a9d",
+        "first": [
+          43.5,
+          100,
+          -12.5,
+          100,
+          2,
+          "butt"
+        ],
+        "last": [
+          3062.5,
+          909.5,
+          3062.5,
+          965.5,
+          2,
+          "butt"
+        ]
+      }
+    },
+    {
+      "id": "scale-min",
+      "changes": [
+        [
+          "scaleSlider",
+          0.1
+        ]
+      ],
+      "expected": {
+        "filename": "ray_pattern_lw2.0_ll56_lc5_co19_sc0.1_hg20_vg10.svg",
+        "modules": 20886,
+        "dividers": 20827,
+        "lines": 125257,
+        "geometrySha256": "2fa8540cc53e8d9b9c0993b37a87fd2e8d1131f93aae8c313057a25d7c400a92",
+        "first": [
+          -2.15,
+          6.5,
+          -7.75,
+          6.5,
+          0.2,
+          "butt"
+        ],
+        "last": [
+          3008.75,
+          994.45,
+          3008.75,
+          1000.05,
+          0.2,
+          "butt"
+        ]
+      }
+    },
+    {
+      "id": "scale-max",
+      "changes": [
+        [
+          "scaleSlider",
+          3
+        ]
+      ],
+      "expected": {
+        "filename": "ray_pattern_lw2.0_ll56_lc5_co19_sc3.0_hg20_vg10.svg",
+        "modules": 24,
+        "dividers": 22,
+        "lines": 142,
+        "geometrySha256": "0eb092039820c73cf576b73b20984290cb08da4ed5817c982adfcd0d42a717f1",
+        "first": [
+          40.5,
+          230,
+          -127.5,
+          230,
+          6,
+          "butt"
+        ],
+        "last": [
+          3157.5,
+          798.5,
+          3157.5,
+          966.5,
+          6,
+          "butt"
+        ]
+      }
+    }
+  ]
+}

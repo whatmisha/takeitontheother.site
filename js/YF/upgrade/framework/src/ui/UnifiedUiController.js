@@ -78,8 +78,7 @@ function summaryConfig(tool) {
         dither: {},
         pulsar_coder: {
             mainPanel: d => `${value(d, 'rayCountValue', '14')} · ${value(d, 'charCounter', '22 chars').replace(' characters', ' chars')}`,
-            encodingPanel: d => `${checkedValue(d, 'eccMode') === 'none' ? 'No ECC' : titleCase(checkedValue(d, 'eccMode'))} · ${value(d, 'tickShortValue', '4')}/${value(d, 'tickLongValue', '12')}`,
-            visualPanel: d => `${value(d, 'marginValue', '50')} margin · ${value(d, 'seedInput', 'voyager1977')} seed`
+            encodingPanel: d => `${checkedValue(d, 'eccMode') === 'none' ? 'No ECC' : titleCase(checkedValue(d, 'eccMode'))} · ${value(d, 'tickShortValue', '4')}/${value(d, 'tickLongValue', '12')}`
         },
         wander_bender: {
             controlsPanel: d => `${titleCase(checkedValue(d, 'mode'))} · ${value(d, 'raysValue')} rays · ${value(d, 'lengthValue')}×${value(d, 'widthValue')}`

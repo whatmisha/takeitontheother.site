@@ -173,7 +173,7 @@
       "name": "Rays Pattern",
       "group": "lunnen",
       "entry": "rays_pattern_generator/index.html",
-      "state": "planned",
+      "state": "migrating",
       "cohort": "migration",
       "referenceViewport": {
         "width": 1440,
