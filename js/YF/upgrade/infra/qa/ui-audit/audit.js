@@ -2,7 +2,7 @@
 import { isAuditableState } from '../../catalog/registry.js';
 
 const $ = selector => document.querySelector(selector);
-const AUDITOR_VERSION = 'int-04';
+const AUDITOR_VERSION = 'int-05';
 const subject = $('#subject');
 const sparky = $('#sparkyReference');
 const word = $('#wordReference');
@@ -175,6 +175,14 @@ function collect() {
     results.push({ name: 'Кнопки и справка шоткатов', status: !help ? 'unavailable' : absent.length ? 'diff' : 'match', detail: !help ? 'Справка ещё не создана.' : absent.length ? `На кнопках есть, в справке нет: ${absent.join(', ')}. Выполнение команд отдельно не проверялось.` : 'Написанные на кнопках команды присутствуют в справке. Выполнение команд отдельно не проверялось.', differences: [] });
     const hidden = [...doc.querySelectorAll('.controls-panel, .control-field-heading, .tone-group-heading, .hsb-picker')].filter(element => !visible(element));
     results.push({ name: 'Непокрытые состояния', status: 'review', detail: `Скрытых панелей, групп и пикеров: ${hidden.length}. Откройте нужный режим или Edit Mode и повторите замер. Hover, focus, экспорт, ошибки, содержимое файлов и мобильная версия требуют отдельных сценариев.`, differences: [] });
+
+    for (const [name, frame] of [['инструмент', subject], ['эталон Sparky', sparky], ['эталон Wordplayer', word]]) {
+        const probe = frame.contentWindow.__upgradeRuntimeProbe?.snapshot();
+        results.push({ name: `Ошибки выполнения — ${name}`, status: !probe ? 'unavailable' : probe.records.length || probe.dropped ? 'diff' : 'review',
+            detail: !probe ? 'Ранний сбор ошибок не подключён. Нельзя считать console gate пройденным.'
+                : `С ${probe.startedAt}: ${probe.records.length} ошибок; сверх лимита: ${probe.dropped}. Сбор начат до скриптов приложения. Отсутствие событий не доказывает отсутствие ошибок изолированного окружения браузера и не заменяет проверку сценариев.`,
+            differences: (probe?.records || []).map(record => ({ element: record.kind, property: `${record.source || '(источник не указан)'}:${record.line}:${record.column}`, actual: `${record.message}\n${record.stack}`, expected: 'Нет ошибок' })) });
+    }
 
     return { schemaVersion: 1, auditorVersion: AUDITOR_VERSION, tool: loadedTool, toolState: toolOptions.get(loadedTool)?.dataset.toolState, url: subject.contentWindow.location.href, recordedAt: new Date().toISOString(), viewport: { width: subject.contentWindow.innerWidth, height: subject.contentWindow.innerHeight }, stylesheets: [...doc.querySelectorAll('link[rel=stylesheet]')].map(link => link.href), scripts: [...doc.querySelectorAll('script[src]')].map(script => script.src), modes: [...doc.querySelectorAll('input[type=radio]:checked')].map(input => ({ name: input.name, value: input.value })), results };
 }
