@@ -1,0 +1,80 @@
+/** Shared framework foundation below Sticky Fingers' frozen application skin. */
+@import url('../infra/framework/css/othersite-styles.css?v=g6-choice-1') layer(framework);
+
+/* Parity bridge: edit-mode panels historically extend beyond the viewport. */
+.controls-panel {
+    max-height: none;
+}
+
+.control-group.show-toggle-chip-group {
+    padding-top: 0;
+    margin-bottom: var(--spacing-md);
+}
+
+.control-group:has(.checkbox-label) {
+    margin-bottom: var(--spacing-xs);
+}
+
+.control-group .toggle-chip input[type="checkbox"] {
+    width: 0;
+    height: 0;
+}
+
+/* Preserve compact segments against Sticky's broad control-label margin. */
+.control-group .segmented-control label {
+    margin-bottom: 0;
+}
+
+.control-group .segmented-control label:hover {
+    color: var(--color-text);
+}
+
+.control-group .segmented-control input[type="radio"]:checked + label {
+    color: var(--color-bg);
+    font-weight: 500;
+}
+
+.segmented-control {
+    --segmented-control-font-size: 0.85rem;
+}
+
+/* Sticky's manifest-only preset sizing metrics. */
+.preset-dropdown-toggle {
+    padding: var(--spacing-md) var(--spacing-xl) var(--spacing-md) var(--spacing-3xl);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.preset-dropdown-menu {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.preset-dropdown-item {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.preset-dropdown-item.selected {
+    font-weight: 600;
+}
+
+.preset-dropdown-menu::-webkit-scrollbar {
+    width: 6px;
+}
+
+.preset-dropdown-menu::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.preset-dropdown-menu::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: 3px;
+}
+
+.preset-dropdown-menu::-webkit-scrollbar-thumb:hover {
+    background: var(--color-text-dim);
+}

@@ -1,0 +1,22 @@
+[
+  {
+    "file": "random_lines_generator/script.js",
+    "before": "24px \"CoFo Sans\", Arial, sans-serif",
+    "after": "24px -apple-system, Inter, \"Segoe UI\", Roboto, sans-serif"
+  },
+  {
+    "file": "pattern_generator/magnetic-rectangle.js",
+    "before": "12px Arial",
+    "after": "12px -apple-system, Inter, \"Segoe UI\", Roboto, sans-serif"
+  },
+  {
+    "file": "asterisk_pattern_generator/script.js",
+    "before": "12px Arial",
+    "after": "12px -apple-system, Inter, \"Segoe UI\", Roboto, sans-serif"
+  },
+  {
+    "file": "asterisk_pattern_generator/script.js",
+    "before": "font-family: Arial;",
+    "after": "font-family: -apple-system, Inter, \"Segoe UI\", Roboto, sans-serif;"
+  }
+]
