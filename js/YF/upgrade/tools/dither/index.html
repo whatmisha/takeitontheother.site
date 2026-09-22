@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Advanced dithering tool for image processing with Floyd-Steinberg, Bayer, and Random patterns. Transform your images with real-time preview.">
+    <meta name="keywords" content="dithering, image processing, Floyd-Steinberg, Bayer, image effects">
+    
+    <!-- Open Graph / Social Media -->
+    <meta property="og:title" content="Dither - Advanced Image Dithering Tool">
+    <meta property="og:description" content="Transform your images with professional dithering algorithms. Real-time preview and multiple pattern options.">
+    <meta property="og:type" content="website">
+    
+    <title>Dither - Image Dithering Tool</title>
+    <link rel="stylesheet" href="framework-base.css?v=g6-choice-1">
+    <link rel="stylesheet" href="style.css?v=uiq-4">
+    <link rel="stylesheet" href="../../framework/css/ui-contract.css?v=uiq-4">
+</head>
+<body>
+    <div class="container">
+        <div class="top-links">
+            <a href="../../" class="top-link" aria-label="Back to Upgrade Tools">← Upgrade Tools</a>
+        </div>
+        <div class="main-content">
+            <div class="canvas-container">
+                <canvas id="canvas" class="ui-artboard" aria-label="Output image"></canvas>
+                <canvas id="overlayCanvas"></canvas>
+            </div>
+
+            <aside class="controls-panel controls-panel-left" id="transformPanel" role="complementary" aria-label="Transform controls">
+                <div class="panel-header" id="transformPanelHeader">
+                    <span>Texture <span class="panel-params" id="textureTransformParams"></span></span>
+                    <button class="collapse-icon" type="button" aria-label="Collapse panel" aria-expanded="true">
+                        <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="panel-content">
+                    <section class="control-section control-field-group control-field-group--flush" role="group" aria-labelledby="sourcesHeading">
+                        <h3 class="control-field-heading" id="sourcesHeading">Sources</h3>
+                        <div class="file-intake file-intake--panel" id="imageSourceIntake">
+                            <input type="file" id="imageInput" accept="image/*" hidden>
+                            <div class="file-intake__actions">
+                                <button type="button" class="btn-secondary panel-action file-intake__trigger" id="uploadBtnFixed" aria-label="Load image (Command/Control + O)" data-file-shortcut="o" data-file-shortcut-label="Open image" data-file-shortcut-persistent="true">Load image ⌘O</button>
+                                <button type="button" class="btn-secondary panel-action file-intake__remove btn-remove" id="removeImageBtn" aria-label="Remove image">Remove</button>
+                            </div>
+                            <span class="file-intake__status" id="imageInputStatus">Default image loaded.</span>
+                        </div>
+                        <div class="file-intake file-intake--panel" id="layoutSourceIntake">
+                            <input type="file" id="sampleInput" accept="image/*" hidden>
+                            <div class="file-intake__actions">
+                                <button type="button" class="btn-secondary panel-action file-intake__trigger" id="uploadSampleBtn" aria-label="Load layout (Command/Control + I)" data-file-shortcut="i" data-file-shortcut-label="Open layout" data-file-shortcut-persistent="true">Load layout ⌘I</button>
+                                <button type="button" class="btn-secondary panel-action file-intake__remove btn-remove" id="removeSampleBtn" aria-label="Remove layout">Remove</button>
+                            </div>
+                            <span class="file-intake__status" id="sampleInputStatus">Default layout loaded.</span>
+                        </div>
+                    </section>
+                    <section class="control-section control-field-group" role="group" aria-labelledby="transformHeading">
+                        <h3 class="control-field-heading" id="transformHeading">Transform</h3>
+                        <div class="control-group">
+                            <label for="positionX">
+                                <span>Position X</span>
+                                <input type="text" class="value-display" id="positionXValue" value="0" data-min="-100" data-max="100" aria-label="Position X value">
+                            </label>
+                            <input type="range" id="positionX" min="-100" max="100" step="1" value="0" aria-label="Position X slider" aria-valuemin="-100" aria-valuemax="100" aria-valuenow="0">
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="positionY">
+                                <span>Position Y</span>
+                                <input type="text" class="value-display" id="positionYValue" value="0" data-min="-100" data-max="100" aria-label="Position Y value">
+                            </label>
+                            <input type="range" id="positionY" min="-100" max="100" step="1" value="0" aria-label="Position Y slider" aria-valuemin="-100" aria-valuemax="100" aria-valuenow="0">
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="scale">
+                                <span>Scale</span>
+                                <input type="text" class="value-display" id="scaleValue" value="100%" data-min="0.1" data-max="4" aria-label="Scale value">
+                            </label>
+                            <input type="range" id="scale" min="0.1" max="4" step="0.1" value="1" aria-label="Scale slider" aria-valuemin="0.1" aria-valuemax="4" aria-valuenow="1">
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="rotation">
+                                <span>Angle</span>
+                                <input type="text" class="value-display" id="rotationValue" value="0°" data-min="-180" data-max="180" aria-label="Rotation angle value">
+                            </label>
+                            <input type="range" id="rotation" min="-180" max="180" step="1" value="0" aria-label="Rotation angle slider" aria-valuemin="-180" aria-valuemax="180" aria-valuenow="0">
+                        </div>
+                        
+                        <div class="control-group transform-reset-group">
+                            <button type="button" class="btn-secondary panel-action btn-full" id="resetTransform" aria-label="Reset transform settings">Reset</button>
+                        </div>
+                    </section>
+                </div>
+            </aside>
+
+            <aside class="controls-panel" id="controlsPanel" role="complementary" aria-label="Pattern settings">
+                <div class="panel-header" id="panelHeader">
+                    <span>Texture Settings <span class="panel-params" id="textureSettingsParams"></span></span>
+                    <button class="collapse-icon" type="button" aria-label="Collapse panel" aria-expanded="true">
+                        <svg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="panel-content">
+                <section class="control-section">
+                    
+                    <div class="control-group">
+                        <label for="gamma">
+                            <span>Gamma</span>
+                            <input type="text" class="value-display" id="gammaValue" value="1.0" data-min="0.1" data-max="3" aria-label="Gamma correction value">
+                        </label>
+                        <input type="range" id="gamma" min="0.1" max="3" step="0.1" value="1" aria-label="Gamma correction slider" aria-valuemin="0.1" aria-valuemax="3" aria-valuenow="1">
+                    </div>
+
+                    <div class="control-group">
+                        <label for="blackPoint">
+                            <span>Black Point</span>
+                            <input type="text" class="value-display" id="blackPointValue" value="0" data-min="0" data-max="255" aria-label="Black point value">
+                        </label>
+                        <input type="range" id="blackPoint" min="0" max="255" step="1" value="0" aria-label="Black point slider" aria-valuemin="0" aria-valuemax="255" aria-valuenow="0">
+                    </div>
+
+                    <div class="control-group">
+                        <label for="whitePoint">
+                            <span>White Point</span>
+                            <input type="text" class="value-display" id="whitePointValue" value="255" data-min="0" data-max="255" aria-label="White point value">
+                        </label>
+                        <input type="range" id="whitePoint" min="0" max="255" step="1" value="255" aria-label="White point slider" aria-valuemin="0" aria-valuemax="255" aria-valuenow="255">
+                    </div>
+
+                    <div class="control-group">
+                        <label for="grain">
+                            <span>Grain</span>
+                            <input type="text" class="value-display" id="grainValue" value="0" data-min="0" data-max="100" aria-label="Grain amount value">
+                        </label>
+                        <input type="range" id="grain" min="0" max="100" step="1" value="0" aria-label="Grain amount slider" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                    </div>
+                </section>
+
+                <section class="control-section">
+                    <div class="control-group">
+                        <label>
+                            <span>Pattern</span>
+                        </label>
+                        <fieldset>
+                            <legend class="sr-only">Dithering pattern</legend>
+                            <div class="segmented-control" role="radiogroup" aria-label="Dithering pattern selection">
+                                <input type="radio" name="pattern" value="floyd-steinberg" id="patternFloyd" checked aria-label="Floyd-Steinberg pattern">
+                                <label for="patternFloyd">FS</label>
+                                
+                                <input type="radio" name="pattern" value="bayer" id="patternBayer" aria-label="Bayer pattern">
+                                <label for="patternBayer">Bayer</label>
+                                
+                                <input type="radio" name="pattern" value="random" id="patternRandom" aria-label="Random pattern">
+                                <label for="patternRandom">Random</label>
+                            </div>
+                        </fieldset>
+                    </div>
+                </section>
+
+                <section class="control-section">
+                    <div class="control-group">
+                        <label for="pixelSize">
+                            <span>Pixel Size</span>
+                            <input type="text" class="value-display" id="pixelSizeValue" value="1" data-min="1" data-max="16" aria-label="Pixel size value">
+                        </label>
+                        <input type="range" id="pixelSize" min="1" max="16" step="1" value="1" aria-label="Pixel size slider" aria-valuemin="1" aria-valuemax="16" aria-valuenow="1">
+                    </div>
+
+                    <div class="control-group">
+                        <label for="threshold">
+                            <span>Threshold</span>
+                            <input type="text" class="value-display" id="thresholdValue" value="128" data-min="0" data-max="255" aria-label="Threshold value">
+                        </label>
+                        <input type="range" id="threshold" min="0" max="255" step="1" value="128" aria-label="Threshold slider" aria-valuemin="0" aria-valuemax="255" aria-valuenow="128">
+                    </div>
+                </section>
+
+                <section class="control-section">
+                    <div class="control-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="invertImage" aria-label="Invert image colors">
+                            <span>Invert Dithered Image</span>
+                        </label>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="showEffect" checked aria-label="Show dithering effect">
+                            <span>Show Effect</span>
+                        </label>
+                    </div>
+                </section>
+                
+                <section class="control-section" aria-labelledby="color-heading">
+                    <h3 id="color-heading" class="sr-only">Color Settings</h3>
+                    <div class="control-group">
+                        <div class="control-group-header">
+                            <span class="control-label">Background Color</span>
+                            <button type="button" class="color-preset" id="lunnenBlue" aria-label="Apply Lunnen Blue preset color">Lunnen Blue</button>
+                        </div>
+                        <div class="color-input-group">
+                            <button type="button" class="color-preview" id="colorPreview" aria-label="Open color picker"></button>
+                            <input type="text" id="hexColorInput" value="#000000" placeholder="#000000" maxlength="7" aria-label="Hex color code input">
+                        </div>
+                    </div>
+                    
+                    <!-- Custom HSB Color Picker -->
+                    <div class="hsb-picker" id="hsbPicker" style="display: none;">
+                        <div class="hsb-controls">
+                            <div class="hsb-control-group">
+                                <label for="hueSlider">
+                                    <span>Hue</span>
+                                    <input type="text" class="value-display hsb-value" id="hueValue" value="0" data-min="0" data-max="360" data-suffix="°" aria-label="Hue value">
+                                </label>
+                                <input type="range" id="hueSlider" min="0" max="360" step="1" value="0">
+                            </div>
+                            
+                            <div class="hsb-control-group">
+                                <label for="saturationSlider">
+                                    <span>Saturation</span>
+                                    <input type="text" class="value-display hsb-value" id="saturationValue" value="0" data-min="0" data-max="100" data-suffix="%" aria-label="Saturation value">
+                                </label>
+                                <input type="range" id="saturationSlider" min="0" max="100" step="1" value="0">
+                            </div>
+                            
+                            <div class="hsb-control-group">
+                                <label for="brightnessSlider">
+                                    <span>Brightness</span>
+                                    <input type="text" class="value-display hsb-value" id="brightnessValue" value="0" data-min="0" data-max="100" data-suffix="%" aria-label="Brightness value">
+                                </label>
+                                <input type="range" id="brightnessSlider" min="0" max="100" step="1" value="0">
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <nav class="bottom-buttons action-dock dither-action-dock" role="toolbar" aria-label="Main actions">
+        <div class="action-dock__slot action-dock__slot--utility">
+            <button class="btn-fixed btn-intro-help" id="shortcutHelpBtn" aria-label="Keyboard shortcuts">?</button>
+        </div>
+        <div class="action-dock__slot action-dock__slot--primary">
+            <button class="btn-fixed btn-export" id="exportBtn" disabled aria-label="Export PNG (Command/Control + E)" aria-describedby="exportStatus" data-action-dock-primary-export data-export-feedback="explicit">
+                PNG ⌘E
+            </button>
+            <span class="sr-only" id="exportStatus" role="status" aria-live="polite"></span>
+        </div>
+        <div class="action-dock__slot action-dock__slot--options">
+            <label class="toggle-label">
+                <span class="toggle-switch">
+                    <input type="checkbox" id="exportWithAlpha" checked aria-label="Export with transparent background">
+                    <span class="toggle-slider"></span>
+                </span>
+                <span class="toggle-label-text">Transparent</span>
+            </label>
+            <div class="segmented-control action-dock__segment" role="radiogroup" aria-label="Export resolution">
+                <input type="radio" id="export1x" name="exportScale" value="1" checked>
+                <label for="export1x">1×</label>
+                <input type="radio" id="export2x" name="exportScale" value="2">
+                <label for="export2x">2×</label>
+                <input type="radio" id="export4x" name="exportScale" value="4">
+                <label for="export4x">4×</label>
+                <input type="radio" id="export8x" name="exportScale" value="8">
+                <label for="export8x">8×</label>
+            </div>
+        </div>
+    </nav>
+
+    <script type="module" src="../../framework/src/ui/actionDockAutoInit.js?v=g7-resilience-4"></script>
+    <script src="js/export/DitherPngExport.js?v=uiq-2" defer></script>
+    <script src="dither.js?v=uiq-4" defer></script>
+    <script type="module" src="../../framework/src/ui/unifiedUiAutoInit.js?v=uiq-4"></script>
+</body>
+</html>

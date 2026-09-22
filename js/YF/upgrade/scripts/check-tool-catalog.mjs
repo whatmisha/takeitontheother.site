@@ -32,10 +32,12 @@ assert.equal(sources.scope, 'source-reference-only');
 assert.deepEqual(contracts.tools.map(tool => tool.id), Object.keys(approvedSources));
 assert.deepEqual(sources.tools.map(tool => tool.id), Object.keys(approvedSources));
 
-const diskDirectories = new Set((await readdir(upgradeRoot, { withFileTypes: true })).filter(item => item.isDirectory()).map(item => item.name));
+const diskDirectories = new Set((await readdir(new URL('tools/', upgradeRoot), { withFileTypes: true })).filter(item => item.isDirectory()).map(item => item.name));
 validateDirectoryCoverage(catalog, diskDirectories);
+const rootDirectories = new Set((await readdir(upgradeRoot, { withFileTypes: true })).filter(item => item.isDirectory() || item.isSymbolicLink()).map(item => item.name));
 for (const tool of catalog.tools) {
-    assert.equal(tool.entry, `${tool.id}/index.html`);
+    assert.ok(!rootDirectories.has(tool.id), `${tool.id}: tools must not be duplicated or aliased at upgrade root`);
+    assert.equal(tool.entry, `tools/${tool.id}/index.html`);
     assert.equal(tool.group, tool.id === 'calendar-randomizer' || tool.id === 'chladni-sound-pattern' ? 'muted' : 'lunnen');
     if (tool.cohort === 'original') {
         assert.equal(tool.capabilityContract, `APPLICATION_CAPABILITIES.json#${tool.id}`);
@@ -74,4 +76,4 @@ for (const tool of catalog.tools) {
     }
 }
 for (const tool of runtimeTools(catalog)) await access(new URL(tool.entry, upgradeRoot));
-console.log(`Catalog passed: 8 protected original tools + 8 approved migrations; ${runtimeTools(catalog).length} runtime entries. Historical acceptance manifests are unchanged.`);
+console.log(`Catalog passed: 8 protected original tools + 8 approved migrations; ${runtimeTools(catalog).length} runtime entries in tools/. Historical acceptance manifests are unchanged.`);

@@ -14,14 +14,14 @@ const jsonFiles = async directory => (await readdir(new URL(directory, root)))
     .sort();
 
 const appHtmlPaths = {
-    Sparky: 'sparky/index.html',
-    'Pizza Boxer': 'grid_generator/src/ui/fragments/workspace.html',
-    'Sticky Fingers': 'label_generator/index.html',
-    Keyboarder: 'keyboarder/index.html',
-    Wordplayer: 'wordplayer/index.html',
-    'Pulsar Coder': 'pulsar_coder/index.html',
-    Dither: 'dither/index.html',
-    'Wander Bender': 'wander_bender/index.html'
+    Sparky: 'tools/sparky/index.html',
+    'Pizza Boxer': 'tools/grid_generator/src/ui/fragments/workspace.html',
+    'Sticky Fingers': 'tools/label_generator/index.html',
+    Keyboarder: 'tools/keyboarder/index.html',
+    Wordplayer: 'tools/wordplayer/index.html',
+    'Pulsar Coder': 'tools/pulsar_coder/index.html',
+    Dither: 'tools/dither/index.html',
+    'Wander Bender': 'tools/wander_bender/index.html'
 };
 
 const appHtml = Object.fromEntries(await Promise.all(
@@ -61,11 +61,11 @@ for (const name of directSharedApps) {
 }
 
 const manifestSpecs = [
-    ['Sparky', 'sparky/presets/manifest.json', 'sparky/presets/', 5, 5, 0],
-    ['Keyboarder', 'keyboarder/presets/manifest.json', 'keyboarder/presets/', 10, 10, 0],
-    ['Wordplayer', 'wordplayer/presets/manifest.json', 'wordplayer/presets/', 1, 3, 0],
-    ['Pizza Boxer', 'grid_generator/presets/manifest.json', 'grid_generator/presets/', 19, 19, 2],
-    ['Sticky Fingers', 'label_generator/presets/manifest.json', 'label_generator/presets/', 3, 3, 0]
+    ['Sparky', 'tools/sparky/presets/manifest.json', 'tools/sparky/presets/', 5, 5, 0],
+    ['Keyboarder', 'tools/keyboarder/presets/manifest.json', 'tools/keyboarder/presets/', 10, 10, 0],
+    ['Wordplayer', 'tools/wordplayer/presets/manifest.json', 'tools/wordplayer/presets/', 1, 3, 0],
+    ['Pizza Boxer', 'tools/grid_generator/presets/manifest.json', 'tools/grid_generator/presets/', 19, 19, 2],
+    ['Sticky Fingers', 'tools/label_generator/presets/manifest.json', 'tools/label_generator/presets/', 3, 3, 0]
 ];
 
 let selectableManifestPresets = 0;
@@ -91,7 +91,7 @@ assert.equal(selectableManifestPresets, 38);
 assert.equal(manifestRows, 40);
 assert.equal(shippedJsonFiles, 40);
 
-const wordplayerManifest = await readJson('wordplayer/presets/manifest.json');
+const wordplayerManifest = await readJson('tools/wordplayer/presets/manifest.json');
 assert.deepEqual(wordplayerManifest.presets, [{ name: 'Default', file: 'default.json' }],
     'Wordplayer must not silently expose its two unlisted JSON examples');
 
@@ -123,24 +123,24 @@ const [
     read('framework/src/core/ApplicationShell.js'),
     read('framework/src/preset/PresetStore.js'),
     read('framework/src/preset/PresetSession.js'),
-    read('sparky/tool.js'),
-    read('keyboarder/app/tool.js'),
-    read('wordplayer/tool.js'),
-    read('sparky/styles/sparky.css'),
-    read('keyboarder/app/theme.css'),
-    read('wordplayer/styles.css'),
-    read('grid_generator/styles/toolbar.css'),
-    read('label_generator/style.css'),
-    read('pulsar_coder/css/yf-styles.css'),
-    read('wander_bender/css/yf-styles.css'),
-    read('dither/style.css'),
-    read('grid_generator/src/preset/PresetManager.js'),
-    read('grid_generator/src/preset/PresetRepository.js'),
-    read('grid_generator/src/preset/PresetFormatAdapter.js'),
-    read('grid_generator/schemas/preset-1.2.schema.json'),
-    read('grid_generator/src/persistence/DraftStore.js'),
-    read('label_generator/script.js'),
-    read('pulsar_coder/pulsar-main.js')
+    read('tools/sparky/tool.js'),
+    read('tools/keyboarder/app/tool.js'),
+    read('tools/wordplayer/tool.js'),
+    read('tools/sparky/styles/sparky.css'),
+    read('tools/keyboarder/app/theme.css'),
+    read('tools/wordplayer/styles.css'),
+    read('tools/grid_generator/styles/toolbar.css'),
+    read('tools/label_generator/style.css'),
+    read('tools/pulsar_coder/css/yf-styles.css'),
+    read('tools/wander_bender/css/yf-styles.css'),
+    read('tools/dither/style.css'),
+    read('tools/grid_generator/src/preset/PresetManager.js'),
+    read('tools/grid_generator/src/preset/PresetRepository.js'),
+    read('tools/grid_generator/src/preset/PresetFormatAdapter.js'),
+    read('tools/grid_generator/schemas/preset-1.2.schema.json'),
+    read('tools/grid_generator/src/persistence/DraftStore.js'),
+    read('tools/label_generator/script.js'),
+    read('tools/pulsar_coder/pulsar-main.js')
 ]);
 
 const activeSharedCss = stripComments(sharedCss);
@@ -209,9 +209,9 @@ assert.equal(localPresetBase(pulsarCss), false, 'Pulsar reintroduced a local pre
 assert.equal(localPresetBase(wanderCss), true, 'Wander dormant legacy preset CSS changed before cleanup');
 assert.equal(localPresetBase(ditherCss), false, 'Dither acquired preset-dropdown CSS');
 for (const [name, css] of [
-    ['Pulsar', await read('pulsar_coder/pulsar-styles.css')],
-    ['Sticky', await read('label_generator/framework-base.css')],
-    ['Pizza', await read('grid_generator/framework-base.css')]
+    ['Pulsar', await read('tools/pulsar_coder/pulsar-styles.css')],
+    ['Sticky', await read('tools/label_generator/framework-base.css')],
+    ['Pizza', await read('tools/grid_generator/framework-base.css')]
 ]) {
     const bridge = stripComments(css);
     assert.doesNotMatch(bridge, /all:\s*revert-layer/u,

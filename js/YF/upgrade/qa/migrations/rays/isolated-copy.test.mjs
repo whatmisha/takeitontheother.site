@@ -6,7 +6,7 @@ import { createLegacy, source, svgLines, roundedGeometry } from './harness.mjs';
 
 const root = new URL('../../../', import.meta.url);
 const read = file => readFile(new URL(file, root), 'utf8');
-const [html, script, css] = await Promise.all(['index.html','script.js','styles.css'].map(name => read(`rays_pattern_generator/${name}`)));
+const [html, script, css] = await Promise.all(['index.html','script.js','styles.css'].map(name => read(`tools/rays_pattern_generator/${name}`)));
 const fixtures = JSON.parse(await readFile(new URL('./geometry-fixtures.json', import.meta.url), 'utf8'));
 const storageKey = 'upgrade:rays-pattern:settings:v1';
 const migrated = options => createLegacy({ html, script, storageKey, ...options });
@@ -51,5 +51,5 @@ test('Rays enters runtime/audit while staying unpublished on the hub', async () 
     const catalog = JSON.parse(await read('TOOL_CATALOG.json'));
     assert.equal(catalog.tools.find(tool => tool.id === 'rays_pattern_generator').state,'migrating');
     assert.match(await read('qa/ui-audit/index.html'), /value="rays_pattern_generator" data-tool-state="migrating">Rays Pattern — перенос/u);
-    assert.doesNotMatch(await read('index.html'), /href="rays_pattern_generator\//u);
+    assert.doesNotMatch(await read('index.html'), /href="(?:tools\/)?rays_pattern_generator\//u);
 });

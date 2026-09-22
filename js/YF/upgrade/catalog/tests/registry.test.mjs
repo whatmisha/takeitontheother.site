@@ -7,19 +7,19 @@ const catalog = JSON.parse(await readFile(new URL('../../TOOL_CATALOG.json', imp
 const fixture = () => structuredClone(catalog);
 const ray = data => data.tools.find(tool => tool.id === 'rays_pattern_generator');
 
-test('all eight original addresses survive alongside eight approved placeholders', () => {
+test('all eight original tools use tools/ alongside eight approved placeholders', () => {
     assert.equal(validateCatalog(catalog), catalog);
     assert.equal(catalog.tools.length, 16);
     assert.deepEqual(catalog.tools.filter(tool => tool.cohort === 'original').map(tool => tool.entry), [
-        'sparky/index.html', 'grid_generator/index.html', 'label_generator/index.html', 'keyboarder/index.html',
-        'wordplayer/index.html', 'dither/index.html', 'wander_bender/index.html', 'pulsar_coder/index.html'
+        'tools/sparky/index.html', 'tools/grid_generator/index.html', 'tools/label_generator/index.html', 'tools/keyboarder/index.html',
+        'tools/wordplayer/index.html', 'tools/dither/index.html', 'tools/wander_bender/index.html', 'tools/pulsar_coder/index.html'
     ]);
 });
 
 test('planned tools have no hub link and no selectable audit option or runtime scan', () => {
     const data = fixture(); ray(data).state = 'planned';
     assert.ok(!runtimeTools(data).some(tool => tool.id === ray(data).id));
-    assert.doesNotMatch(renderHub(data), /href="rays_pattern_generator\//u);
+    assert.doesNotMatch(renderHub(data), /href="tools\/rays_pattern_generator\//u);
     assert.match(renderAuditOptions(data), /value="rays_pattern_generator" data-tool-state="planned" disabled/u);
 });
 
@@ -27,7 +27,7 @@ test('migrating tools enter runtime checks and audit immediately, without a publ
     const data = fixture(); ray(data).state = 'migrating';
     assert.ok(runtimeTools(data).some(tool => tool.id === ray(data).id));
     assert.ok(!publishedTools(data).some(tool => tool.id === ray(data).id));
-    assert.doesNotMatch(renderHub(data), /href="rays_pattern_generator\//u);
+    assert.doesNotMatch(renderHub(data), /href="tools\/rays_pattern_generator\//u);
     assert.match(renderAuditOptions(data), /value="rays_pattern_generator" data-tool-state="migrating">Rays Pattern — перенос/u);
 });
 
@@ -35,14 +35,14 @@ test('accepted tools appear once under their own group; priority order remains u
     const data = fixture(); ray(data).state = 'accepted';
     data.tools.find(tool => tool.id === 'calendar-randomizer').state = 'accepted';
     const html = renderHub(data);
-    assert.equal(html.match(/href="rays_pattern_generator\/"/gu).length, 1);
-    assert.equal(html.match(/href="calendar-randomizer\/"/gu).length, 1);
-    assert.ok(html.indexOf('href="calendar-randomizer/"') > html.indexOf('id="muted-heading"'));
-    assert.ok(html.indexOf('href="sparky/"') < html.indexOf('href="grid_generator/"'));
+    assert.equal(html.match(/href="tools\/rays_pattern_generator\/"/gu).length, 1);
+    assert.equal(html.match(/href="tools\/calendar-randomizer\/"/gu).length, 1);
+    assert.ok(html.indexOf('href="tools/calendar-randomizer/"') > html.indexOf('id="muted-heading"'));
+    assert.ok(html.indexOf('href="tools/sparky/"') < html.indexOf('href="tools/grid_generator/"'));
 });
 
 test('unsafe paths, malformed states, duplicates and original unpublishing are rejected', () => {
-    for (const entry of ['../lunnen/rays_pattern_generator/index.html', '/rays/index.html', 'https://example.com/', 'rays_pattern_generator/%2e%2e/index.html']) {
+    for (const entry of ['../lunnen/rays_pattern_generator/index.html', '/rays/index.html', 'https://example.com/', 'tools/rays_pattern_generator/%2e%2e/index.html']) {
         const data = fixture(); ray(data).entry = entry;
         assert.throws(() => validateCatalog(data), /entry/u);
     }

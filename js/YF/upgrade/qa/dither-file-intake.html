@@ -10,7 +10,7 @@
     </style>
 </head>
 <body>
-    <iframe title="Dither under FileIntake test" src="../dither/"></iframe>
+    <iframe title="Dither under FileIntake test" src="../tools/dither/"></iframe>
     <output id="qaResult" hidden></output>
     <script>
         const iframe = document.querySelector('iframe');
@@ -52,8 +52,8 @@
                 await wait(1000);
                 const documentUnderTest = iframe.contentDocument;
                 const baseline = await hashCanvas(documentUnderTest);
-                const imageBlob = await (await fetch('../dither/images/sample_image_01.jpg')).blob();
-                const sampleBlob = await (await fetch('../dither/images/sample_image_02.png')).blob();
+                const imageBlob = await (await fetch('../tools/dither/images/sample_image_01.jpg')).blob();
+                const sampleBlob = await (await fetch('../tools/dither/images/sample_image_02.png')).blob();
                 const imageFile = new File([imageBlob], 'sample_image_01.jpg', { type: imageBlob.type });
                 const sampleFile = new File([sampleBlob], 'sample_image_02.png', { type: sampleBlob.type });
                 const imageRuns = [];

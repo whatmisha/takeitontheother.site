@@ -1,3 +1,4 @@
+import { resolveToolPath } from './lib/upgrade-paths.mjs';
 import assert from 'node:assert/strict';
 import { access, readFile } from 'node:fs/promises';
 
@@ -22,7 +23,7 @@ let jsonImports = 0;
 
 for (const app of manifest.applications) {
     assert.ok(app.primary.length > 0, `${app.id} primary export missing`);
-    const html = await readFile(new URL(app.html, root), 'utf8');
+    const html = await readFile(new URL(resolveToolPath(app.html), root), 'utf8');
     assert.match(html, /\baction-dock\b/u, `${app.id} ActionDock missing`);
 
     for (const action of app.primary) {
@@ -56,7 +57,7 @@ for (const app of manifest.applications) {
 
     assert.ok(app.implementation.length > 0, `${app.id} implementation owner missing`);
     assert.ok(app.testEvidence.length > 0, `${app.id} test evidence missing`);
-    await Promise.all([...app.implementation, ...app.testEvidence].map(path => access(new URL(path, root))));
+    await Promise.all([...app.implementation, ...app.testEvidence].map(path => access(new URL(resolveToolPath(path), root))));
     artifactCoverage += Number(app.artifactCoverage);
 }
 

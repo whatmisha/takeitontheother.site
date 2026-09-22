@@ -8,10 +8,10 @@ const [plan, acceptance, gate, controller, stickyHtml, stickyScript, wanderHtml,
     read('docs/G13_UI_ACCEPTANCE.md'),
     read('docs/GATE_G13.md'),
     read('framework/src/ui/UnifiedUiController.js'),
-    read('label_generator/index.html'),
-    read('label_generator/script.js'),
-    read('wander_bender/index.html'),
-    read('grid_generator/src/preset/PresetDropdownView.js')
+    read('tools/label_generator/index.html'),
+    read('tools/label_generator/script.js'),
+    read('tools/wander_bender/index.html'),
+    read('tools/grid_generator/src/preset/PresetDropdownView.js')
 ]);
 
 for (const id of ['UPG-098', 'UPG-099', 'UPG-100']) {

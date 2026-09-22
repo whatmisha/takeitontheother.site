@@ -1,7 +1,0 @@
-/**
- * Shared framework foundation in a lower cascade layer.
- *
- * Pulsar's frozen v1 skin remains unlayered and therefore wins during the
- * parity phase even when an older selector is less specific.
- */
-@import url('../../framework/css/othersite-styles.css?v=g6-choice-1') layer(framework);

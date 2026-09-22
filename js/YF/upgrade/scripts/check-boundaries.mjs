@@ -9,7 +9,7 @@ const upgradeRoot = path.dirname(scriptDir);
 const canonicalRoot = await realpath(upgradeRoot);
 
 const catalog = await readCatalog();
-const appDirectories = runtimeTools(catalog).map(tool => tool.id);
+const appDirectories = runtimeTools(catalog).map(tool => path.posix.dirname(tool.entry));
 
 const entrypoints = [
     'index.html',
@@ -28,7 +28,6 @@ const ignoredDirectoryNames = new Set([
     'plans',
     'test',
     'tests',
-    'tools',
     'upstream-v3'
 ]);
 const runtimeExtensions = new Set(['.css', '.html', '.js', '.json', '.mjs']);
@@ -64,13 +63,14 @@ async function walk(directory) {
         const resolved = await realpath(absolutePath);
         if (!isInsideUpgrade(resolved)) errors.push(`Path escapes upgrade: ${relativePath}`);
         if (entry.isDirectory()) {
-            if (!ignoredDirectoryNames.has(entry.name)) await walk(absolutePath);
+            // Only the app-owned Pizza build tooling is non-runtime, never the tools/ container.
+            if (!ignoredDirectoryNames.has(entry.name) && relativePath !== 'tools/grid_generator/tools') await walk(absolutePath);
             continue;
         }
         if (!entry.isFile()) continue;
         const topLevelDirectory = relativePath.split('/')[0];
         if (
-            (appDirectories.includes(topLevelDirectory) || ['framework', 'catalog'].includes(topLevelDirectory) || relativePath.startsWith('qa/ui-audit/') || relativePath.startsWith('qa/ui-host/'))
+            (appDirectories.some(directory => relativePath.startsWith(`${directory}/`)) || ['framework', 'catalog'].includes(topLevelDirectory) || relativePath.startsWith('qa/ui-audit/') || relativePath.startsWith('qa/ui-host/'))
             && runtimeExtensions.has(path.extname(entry.name).toLowerCase())
             && !isThirdPartyBundle(relativePath)
         ) {
@@ -97,7 +97,7 @@ async function auditSymlinks(directory) {
     }
 }
 
-const existingDirectories = new Set((await readdir(upgradeRoot, { withFileTypes: true })).filter(entry => entry.isDirectory()).map(entry => entry.name));
+const existingDirectories = new Set((await readdir(path.join(upgradeRoot, 'tools'), { withFileTypes: true })).filter(entry => entry.isDirectory()).map(entry => entry.name));
 validateDirectoryCoverage(catalog, existingDirectories);
 for (const directory of appDirectories) {
     const metadata = await lstat(path.join(upgradeRoot, directory));

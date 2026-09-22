@@ -93,7 +93,7 @@ async function settle(frame) {
 
 function collect() {
     const doc = subject.contentDocument;
-    const expectedPath = new URL(`../../${loadedTool}/`, location.href).pathname;
+    const expectedPath = new URL(`../../tools/${loadedTool}/`, location.href).pathname;
     if (!doc || new URL(doc.URL).pathname !== expectedPath) {
         throw new Error('Рабочее окно перешло на другую страницу. Нажмите «Открыть и проверить», чтобы вернуть выбранный инструмент.');
     }
@@ -226,7 +226,7 @@ async function openFrame(frame, tool, width, height) {
     if (!allowedTools.has(tool)) throw new Error(`${tool}: инструмент ещё не перенесён или отсутствует в каталоге.`);
     frame.style.width = `${width}px`;
     frame.style.height = `${height}px`;
-    const url = new URL(`../../${tool}/`, location.href);
+    const url = new URL(`../../tools/${tool}/`, location.href);
     url.searchParams.set('ui-audit', Date.now().toString());
     await new Promise((resolve, reject) => {
         const timeout = setTimeout(() => { frame.onload = null; reject(new Error(`${tool}: загрузка дольше 20 секунд. Повторите открытие.`)); }, 20000);

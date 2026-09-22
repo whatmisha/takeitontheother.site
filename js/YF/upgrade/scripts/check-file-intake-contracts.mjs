@@ -6,17 +6,17 @@ const read = relativePath => readFile(new URL(relativePath, root), 'utf8');
 const count = (source, pattern) => source.match(pattern)?.length || 0;
 
 const htmlPaths = {
-    Wordplayer: ['wordplayer/index.html'],
+    Wordplayer: ['tools/wordplayer/index.html'],
     'Pizza Boxer': [
-        'grid_generator/src/ui/fragments/actions.html',
-        'grid_generator/src/ui/fragments/object-editors.html'
+        'tools/grid_generator/src/ui/fragments/actions.html',
+        'tools/grid_generator/src/ui/fragments/object-editors.html'
     ],
-    'Sticky Fingers': ['label_generator/index.html'],
-    Keyboarder: ['keyboarder/index.html'],
-    Sparky: ['sparky/index.html'],
-    Dither: ['dither/index.html'],
-    'Wander Bender': ['wander_bender/index.html'],
-    'Pulsar Coder': ['pulsar_coder/index.html']
+    'Sticky Fingers': ['tools/label_generator/index.html'],
+    Keyboarder: ['tools/keyboarder/index.html'],
+    Sparky: ['tools/sparky/index.html'],
+    Dither: ['tools/dither/index.html'],
+    'Wander Bender': ['tools/wander_bender/index.html'],
+    'Pulsar Coder': ['tools/pulsar_coder/index.html']
 };
 const expectedInputs = {
     Wordplayer: ['imageInput', 'formInput'],
@@ -76,14 +76,14 @@ const [
     read('framework/src/ui/FileIntakeController.js'),
     read('framework/src/index.js'),
     read('framework/css/othersite-styles.css'),
-    read('wordplayer/src/ui/controls.js'),
-    read('wordplayer/src/io/assets.js'),
-    read('grid_generator/src/ui/ApplicationEventController.js'),
-    read('grid_generator/src/elements/GraphicsEditorEventController.js'),
-    read('label_generator/script.js'),
-    read('keyboarder/app/tool.js'),
-    read('sparky/tool.js'),
-    read('dither/dither.js')
+    read('tools/wordplayer/src/ui/controls.js'),
+    read('tools/wordplayer/src/io/assets.js'),
+    read('tools/grid_generator/src/ui/ApplicationEventController.js'),
+    read('tools/grid_generator/src/elements/GraphicsEditorEventController.js'),
+    read('tools/label_generator/script.js'),
+    read('tools/keyboarder/app/tool.js'),
+    read('tools/sparky/tool.js'),
+    read('tools/dither/dither.js')
 ]);
 
 for (const marker of [

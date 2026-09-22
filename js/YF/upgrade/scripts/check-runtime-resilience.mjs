@@ -1,3 +1,4 @@
+import { resolveToolPath } from './lib/upgrade-paths.mjs';
 import assert from 'node:assert/strict';
 import { access, readFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -5,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const upgradeRoot = path.dirname(scriptDir);
-const absolute = relativePath => path.join(upgradeRoot, relativePath);
+const absolute = relativePath => path.join(upgradeRoot, resolveToolPath(relativePath));
 const read = relativePath => readFile(absolute(relativePath), 'utf8');
 const manifest = JSON.parse(await read('RUNTIME_RESILIENCE.json'));
 
@@ -72,7 +73,7 @@ assert.match(observed, /observer\.disconnect\?\.\(\);/u);
 const intake = await read('framework/src/ui/FileIntakeController.js');
 assert.match(intake, /code: 'cancelled'/u);
 assert.match(intake, /this\.operationId \+= 1;/u);
-const animation = await read('sparky/src/export/animationExporter.js');
+const animation = await read('tools/sparky/src/export/animationExporter.js');
 assert.match(animation, /removeEventListener\?\.\('click', this\.handleCancel\)/u);
 assert.match(animation, /if \(this\.worker\) this\.cancel\(\);/u);
 

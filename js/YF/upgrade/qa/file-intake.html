@@ -20,7 +20,7 @@
     </style>
 </head>
 <body>
-    <iframe src="../wordplayer/" title="Wordplayer FileIntake canary"></iframe>
+    <iframe src="../tools/wordplayer/" title="Wordplayer FileIntake canary"></iframe>
     <output id="qaFileIntakeResult" hidden></output>
     <script>
         const iframe = document.querySelector('iframe');
@@ -150,7 +150,7 @@
                     windowUnderTest,
                     inputId: 'imageInput',
                     statusId: 'imageStatus',
-                    assetUrl: '../wordplayer/assets/default-image.avif',
+                    assetUrl: '../tools/wordplayer/assets/default-image.avif',
                     validName: 'default-image.avif',
                     validType: 'image/avif',
                     waitForStable: waitForDitherIdle
@@ -167,7 +167,7 @@
                     windowUnderTest,
                     inputId: 'formInput',
                     statusId: 'formStatus',
-                    assetUrl: '../wordplayer/assets/default-form.svg',
+                    assetUrl: '../tools/wordplayer/assets/default-form.svg',
                     validName: 'default-form.svg',
                     validType: 'image/svg+xml',
                     waitForStable: waitForFormsIdle

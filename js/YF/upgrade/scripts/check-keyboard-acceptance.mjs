@@ -1,3 +1,4 @@
+import { resolveToolPath } from './lib/upgrade-paths.mjs';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -39,7 +40,7 @@ let focusableTotal = 0;
 
 for (const app of manifest.apps) {
     const source = (await Promise.all(app.sources.map(async relativePath => (
-        readFile(path.join(upgradeRoot, relativePath), 'utf8')
+        readFile(path.join(upgradeRoot, resolveToolPath(relativePath)), 'utf8')
     )))).join('\n');
 
     assert.match(source, /<a\b[^>]*aria-label="Back to Upgrade Tools"/u,

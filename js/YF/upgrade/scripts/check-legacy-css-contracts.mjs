@@ -44,16 +44,16 @@ const promotionBridgeTotal = Object.values(promotionBridgeCounts)
     .reduce((total, value) => total + value, 0);
 assert.equal(promotionBridgeTotal, 0);
 
-const pizzaBridge = await read('grid_generator/framework-base.css');
+const pizzaBridge = await read('tools/grid_generator/framework-base.css');
 assert.doesNotMatch(pizzaBridge, /all:\s*revert-layer/u,
     'Pizza reset promotions returned');
 
-const stickyBridge = await read('label_generator/framework-base.css');
+const stickyBridge = await read('tools/label_generator/framework-base.css');
 assert.doesNotMatch(stickyBridge, /all:\s*revert-layer/u,
     'Sticky reset promotions returned');
 assert.match(stickyBridge, /\.controls-panel\s*\{\s*max-height:\s*none;/u,
     'Sticky edit-panel parity bridge changed');
-const ditherBridge = await read('dither/framework-base.css');
+const ditherBridge = await read('tools/dither/framework-base.css');
 assert.doesNotMatch(ditherBridge, /all:\s*revert-layer/u,
     'Dither reset promotions returned');
 assert.doesNotMatch(ditherBridge, /\.bottom-buttons\s*\{/u,
@@ -61,7 +61,7 @@ assert.doesNotMatch(ditherBridge, /\.bottom-buttons\s*\{/u,
 assert.match(ditherBridge,
     /\.dither-action-dock\s*\{\s*z-index:\s*1000;\s*\}/u,
     'Dither modal/action stacking extension changed');
-const pulsarBridge = await read('pulsar_coder/pulsar-styles.css');
+const pulsarBridge = await read('tools/pulsar_coder/pulsar-styles.css');
 assert.doesNotMatch(pulsarBridge, /all:\s*revert-layer/u,
     'Pulsar reset promotions returned');
 
@@ -84,21 +84,21 @@ const [
     ditherHtml
 ] = await Promise.all([
     read('framework/css/othersite-styles.css'),
-    read('grid_generator/src/ui/ApplicationDocument.html'),
-    read('grid_generator/src/ui/ApplicationShellLoader.js'),
-    readJavaScriptTree('grid_generator/src/'),
-    read('grid_generator/styles/base.css'),
-    read('grid_generator/styles/actions-modal.css'),
-    read('grid_generator/styles/canvas-responsive.css'),
-    read('label_generator/index.html'),
-    read('label_generator/src/core/GridGenerator.js'),
-    read('label_generator/style.css'),
-    read('pulsar_coder/index.html'),
-    read('pulsar_coder/css/yf-styles.css'),
-    read('wander_bender/index.html'),
-    read('wander_bender/js/wander-bender.js'),
-    read('wander_bender/css/yf-styles.css'),
-    read('dither/index.html')
+    read('tools/grid_generator/src/ui/ApplicationDocument.html'),
+    read('tools/grid_generator/src/ui/ApplicationShellLoader.js'),
+    readJavaScriptTree('tools/grid_generator/src/'),
+    read('tools/grid_generator/styles/base.css'),
+    read('tools/grid_generator/styles/actions-modal.css'),
+    read('tools/grid_generator/styles/canvas-responsive.css'),
+    read('tools/label_generator/index.html'),
+    read('tools/label_generator/src/core/GridGenerator.js'),
+    read('tools/label_generator/style.css'),
+    read('tools/pulsar_coder/index.html'),
+    read('tools/pulsar_coder/css/yf-styles.css'),
+    read('tools/wander_bender/index.html'),
+    read('tools/wander_bender/js/wander-bender.js'),
+    read('tools/wander_bender/css/yf-styles.css'),
+    read('tools/dither/index.html')
 ]);
 
 assert.match(sharedCss, /\.modal-overlay\s*>\s*\.modal-content\s*\{/u,
@@ -171,7 +171,7 @@ for (const [name, sources] of Object.entries(localNativeDialogCollisions)) {
 
 assert.equal(countClass(ditherHtml, 'modal-overlay'), 0,
     'Dither removed instructions overlay returned');
-const ditherCss = await read('dither/style.css');
+const ditherCss = await read('tools/dither/style.css');
 assert.doesNotMatch(ditherCss, /^\s*\*\s*\{/mu,
     'Dither local universal reset returned');
 assert.equal(countClass(pulsarHtml, 'modal-overlay'), 1,

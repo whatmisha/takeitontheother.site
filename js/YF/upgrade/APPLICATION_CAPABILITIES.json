@@ -4,7 +4,7 @@
   "applications": [
     {
       "id": "sparky",
-      "entry": "sparky/index.html",
+      "entry": "tools/sparky/index.html",
       "priority": "primary",
       "renderer": "svg",
       "frameworkMode": "defineTool",
@@ -14,7 +14,7 @@
     },
     {
       "id": "grid_generator",
-      "entry": "grid_generator/index.html",
+      "entry": "tools/grid_generator/index.html",
       "priority": "primary",
       "renderer": "svg",
       "frameworkMode": "adapter",
@@ -24,7 +24,7 @@
     },
     {
       "id": "label_generator",
-      "entry": "label_generator/index.html",
+      "entry": "tools/label_generator/index.html",
       "priority": "primary",
       "renderer": "svg",
       "frameworkMode": "adapter",
@@ -34,7 +34,7 @@
     },
     {
       "id": "keyboarder",
-      "entry": "keyboarder/index.html",
+      "entry": "tools/keyboarder/index.html",
       "priority": "primary",
       "renderer": "svg",
       "frameworkMode": "defineTool",
@@ -44,7 +44,7 @@
     },
     {
       "id": "wordplayer",
-      "entry": "wordplayer/index.html",
+      "entry": "tools/wordplayer/index.html",
       "priority": "primary",
       "renderer": "canvas",
       "frameworkMode": "defineTool",
@@ -54,7 +54,7 @@
     },
     {
       "id": "dither",
-      "entry": "dither/index.html",
+      "entry": "tools/dither/index.html",
       "priority": "secondary",
       "renderer": "canvas",
       "frameworkMode": "adapter",
@@ -64,7 +64,7 @@
     },
     {
       "id": "pulsar_coder",
-      "entry": "pulsar_coder/index.html",
+      "entry": "tools/pulsar_coder/index.html",
       "priority": "secondary",
       "renderer": "svg",
       "frameworkMode": "adapter",
@@ -74,7 +74,7 @@
     },
     {
       "id": "wander_bender",
-      "entry": "wander_bender/index.html",
+      "entry": "tools/wander_bender/index.html",
       "priority": "secondary",
       "renderer": "svg",
       "frameworkMode": "adapter",

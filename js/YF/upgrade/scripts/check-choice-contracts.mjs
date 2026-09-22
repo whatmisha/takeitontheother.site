@@ -8,24 +8,24 @@ const [
     sparky, pizzaDocument, pizzaWorkspace, sticky, keyboarder, wordplayer, pulsar, dither, wander,
     ditherJs, ditherCss, wanderJs, controller
 ] = await Promise.all([
-    read('sparky/index.html'),
-    read('grid_generator/src/ui/ApplicationDocument.html'),
-    read('grid_generator/src/ui/fragments/workspace.html'),
-    read('label_generator/index.html'),
-    read('keyboarder/index.html'),
-    read('wordplayer/index.html'),
-    read('pulsar_coder/index.html'),
-    read('dither/index.html'),
-    read('wander_bender/index.html'),
-    read('dither/dither.js'),
-    read('dither/style.css'),
-    read('wander_bender/js/wander-bender.js'),
+    read('tools/sparky/index.html'),
+    read('tools/grid_generator/src/ui/ApplicationDocument.html'),
+    read('tools/grid_generator/src/ui/fragments/workspace.html'),
+    read('tools/label_generator/index.html'),
+    read('tools/keyboarder/index.html'),
+    read('tools/wordplayer/index.html'),
+    read('tools/pulsar_coder/index.html'),
+    read('tools/dither/index.html'),
+    read('tools/wander_bender/index.html'),
+    read('tools/dither/dither.js'),
+    read('tools/dither/style.css'),
+    read('tools/wander_bender/js/wander-bender.js'),
     read('framework/src/ui/PresetMenuKeyboardController.js')
 ]);
 
 const pizza = `${pizzaDocument}\n${pizzaWorkspace}`;
 
-assert.match(dither, /class="top-links"[\s\S]*?<a href="\.\.\/" class="top-link"[^>]*>← Upgrade Tools<\/a>/u);
+assert.match(dither, /class="top-links"[\s\S]*?<a href="\.\.\/\.\.\/" class="top-link"[^>]*>← Upgrade Tools<\/a>/u);
 assert.doesNotMatch(dither, /yf-tools-link/u);
 assert.doesNotMatch(ditherJs, /initYFToolsLink|yf-tools-link/u);
 assert.doesNotMatch(ditherCss.replace(/\/\*[\s\S]*?\*\//gu, ''), /\.yf-tools-link\b/u);

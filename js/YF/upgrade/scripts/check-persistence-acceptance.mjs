@@ -1,3 +1,4 @@
+import { resolveToolPath } from './lib/upgrade-paths.mjs';
 import assert from 'node:assert/strict';
 import { access, readFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -37,10 +38,10 @@ for (const surface of manifest.surfaces) {
     assert.ok(['localStorage', 'IndexedDB'].includes(surface.medium), `${surface.id} has unknown medium`);
     assert.ok(surface.reloadContract, `${surface.id} has no reload contract`);
 
-    const sourcePath = path.join(upgradeRoot, surface.source);
+    const sourcePath = path.join(upgradeRoot, resolveToolPath(surface.source));
     const source = await readFile(sourcePath, 'utf8');
     assert.ok(source.includes(surface.key), `${surface.source} does not contain ${surface.key}`);
-    await access(path.join(upgradeRoot, surface.test));
+    await access(path.join(upgradeRoot, resolveToolPath(surface.test)));
 }
 
 for (const app of manifest.apps) {
@@ -58,7 +59,7 @@ assert.deepEqual(
 );
 for (const proof of manifest.rollbackProofs) {
     assert.ok(proof.operation, `${proof.owner} rollback operation is missing`);
-    await access(path.join(upgradeRoot, proof.test));
+    await access(path.join(upgradeRoot, resolveToolPath(proof.test)));
 }
 
 console.log(

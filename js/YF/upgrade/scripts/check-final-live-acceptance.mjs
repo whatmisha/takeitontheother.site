@@ -1,10 +1,11 @@
+import { resolveToolPath } from './lib/upgrade-paths.mjs';
 import assert from 'node:assert/strict';
 import { access, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
-const absolute = relativePath => path.join(root, relativePath);
+const absolute = relativePath => path.join(root, resolveToolPath(relativePath));
 const manifest = JSON.parse(await readFile(absolute('FINAL_LIVE_ACCEPTANCE.json'), 'utf8'));
 
 assert.equal(manifest.schemaVersion, 1);
@@ -48,7 +49,7 @@ const pizzaHarness = await readFile(absolute('qa/pizza-file-intake.html'), 'utf8
 assert.match(pizzaHarness, /const jsonHash = jsonRuns\[0\]\.svg;/u);
 assert.match(pizzaHarness, /new windowUnderTest\.MutationObserver/u);
 const pizzaApplication = await readFile(
-    absolute('grid_generator/src/preset/PresetApplicationController.js'),
+    absolute('tools/grid_generator/src/preset/PresetApplicationController.js'),
     'utf8'
 );
 assert.match(pizzaApplication, /const normalized = isImported \? clone\(data\) : await this\.normalize\(data\);/u);

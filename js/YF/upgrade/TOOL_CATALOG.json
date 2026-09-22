@@ -16,7 +16,7 @@
       "id": "sparky",
       "name": "Sparky",
       "group": "lunnen",
-      "entry": "sparky/index.html",
+      "entry": "tools/sparky/index.html",
       "state": "accepted",
       "cohort": "original",
       "referenceViewport": {
@@ -29,7 +29,7 @@
       "id": "grid_generator",
       "name": "Pizza Boxer",
       "group": "lunnen",
-      "entry": "grid_generator/index.html",
+      "entry": "tools/grid_generator/index.html",
       "state": "accepted",
       "cohort": "original",
       "referenceViewport": {
@@ -42,7 +42,7 @@
       "id": "label_generator",
       "name": "Sticky Fingers",
       "group": "lunnen",
-      "entry": "label_generator/index.html",
+      "entry": "tools/label_generator/index.html",
       "state": "accepted",
       "cohort": "original",
       "referenceViewport": {
@@ -55,7 +55,7 @@
       "id": "keyboarder",
       "name": "Keyboarder",
       "group": "lunnen",
-      "entry": "keyboarder/index.html",
+      "entry": "tools/keyboarder/index.html",
       "state": "accepted",
       "cohort": "original",
       "referenceViewport": {
@@ -68,7 +68,7 @@
       "id": "wordplayer",
       "name": "Wordplayer",
       "group": "lunnen",
-      "entry": "wordplayer/index.html",
+      "entry": "tools/wordplayer/index.html",
       "state": "accepted",
       "cohort": "original",
       "referenceViewport": {
@@ -81,7 +81,7 @@
       "id": "dither",
       "name": "Dither Wizard",
       "group": "lunnen",
-      "entry": "dither/index.html",
+      "entry": "tools/dither/index.html",
       "state": "accepted",
       "cohort": "original",
       "referenceViewport": {
@@ -94,7 +94,7 @@
       "id": "wander_bender",
       "name": "Wander Bender",
       "group": "lunnen",
-      "entry": "wander_bender/index.html",
+      "entry": "tools/wander_bender/index.html",
       "state": "accepted",
       "cohort": "original",
       "referenceViewport": {
@@ -107,7 +107,7 @@
       "id": "pulsar_coder",
       "name": "Pulsar Coder",
       "group": "lunnen",
-      "entry": "pulsar_coder/index.html",
+      "entry": "tools/pulsar_coder/index.html",
       "state": "accepted",
       "cohort": "original",
       "referenceViewport": {
@@ -120,7 +120,7 @@
       "id": "hyperspace",
       "name": "Hyperspace",
       "group": "lunnen",
-      "entry": "hyperspace/index.html",
+      "entry": "tools/hyperspace/index.html",
       "state": "planned",
       "cohort": "migration",
       "referenceViewport": {
@@ -133,7 +133,7 @@
       "id": "pattern_generator",
       "name": "Pattern 01",
       "group": "lunnen",
-      "entry": "pattern_generator/index.html",
+      "entry": "tools/pattern_generator/index.html",
       "state": "planned",
       "cohort": "migration",
       "referenceViewport": {
@@ -146,7 +146,7 @@
       "id": "pattern_generator_02",
       "name": "Pattern 02",
       "group": "lunnen",
-      "entry": "pattern_generator_02/index.html",
+      "entry": "tools/pattern_generator_02/index.html",
       "state": "planned",
       "cohort": "migration",
       "referenceViewport": {
@@ -159,7 +159,7 @@
       "id": "random_lines_generator",
       "name": "Random Lines",
       "group": "lunnen",
-      "entry": "random_lines_generator/index.html",
+      "entry": "tools/random_lines_generator/index.html",
       "state": "planned",
       "cohort": "migration",
       "referenceViewport": {
@@ -172,7 +172,7 @@
       "id": "rays_pattern_generator",
       "name": "Rays Pattern",
       "group": "lunnen",
-      "entry": "rays_pattern_generator/index.html",
+      "entry": "tools/rays_pattern_generator/index.html",
       "state": "migrating",
       "cohort": "migration",
       "referenceViewport": {
@@ -185,7 +185,7 @@
       "id": "asterisk_pattern_generator",
       "name": "Asterisk Pattern",
       "group": "lunnen",
-      "entry": "asterisk_pattern_generator/index.html",
+      "entry": "tools/asterisk_pattern_generator/index.html",
       "state": "planned",
       "cohort": "migration",
       "referenceViewport": {
@@ -198,7 +198,7 @@
       "id": "calendar-randomizer",
       "name": "Calendar Randomizer",
       "group": "muted",
-      "entry": "calendar-randomizer/index.html",
+      "entry": "tools/calendar-randomizer/index.html",
       "state": "planned",
       "cohort": "migration",
       "referenceViewport": {
@@ -211,7 +211,7 @@
       "id": "chladni-sound-pattern",
       "name": "Chladni Sound Pattern",
       "group": "muted",
-      "entry": "chladni-sound-pattern/index.html",
+      "entry": "tools/chladni-sound-pattern/index.html",
       "state": "planned",
       "cohort": "migration",
       "referenceViewport": {

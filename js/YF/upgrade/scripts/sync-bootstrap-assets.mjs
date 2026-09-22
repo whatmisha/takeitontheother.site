@@ -8,11 +8,11 @@ const upgradeRoot = path.dirname(scriptDir);
 const checkOnly = process.argv.includes('--check');
 
 const assets = [
-    ['keyboarder/vendor/lib/opentype.module.js', 'framework/vendor/opentype/1.3.4/opentype.module.js', 'opentype.js 1.3.4 ESM', 'Framework text-to-path'],
-    ['grid_generator/vendor/opentype.min.js', 'framework/vendor/opentype/1.3.4/opentype.min.js', 'opentype.js 1.3.4 UMD', 'Legacy Label text-to-path'],
-    ['grid_generator/vendor/licenses/jspdf.txt', 'framework/vendor/licenses/jspdf.txt', 'jsPDF license', 'License'],
-    ['grid_generator/vendor/licenses/svg2pdf.js.txt', 'framework/vendor/licenses/svg2pdf.js.txt', 'svg2pdf.js license', 'License'],
-    ['grid_generator/vendor/licenses/opentype.js.txt', 'framework/vendor/licenses/opentype.js.txt', 'opentype.js license', 'License']
+    ['tools/keyboarder/vendor/lib/opentype.module.js', 'framework/vendor/opentype/1.3.4/opentype.module.js', 'opentype.js 1.3.4 ESM', 'Framework text-to-path'],
+    ['tools/grid_generator/vendor/opentype.min.js', 'framework/vendor/opentype/1.3.4/opentype.min.js', 'opentype.js 1.3.4 UMD', 'Legacy Label text-to-path'],
+    ['tools/grid_generator/vendor/licenses/jspdf.txt', 'framework/vendor/licenses/jspdf.txt', 'jsPDF license', 'License'],
+    ['tools/grid_generator/vendor/licenses/svg2pdf.js.txt', 'framework/vendor/licenses/svg2pdf.js.txt', 'svg2pdf.js license', 'License'],
+    ['tools/grid_generator/vendor/licenses/opentype.js.txt', 'framework/vendor/licenses/opentype.js.txt', 'opentype.js license', 'License']
 ].map(([source, target, name, purpose]) => ({ source, target, name, purpose }));
 
 // These files were promoted from Keyboarder during G1 and became framework-owned
@@ -20,37 +20,37 @@ const assets = [
 const canonicalAssets = [
     {
         target: 'framework/fonts/CoFoSans-Regular.woff2',
-        promotedFrom: 'keyboarder/Fonts/CoFo Sans/CoFoSans-Regular.woff2',
+        promotedFrom: 'tools/keyboarder/Fonts/CoFo Sans/CoFoSans-Regular.woff2',
         name: 'CoFo Sans Regular', purpose: 'UI font',
         sha256: '54d749f8c8f836f4131e40deecf693964543c4cfb0c11252097ebe164ee0800a', bytes: 44052
     },
     {
         target: 'framework/fonts/CoFoSans-Regular.woff',
-        promotedFrom: 'keyboarder/Fonts/CoFo Sans/CoFoSans-Regular.woff',
+        promotedFrom: 'tools/keyboarder/Fonts/CoFo Sans/CoFoSans-Regular.woff',
         name: 'CoFo Sans Regular', purpose: 'UI font fallback',
         sha256: '8088a648ae9746bb622236cc1cfefee4371e82187ec491bdecc031d047ea1868', bytes: 58344
     },
     {
         target: 'framework/fonts/CoFoSans-Medium.woff2',
-        promotedFrom: 'keyboarder/Fonts/CoFo Sans/CoFoSans-Medium.woff2',
+        promotedFrom: 'tools/keyboarder/Fonts/CoFo Sans/CoFoSans-Medium.woff2',
         name: 'CoFo Sans Medium', purpose: 'UI font',
         sha256: '1f3b5c06e57fc906c6970dc5d1a08ae407507bb78673339a1e130c686abb0d45', bytes: 45248
     },
     {
         target: 'framework/fonts/CoFoSans-Medium.woff',
-        promotedFrom: 'keyboarder/Fonts/CoFo Sans/CoFoSans-Medium.woff',
+        promotedFrom: 'tools/keyboarder/Fonts/CoFo Sans/CoFoSans-Medium.woff',
         name: 'CoFo Sans Medium', purpose: 'UI font fallback',
         sha256: '61b4a304ae6bcb47f3a18e9a3e27fd47ea649fe4ead128eda4b649f7b1fa7eef', bytes: 59612
     },
     {
         target: 'framework/vendor/jspdf/2.5.1/jspdf.umd.min.js',
-        promotedFrom: 'keyboarder/vendor/lib/jspdf.umd.min.js',
+        promotedFrom: 'tools/keyboarder/vendor/lib/jspdf.umd.min.js',
         name: 'jsPDF 2.5.1', purpose: 'Framework v3 and legacy Label export',
         sha256: '98ccf17aa10c20bb1301762618fcc9b6ab3a4e7f26b6071d64d0b41154df3875', bytes: 364463
     },
     {
         target: 'framework/vendor/svg2pdf/2.2.3/svg2pdf.umd.min.js',
-        promotedFrom: 'keyboarder/vendor/lib/svg2pdf.umd.min.js',
+        promotedFrom: 'tools/keyboarder/vendor/lib/svg2pdf.umd.min.js',
         name: 'svg2pdf.js 2.2.3', purpose: 'Framework v3 export',
         sha256: 'fdfbbf24d434fe653f7a553bd52093177702ddb285a57508f28cba3f303a33f6', bytes: 84587
     }

@@ -20,7 +20,7 @@
     </style>
 </head>
 <body>
-    <iframe src="../grid_generator/?qa=file-intake" title="Pizza Boxer FileIntake probe"></iframe>
+    <iframe src="../tools/grid_generator/?qa=file-intake" title="Pizza Boxer FileIntake probe"></iframe>
     <output id="qaPizzaFileIntakeResult" hidden></output>
     <script>
         const iframe = document.querySelector('iframe');
@@ -112,7 +112,7 @@
                     outputUnchanged: (await capture(documentUnderTest)).svg === baseline.svg
                 };
 
-                const presetBlob = await fetch('../grid_generator/presets/New.json')
+                const presetBlob = await fetch('../tools/grid_generator/presets/New.json')
                     .then(response => {
                         if (!response.ok) throw new Error('Could not load New.json');
                         return response.blob();

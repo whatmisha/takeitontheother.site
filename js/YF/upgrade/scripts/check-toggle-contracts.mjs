@@ -54,18 +54,18 @@ const [
     ditherHtml,
     wanderHtml
 ] = await Promise.all([
-    read('sparky/index.html'),
-    read('grid_generator/src/ui/fragments/workspace.html'),
-    read('grid_generator/src/ui/fragments/actions.html'),
-    read('grid_generator/src/ui/fragments/objects.html'),
-    read('grid_generator/src/ui/fragments/typography.html'),
-    read('grid_generator/src/ui/fragments/object-editors.html'),
-    read('label_generator/index.html'),
-    read('keyboarder/index.html'),
-    read('wordplayer/index.html'),
-    read('pulsar_coder/index.html'),
-    read('dither/index.html'),
-    read('wander_bender/index.html')
+    read('tools/sparky/index.html'),
+    read('tools/grid_generator/src/ui/fragments/workspace.html'),
+    read('tools/grid_generator/src/ui/fragments/actions.html'),
+    read('tools/grid_generator/src/ui/fragments/objects.html'),
+    read('tools/grid_generator/src/ui/fragments/typography.html'),
+    read('tools/grid_generator/src/ui/fragments/object-editors.html'),
+    read('tools/label_generator/index.html'),
+    read('tools/keyboarder/index.html'),
+    read('tools/wordplayer/index.html'),
+    read('tools/pulsar_coder/index.html'),
+    read('tools/dither/index.html'),
+    read('tools/wander_bender/index.html')
 ]);
 
 const pizzaHtml = [
@@ -77,8 +77,8 @@ const pizzaHtml = [
 ].join('\n');
 
 const [pizzaSurfaceController, wanderScript] = await Promise.all([
-    read('grid_generator/src/surfaces/SurfacePanelController.js'),
-    read('wander_bender/js/wander-bender.js')
+    read('tools/grid_generator/src/surfaces/SurfacePanelController.js'),
+    read('tools/wander_bender/js/wander-bender.js')
 ]);
 
 const apps = [
@@ -202,22 +202,22 @@ const [
 ] = await Promise.all([
     read('framework/css/othersite-styles.css'),
     read('framework/css/ui-contract.css'),
-    read('sparky/styles/sparky.css'),
-    read('keyboarder/app/theme.css'),
-    read('wordplayer/styles.css'),
-    read('grid_generator/styles/layout-panels.css'),
-    read('grid_generator/styles/editors.css'),
-    read('grid_generator/styles/actions-modal.css'),
-    read('grid_generator/styles/sides.css'),
-    read('grid_generator/framework-base.css'),
-    read('label_generator/style.css'),
-    read('label_generator/framework-base.css'),
-    read('pulsar_coder/css/yf-styles.css'),
-    read('pulsar_coder/pulsar-styles.css'),
-    read('dither/style.css'),
-    read('dither/framework-base.css'),
-    read('wander_bender/css/yf-styles.css'),
-    read('wander_bender/css/wander-bender.css')
+    read('tools/sparky/styles/sparky.css'),
+    read('tools/keyboarder/app/theme.css'),
+    read('tools/wordplayer/styles.css'),
+    read('tools/grid_generator/styles/layout-panels.css'),
+    read('tools/grid_generator/styles/editors.css'),
+    read('tools/grid_generator/styles/actions-modal.css'),
+    read('tools/grid_generator/styles/sides.css'),
+    read('tools/grid_generator/framework-base.css'),
+    read('tools/label_generator/style.css'),
+    read('tools/label_generator/framework-base.css'),
+    read('tools/pulsar_coder/css/yf-styles.css'),
+    read('tools/pulsar_coder/pulsar-styles.css'),
+    read('tools/dither/style.css'),
+    read('tools/dither/framework-base.css'),
+    read('tools/wander_bender/css/yf-styles.css'),
+    read('tools/wander_bender/css/wander-bender.css')
 ]);
 
 const activeShared = stripComments(sharedCss);

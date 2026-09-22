@@ -17,14 +17,14 @@ const bottomBar = (source, name) => {
 };
 
 const appHtmlPaths = {
-    Sparky: 'sparky/index.html',
-    'Pizza Boxer': 'grid_generator/src/ui/fragments/actions.html',
-    'Sticky Fingers': 'label_generator/index.html',
-    Keyboarder: 'keyboarder/index.html',
-    Wordplayer: 'wordplayer/index.html',
-    'Pulsar Coder': 'pulsar_coder/index.html',
-    Dither: 'dither/index.html',
-    'Wander Bender': 'wander_bender/index.html'
+    Sparky: 'tools/sparky/index.html',
+    'Pizza Boxer': 'tools/grid_generator/src/ui/fragments/actions.html',
+    'Sticky Fingers': 'tools/label_generator/index.html',
+    Keyboarder: 'tools/keyboarder/index.html',
+    Wordplayer: 'tools/wordplayer/index.html',
+    'Pulsar Coder': 'tools/pulsar_coder/index.html',
+    Dither: 'tools/dither/index.html',
+    'Wander Bender': 'tools/wander_bender/index.html'
 };
 
 const appHtml = Object.fromEntries(await Promise.all(
@@ -202,32 +202,32 @@ const [
     pulsarPngExport
 ] = await Promise.all([
     read('framework/css/othersite-styles.css'),
-    read('sparky/styles/sparky.css'),
-    read('keyboarder/app/theme.css'),
-    read('wordplayer/styles.css'),
-    read('pulsar_coder/css/yf-styles.css'),
-    read('pulsar_coder/pulsar-styles.css'),
-    read('wander_bender/css/yf-styles.css'),
-    read('wander_bender/css/wander-bender.css'),
-    read('label_generator/style.css'),
-    read('label_generator/framework-base.css'),
-    read('grid_generator/styles/actions-modal.css'),
-    read('grid_generator/styles/editors.css'),
-    read('grid_generator/styles/canvas-responsive.css'),
-    read('dither/style.css'),
-    read('dither/framework-base.css'),
-    read('sparky/tool.js'),
-    read('keyboarder/app/tool.js'),
-    read('wordplayer/src/ui/controls.js'),
-    read('pulsar_coder/pulsar-main.js'),
-    read('wander_bender/js/wander-bender.js'),
-    read('label_generator/script.js'),
-    read('grid_generator/src/svg/ExportController.js'),
-    read('dither/dither.js'),
-    read('dither/js/export/DitherPngExport.js'),
-    read('wander_bender/js/export/WanderSvgExport.js'),
-    read('pulsar_coder/js/export/PulsarSvgExport.js'),
-    read('pulsar_coder/js/export/PulsarPngExport.js')
+    read('tools/sparky/styles/sparky.css'),
+    read('tools/keyboarder/app/theme.css'),
+    read('tools/wordplayer/styles.css'),
+    read('tools/pulsar_coder/css/yf-styles.css'),
+    read('tools/pulsar_coder/pulsar-styles.css'),
+    read('tools/wander_bender/css/yf-styles.css'),
+    read('tools/wander_bender/css/wander-bender.css'),
+    read('tools/label_generator/style.css'),
+    read('tools/label_generator/framework-base.css'),
+    read('tools/grid_generator/styles/actions-modal.css'),
+    read('tools/grid_generator/styles/editors.css'),
+    read('tools/grid_generator/styles/canvas-responsive.css'),
+    read('tools/dither/style.css'),
+    read('tools/dither/framework-base.css'),
+    read('tools/sparky/tool.js'),
+    read('tools/keyboarder/app/tool.js'),
+    read('tools/wordplayer/src/ui/controls.js'),
+    read('tools/pulsar_coder/pulsar-main.js'),
+    read('tools/wander_bender/js/wander-bender.js'),
+    read('tools/label_generator/script.js'),
+    read('tools/grid_generator/src/svg/ExportController.js'),
+    read('tools/dither/dither.js'),
+    read('tools/dither/js/export/DitherPngExport.js'),
+    read('tools/wander_bender/js/export/WanderSvgExport.js'),
+    read('tools/pulsar_coder/js/export/PulsarSvgExport.js'),
+    read('tools/pulsar_coder/js/export/PulsarPngExport.js')
 ]);
 
 const activeSharedCss = stripComments(sharedCss);
@@ -261,7 +261,7 @@ for (const [name, css] of [
     assert.equal(localBarBase(css), false, `${name} reintroduced a local action-bar base`);
 }
 assert.doesNotMatch(
-    stripComments(await read('grid_generator/framework-base.css')),
+    stripComments(await read('tools/grid_generator/framework-base.css')),
     /all:\s*revert-layer/u,
     'Pizza Boxer must consume the canonical shared action presentation without reset promotions'
 );
@@ -309,7 +309,7 @@ assert.match(sparkyTool, /PNG ZIP/u);
 assert.match(sparkyTool, /MP4 ⌘E/u);
 assert.match(sparkyTool, /animationExportCancelBtn/u);
 
-const keyboarderExportActions = await read('keyboarder/app/export-actions.js');
+const keyboarderExportActions = await read('tools/keyboarder/app/export-actions.js');
 assert.match(keyboarderTool, /import \{ bindKeyboarderExportActions \} from '\.\/export-actions\.js/u);
 assert.match(keyboarderTool, /bindKeyboarderExportActions\(\{\s*app: readyApp, ExportFeedbackController, exportJSON: exportModelJSON/u);
 for (const [buttonId, method] of [['exportSvgBtn', 'exportSVG'], ['exportPngBtn', 'exportPNG'], ['exportPdfBtn', 'exportPDF']]) {

@@ -1,3 +1,4 @@
+import { resolveToolPath } from './lib/upgrade-paths.mjs';
 import assert from 'node:assert/strict';
 import { access, readFile } from 'node:fs/promises';
 
@@ -20,7 +21,7 @@ for (const app of roundTrip.jsonApplications) {
     if (app.mode === 'round-trip') assert.ok(app.importId, `${app.id} round-trip requires import`);
     else assert.equal(app.importId, null, `${app.id} export-only mode gained an implicit import`);
     assert.ok(app.evidence.length > 0, `${app.id} round-trip evidence missing`);
-    await Promise.all(app.evidence.map(path => access(new URL(path, root))));
+    await Promise.all(app.evidence.map(path => access(new URL(resolveToolPath(path), root))));
 }
 
 const capabilityApps = new Map(capabilities.applications.map(app => [app.id, app]));
@@ -32,7 +33,7 @@ assert.deepEqual(
 for (const app of roundTrip.fileIntakeApplications) {
     assert.equal(capabilityApps.get(app.id)?.shared.fileIntake, app.surfaces,
         `${app.id} file-intake surface count diverged`);
-    await Promise.all(app.evidence.map(path => access(new URL(path, root))));
+    await Promise.all(app.evidence.map(path => access(new URL(resolveToolPath(path), root))));
 }
 
 console.log('Round-trip acceptance passed: 3 bidirectional JSON tools, 1 explicit export-only tool, 4 asset intake surfaces.');

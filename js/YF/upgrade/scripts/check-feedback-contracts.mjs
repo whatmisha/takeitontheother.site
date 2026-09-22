@@ -26,14 +26,14 @@ async function readJavaScriptTree(relativeDirectory) {
 }
 
 const htmlPaths = {
-    Sparky: 'sparky/index.html',
-    Keyboarder: 'keyboarder/index.html',
-    Wordplayer: 'wordplayer/index.html',
-    'Pizza Boxer': 'grid_generator/src/ui/ApplicationDocument.html',
-    'Sticky Fingers': 'label_generator/index.html',
-    'Pulsar Coder': 'pulsar_coder/index.html',
-    Dither: 'dither/index.html',
-    'Wander Bender': 'wander_bender/index.html'
+    Sparky: 'tools/sparky/index.html',
+    Keyboarder: 'tools/keyboarder/index.html',
+    Wordplayer: 'tools/wordplayer/index.html',
+    'Pizza Boxer': 'tools/grid_generator/src/ui/ApplicationDocument.html',
+    'Sticky Fingers': 'tools/label_generator/index.html',
+    'Pulsar Coder': 'tools/pulsar_coder/index.html',
+    Dither: 'tools/dither/index.html',
+    'Wander Bender': 'tools/wander_bender/index.html'
 };
 
 const html = Object.fromEntries(await Promise.all(
@@ -170,20 +170,20 @@ const [
     read('framework/src/core/ApplicationShell.js'),
     read('framework/css/othersite-styles.css'),
     read('framework/src/ui/UnifiedUiController.js'),
-    read('sparky/tool.js'),
-    read('keyboarder/app/tool.js'),
-    read('wordplayer/src/ui/controls.js'),
-    read('grid_generator/src/ui/ErrorPresenter.js'),
-    read('grid_generator/src/persistence/DraftRecoveryController.js'),
-    readJavaScriptTree('grid_generator/src/'),
-    read('label_generator/script.js'),
-    read('label_generator/src/elements/ElementsNavigator.js'),
-    read('label_generator/src/core/GridGenerator.js'),
-    read('label_generator/style.css'),
-    read('pulsar_coder/pulsar-main.js'),
-    read('dither/dither.js'),
-    read('wander_bender/js/wander-bender.js'),
-    read('wander_bender/css/yf-styles.css')
+    read('tools/sparky/tool.js'),
+    read('tools/keyboarder/app/tool.js'),
+    read('tools/wordplayer/src/ui/controls.js'),
+    read('tools/grid_generator/src/ui/ErrorPresenter.js'),
+    read('tools/grid_generator/src/persistence/DraftRecoveryController.js'),
+    readJavaScriptTree('tools/grid_generator/src/'),
+    read('tools/label_generator/script.js'),
+    read('tools/label_generator/src/elements/ElementsNavigator.js'),
+    read('tools/label_generator/src/core/GridGenerator.js'),
+    read('tools/label_generator/style.css'),
+    read('tools/pulsar_coder/pulsar-main.js'),
+    read('tools/dither/dither.js'),
+    read('tools/wander_bender/js/wander-bender.js'),
+    read('tools/wander_bender/css/yf-styles.css')
 ]);
 
 for (const marker of ['show(options = {})', 'async confirm(', 'async prompt(', 'async alert(']) {

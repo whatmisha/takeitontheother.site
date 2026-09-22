@@ -7,24 +7,24 @@ const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const upgradeRoot = path.dirname(scriptDir);
 
 const expectedLiterals = new Map([
-    ['keyboarder/app/tool.js', [
+    ['tools/keyboarder/app/tool.js', [
         'upgrade:keyboarder:svg-export-mode:v1',
         'upgrade:keyboarder:ui-mode:v1',
         'upgrade:keyboarder:presets:v1'
     ]],
-    ['keyboarder/app/perf.js', ['upgrade:keyboarder:perf:v1']],
-    ['wordplayer/tool.js', ['upgrade:wordplayer:presets:v1']],
-    ['sparky/tool.js', ['upgrade:sparky:presets:v1']],
+    ['tools/keyboarder/app/perf.js', ['upgrade:keyboarder:perf:v1']],
+    ['tools/wordplayer/tool.js', ['upgrade:wordplayer:presets:v1']],
+    ['tools/sparky/tool.js', ['upgrade:sparky:presets:v1']],
     ['framework/demo/tool.js', ['upgrade:framework-demo:presets:v1']],
     ['framework/src/preset/PresetStore.js', ['upgrade:framework:presets:v1']],
     ['framework/src/core/ApplicationShell.js', ['upgrade:framework:presets:v1']],
-    ['grid_generator/src/persistence/DraftStore.js', ['upgrade-pizza-boxer-v1']]
+    ['tools/grid_generator/src/persistence/DraftStore.js', ['upgrade-pizza-boxer-v1']]
 ]);
 
-const pizzaRuntimeEntries = (await readdir(path.join(upgradeRoot, 'grid_generator/runtime/assets')))
+const pizzaRuntimeEntries = (await readdir(path.join(upgradeRoot, 'tools/grid_generator/runtime/assets')))
     .filter(name => /^PublicEntry-[\w-]+\.js$/.test(name));
 assert.equal(pizzaRuntimeEntries.length, 1, 'Expected exactly one Pizza Boxer PublicEntry runtime');
-expectedLiterals.set(`grid_generator/runtime/assets/${pizzaRuntimeEntries[0]}`, ['upgrade-pizza-boxer-v1']);
+expectedLiterals.set(`tools/grid_generator/runtime/assets/${pizzaRuntimeEntries[0]}`, ['upgrade-pizza-boxer-v1']);
 
 const originalNamespaces = [
     'keyboarder.svgExportTextMode',

@@ -16,60 +16,60 @@ assert.deepEqual(rootMarkdownFiles, [],
 const apps = [
     {
         name: 'Sparky',
-        href: 'sparky/',
-        entry: 'sparky/index.html',
-        css: 'sparky/index.html',
-        js: 'sparky/tool.js'
+        href: 'tools/sparky/',
+        entry: 'tools/sparky/index.html',
+        css: 'tools/sparky/index.html',
+        js: 'tools/sparky/tool.js'
     },
     {
         name: 'Pizza Boxer',
-        href: 'grid_generator/',
-        entry: 'grid_generator/index.html',
-        nav: 'grid_generator/src/ui/fragments/workspace.html',
-        css: 'grid_generator/framework-base.css',
-        js: 'grid_generator/src/framework/FrameworkAdapter.js'
+        href: 'tools/grid_generator/',
+        entry: 'tools/grid_generator/index.html',
+        nav: 'tools/grid_generator/src/ui/fragments/workspace.html',
+        css: 'tools/grid_generator/framework-base.css',
+        js: 'tools/grid_generator/src/framework/FrameworkAdapter.js'
     },
     {
         name: 'Sticky Fingers',
-        href: 'label_generator/',
-        entry: 'label_generator/index.html',
-        css: 'label_generator/framework-base.css',
-        js: 'label_generator/src/framework/FrameworkAdapter.js'
+        href: 'tools/label_generator/',
+        entry: 'tools/label_generator/index.html',
+        css: 'tools/label_generator/framework-base.css',
+        js: 'tools/label_generator/src/framework/FrameworkAdapter.js'
     },
     {
         name: 'Keyboarder',
-        href: 'keyboarder/',
-        entry: 'keyboarder/index.html',
-        css: 'keyboarder/index.html',
-        js: 'keyboarder/app/tool.js'
+        href: 'tools/keyboarder/',
+        entry: 'tools/keyboarder/index.html',
+        css: 'tools/keyboarder/index.html',
+        js: 'tools/keyboarder/app/tool.js'
     },
     {
         name: 'Wordplayer',
-        href: 'wordplayer/',
-        entry: 'wordplayer/index.html',
-        css: 'wordplayer/index.html',
-        js: 'wordplayer/tool.js'
+        href: 'tools/wordplayer/',
+        entry: 'tools/wordplayer/index.html',
+        css: 'tools/wordplayer/index.html',
+        js: 'tools/wordplayer/tool.js'
     },
     {
         name: 'Dither',
-        href: 'dither/',
-        entry: 'dither/index.html',
-        css: 'dither/framework-base.css',
-        js: 'dither/js/framework/FrameworkAdapter.js'
+        href: 'tools/dither/',
+        entry: 'tools/dither/index.html',
+        css: 'tools/dither/framework-base.css',
+        js: 'tools/dither/js/framework/FrameworkAdapter.js'
     },
     {
         name: 'Wander Bender',
-        href: 'wander_bender/',
-        entry: 'wander_bender/index.html',
-        css: 'wander_bender/css/framework-base.css',
-        js: 'wander_bender/js/framework/FrameworkAdapter.js'
+        href: 'tools/wander_bender/',
+        entry: 'tools/wander_bender/index.html',
+        css: 'tools/wander_bender/css/framework-base.css',
+        js: 'tools/wander_bender/js/framework/FrameworkAdapter.js'
     },
     {
         name: 'Pulsar Coder',
-        href: 'pulsar_coder/',
-        entry: 'pulsar_coder/index.html',
-        css: 'pulsar_coder/css/framework-base.css',
-        js: 'pulsar_coder/js/framework/FrameworkAdapter.js'
+        href: 'tools/pulsar_coder/',
+        entry: 'tools/pulsar_coder/index.html',
+        css: 'tools/pulsar_coder/css/framework-base.css',
+        js: 'tools/pulsar_coder/js/framework/FrameworkAdapter.js'
     }
 ];
 
@@ -95,11 +95,11 @@ for (const app of apps) {
 }
 
 const resetFiles = [
-    'grid_generator/styles/base.css',
-    'label_generator/style.css',
-    'dither/style.css',
-    'pulsar_coder/css/yf-styles.css',
-    'wander_bender/css/yf-styles.css'
+    'tools/grid_generator/styles/base.css',
+    'tools/label_generator/style.css',
+    'tools/dither/style.css',
+    'tools/pulsar_coder/css/yf-styles.css',
+    'tools/wander_bender/css/yf-styles.css'
 ];
 for (const relativePath of resetFiles) {
     assert.doesNotMatch(await read(relativePath), /^\s*\*\s*\{/mu,
@@ -107,11 +107,11 @@ for (const relativePath of resetFiles) {
 }
 
 const deltaFiles = [
-    'grid_generator/framework-base.css',
-    'label_generator/framework-base.css',
-    'dither/framework-base.css',
-    'pulsar_coder/pulsar-styles.css',
-    'wander_bender/css/wander-bender.css'
+    'tools/grid_generator/framework-base.css',
+    'tools/label_generator/framework-base.css',
+    'tools/dither/framework-base.css',
+    'tools/pulsar_coder/pulsar-styles.css',
+    'tools/wander_bender/css/wander-bender.css'
 ];
 for (const relativePath of deltaFiles) {
     assert.doesNotMatch(await read(relativePath), /all:\s*revert-layer/u,

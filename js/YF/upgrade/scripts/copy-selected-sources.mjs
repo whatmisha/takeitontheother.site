@@ -1,3 +1,4 @@
+import { resolveToolPath } from './lib/upgrade-paths.mjs';
 import { createHash } from 'node:crypto';
 import { access, chmod, copyFile, lstat, mkdir, readFile, realpath, rename, rm } from 'node:fs/promises';
 import path from 'node:path';
@@ -89,7 +90,7 @@ for (const entry of copyEntries) {
         throw new Error(`Target escapes upgrade: ${entry.target}`);
     }
 
-    const targetPath = path.resolve(upgradeRoot, ...normalizedTarget.split('/'));
+    const targetPath = path.resolve(upgradeRoot, ...resolveToolPath(normalizedTarget).split('/'));
     if (!isInside(upgradeRealRoot, targetPath)) throw new Error(`Resolved target escapes upgrade: ${targetPath}`);
     await assertNoTargetSymlink(targetPath);
 
@@ -155,4 +156,3 @@ if (checkOnly) {
 } else {
     console.log(`Copied ${copied} files; ${unchanged} already matched (${bytes} bytes total).`);
 }
-

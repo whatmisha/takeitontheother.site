@@ -1,3 +1,4 @@
+import { resolveToolPath } from './lib/upgrade-paths.mjs';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { readCatalog } from './lib/tool-catalog.mjs';
@@ -14,7 +15,7 @@ const applications = [
     'pulsar_coder',
     'wander_bender'
 ];
-const read = relative => readFile(new URL(relative, root), 'utf8');
+const read = relative => readFile(new URL(resolveToolPath(relative), root), 'utf8');
 const [contractCss, controller, plan, ...entrypoints] = await Promise.all([
     read('framework/css/ui-contract.css'),
     read('framework/src/ui/UnifiedUiController.js'),
@@ -76,7 +77,7 @@ assert.doesNotMatch(controller, /Fit \/ actual size|⌘0 \/ ⌘1/u);
 assert.match(plan, /никогда не меняет габариты панели/u);
 
 const hub = await read('index.html');
-const pizzaNavigation = await read('grid_generator/src/ui/fragments/workspace.html');
+const pizzaNavigation = await read('tools/grid_generator/src/ui/fragments/workspace.html');
 assert.match(pizzaNavigation, /←\s+Upgrade Tools/u, 'grid_generator: back link needs a readable arrow gap');
 assert.match(hub, /<title>YF Tools<\/title>/u);
 assert.match(hub, /<h1>YF Tools<\/h1>/u);
@@ -85,23 +86,23 @@ assert.match(hub, /<h2 id="muted-heading">Muted<\/h2>/u);
 assert.equal(hub, replaceGeneratedRegion(hub, 'hub', renderHub(await readCatalog())), 'Hub links/placeholders must match catalog acceptance states');
 
 const [ditherHtml, keyboarderSource, wordplayerSource] = await Promise.all([
-    read('dither/index.html'),
-    read('keyboarder/app/tool.js'),
-    read('wordplayer/src/ui/controls.js')
+    read('tools/dither/index.html'),
+    read('tools/keyboarder/app/tool.js'),
+    read('tools/wordplayer/src/ui/controls.js')
 ]);
 assert.doesNotMatch(ditherHtml, /How it Works|Show instructions/u);
 assert.doesNotMatch(keyboarderSource, /getElementById\('aboutBtn'\).*addEventListener/u);
 assert.doesNotMatch(wordplayerSource, /getElementById\('introHelpBtn'\).*addEventListener/u);
 
 const [wordplayerHtml, keyboarderCss, stickyHtml] = await Promise.all([
-    read('wordplayer/index.html'),
-    read('keyboarder/app/theme.css'),
-    read('label_generator/index.html')
+    read('tools/wordplayer/index.html'),
+    read('tools/keyboarder/app/theme.css'),
+    read('tools/label_generator/index.html')
 ]);
-const wordplayerStyles = await read('wordplayer/styles.css');
+const wordplayerStyles = await read('tools/wordplayer/styles.css');
 assert.doesNotMatch(wordplayerStyles, /\.tone-group-heading\s*\{/u, 'Wordplayer must not fork the shared group heading');
 assert.equal(wordplayerHtml.match(/class="tone-group-heading control-field-heading"/gu)?.length || 0, 5, 'Both Wordplayer modes must use shared headings');
-const pizzaEditors = await read('grid_generator/src/ui/fragments/object-editors.html');
+const pizzaEditors = await read('tools/grid_generator/src/ui/fragments/object-editors.html');
 assert.equal(pizzaEditors.match(/class="stacked-select-label"/gu)?.length || 0, 2);
 for (const html of [pizzaEditors, stickyHtml]) {
     assert.equal(html.match(/class="toggle-chip feature-chip"/gu)?.length || 0, 6);
@@ -127,8 +128,8 @@ const swatchCount = entrypoints.reduce(
 assert.equal(swatchCount, 13, 'the six color-enabled tools must expose 13 shared swatch triggers');
 
 const [sparkyHtml, ditherCss] = await Promise.all([
-    read('sparky/index.html'),
-    read('dither/style.css')
+    read('tools/sparky/index.html'),
+    read('tools/dither/style.css')
 ]);
 assert.doesNotMatch(sparkyHtml, /\bid="showPoint"/u);
 assert.match(sparkyHtml, /type="checkbox"[^>]*\bid="followCursor"/u);

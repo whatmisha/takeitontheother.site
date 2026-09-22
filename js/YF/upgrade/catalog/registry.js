@@ -3,9 +3,14 @@ export const isAuditableState = state => state === 'migrating' || state === 'acc
 export const runtimeTools = catalog => catalog.tools.filter(tool => isAuditableState(tool.state));
 export const publishedTools = catalog => catalog.tools.filter(tool => tool.state === 'accepted');
 export const toolHref = tool => tool.entry.replace(/index\.html$/, '');
+export const toolDirectory = id => `tools/${id}`;
 
 export function validateDirectoryCoverage(catalog, directoryNames) {
     const directories = new Set(directoryNames);
+    const known = new Set(catalog.tools.map(tool => tool.id));
+    for (const directory of directories) {
+        if (!known.has(directory)) throw new Error(`${directory}: unregistered tool directory`);
+    }
     for (const tool of catalog.tools) {
         if (tool.state === 'planned' && directories.has(tool.id)) {
             throw new Error(`${tool.id}: copied app must be marked migrating so runtime checks cannot skip it`);
@@ -29,7 +34,7 @@ export function validateCatalog(catalog) {
     for (const tool of catalog.tools) {
         if (!/^[a-z][a-z0-9_-]*$/.test(tool.id) || ids.has(tool.id)) fail('invalid/duplicate tool id');
         ids.add(tool.id);
-        if (tool.entry !== `${tool.id}/index.html`) fail(`${tool.id}: entry must stay in its own upgrade directory`);
+        if (tool.entry !== `${toolDirectory(tool.id)}/index.html`) fail(`${tool.id}: entry must stay in its own upgrade/tools directory`);
         if (typeof tool.name !== 'string' || !tool.name.trim() || !groups.has(tool.group)) fail(`${tool.id}: missing name/group`);
         if (!['planned', 'migrating', 'accepted'].includes(tool.state)) fail(`${tool.id}: invalid state`);
         if (!['original', 'migration'].includes(tool.cohort)) fail(`${tool.id}: invalid cohort`);

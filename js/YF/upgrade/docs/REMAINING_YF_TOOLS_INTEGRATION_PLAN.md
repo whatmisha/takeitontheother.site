@@ -2,6 +2,8 @@
 
 Дата исследования: 2026-09-22. Состав подтверждён пользователем: **все восемь новых инструментов**. Каталог INT-01 готов, opt-in UI host INT-02 реализован и проверен на стенде. **Rays T.1/T.2 выполнены:** контрольные fixtures и 22 теста, изолированная копия со статусом migrating. Общий UI Rays ещё не подключён, публичная ссылка не включена. Остальные семь — planned. Единичная console error UI-аудитора из INT-02 остаётся открытой. Отчёты: [INT-00/01](INT_00_01_MIGRATION_FOUNDATION.md), [INT-02](INT_02_SHARED_UI_HOST.md), [Rays T.1/T.2 и следующая задача T.3](RAYS_T1_T2_BASELINE.md).
 
+**Обновление 2026-09-22:** по просьбе пользователя все девять имеющихся инструментов перемещены в `upgrade/tools/`; туда же направлены семь будущих. Начат Rays T.3a: независимый scene engine сравнен с legacy/golden, теперь 33 теста Rays. Runtime ещё использует прежний script; следующий шаг — T.3b, подключение обоих renderer к проверенной сцене. Актуальная структура и проверки: [TOOLS_LAYOUT_AND_RAYS_T3.md](TOOLS_LAYOUT_AND_RAYS_T3.md).
+
 ## 1. Подтверждённый состав: восемь инструментов
 
 В `YF/index.html` 16 ссылок: восемь уже работающих инструментов upgrade и восемь неперенесённых. В `upgrade/index.html` этим восьми соответствуют placeholders. Пользователь подтвердил перенос всех восьми; никого не исключать. Подтверждение состава не означает автоматической приёмки новых приложений или разрешения изменять оригиналы.
@@ -10,16 +12,16 @@
 
 | Раздел | Инструмент | Исходная точка входа относительно YF | Предлагаемый адрес внутри upgrade |
 | --- | --- | --- | --- |
-| Lunnen | Hyperspace | `lunnen/hyperspace/index.html` | `hyperspace/` |
-| Lunnen | Pattern 01 | `lunnen/pattern_generator/index.html` | `pattern_generator/` |
-| Lunnen | Pattern 02 | `lunnen/pattern_generator_02/01/index.html` | `pattern_generator_02/` |
-| Lunnen | Random Lines | `lunnen/random_lines_generator/01/index.html` | `random_lines_generator/` |
-| Lunnen | Rays Pattern | `lunnen/rays_pattern_generator/01/index.html` | `rays_pattern_generator/` |
-| Lunnen | Asterisk Pattern | `lunnen/asterisk_pattern_generator/index.html` | `asterisk_pattern_generator/` |
-| Muted | Calendar Randomizer | `muted/calendar-randomizer/index.html` | `calendar-randomizer/` |
-| Muted | Chladni Sound Pattern | `muted/chladni-sound-pattern/index.html` | `chladni-sound-pattern/` |
+| Lunnen | Hyperspace | `lunnen/hyperspace/index.html` | `tools/hyperspace/` |
+| Lunnen | Pattern 01 | `lunnen/pattern_generator/index.html` | `tools/pattern_generator/` |
+| Lunnen | Pattern 02 | `lunnen/pattern_generator_02/01/index.html` | `tools/pattern_generator_02/` |
+| Lunnen | Random Lines | `lunnen/random_lines_generator/01/index.html` | `tools/random_lines_generator/` |
+| Lunnen | Rays Pattern | `lunnen/rays_pattern_generator/01/index.html` | `tools/rays_pattern_generator/` |
+| Lunnen | Asterisk Pattern | `lunnen/asterisk_pattern_generator/index.html` | `tools/asterisk_pattern_generator/` |
+| Muted | Calendar Randomizer | `muted/calendar-randomizer/index.html` | `tools/calendar-randomizer/` |
+| Muted | Chladni Sound Pattern | `muted/chladni-sound-pattern/index.html` | `tools/chladni-sound-pattern/` |
 
-Плоские каталоги новых приложений соответствуют структуре нынешних восьми. Принадлежность Lunnen/Muted хранится в каталоге инструментов и индексе, а не определяет другую копию framework.
+Все приложения лежат одним списком внутри `upgrade/tools/`. Принадлежность Lunnen/Muted хранится в каталоге инструментов и индексе, а не определяет другую копию framework. В корне upgrade остаются главная, framework, QA, scripts, catalog и документация; старых папок/алиасов приложений там нет.
 
 Pattern 02: `index.html`, `script.js`, `styles.css` в корне и `/01/` сейчас побайтно одинаковы. Канонический источник всё равно `/01/`, поскольку туда ведёт индекс. У Hyperspace используется корень, не `/05/`. Каталоги `backup`, `_backup`, `01 2` и прочие снимки не смешивать с выбранной версией.
 
@@ -44,7 +46,7 @@ UI Garage — независимый переносимый пакет, теку
 ```text
 upgrade/
   framework/                 один рабочий framework и versioned vendor
-  <tool>/
+  tools/<tool>/
     index.html               общая оболочка без старого полного CSS
     app/                     связывание UI, состояния и действий
     model/                   схема, валидация, versioned document
@@ -91,7 +93,7 @@ p5 1.4.0, 1.7.0 и 1.9.0 нельзя без проверки заменить �
 
 ### 4.1. Rays Pattern — рекомендуемый первый перенос
 
-**Прогресс 2026-09-22.** T.1/T.2: `rays_pattern_generator/` существует только как migration preview, без общего UI. `qa/migrations/rays/` содержит замороженный исходник, семь golden-сценариев, Node harness и тесты. Алгоритм в копии не изменён; заменён только storage namespace, удалены внешние UI-шрифты, добавлена маркировка. Следующий этап — T.3, единая модель сцены для Canvas/SVG. Подробные ограничения и исходные дефекты — в [отчёте](RAYS_T1_T2_BASELINE.md). Эти дефекты ещё не исправлены и не считаются принятой целевой логикой.
+**Прогресс 2026-09-22.** T.1/T.2: `tools/rays_pattern_generator/` существует как migration preview, без общего UI. `qa/migrations/rays/` содержит замороженный исходник, семь golden-сценариев, Node harness и тесты. Алгоритм действующего script не изменён. На T.3a добавлен отдельный `engine/scene.js`: чистая модель модулей/лучей/соединений, 11 новых тестов против legacy, всего 33. Следующий этап — T.3b, подключить Canvas/SVG к модели. Подробные ограничения и исходные дефекты — в [отчёте T.1/T.2](RAYS_T1_T2_BASELINE.md). Эти дефекты ещё не исправлены и не считаются принятой целевой логикой.
 
 **Устройство.** Три активных файла, native Canvas 3000 × 1000 и отдельный SVG exporter. Общая регулярная раскладка модулей, лучи, соединения, шахматное смещение рядов. Живой пересчёт при изменении параметров. localStorage `rayPatternSettings`. Восстановление параметров из имени SVG. Внешние CoFo в CSS.
 
@@ -363,7 +365,7 @@ p5 1.4.0, 1.7.0 и 1.9.0 нельзя без проверки заменить �
 
 ## 10. Первая задача для следующего исполнителя
 
-> Прочитай RAYS_T1_T2_BASELINE.md, INT_02_SHARED_UI_HOST.md и раздел Rays этого плана. T.1/T.2 уже выполнены: не копируй исходники повторно и не пересоздавай baseline. Запусти test:rays-baseline и проверь текущие параллельные изменения. Следующая задача — Rays T.3: извлечь чистую модель модулей/лучей и направить через неё Canvas/SVG, сравнивая с замороженным legacy и golden fixtures. Сохраняй порядок примитивов, defaults, odd-row polarity, формулы gradient/image и даже задокументированный duplicate ray до отдельного решения. Старый UI пока можно оставить; не смешивай извлечение с T.4-исправлениями. T.2 identity-test сознательно заменить проверкой нового adapter против прежнего baseline, а не подгонять ожидаемые hashes. Все записи только внутри upgrade. Остальные семь planned не трогать, Rays остаётся migrating до T.7. Единичная MutationObserver error аудитора из INT-02 не закрыта одним чистым запуском. В конце запиши реальные проверки и следующую маленькую задачу.
+> Прочитай TOOLS_LAYOUT_AND_RAYS_T3.md, RAYS_T1_T2_BASELINE.md и INT_02_SHARED_UI_HOST.md. Все приложения теперь находятся в upgrade/tools; не запускай повторно relocate-tools.mjs и не копируй исходники заново. T.3a уже выполнен: engine/scene.js проверен по legacy/golden, 33 теста Rays. Следующая задача — T.3b: направить Canvas/SVG через эту модель, не дублировать расчёты. Сохраняй порядок примитивов, defaults, odd-row polarity, формулы gradient/image и duplicate ray до отдельного решения. Старый UI пока можно оставить; не смешивай извлечение с T.4-исправлениями. T.2 identity-test сознательно заменить проверкой нового adapter, а не подгонять ожидаемые hashes. Все записи только внутри upgrade. Остальные семь planned не трогать, Rays остаётся migrating до T.7. Не считать закрытыми MutationObserver error аудитора из INT-02 и историческое расхождение keyboard inventory Pulsar (отчёт 3 панели, текущий UI 2). В конце запиши реальные проверки и следующую маленькую задачу.
 
 После Rays T.3 — адресные T.4-исправления, затем общий UI/команды T.5/T.6 и приёмка T.7. Не начинать массовое копирование восьми приложений одним изменением.
 

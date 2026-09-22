@@ -18,16 +18,16 @@ const [
     ditherHtml,
     wanderHtml
 ] = await Promise.all([
-    read('sparky/index.html'),
-    read('grid_generator/src/ui/fragments/workspace.html'),
-    read('grid_generator/src/ui/fragments/typography.html'),
-    read('grid_generator/src/ui/fragments/object-editors.html'),
-    read('label_generator/index.html'),
-    read('keyboarder/index.html'),
-    read('wordplayer/index.html'),
-    read('pulsar_coder/index.html'),
-    read('dither/index.html'),
-    read('wander_bender/index.html')
+    read('tools/sparky/index.html'),
+    read('tools/grid_generator/src/ui/fragments/workspace.html'),
+    read('tools/grid_generator/src/ui/fragments/typography.html'),
+    read('tools/grid_generator/src/ui/fragments/object-editors.html'),
+    read('tools/label_generator/index.html'),
+    read('tools/keyboarder/index.html'),
+    read('tools/wordplayer/index.html'),
+    read('tools/pulsar_coder/index.html'),
+    read('tools/dither/index.html'),
+    read('tools/wander_bender/index.html')
 ]);
 
 const inventory = [
@@ -69,7 +69,7 @@ assert.deepEqual([...pulsarHtml.matchAll(/<input\b(?=[^>]*type="range")[^>]*id="
     'rayCountSlider', 'rayLengthSlider', 'lengthVariationSlider', 'bitStepSlider', 'strokeWidthSlider', 'tickShortSlider', 'tickLongSlider'
 ]);
 assert.doesNotMatch(pulsarHtml, /preambleLengthSlider/u);
-const pulsarCodec = await import('../pulsar_coder/js/codec/PulsarCodec.js');
+const pulsarCodec = await import('../tools/pulsar_coder/js/codec/PulsarCodec.js');
 assert.equal(pulsarCodec.CODEC_VERSION, 2);
 assert.equal(pulsarCodec.GLOBAL_MAGIC_BITS, 12);
 assert.equal(pulsarCodec.RAY_PREFIX_BITS, 10);
@@ -79,12 +79,12 @@ assert.equal(privateRanges, 22);
 assert.equal(sharedOrdinary + sharedHsb + privateRanges, 127);
 
 const sharedOrdinaryApps = await Promise.all([
-    ['Sparky', 'sparky/styles/sparky.css'],
-    ['Pizza Boxer', 'grid_generator/styles/controls.css'],
-    ['Keyboarder', 'keyboarder/app/theme.css'],
-    ['Wordplayer', 'wordplayer/styles.css'],
-    ['Pulsar Coder', 'pulsar_coder/css/yf-styles.css'],
-    ['Wander Bender', 'wander_bender/css/yf-styles.css']
+    ['Sparky', 'tools/sparky/styles/sparky.css'],
+    ['Pizza Boxer', 'tools/grid_generator/styles/controls.css'],
+    ['Keyboarder', 'tools/keyboarder/app/theme.css'],
+    ['Wordplayer', 'tools/wordplayer/styles.css'],
+    ['Pulsar Coder', 'tools/pulsar_coder/css/yf-styles.css'],
+    ['Wander Bender', 'tools/wander_bender/css/yf-styles.css']
 ].map(async ([app, path]) => [app, stripComments(await read(path))]));
 
 const ordinaryPseudo = /\.control-group input\[type=["']range["']\](?::focus)?::(?:-webkit-slider-thumb|-moz-range-thumb|-webkit-slider-runnable-track|-moz-range-track)/u;
@@ -94,9 +94,9 @@ for (const [app, css] of sharedOrdinaryApps) {
 
 const [sharedCss, pizzaCss, ditherCss, stickyCss] = await Promise.all([
     read('framework/css/othersite-styles.css'),
-    read('grid_generator/styles/controls.css'),
-    read('dither/style.css'),
-    read('label_generator/style.css')
+    read('tools/grid_generator/styles/controls.css'),
+    read('tools/dither/style.css'),
+    read('tools/label_generator/style.css')
 ]);
 assert.match(sharedCss, /\.hsb-control-group input\[type="range"\]::-webkit-slider-thumb\s*\{[^}]*width:\s*12px;[^}]*height:\s*12px;/su);
 assert.match(pizzaCss, /\.hsb-control-group input\[type="range"\]::-webkit-slider-thumb\s*\{[^}]*width:\s*var\(--slider-thumb-size\);[^}]*height:\s*var\(--slider-thumb-size\);/su);
