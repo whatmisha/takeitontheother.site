@@ -7,7 +7,7 @@ const catalog = JSON.parse(await readFile(new URL('../../TOOL_CATALOG.json', imp
 const fixture = () => structuredClone(catalog);
 const ray = data => data.tools.find(tool => tool.id === 'rays_pattern_generator');
 
-test('all eight original tools use tools/ alongside eight approved placeholders', () => {
+test('all eight original tools use clean URLs alongside eight approved migrations', () => {
     assert.equal(validateCatalog(catalog), catalog);
     assert.equal(catalog.tools.length, 16);
     assert.deepEqual(catalog.tools.filter(tool => tool.cohort === 'original').map(tool => tool.entry), [
@@ -19,7 +19,7 @@ test('all eight original tools use tools/ alongside eight approved placeholders'
 test('planned tools have no hub link and no selectable audit option or runtime scan', () => {
     const data = fixture(); ray(data).state = 'planned';
     assert.ok(!runtimeTools(data).some(tool => tool.id === ray(data).id));
-    assert.doesNotMatch(renderHub(data), /href="tools\/rays_pattern_generator\//u);
+    assert.doesNotMatch(renderHub(data), /href="rays_pattern_generator\//u);
     assert.match(renderAuditOptions(data), /value="rays_pattern_generator" data-tool-state="planned" disabled/u);
 });
 
@@ -27,7 +27,7 @@ test('migrating tools enter runtime checks and audit immediately, without a publ
     const data = fixture(); ray(data).state = 'migrating';
     assert.ok(runtimeTools(data).some(tool => tool.id === ray(data).id));
     assert.ok(!publishedTools(data).some(tool => tool.id === ray(data).id));
-    assert.doesNotMatch(renderHub(data), /href="tools\/rays_pattern_generator\//u);
+    assert.doesNotMatch(renderHub(data), /href="rays_pattern_generator\//u);
     assert.match(renderAuditOptions(data), /value="rays_pattern_generator" data-tool-state="migrating">Rays Pattern — перенос/u);
 });
 
@@ -35,8 +35,8 @@ test('accepted tools appear once under their own group; priority order remains u
     const data = fixture(); ray(data).state = 'accepted';
     data.tools.find(tool => tool.id === 'calendar-randomizer').state = 'accepted';
     const html = renderHub(data);
-    assert.equal(html.match(/href="tools\/rays_pattern_generator\/"/gu).length, 1);
-    assert.equal(html.match(/href="tools\/calendar-randomizer\/"/gu).length, 1);
+    assert.equal(html.match(/href="rays_pattern_generator\/"/gu).length, 1);
+    assert.equal(html.match(/href="calendar-randomizer\/"/gu).length, 1);
     assert.ok(html.indexOf('href="calendar-randomizer/"') > html.indexOf('id="muted-heading"'));
     assert.ok(html.indexOf('href="sparky/"') < html.indexOf('href="grid_generator/"'));
 });
@@ -73,7 +73,7 @@ test('generation changes only the marked region and is idempotent', () => {
 
 test('checked-in hub and audit options are generated from the same catalog', async () => {
     for (const [file, region, render] of [['index.html', 'hub', renderHub], ['infra/qa/ui-audit/index.html', 'audit', renderAuditOptions]]) {
-        const html = await readFile(new URL(`../../${file}`, import.meta.url), 'utf8');
+        const html = await readFile(new URL(`../../../${file}`, import.meta.url), 'utf8');
         assert.equal(html, replaceGeneratedRegion(html, region, render(catalog)), `${file} is stale`);
     }
 });

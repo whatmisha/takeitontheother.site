@@ -3,7 +3,7 @@ import {
     DialogHost,
     SliderController,
     WanderPanelManager
-} from './framework/FrameworkAdapter.js?v=g5-feedback-2';
+} from './framework/FrameworkAdapter.js?v=g5-feedback-2&layout=root-infra-1';
 import { ZoomPanManager } from './ui/ZoomPanManager.js?v=g13-ui-repair-1';
 import { debounce, DEBOUNCE_DELAYS } from './utils/DebounceUtils.js';
 import { RadialMode } from './modes/RadialMode.js';

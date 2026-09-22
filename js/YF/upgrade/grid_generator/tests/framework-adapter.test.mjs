@@ -36,7 +36,7 @@ test('Pizza Boxer consumes shared capabilities through one explicit adapter', as
     ]) {
         assert.match(
             await readFile(new URL(source, import.meta.url), 'utf8'),
-            /from '..\/framework\/FrameworkAdapter\.js';/u
+            /from '..\/framework\/FrameworkAdapter\.js\?layout=root-infra-1';/u
         );
     }
 });
@@ -79,7 +79,7 @@ test('Pizza Boxer layers shared CSS below its production compatibility skin', as
 
     assert.match(
         bridge,
-        /@import url\('\.\.\/\.\.\/framework\/css\/othersite-styles\.css\?v=g6-choice-1'\) layer\(framework\);/u
+        /@import url\('\.\.\/infra\/framework\/css\/othersite-styles\.css\?v=g6-choice-1'\) layer\(framework\);/u
     );
     assert.doesNotMatch(bridge, /all:\s*revert-layer/u);
     assert.match(frameworkStyles, /\.top-link\s*\{\s*padding: var\(--spacing-md\) var\(--spacing-3xl\);/u);
@@ -114,7 +114,7 @@ test('Pizza Boxer layers shared CSS below its production compatibility skin', as
     );
     assert.match(
         workspace,
-        /<a href="\.\.\/\.\.\/" class="top-link" aria-label="Back to Upgrade Tools">\s*← Upgrade Tools\s*<\/a>/u
+        /<a href="\.\.\/" class="top-link" aria-label="Back to Upgrade Tools">\s*← Upgrade Tools\s*<\/a>/u
     );
     assert.doesNotMatch(workspace, /class="yf-tools-link"/u);
     assert.match(workspace, /id="presetDropdownToggle" type="button"[\s\S]*?aria-controls="presetDropdownMenu"/u);
@@ -124,7 +124,7 @@ test('Pizza Boxer layers shared CSS below its production compatibility skin', as
     );
     assert.match(
         template,
-        /href="\.\.\/\.\.\/framework-base\.css\?v=g6-choice-1"/u,
+        /href="\.\.\/\.\.\/framework-base\.css\?v=g6-choice-1&layout=root-infra-1"/u,
         'development document must resolve the bridge from src/ui'
     );
     const actionFragment = await readFile(new URL('../src/ui/fragments/actions.html', import.meta.url), 'utf8');

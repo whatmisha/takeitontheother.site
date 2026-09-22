@@ -18,7 +18,7 @@ test('Dither reaches shared UI and color behavior through one public-barrel faca
         readFile(new URL('dither.js', appRoot), 'utf8')
     ]);
 
-    assert.match(adapter, /from '\.\.\/\.\.\/\.\.\/\.\.\/framework\/src\/index\.js\?v=uiq-2';/u);
+    assert.match(adapter, /from '\.\.\/\.\.\/\.\.\/infra\/framework\/src\/index\.js\?v=uiq-2';/u);
     assert.deepEqual(DITHER_FRAMEWORK_ADAPTER.sharedCapabilities, [
         'ColorUtils',
         'ExportFeedbackController',
@@ -65,7 +65,7 @@ test('shared CSS stays below the Dither compatibility skin', async () => {
 
     assert.match(
         bridge,
-        /@import url\('\.\.\/\.\.\/framework\/css\/othersite-styles\.css\?v=g6-choice-1'\) layer\(framework\);/u
+        /@import url\('\.\.\/infra\/framework\/css\/othersite-styles\.css\?v=g6-choice-1'\) layer\(framework\);/u
     );
     assert.ok(
         html.indexOf('framework-base.css') < html.indexOf('style.css'),

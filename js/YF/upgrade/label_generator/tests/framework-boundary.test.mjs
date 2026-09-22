@@ -15,11 +15,11 @@ test('Sticky Fingers exposes shared behavior through one public-barrel facade', 
         readFile(new URL('../infra/framework/css/ui-contract.css', appRoot), 'utf8'),
         readFile(new URL('style.css', appRoot), 'utf8')
     ]);
-    assert.match(adapter, /from '\.\.\/\.\.\/\.\.\/\.\.\/framework\/src\/index\.js\?v=g6-file-intake-1';/u);
+    assert.match(adapter, /from '\.\.\/\.\.\/\.\.\/infra\/framework\/src\/index\.js\?v=g6-file-intake-1';/u);
     assert.match(adapter, /sharedCapabilities: Object\.freeze\(\['ColorUtils', 'DialogHost', 'FileIntakeController'\]\)/u);
     assert.match(
         bridge,
-        /@import url\('\.\.\/\.\.\/framework\/css\/othersite-styles\.css\?v=g6-choice-1'\) layer\(framework\);/u
+        /@import url\('\.\.\/infra\/framework\/css\/othersite-styles\.css\?v=g6-choice-1'\) layer\(framework\);/u
     );
     assert.doesNotMatch(bridge, /all:\s*revert-layer/u);
     assert.match(bridge, /\.controls-panel\s*\{\s*max-height: none;/u);
@@ -28,15 +28,15 @@ test('Sticky Fingers exposes shared behavior through one public-barrel facade', 
     assert.match(sharedStyles, /\.top-link\s*\{\s*padding: var\(--spacing-md\) var\(--spacing-3xl\);/u);
     assert.match(
         html,
-        /<a href="\.\.\/\.\.\/" class="top-link" aria-label="Back to Upgrade Tools">\s*← Upgrade Tools\s*<\/a>/u
+        /<a href="\.\.\/" class="top-link" aria-label="Back to Upgrade Tools">\s*← Upgrade Tools\s*<\/a>/u
     );
     assert.doesNotMatch(html, /class="yf-tools-link"/u);
     assert.ok(
         html.indexOf('framework-base.css') < html.indexOf('style.css'),
         'shared CSS must load below the frozen Sticky Fingers skin'
     );
-    assert.match(html, /href="framework-base\.css\?v=g6-choice-1"/u);
-    assert.match(html, /href="style\.css\?v=g15-sticky-controls-1"/u);
+    assert.match(html, /href="framework-base\.css\?v=g6-choice-1&layout=root-infra-1"/u);
+    assert.match(html, /href="style\.css\?v=g15-sticky-controls-1&layout=root-infra-1"/u);
     assert.doesNotMatch(html, /(?:modal-overlay|\bid="helpButton")/u);
 
     assert.equal(html.match(/class="toggle-chip feature-chip"/gu)?.length || 0, 6);
@@ -127,7 +127,7 @@ test('Sticky Fingers exposes shared behavior through one public-barrel facade', 
     ]) {
         assert.equal(
             (await readFile(new URL(source, appRoot), 'utf8'))
-                .includes(`from '${expectedImport}';`),
+                .includes(`from '${expectedImport}&layout=root-infra-1';`),
             true
         );
     }
@@ -144,10 +144,10 @@ test('Sticky Fingers exposes shared behavior through one public-barrel facade', 
     const [textToPath] = await Promise.all([
         readFile(new URL('src/utils/TextToPath.js', appRoot), 'utf8')
     ]);
-    assert.match(style, /\.\.\/framework\/fonts\/TT_Commons_Classic_Regular\.woff2/u);
-    assert.match(style, /\.\.\/framework\/fonts\/TT_Commons_Classic_Medium\.woff2/u);
-    assert.match(textToPath, /\.\.\/framework\/fonts\/TT Commons Classic Regular\.otf/u);
-    assert.match(textToPath, /\.\.\/framework\/fonts\/TT Commons Classic Medium\.otf/u);
+    assert.match(style, /\.\.\/infra\/framework\/fonts\/TT_Commons_Classic_Regular\.woff2/u);
+    assert.match(style, /\.\.\/infra\/framework\/fonts\/TT_Commons_Classic_Medium\.woff2/u);
+    assert.match(textToPath, /\.\.\/infra\/framework\/fonts\/TT Commons Classic Regular\.otf/u);
+    assert.match(textToPath, /\.\.\/infra\/framework\/fonts\/TT Commons Classic Medium\.otf/u);
     assert.match(
         style,
         /\.panel-header span:first-child\s*\{[^}]*font-size:\s*0\.9rem;[^}]*line-height:\s*1rem;/su
@@ -246,7 +246,7 @@ test('Google Sheets remains explicit user-initiated external functionality', asy
     assert.match(script, /https:\/\/docs\.google\.com\/spreadsheets/u);
     assert.match(html, /id="loadDataBtn"/u);
     assert.match(html, /id="googleSheetsUrl"/u);
-    assert.match(html, /src="script\.js\?v=g15-sticky-controls-1"/u);
+    assert.match(html, /src="script\.js\?v=g15-sticky-controls-1&layout=root-infra-1"/u);
     assert.match(
         html,
         /id="dataStatus" class="data-status" role="status" aria-live="polite" aria-atomic="true"/u

@@ -80,7 +80,7 @@ function categoryFor(relativePath) {
     if (segments.includes('presets')) return 'preset';
     if (segments.includes('vendor')) return 'vendor';
     if (segments.some(segment => ['fonts', 'font', 'assets', 'images', 'img', 'reference', 'graphics'].includes(segment))) return 'asset';
-    if (segments.includes('infra/docs') || extension === '.md' || filename.startsWith('readme')) return 'documentation';
+    if (segments.includes('docs') || extension === '.md' || filename.startsWith('readme')) return 'documentation';
     if (['package.json', 'package-lock.json', 'vite.config.js'].includes(filename) || segments.includes('tools') || segments.includes('analysis') || segments.includes('benchmarks')) return 'tooling';
     if (['.html', '.css', '.js', '.mjs', '.json', '.svg'].includes(extension)) return 'runtime-source';
     return 'asset';

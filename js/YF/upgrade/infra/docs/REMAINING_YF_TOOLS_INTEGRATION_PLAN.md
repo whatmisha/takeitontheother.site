@@ -1,8 +1,8 @@
 # Интеграция оставшихся инструментов YF в upgrade
 
-Дата исследования и обновления: 2026-09-22. Состав подтверждён пользователем: **все восемь новых инструментов**. Теперь все они скопированы в upgrade/tools и имеют статус migrating; вместе с прежними восемью там 16 приложений. INT-01 готов, opt-in UI host INT-02 проверен на стенде, но общий UI новых приложений ещё не подключён. Rays имеет T.1/T.2 и T.3a, 33 теста; остальные семь — изолированные T.2-копии с 33 пакетными проверками, предметные fixtures T.1 ещё надо дополнить. Публичные ссылки не включены до приёмки. Единичная console error UI-аудитора из INT-02 остаётся открытой. Отчёты: [INT-00/01](INT_00_01_MIGRATION_FOUNDATION.md), [INT-02](INT_02_SHARED_UI_HOST.md), [Rays T.1/T.2](RAYS_T1_T2_BASELINE.md), [пакет семи](BATCH7_ISOLATED_TOOLS.md).
+Дата исследования и обновления: 2026-09-22. Состав подтверждён пользователем: **все восемь новых инструментов**. Теперь все они скопированы в upgrade/ и имеют статус migrating; вместе с прежними восемью там 16 приложений. INT-01 готов, opt-in UI host INT-02 проверен на стенде, но общий UI новых приложений ещё не подключён. Rays имеет T.1/T.2 и T.3a, 33 теста; остальные семь — изолированные T.2-копии с 33 пакетными проверками, предметные fixtures T.1 ещё надо дополнить. Публичные ссылки не включены до приёмки. Единичная console error UI-аудитора из INT-02 остаётся открытой. Отчёты: [INT-00/01](INT_00_01_MIGRATION_FOUNDATION.md), [INT-02](INT_02_SHARED_UI_HOST.md), [Rays T.1/T.2](RAYS_T1_T2_BASELINE.md), [пакет семи](BATCH7_ISOLATED_TOOLS.md).
 
-**Обновление 2026-09-22:** по просьбе пользователя все девять имеющихся инструментов перемещены в `upgrade/tools/`; туда же направлены семь будущих. Начат Rays T.3a: независимый scene engine сравнен с legacy/golden, теперь 33 теста Rays. Runtime ещё использует прежний script; следующий шаг — T.3b, подключение обоих renderer к проверенной сцене. Актуальная структура и проверки: [TOOLS_LAYOUT_AND_RAYS_T3.md](TOOLS_LAYOUT_AND_RAYS_T3.md).
+**Актуальное решение 2026-09-22:** все 16 инструментов физически находятся в `upgrade/<tool>/`, инфраструктура — в `upgrade/infra/`. Адреса без `tools/`, без редиректов, дублей и `<base>`. Восемь новых приложений остаются migration preview, не accepted. Rays T.3a завершён (33 теста); следующий шаг — T.3b. Карта папок и проверок: [ROOT_LAYOUT.md](ROOT_LAYOUT.md).
 
 ## 1. Подтверждённый состав: восемь инструментов
 
@@ -12,16 +12,16 @@
 
 | Раздел | Инструмент | Исходная точка входа относительно YF | Предлагаемый адрес внутри upgrade |
 | --- | --- | --- | --- |
-| Lunnen | Hyperspace | `lunnen/hyperspace/index.html` | `tools/hyperspace/` |
-| Lunnen | Pattern 01 | `lunnen/pattern_generator/index.html` | `tools/pattern_generator/` |
-| Lunnen | Pattern 02 | `lunnen/pattern_generator_02/01/index.html` | `tools/pattern_generator_02/` |
-| Lunnen | Random Lines | `lunnen/random_lines_generator/01/index.html` | `tools/random_lines_generator/` |
-| Lunnen | Rays Pattern | `lunnen/rays_pattern_generator/01/index.html` | `tools/rays_pattern_generator/` |
-| Lunnen | Asterisk Pattern | `lunnen/asterisk_pattern_generator/index.html` | `tools/asterisk_pattern_generator/` |
-| Muted | Calendar Randomizer | `muted/calendar-randomizer/index.html` | `tools/calendar-randomizer/` |
-| Muted | Chladni Sound Pattern | `muted/chladni-sound-pattern/index.html` | `tools/chladni-sound-pattern/` |
+| Lunnen | Hyperspace | `lunnen/hyperspace/index.html` | `hyperspace/` |
+| Lunnen | Pattern 01 | `lunnen/pattern_generator/index.html` | `pattern_generator/` |
+| Lunnen | Pattern 02 | `lunnen/pattern_generator_02/01/index.html` | `pattern_generator_02/` |
+| Lunnen | Random Lines | `lunnen/random_lines_generator/01/index.html` | `random_lines_generator/` |
+| Lunnen | Rays Pattern | `lunnen/rays_pattern_generator/01/index.html` | `rays_pattern_generator/` |
+| Lunnen | Asterisk Pattern | `lunnen/asterisk_pattern_generator/index.html` | `asterisk_pattern_generator/` |
+| Muted | Calendar Randomizer | `muted/calendar-randomizer/index.html` | `calendar-randomizer/` |
+| Muted | Chladni Sound Pattern | `muted/chladni-sound-pattern/index.html` | `chladni-sound-pattern/` |
 
-Все приложения лежат одним списком внутри `upgrade/tools/`. Принадлежность Lunnen/Muted хранится в каталоге инструментов и индексе, а не определяет другую копию framework. В корне upgrade остаются главная, framework, QA, scripts, catalog и документация; старых папок/алиасов приложений там нет.
+Все приложения лежат одним списком внутри `upgrade/`. Принадлежность Lunnen/Muted хранится в каталоге инструментов и индексе, а не определяет другую копию framework. В корне upgrade остаются все 16 папок инструментов, infra/, index.html, package.json и .gitignore. Фреймворк, QA, scripts, catalog, документация и служебные JSON находятся внутри infra/.
 
 Pattern 02: `index.html`, `script.js`, `styles.css` в корне и `/01/` сейчас побайтно одинаковы. Канонический источник всё равно `/01/`, поскольку туда ведёт индекс. У Hyperspace используется корень, не `/05/`. Каталоги `backup`, `_backup`, `01 2` и прочие снимки не смешивать с выбранной версией.
 
@@ -29,7 +29,7 @@ Pattern 02: `index.html`, `script.js`, `styles.css` в корне и `/01/` се
 
 ## 2. Что исследовано и что ещё не проверялось
 
-Проверены индексы, активные HTML/JS/CSS, параметры и режимы, инициализация, модели, генерация, экспорт, работа с файлами, клавиатура, хранение, внешние ресурсы. У Calendar дополнительно рассмотрены четыре SVG и способы их перечисления; у Chladni — звук, ручные режимы, кадр на паузе и README. Также проверены текущие API/рендереры `upgrade/framework`, контракт UI, отдельный UI Garage и списки приложений в QA.
+Проверены индексы, активные HTML/JS/CSS, параметры и режимы, инициализация, модели, генерация, экспорт, работа с файлами, клавиатура, хранение, внешние ресурсы. У Calendar дополнительно рассмотрены четыре SVG и способы их перечисления; у Chladni — звук, ручные режимы, кадр на паузе и README. Также проверены текущие API/рендереры `upgrade/infra/framework`, контракт UI, отдельный UI Garage и списки приложений в QA.
 
 Это **исследование исходников**, не браузерная приёмка. Микрофон не включался, оригинальные приложения не запускались с записью их localStorage, экспорты на диск не выполнялись. В изолированных Node VM воспроизведены четыре проблемы/расхождения: Random Lines filename parser, маршруты экспорта Pattern 01, номера слоёв Asterisk, блокировка ручного X в Chladni. VM-заглушки подтверждают конкретный путь кода, не заменяют проверку настоящего браузера.
 
@@ -37,7 +37,7 @@ Pattern 02: `index.html`, `script.js`, `styles.css` в корне и `/01/` се
 
 ## 3. Главный архитектурный выбор
 
-**Новые приложения используют общий рабочий `upgrade/framework/`. Не копировать framework в каждый инструмент и не подключать их к `upgrade/extracted/ui-garage/`.**
+**Новые приложения используют общий рабочий `upgrade/infra/framework/`. Не копировать framework в каждый инструмент и не подключать их к `upgrade/infra/extracted/ui-garage/`.**
 
 UI Garage — независимый переносимый пакет, текущие восемь инструментов его не используют. Он полезен как источник проверенных подходов, но смешение двух runtime внутри upgrade вернёт исходную проблему расхождения интерфейсов. Переключение всех приложений на другой runtime было бы отдельным проектом.
 
@@ -45,8 +45,8 @@ UI Garage — независимый переносимый пакет, теку
 
 ```text
 upgrade/
-  framework/                 один рабочий framework и versioned vendor
-  tools/<tool>/
+  infra/framework/           один рабочий framework и versioned vendor
+  <tool>/
     index.html               общая оболочка без старого полного CSS
     app/                     связывание UI, состояния и действий
     model/                   схема, валидация, versioned document
@@ -93,7 +93,7 @@ p5 1.4.0, 1.7.0 и 1.9.0 нельзя без проверки заменить �
 
 ### 4.1. Rays Pattern — рекомендуемый первый перенос
 
-**Прогресс 2026-09-22.** T.1/T.2: `tools/rays_pattern_generator/` существует как migration preview, без общего UI. `qa/migrations/rays/` содержит замороженный исходник, семь golden-сценариев, Node harness и тесты. Алгоритм действующего script не изменён. На T.3a добавлен отдельный `engine/scene.js`: чистая модель модулей/лучей/соединений, 11 новых тестов против legacy, всего 33. Следующий этап — T.3b, подключить Canvas/SVG к модели. Подробные ограничения и исходные дефекты — в [отчёте T.1/T.2](RAYS_T1_T2_BASELINE.md). Эти дефекты ещё не исправлены и не считаются принятой целевой логикой.
+**Прогресс 2026-09-22.** T.1/T.2: `rays_pattern_generator/` существует как migration preview, без общего UI. `infra/qa/migrations/rays/` содержит замороженный исходник, семь golden-сценариев, Node harness и тесты. Алгоритм действующего script не изменён. На T.3a добавлен отдельный `engine/scene.js`: чистая модель модулей/лучей/соединений, 11 новых тестов против legacy, всего 33. Следующий этап — T.3b, подключить Canvas/SVG к модели. Подробные ограничения и исходные дефекты — в [отчёте T.1/T.2](RAYS_T1_T2_BASELINE.md). Эти дефекты ещё не исправлены и не считаются принятой целевой логикой.
 
 **Устройство.** Три активных файла, native Canvas 3000 × 1000 и отдельный SVG exporter. Общая регулярная раскладка модулей, лучи, соединения, шахматное смещение рядов. Живой пересчёт при изменении параметров. localStorage `rayPatternSettings`. Восстановление параметров из имени SVG. Внешние CoFo в CSS.
 
@@ -258,7 +258,7 @@ p5 1.4.0, 1.7.0 и 1.9.0 нельзя без проверки заменить �
 
 Готово: определён состав, исходники, реальные исходные ошибки и стартовая точка; оригиналы не изменены.
 
-Текущий статус: per-file baseline сохранён в `qa/migrations/SOURCE_BASELINE.json`; исходные замечания и результаты первого запуска сохранены в отчёте INT-00/01. На INT-02 статические расхождения разобраны адресно, воспроизводимые UI/lifecycle дефекты исправлены; тесты и desktop CSS smoke восьми повторно прошли. Однако на финальном reload аудитора снова зарегистрирована единичная observer error без stack/filename. Её причина остаётся открытой; общий console gate и полная приёмка всех состояний/mobile не заявляются. См. INT-02.
+Текущий статус: per-file baseline сохранён в `infra/qa/migrations/SOURCE_BASELINE.json`; исходные замечания и результаты первого запуска сохранены в отчёте INT-00/01. На INT-02 статические расхождения разобраны адресно, воспроизводимые UI/lifecycle дефекты исправлены; тесты и desktop CSS smoke восьми повторно прошли. Однако на финальном reload аудитора снова зарегистрирована единичная observer error без stack/filename. Её причина остаётся открытой; общий console gate и полная приёмка всех состояний/mobile не заявляются. См. INT-02.
 
 ### INT-01 — единый каталог и критерии подключения
 
@@ -282,7 +282,7 @@ p5 1.4.0, 1.7.0 и 1.9.0 нельзя без проверки заменить �
 
 Готово: один небольшой native Canvas fixture подключает общий UI без имени приложения внутри framework; re-init не удваивает listeners. Текущие восемь проходят регрессию.
 
-Текущий статус: **реализовано и проверено на native Canvas fixture; console gate аудитора открыт**. Публичный `ToolUiController`, общий descriptor→button/help/keyboard, explicit export feedback, lifecycle и mode guards. Стенд `qa/ui-host/` использует общий CSS, настоящую PNG-encoding операцию и явно обозначенные симуляции source/JSON/audio; реальные адаптеры проверяются при переносе соответствующего приложения. Подключение, ограничения и реальные результаты — [INT-02](INT_02_SHARED_UI_HOST.md). Следом диагностика сообщения аудитора и независимая подготовка Rays T.1.
+Текущий статус: **реализовано и проверено на native Canvas fixture; console gate аудитора открыт**. Публичный `ToolUiController`, общий descriptor→button/help/keyboard, explicit export feedback, lifecycle и mode guards. Стенд `infra/qa/ui-host/` использует общий CSS, настоящую PNG-encoding операцию и явно обозначенные симуляции source/JSON/audio; реальные адаптеры проверяются при переносе соответствующего приложения. Подключение, ограничения и реальные результаты — [INT-02](INT_02_SHARED_UI_HOST.md). Следом диагностика сообщения аудитора и независимая подготовка Rays T.1.
 
 ### INT-03 — p5 host, только перед первым p5-инструментом
 
@@ -369,7 +369,7 @@ p5 1.4.0, 1.7.0 и 1.9.0 нельзя без проверки заменить �
 
 ## 10. Первая задача для следующего исполнителя
 
-> Прочитай BATCH7_ISOLATED_TOOLS.md, TOOLS_LAYOUT_AND_RAYS_T3.md, RAYS_T1_T2_BASELINE.md и INT_02_SHARED_UI_HOST.md. Все 16 приложений уже находятся в upgrade/tools; не запускай повторно relocate-tools.mjs/copy-remaining-tools.mjs и не копируй исходники заново. Для восьми новых state=migrating, не accepted. У Rays T.3a выполнен: engine/scene.js проверен по legacy/golden, 33 теста. Следующая задача — T.3b: направить Canvas/SVG через эту модель, сохранив геометрию/порядок/RNG. T.2 identity-test заменить проверкой нового adapter, не подгонять ожидаемые hashes. Для остальных семи перед T.3 дополнить предметные fixtures поверх пакетных identity tests. Все записи только внутри upgrade. Не считать закрытыми MutationObserver error аудитора и историческое расхождение keyboard inventory Pulsar. В конце запиши реальные проверки и следующую маленькую задачу.
+> Прочитай BATCH7_ISOLATED_TOOLS.md, TOOLS_LAYOUT_AND_RAYS_T3.md, RAYS_T1_T2_BASELINE.md и INT_02_SHARED_UI_HOST.md. Все 16 приложений уже находятся в upgrade/; не запускай повторно relocate-tools.mjs/copy-remaining-tools.mjs и не копируй исходники заново. Для восьми новых state=migrating, не accepted. У Rays T.3a выполнен: engine/scene.js проверен по legacy/golden, 33 теста. Следующая задача — T.3b: направить Canvas/SVG через эту модель, сохранив геометрию/порядок/RNG. T.2 identity-test заменить проверкой нового adapter, не подгонять ожидаемые hashes. Для остальных семи перед T.3 дополнить предметные fixtures поверх пакетных identity tests. Все записи только внутри upgrade. Не считать закрытыми MutationObserver error аудитора и историческое расхождение keyboard inventory Pulsar. В конце запиши реальные проверки и следующую маленькую задачу.
 
 После Rays T.3 — адресные T.4-исправления, затем общий UI/команды T.5/T.6 и приёмка T.7. Семь остальных уже скопированы одним пакетом по новому прямому запросу пользователя; теперь интегрировать эти копии, не возвращаться к исходным папкам.
 

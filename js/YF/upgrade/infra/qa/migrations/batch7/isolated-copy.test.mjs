@@ -37,8 +37,9 @@ for (const tool of manifest.tools) {
         for (const file of tool.files) {
             assert.equal(file.sourceSha256, original.files.find(item => item.path === file.path).sha256);
             const contents = await read(`${tool.id}/${file.path}`);
-            assert.equal(hash(contents), file.copySha256, file.path);
-            assert.equal(Buffer.byteLength(contents), file.bytes, file.path);
+            const snapshot = file.path.endsWith('.html') ? contents.replaceAll('../infra/framework/', '../../framework/').replaceAll('href="../"', 'href="../../"') : contents;
+            assert.equal(hash(snapshot), file.copySha256, file.path);
+            assert.equal(Buffer.byteLength(snapshot), file.bytes, file.path);
         }
     });
     test(`${tool.id}: original algorithms/assets unchanged except settings namespace and service fonts`, async () => {
@@ -58,7 +59,7 @@ for (const tool of manifest.tools) {
     test(`${tool.id}: every declared control, range, default and option is retained`, async () => {
         const html = await read(`${tool.id}/index.html`);
         assert.deepEqual([...html.matchAll(/<(?:input|button|select|textarea|option)\b[^>]*>/gi)].map(match => match[0]), tool.htmlControls);
-        assert.match(html, /href="\.\.\/\.\.\/"[^>]*>← Upgrade Tools/);
+        assert.match(html, /href="\.\.\/"[^>]*>← Upgrade Tools/);
         assert.match(html, /Migration preview/);
         assert.doesNotMatch(html, /<(?:link|script)\b[^>]*(?:src|href)=["']https?:/i);
     });
@@ -100,7 +101,7 @@ test('four Calendar SVGs are standalone artwork, without external assets or scri
 test('each p5 app retains its exact original major/minor/patch and local path', async () => {
     for (const [id, version, file] of [['hyperspace', '1.4.0', 'p5.js'], ['pattern_generator_02', '1.7.0', 'p5.min.js'], ['chladni-sound-pattern', '1.9.0', 'p5.min.js']]) {
         const html = await read(`${id}/index.html`);
-        assert.ok(html.includes(`../../framework/vendor/p5/${version}/lib/${file}`));
+        assert.ok(html.includes(`../infra/framework/vendor/p5/${version}/lib/${file}`));
     }
     assert.match(await read('chladni-sound-pattern/index.html'), /p5\/1\.9\.0\/lib\/addons\/p5\.sound\.min\.js/);
 });

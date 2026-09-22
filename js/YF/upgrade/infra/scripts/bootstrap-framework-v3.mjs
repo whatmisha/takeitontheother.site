@@ -110,8 +110,8 @@ for (const entry of entries) {
 const provenance = {
     schemaVersion: 1,
     source: 'othersite-ui-framework/v3',
-    immutableSnapshot: 'infra/framework/upstream-v3',
-    workingTree: 'infra/framework',
+    immutableSnapshot: 'framework/upstream-v3',
+    workingTree: 'framework',
     files: records
 };
 const provenancePath = path.join(upgradeRoot, 'infra/framework', 'UPSTREAM_V3.json');

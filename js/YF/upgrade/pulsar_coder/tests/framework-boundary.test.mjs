@@ -17,12 +17,12 @@ test('Pulsar Coder reaches shared UI behavior through one public-barrel facade',
         readFile(new URL('pulsar-main.js', appRoot), 'utf8')
     ]);
 
-    assert.match(adapter, /from '\.\.\/\.\.\/\.\.\/\.\.\/framework\/src\/index\.js\?v=g5-feedback-2';/u);
+    assert.match(adapter, /from '\.\.\/\.\.\/\.\.\/infra\/framework\/src\/index\.js\?v=g5-feedback-2';/u);
     assert.match(
         adapter,
         /sharedCapabilities: Object\.freeze\(\[\s*'DialogHost',\s*'OverlayDialogHost',\s*'PanelManager',\s*'SliderController'/u
     );
-    assert.match(main, /from '\.\/js\/framework\/FrameworkAdapter\.js\?v=g5-feedback-2';/u);
+    assert.match(main, /from '\.\/js\/framework\/FrameworkAdapter\.js\?v=g5-feedback-2&layout=root-infra-1';/u);
     assert.match(main, /from '\.\/js\/ui\/ZoomPanManager\.js\?v=g13-ui-repair-1';/u);
     assert.doesNotMatch(main, /from '\.\/js\/ui\/(?:PanelManager|SliderController)\.js';/u);
     assert.match(main, /panelManager\.initCollapse\(\);/u);
@@ -78,7 +78,7 @@ test('shared CSS is layered below the frozen Pulsar skin', async () => {
 
     assert.match(
         bridge,
-        /@import url\('\.\.\/\.\.\/\.\.\/framework\/css\/othersite-styles\.css\?v=g6-choice-1'\) layer\(framework\);/u
+        /@import url\('\.\.\/\.\.\/infra\/framework\/css\/othersite-styles\.css\?v=g6-choice-1'\) layer\(framework\);/u
     );
     assert.ok(
         html.indexOf('css/framework-base.css') < html.indexOf('css/yf-styles.css'),
@@ -91,7 +91,7 @@ test('shared CSS is layered below the frozen Pulsar skin', async () => {
     assert.doesNotMatch(skin, /all:\s*revert-layer/u);
     assert.match(
         html,
-        /<a href="\.\.\/\.\.\/" class="top-link" aria-label="Back to Upgrade Tools">← Upgrade Tools<\/a>/u
+        /<a href="\.\.\/" class="top-link" aria-label="Back to Upgrade Tools">← Upgrade Tools<\/a>/u
     );
     assert.doesNotMatch(html, /class="yf-tools-link"/u);
     assert.match(html, /<nav class="bottom-buttons action-dock" role="toolbar" aria-label="Verify and export actions">/u);

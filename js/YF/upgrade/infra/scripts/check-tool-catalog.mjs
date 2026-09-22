@@ -76,4 +76,4 @@ for (const tool of catalog.tools) {
     }
 }
 for (const tool of runtimeTools(catalog)) await access(new URL(tool.entry, upgradeRoot));
-console.log(`Catalog passed: 8 protected original tools + 8 approved migrations; ${runtimeTools(catalog).length} runtime entries in tools/. Historical acceptance manifests are unchanged.`);
+console.log(`Catalog passed: 8 protected original tools + 8 approved migrations; ${runtimeTools(catalog).length} runtime entries at upgrade root. Historical acceptance manifests are unchanged.`);

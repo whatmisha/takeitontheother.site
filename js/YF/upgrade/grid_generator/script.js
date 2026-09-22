@@ -1,4 +1,4 @@
-import { GridGenerator } from './src/core/GridGenerator.js';
+import { GridGenerator } from './src/core/GridGenerator.js?layout=root-infra-1';
 import { loadApplicationShell } from './src/ui/ApplicationShellLoader.js';
 
 const APPLICATION_INSTANCE = Symbol.for('lunnen.grid-generator.application');

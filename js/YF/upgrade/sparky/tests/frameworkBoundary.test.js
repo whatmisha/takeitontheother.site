@@ -12,7 +12,7 @@ test('Sparky consumes the shared framework without surrendering private mobile a
 
     assert.match(
         toolSource,
-        /import\s*\{\s*defineTool\s*,\s*FileIntakeController\s*\}\s*from\s*['"]\.\.\/\.\.\/framework\/src\/index\.js\?v=g6-capabilities-1['"];/,
+        /import\s*\{\s*defineTool\s*,\s*FileIntakeController\s*\}\s*from\s*['"]\.\.\/infra\/framework\/src\/index\.js\?v=g6-capabilities-1['"];/,
         'Sparky must consume shared infrastructure through the public barrel'
     );
     assert.doesNotMatch(toolSource, /from\s*['"]\.\/framework\//, 'Sparky runtime still imports its retired framework copy');
@@ -41,7 +41,7 @@ test('Sparky consumes the shared framework without surrendering private mobile a
     assert.doesNotMatch(htmlSource, /(?:href|src)=["']\.\/framework\//, 'Sparky HTML still links its retired framework copy');
     assert.match(
         htmlSource,
-        /<a href="\.\.\/\.\.\/" class="top-link" aria-label="Back to Upgrade Tools">← Upgrade Tools<\/a>/u,
+        /<a href="\.\.\/" class="top-link" aria-label="Back to Upgrade Tools">← Upgrade Tools<\/a>/u,
         'Sparky back link must expose the canonical navigation contract'
     );
     assert.match(

@@ -1,6 +1,6 @@
 import { SVG } from '../core/Constants.js';
 import { DOMUtils } from '../utils/DOMUtils.js';
-import { ColorUtils } from '../framework/FrameworkAdapter.js';
+import { ColorUtils } from '../framework/FrameworkAdapter.js?layout=root-infra-1';
 import {
     calculateBaselineRects,
     calculateColumnRects,

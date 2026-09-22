@@ -12,7 +12,7 @@ const [toolSource, htmlSource, themeSource, typographySource, frameworkStylesSou
 
 assert.match(
     toolSource,
-    /import\s*\{[\s\S]*?defineTool[\s\S]*?FileIntakeController[\s\S]*?ExportFeedbackController[\s\S]*?SVGExporter[\s\S]*?\}\s*from\s*['"]\.\.\/\.\.\/\.\.\/framework\/src\/index\.js\?v=uiq-3['"];/,
+    /import\s*\{[\s\S]*?defineTool[\s\S]*?FileIntakeController[\s\S]*?ExportFeedbackController[\s\S]*?SVGExporter[\s\S]*?\}\s*from\s*['"]\.\.\/\.\.\/infra\/framework\/src\/index\.js\?v=uiq-3['"];/,
     'Keyboarder must consume shared infrastructure through the public barrel'
 );
 assert.doesNotMatch(toolSource, /vendor\/framework/, 'Keyboarder runtime still imports its retired framework copy');
@@ -36,7 +36,7 @@ assert.ok(applicationCss > frameworkCss, 'Keyboarder theme must load after frame
 assert.doesNotMatch(htmlSource, /vendor\/framework/, 'Keyboarder HTML still links its retired framework copy');
 assert.match(
     htmlSource,
-    /<a class="top-link" href="\.\.\/\.\.\/" aria-label="Back to Upgrade Tools">← Upgrade Tools<\/a>/u,
+    /<a class="top-link" href="\.\.\/" aria-label="Back to Upgrade Tools">← Upgrade Tools<\/a>/u,
     'Keyboarder back link must expose the canonical navigation contract'
 );
 assert.match(

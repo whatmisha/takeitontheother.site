@@ -4,7 +4,7 @@
  */
 import { Settings } from './Settings.js';
 import { COLORS } from './Constants.js';
-import { ColorUtils } from '../framework/FrameworkAdapter.js?v=g6-file-intake-1';
+import { ColorUtils } from '../framework/FrameworkAdapter.js?v=g6-file-intake-1&layout=root-infra-1';
 import { MathUtils } from '../utils/MathUtils.js';
 import { GridCalculator } from '../grid/GridCalculator.js';
 import { GridRenderer } from '../grid/GridRenderer.js';
@@ -12,13 +12,13 @@ import { GridPresets } from '../grid/GridPresets.js';
 import { SVGExporter } from '../svg/SVGExporter.js';
 import { SliderController } from '../ui/SliderController.js';
 import { PanelManager } from '../ui/PanelManager.js';
-import { ColorPicker } from '../ui/ColorPicker.js';
+import { ColorPicker } from '../ui/ColorPicker.js?layout=root-infra-1';
 import { DragDropManager } from '../ui/DragDropManager.js';
 import { TextBlockManager } from '../elements/TextBlockManager.js';
 import { TextRenderer } from '../elements/TextRenderer.js';
 import { GraphicsManager } from '../elements/GraphicsManager.js';
 import { GraphicsRenderer } from '../elements/GraphicsRenderer.js';
-import { ElementsNavigator } from '../elements/ElementsNavigator.js';
+import { ElementsNavigator } from '../elements/ElementsNavigator.js?layout=root-infra-1';
 
 export class GridGenerator {
     constructor() {

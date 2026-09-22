@@ -18,7 +18,7 @@ test('Wander reaches shared panels and sliders through one public-barrel facade'
         readFile(new URL('js/wander-bender.js', appRoot), 'utf8')
     ]);
 
-    assert.match(adapter, /from '\.\.\/\.\.\/\.\.\/\.\.\/framework\/src\/index\.js\?v=g5-feedback-2';/u);
+    assert.match(adapter, /from '\.\.\/\.\.\/\.\.\/infra\/framework\/src\/index\.js\?v=g5-feedback-2';/u);
     assert.deepEqual(WANDER_FRAMEWORK_ADAPTER.sharedCapabilities, [
         'DialogHost',
         'PanelManager',
@@ -28,7 +28,7 @@ test('Wander reaches shared panels and sliders through one public-barrel facade'
     assert.equal(AdaptedDialogHost, DialogHost);
     assert.equal(AdaptedSliderController, SliderController);
 
-    assert.match(app, /from '\.\/framework\/FrameworkAdapter\.js\?v=g5-feedback-2';/u);
+    assert.match(app, /from '\.\/framework\/FrameworkAdapter\.js\?v=g5-feedback-2&layout=root-infra-1';/u);
     assert.match(app, /const feedbackDialogHost = new DialogHost\(\);/u);
     assert.match(app, /await feedbackDialogHost\.alert\(\{/u);
     assert.doesNotMatch(app, /(?:^|[^\w$.])alert\s*\(/u);
@@ -74,7 +74,7 @@ test('shared CSS is layered below the frozen Wander skin', async () => {
 
     assert.match(
         bridge,
-        /@import url\('\.\.\/\.\.\/\.\.\/framework\/css\/othersite-styles\.css\?v=g6-choice-1'\) layer\(framework\);/u
+        /@import url\('\.\.\/\.\.\/infra\/framework\/css\/othersite-styles\.css\?v=g6-choice-1'\) layer\(framework\);/u
     );
     assert.ok(
         html.indexOf('framework-base.css') < html.indexOf('yf-styles.css') &&
@@ -96,7 +96,7 @@ test('shared CSS is layered below the frozen Wander skin', async () => {
     );
     assert.match(
         html,
-        /<a href="\.\.\/\.\.\/" class="top-link" aria-label="Back to Upgrade Tools">← Upgrade Tools<\/a>/u
+        /<a href="\.\.\/" class="top-link" aria-label="Back to Upgrade Tools">← Upgrade Tools<\/a>/u
     );
     assert.doesNotMatch(html, /class="yf-tools-link"/u);
     assert.match(skin, /Shared-framework parity bridge/u);
@@ -205,7 +205,7 @@ test('shared CSS is layered below the frozen Wander skin', async () => {
 test('Paper.js is local and donor Pattern never enters the active runtime', async () => {
     const html = await readFile(new URL('index.html', appRoot), 'utf8');
 
-    assert.match(html, /\.\.\/framework\/vendor\/paper\/0\.12\.17\/paper-full\.min\.js/u);
+    assert.match(html, /\.\.\/infra\/framework\/vendor\/paper\/0\.12\.17\/paper-full\.min\.js/u);
     assert.doesNotMatch(html, /(?:src|href)="https?:\/\//u);
     await access(new URL('../infra/framework/vendor/paper/0.12.17/paper-full.min.js', appRoot));
     await assert.rejects(

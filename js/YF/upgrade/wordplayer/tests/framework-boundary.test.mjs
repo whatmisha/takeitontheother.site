@@ -14,7 +14,7 @@ const [toolSource, htmlSource, stylesSource, frameworkStylesSource, controlsSour
 
 assert.match(
     toolSource,
-    /import\s*\{\s*defineTool,\s*FileIntakeController,\s*ExportFeedbackController\s*\}\s*from\s*['"]\.\.\/\.\.\/framework\/src\/index\.js\?v=uiq-3['"];/,
+    /import\s*\{\s*defineTool,\s*FileIntakeController,\s*ExportFeedbackController\s*\}\s*from\s*['"]\.\.\/infra\/framework\/src\/index\.js\?v=uiq-3['"];/,
     'Wordplayer must consume the shared framework through its public barrel'
 );
 assert.doesNotMatch(
@@ -40,7 +40,7 @@ assert.doesNotMatch(htmlSource, /href=["']foundation\.css["']/, 'retired local f
 assert.doesNotMatch(htmlSource, /CoFoSans-(?:Regular|Medium)\.woff2/, 'system UI must not preload the retired CoFo files');
 assert.match(
     htmlSource,
-    /<a href="\.\.\/\.\.\/" class="mode-nav-button mode-nav-back" aria-label="Back to Upgrade Tools">← Upgrade Tools<\/a>/u,
+    /<a href="\.\.\/" class="mode-nav-button mode-nav-back" aria-label="Back to Upgrade Tools">← Upgrade Tools<\/a>/u,
     'Wordplayer mode-navigation extension must expose the canonical back-link semantics'
 );
 assert.doesNotMatch(

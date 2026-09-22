@@ -17,8 +17,8 @@ import { ListenerScope } from './ListenerScope.js';
 import { RenderScheduler } from './RenderScheduler.js';
 
 import { GridCalculator } from '../grid/GridCalculator.js';
-import { GridRenderer } from '../grid/GridRenderer.js';
-import { CanvasRendererController } from '../grid/CanvasRendererController.js';
+import { GridRenderer } from '../grid/GridRenderer.js?layout=root-infra-1';
+import { CanvasRendererController } from '../grid/CanvasRendererController.js?layout=root-infra-1';
 
 import { createSliderConfig } from '../config/SliderConfigFactory.js';
 
@@ -27,9 +27,9 @@ import { PanelManager } from '../ui/PanelManager.js';
 import { ZoomPanManager } from '../ui/ZoomPanManager.js';
 import { TypographyUnitController } from '../ui/TypographyUnitController.js';
 import { GridSettingsController } from '../ui/GridSettingsController.js';
-import { ColorPanelController } from '../ui/ColorPanelController.js';
+import { ColorPanelController } from '../ui/ColorPanelController.js?layout=root-infra-1';
 import { SliderHistoryController } from '../ui/SliderHistoryController.js';
-import { ApplicationEventController } from '../ui/ApplicationEventController.js';
+import { ApplicationEventController } from '../ui/ApplicationEventController.js?layout=root-infra-1';
 import { PanelUiController } from '../ui/PanelUiController.js';
 import { ZoomToolbarController } from '../ui/ZoomToolbarController.js';
 import { ErrorPresenter } from '../ui/ErrorPresenter.js';
@@ -43,7 +43,7 @@ import { ObjectEditorInputController } from '../elements/ObjectEditorInputContro
 import { TextEditorPositionController } from '../elements/TextEditorPositionController.js';
 import { LunnenDisplayEditorController } from '../elements/LunnenDisplayEditorController.js';
 import { GraphicsEditorInputController } from '../elements/GraphicsEditorInputController.js';
-import { GraphicsEditorEventController } from '../elements/GraphicsEditorEventController.js';
+import { GraphicsEditorEventController } from '../elements/GraphicsEditorEventController.js?layout=root-infra-1';
 import { ObjectNavigatorController } from '../elements/ObjectNavigatorController.js';
 import { ObjectDragController } from '../elements/ObjectDragController.js';
 import { ObjectDocumentController } from '../elements/ObjectDocumentController.js';

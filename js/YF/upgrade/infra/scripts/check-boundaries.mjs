@@ -24,7 +24,7 @@ const expectedIndexLinks = publishedTools(catalog).map(toolHref);
 const ignoredDirectoryNames = new Set([
     '.git',
     'benchmarks',
-    'infra/docs',
+    'docs',
     'node_modules',
     'plans',
     'test',
@@ -71,7 +71,7 @@ async function walk(directory) {
         if (!entry.isFile()) continue;
         const topLevelDirectory = relativePath.split('/')[0];
         if (
-            (appDirectories.some(directory => relativePath.startsWith(`${directory}/`)) || ['infra/framework', 'infra/catalog'].includes(topLevelDirectory) || relativePath.startsWith('infra/qa/ui-audit/') || relativePath.startsWith('infra/qa/ui-host/') || ['infra/qa/migrations/index.html', 'infra/qa/migrations/preview.js', 'infra/qa/migrations/preview.css'].includes(relativePath))
+            (appDirectories.some(directory => relativePath.startsWith(`${directory}/`)) || ['infra/framework/', 'infra/catalog/'].some(prefix => relativePath.startsWith(prefix)) || relativePath.startsWith('infra/qa/ui-audit/') || relativePath.startsWith('infra/qa/ui-host/') || ['infra/qa/migrations/index.html', 'infra/qa/migrations/preview.js', 'infra/qa/migrations/preview.css'].includes(relativePath))
             && runtimeExtensions.has(path.extname(entry.name).toLowerCase())
             && !isThirdPartyBundle(relativePath)
         ) {
@@ -98,7 +98,7 @@ async function auditSymlinks(directory) {
     }
 }
 
-const existingDirectories = new Set((await readdir(path.join(upgradeRoot, 'tools'), { withFileTypes: true })).filter(entry => entry.isDirectory()).map(entry => entry.name));
+const existingDirectories = new Set((await readdir(upgradeRoot, { withFileTypes: true })).filter(entry => entry.isDirectory() && entry.name !== 'infra').map(entry => entry.name));
 validateDirectoryCoverage(catalog, existingDirectories);
 for (const directory of appDirectories) {
     const metadata = await lstat(path.join(upgradeRoot, directory));

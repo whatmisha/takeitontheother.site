@@ -1,5 +1,5 @@
 import { ListenerScope } from '../core/ListenerScope.js';
-import { FileIntakeController } from '../framework/FrameworkAdapter.js';
+import { FileIntakeController } from '../framework/FrameworkAdapter.js?layout=root-infra-1';
 
 const VISIBILITY_CONTROLS = [
     ['showColumns', 'showColumns', 'toggle columns'],

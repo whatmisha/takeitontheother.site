@@ -12,10 +12,10 @@ const hash = text => createHash('sha256').update(text).digest('hex');
 const font = '-apple-system, Inter, "Segoe UI", Roboto, sans-serif';
 const namespaces = { randomLinesSettings: 'upgrade:random-lines:settings:v1', controlsCollapsed: 'upgrade:calendar-randomizer:controls-collapsed:v1' };
 const vendors = {
-    'https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js': '../../framework/vendor/p5/1.4.0/lib/p5.js',
-    'https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js': '../../framework/vendor/p5/1.7.0/lib/p5.min.js',
-    'https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js': '../../framework/vendor/p5/1.9.0/lib/p5.min.js',
-    'https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/addons/p5.sound.min.js': '../../framework/vendor/p5/1.9.0/lib/addons/p5.sound.min.js'
+    'https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js': '../infra/framework/vendor/p5/1.4.0/lib/p5.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js': '../infra/framework/vendor/p5/1.7.0/lib/p5.min.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js': '../infra/framework/vendor/p5/1.9.0/lib/p5.min.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/addons/p5.sound.min.js': '../infra/framework/vendor/p5/1.9.0/lib/addons/p5.sound.min.js'
 };
 const style = css => css.replace(/@font-face\s*\{[^}]*\}\s*/g, '').replace(/font-family\s*:[^;}]+/g, `font-family: ${font}`).replace(/font-weight\s*:\s*(?:[1-9]00|bold|normal|bolder)\b/g, match => `font-weight: ${/(?:400|normal)\b/.test(match) ? 400 : 500}`);
 const controls = html => [...html.matchAll(/<(?:input|button|select|textarea|option)\b[^>]*>/gi)].map(match => match[0]);
@@ -57,8 +57,8 @@ for (const id of ids) {
             }
             contents = contents.replace(/\s*<link\b[^>]*href=["']https:\/\/fonts\.(?:googleapis|gstatic)\.com[^>]*>/g, '');
             contents = contents.replace(/<style\b([^>]*)>([\s\S]*?)<\/style>/gi, (_, attrs, css) => `<style${attrs}>${style(css)}</style>`);
-            contents = contents.replace('</head>', '    <link rel="icon" href="data:,">\n    <link rel="stylesheet" href="../../framework/styles/migration-preview.css">\n</head>');
-            contents = contents.replace(/<body([^>]*)>/, '<body$1>\n    <a class="upgrade-migration-preview" href="../../" aria-label="Upgrade Tools — return to main page">← Upgrade Tools <span>Migration preview</span></a>');
+            contents = contents.replace('</head>', '    <link rel="icon" href="data:,">\n    <link rel="stylesheet" href="../infra/framework/styles/migration-preview.css">\n</head>');
+            contents = contents.replace(/<body([^>]*)>/, '<body$1>\n    <a class="upgrade-migration-preview" href="../" aria-label="Upgrade Tools — return to main page">← Upgrade Tools <span>Migration preview</span></a>');
             record.htmlControls = controls(original);
             record.inlineScriptHashes = inlineScripts(original);
         }
@@ -70,7 +70,7 @@ for (const id of ids) {
     manifest.tools.push(record);
 }
 if (!process.argv.includes('--apply')) {
-    console.log(`Verified ${ids.length} tools / ${pending.length} files; use --apply to copy into upgrade/tools/.`);
+    console.log(`Verified ${ids.length} tools / ${pending.length} files; use --apply to copy into upgrade/.`);
 } else {
     for (const { target, contents } of pending) {
         const url = new URL(target, root);

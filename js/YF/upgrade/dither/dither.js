@@ -2189,7 +2189,7 @@ class DitheringTool {
 // Initialize the tool when the page loads
 document.addEventListener('DOMContentLoaded', async () => {
     ({ ColorUtils, ExportFeedbackController, FileIntakeController, PanelManager } = await import(
-        './js/framework/FrameworkAdapter.js?v=uiq-2'
+        './js/framework/FrameworkAdapter.js?v=uiq-2&layout=root-infra-1'
     ));
     new DitheringTool();
 });

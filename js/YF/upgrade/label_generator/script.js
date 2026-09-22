@@ -6,10 +6,10 @@ import {
     ColorUtils,
     DialogHost,
     FileIntakeController
-} from './src/framework/FrameworkAdapter.js?v=g6-file-intake-1';
+} from './src/framework/FrameworkAdapter.js?v=g6-file-intake-1&layout=root-infra-1';
 import { MathUtils } from './src/utils/MathUtils.js';
 import { DOMUtils } from './src/utils/DOMUtils.js';
-import { TextToPath } from './src/utils/TextToPath.js?v=g3-sticky-1';
+import { TextToPath } from './src/utils/TextToPath.js?v=g3-sticky-1&layout=root-infra-1';
 import { BarcodeGenerator } from './src/utils/BarcodeGenerator.js';
 import { ICONS, createSVGIcon } from './src/core/Constants.js';
 
@@ -22,7 +22,7 @@ import { GridRenderer } from './src/grid/GridRenderer.js';
 
 // Итерация 5: UI Controllers
 import { NumberInputController } from './src/ui/NumberInputController.js';
-import { ColorPicker } from './src/ui/ColorPicker.js';
+import { ColorPicker } from './src/ui/ColorPicker.js?layout=root-infra-1';
 import { PanelManager } from './src/ui/PanelManager.js';
 
 // Итерация 6: Elements
@@ -31,7 +31,7 @@ import { PanelManager } from './src/ui/PanelManager.js';
 // import { TextRenderer } from './src/elements/TextRenderer.js';
 // import { GraphicsManager } from './src/elements/GraphicsManager.js';
 // import { GraphicsRenderer } from './src/elements/GraphicsRenderer.js';
-// import { ElementsNavigator } from './src/elements/ElementsNavigator.js';
+// import { ElementsNavigator } from './src/elements/ElementsNavigator.js?layout=root-infra-1';
 
 // Итерация 7: SVG Export
 import { SVGExporter } from './src/svg/SVGExporter.js';
