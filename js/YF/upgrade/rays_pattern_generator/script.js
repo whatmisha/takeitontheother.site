@@ -518,7 +518,7 @@ document.addEventListener('DOMContentLoaded', function() {
         params.imageData = null;
         
         // Сбрасываем предпросмотр изображения
-        imagePreview.src = '#';
+        imagePreview.removeAttribute('src');
         imagePreview.style.display = 'none';
         
         // Обновляем отображаемые значения
