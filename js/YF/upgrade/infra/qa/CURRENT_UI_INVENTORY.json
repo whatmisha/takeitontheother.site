@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "note": "Current inventory, separate from immutable G7 browser acceptance. Pulsar v2 has no separate preamble panel.",
+  "overrides": {
+    "pulsar_coder": {
+      "panelIds": ["mainPanel", "encodingPanel"],
+      "collapseControls": 2
+    }
+  }
+}

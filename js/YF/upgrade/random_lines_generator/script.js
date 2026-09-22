@@ -61,13 +61,6 @@ document.addEventListener('DOMContentLoaded', function() {
     exportSvgBtn.textContent = `Export SVG (${hotkeySymbol})`;
     
     // Добавляем обработчик клавиатурных сокращений
-    document.addEventListener('keydown', function(event) {
-        // Cmd+E (Mac) или Ctrl+E (Windows/Linux)
-        if ((event.metaKey || event.ctrlKey) && event.key === 'e') {
-            event.preventDefault(); // Предотвращаем стандартное действие браузера
-            exportToSvg();
-        }
-    });
     
     // Массив для хранения сгенерированных линий
     let lines = [];
@@ -494,6 +487,15 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Сохраняем настройки
         saveSettingsToLocalStorage();
+        refreshGenerationStatus();
+    }
+
+    function refreshGenerationStatus() {
+        const ready = params.patternGenerated && lines.length > 0;
+        exportSvgBtn.disabled = !ready;
+        document.getElementById('generationStatus').textContent = ready
+            ? `${lines.length} / ${params.lineCount} lines${lines.length < params.lineCount ? ' — placement limit reached; reduce safe field or count.' : ''}`
+            : lines.length ? 'Settings changed. Press Generate to update.' : 'Press Generate to create a pattern.';
     }
     
     // Функция для сброса настроек
@@ -562,23 +564,30 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Обработчик для загрузки изображения
     if (imageUpload) {
-        imageUpload.addEventListener('change', function(event) {
-            if (event.target.files && event.target.files[0]) {
-                const file = event.target.files[0];
+        import('../infra/framework/src/ui/GeneratorHost.js?v=3').then(({ connectFileInput }) => connectFileInput({
+            input: imageUpload,
+            onSelect: (file, { controller }) => new Promise((resolve, reject) => {
+            const operationId = controller.operationId;
+            if (file) {
                 const reader = new FileReader();
+                reader.onerror = () => reject(new Error('Could not read the image.'));
                 
                 reader.onload = function(e) {
                     // Создаем новое изображение
                     const img = new Image();
+                    img.onerror = () => reject(new Error('Could not decode the image.'));
                     
                     // Когда изображение загружено, сохраняем его и обновляем канвас
                     img.onload = function() {
+                        try {
+                        if (!controller.bound || controller.operationId !== operationId) { reject(new Error('Cancelled')); return; }
+                        const previousSource = params.sourceImage;
+                        const previousData = params.imageData;
                         params.sourceImage = img;
+                        try { processUploadedImage(); }
+                        catch (error) { params.sourceImage = previousSource; params.imageData = previousData; throw error; }
                         imagePreview.src = e.target.result;
                         imagePreview.style.display = 'block';
-                        
-                        // Обрабатываем изображение
-                        processUploadedImage();
                         
                         // Только если паттерн уже сгенерирован, применяем к нему растр
                         if (params.patternGenerated && lines.length > 0) {
@@ -588,18 +597,25 @@ document.addEventListener('DOMContentLoaded', function() {
                             // Просто обновляем канвас с сообщением
                             drawPattern();
                         }
+                        resolve();
+                        } catch (error) { reject(error); }
                     };
                     
                     img.src = e.target.result;
                 };
                 
                 reader.readAsDataURL(file);
-            }
-        });
+            } else reject(new Error('Choose an image.'));
+        }), onRemove: () => {
+            params.sourceImage = null; params.imageData = null;
+            imagePreview.removeAttribute('src'); imagePreview.style.display = 'none';
+            updateAndSave();
+        } })).catch(console.error);
     }
     
     // Функция экспорта в SVG
     function exportToSvg() {
+        if (!params.patternGenerated || lines.length === 0) throw new Error('Press Generate before exporting.');
         // Создаем SVG документ
         const svgNS = "http://www.w3.org/2000/svg";
         const svg = document.createElementNS(svgNS, "svg");
@@ -713,10 +729,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     settings.lineLength = parseInt(part.substring(1));
                 } else if (part.startsWith("c")) {
                     settings.lineCount = parseInt(part.substring(1));
-                } else if (part.startsWith("s")) {
-                    settings.scale = parseFloat(part.substring(1));
                 } else if (part.startsWith("sf")) {
                     settings.safeField = parseInt(part.substring(2));
+                } else if (/^s[\d.]+$/.test(part)) {
+                    settings.scale = parseFloat(part.substring(1));
                 } else if (part === "round") {
                     settings.roundCap = true;
                 } else if (part === "raster") {
@@ -736,6 +752,7 @@ document.addEventListener('DOMContentLoaded', function() {
             generateLines();
             applyRasterMode();
             drawPattern();
+            refreshGenerationStatus();
             
             console.log("Settings restored successfully:", settings);
         } catch (error) {
@@ -797,7 +814,15 @@ document.addEventListener('DOMContentLoaded', function() {
     imageInvertCheckbox.addEventListener('change', updateAndSave);
     
     // Обработчики для кнопок
-    exportSvgBtn.addEventListener('click', exportToSvg);
+    import('../infra/framework/src/ui/GeneratorHost.js?v=3').then(({ mountGenerator }) => mountGenerator({
+        id: 'random_lines_generator', title: 'Random Lines',
+        panels: [
+            { title: 'Pattern', selectors: ['.pattern-sliders', '.checkboxes-section', '#generateBtn', '#generationStatus', '#resetBtn'], summary: () => `${params.lineCount} · ${params.lineLength}×${params.lineWidth}` },
+            { title: 'Tone', selectors: ['.raster-controls-row', '#imageRasterControls'] },
+            { title: 'Settings', selectors: ['.settings-recovery-section'] }
+        ],
+        actions: [{ id: 'svg', button: 'exportSvgBtn', label: 'SVG', kind: 'export', group: 'primary', shortcut: 'mod+e', run: exportToSvg }]
+    })).catch(console.error);
     resetBtn.addEventListener('click', resetSettings);
     
     // Обработчик для кнопки Generate/Regenerate
@@ -828,6 +853,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (generateBtn.textContent === 'Generate') {
             generateBtn.textContent = 'Regenerate';
         }
+        refreshGenerationStatus();
     });
     
     // Функция для проверки всех инпутов
@@ -879,6 +905,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Отображаем canvas с сообщением
     drawPattern();
+    refreshGenerationStatus();
 
     // Функция для проверки, находится ли точка внутри охранного поля линии
     function isPointInSafeField(x, y, line, safeFieldRadius) {
@@ -983,4 +1010,4 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
-}); 
+});

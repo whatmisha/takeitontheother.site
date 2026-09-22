@@ -101,7 +101,12 @@ function init() {
         drawPattern();
     });
 
-    exportSVGButton.addEventListener('click', exportToSVG);
+    import('../infra/framework/src/ui/GeneratorHost.js?v=3').then(({ mountGenerator }) => mountGenerator({
+        id: 'asterisk_pattern_generator', title: 'Asterisk Pattern',
+        panels: [{ title: 'Pattern', selectors: ['.sliders-row', '.checkboxes-row'], summary: () => `${params.duplicateLayers} layers · 1:${getScaleFactor()}` }],
+        actions: [{ id: 'svg', button: 'exportSVG', label: 'SVG', kind: 'export', group: 'primary', shortcut: 'mod+e', run: exportToSVG }],
+        afterMount: resize
+    })).catch(console.error);
 
     // Слушатель события изменения размера окна
     window.addEventListener('resize', function() {
@@ -110,13 +115,6 @@ function init() {
     });
 
     // Добавляем обработчик клавиш для экспорта по Cmd+E
-    document.addEventListener('keydown', function(event) {
-        // Проверяем, что нажата Cmd (metaKey) + E (keyCode 69 или key 'e')
-        if ((event.metaKey || event.ctrlKey) && (event.keyCode === 69 || event.key === 'e')) {
-            event.preventDefault(); // Предотвращаем стандартное действие браузера
-            exportToSVG();
-        }
-    });
 }
 
 // Обновление отображения значения толщины
@@ -1307,7 +1305,7 @@ function exportToSVG() {
                 exportTessellationLayer(svgElement, mainGroup, i);
             }
         } else {
-            for (let i = 0; i <= params.duplicateLayers; i++) {
+            for (let i = 1; i <= params.duplicateLayers; i++) {
                 exportDuplicateLayer(svgElement, mainGroup, i);
             }
         }
@@ -1697,4 +1695,4 @@ function exportTessellationLayer(svgElement, mainGroup, layerIndex) {
 }
 
 // Инициализация при загрузке страницы
-window.addEventListener('load', init); 
+window.addEventListener('load', init);

@@ -20,6 +20,7 @@ test('mobile showcase prevents text selection and SVG dragging', async () => {
     assert.match(toolSource, /mobileShowcaseFocus \|\| centeredFocus\(settings\)/);
     assert.match(toolSource, /resetMobileFocusMotion\(centeredFocus\(settings\)\)/);
     assert.match(styles, /\.sparky-initializing #mainSvg\s*\{[^}]*visibility:\s*hidden/);
+    assert.match(mobileStyles, /\.mobile-desktop-hint\s*\{[\s\S]*?bottom:\s*calc\(84px \+ env\(safe-area-inset-bottom, 0px\)\)/);
     assert.match(toolSource, /syncMode\(\{ fitImmediately: true \}\)/);
     assert.match(toolSource, /classList\.remove\('sparky-initializing'\)/);
 });

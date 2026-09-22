@@ -75,7 +75,7 @@ test('framework source graph stays local and application-agnostic', async () => 
             assert.ok(resolved.startsWith(`${frameworkRoot}${path.sep}`));
         }
     }
-    assert.equal(files.length, 50); // Includes CommandPolicy and opt-in ToolUiController.
+    assert.equal(files.length, 51); // Includes the opt-in GeneratorHost; all imports remain local.
 });
 
 test('working CSS and exporters use checked-in same-origin assets', async () => {

@@ -5,9 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hyperspace Jump Generator</title>
     <script src="../infra/framework/vendor/p5/1.4.0/lib/p5.js"></script>
-    <link rel="stylesheet" href="styles.css">
     <link rel="icon" href="data:,">
-    <link rel="stylesheet" href="../infra/framework/styles/migration-preview.css">
+    <link rel="stylesheet" href="../infra/framework/css/othersite-styles.css">
+    <link rel="stylesheet" href="../infra/framework/css/generator-host.css?v=3">
+    <link rel="stylesheet" href="../infra/framework/css/ui-contract.css">
 </head>
 <body>
     <a class="upgrade-migration-preview" href="../" aria-label="Upgrade Tools — return to main page">← Upgrade Tools <span>Migration preview</span></a>
@@ -72,14 +73,11 @@
         
         <div class="button-container">
             <button id="centerButton" class="control-button">В центр</button>
+            <button id="pauseButton" type="button">Pause / resume</button>
             <button id="exportButton" class="control-button">Экспорт PNG</button>
         </div>
         
-        <p>Зажмите и перетаскивайте мышь для рисования с инерцией</p>
-        <p>Кликните мышью, чтобы изменить точку схода</p>
-        <p>Пробел: пауза/продолжить</p>
-        <p style="margin-bottom: 0;">Cmd+E / Ctrl+E: экспорт PNG</p>
     </div>
-    <script src="sketch.js"></script>
+    <script src="sketch.js?v=integration-3&layout=root-infra-1"></script>
 </body>
 </html>

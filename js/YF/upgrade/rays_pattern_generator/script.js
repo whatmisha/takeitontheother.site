@@ -1,3 +1,7 @@
+import { buildRaysScene } from './engine/scene.js?layout=root-infra-1';
+import { paintRaysScene, raysSvgElement } from './engine/renderers.js';
+import { mountGenerator, connectFileInput } from '../infra/framework/src/ui/GeneratorHost.js?v=3';
+
 document.addEventListener('DOMContentLoaded', function() {
     const canvas = document.getElementById('patternCanvas');
     const ctx = canvas.getContext('2d');
@@ -81,13 +85,6 @@ document.addEventListener('DOMContentLoaded', function() {
     exportSvgBtn.textContent = `Export SVG (${hotkeySymbol})`;
     
     // Добавляем обработчик клавиатурных сокращений
-    document.addEventListener('keydown', function(event) {
-        // Cmd+E (Mac) или Ctrl+E (Windows/Linux)
-        if ((event.metaKey || event.ctrlKey) && event.key === 'e') {
-            event.preventDefault(); // Предотвращаем стандартное действие браузера
-            exportToSvg();
-        }
-    });
     
     // Разрешенные значения для количества лучей
     const allowedRayCounts = [3, 4, 5, 6, 8, 10, 12, 14, 16, 18, 20, 24];
@@ -241,7 +238,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Обработчик для кнопки экспорта в SVG
-    exportSvgBtn.addEventListener('click', exportToSvg);
     
     // Функции для работы с localStorage
     function saveSettingsToLocalStorage() {
@@ -382,6 +378,11 @@ document.addEventListener('DOMContentLoaded', function() {
     
     rasterModeCheckbox.addEventListener('change', function() {
         params.rasterMode = this.checked;
+        if (params.rasterMode) {
+            params.imageRasterMode = false;
+            imageRasterModeCheckbox.checked = false;
+            toggleImageRasterControls();
+        }
         toggleRasterControls();
         
         // Отключаем/включаем слайдер Line Length при включении/выключении режима растра
@@ -570,295 +571,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // Обработчик для кнопки сброса настроек
     resetBtn.addEventListener('click', resetSettings);
     
-    // Функция отрисовки паттерна
+    function scene() {
+        return buildRaysScene(params, { width: canvas.width, height: canvas.height, imageData: params.imageData });
+    }
+
     function drawPattern() {
-        // Очистка канваса
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
-        // Заполняем канвас модулями паттерна
-        fillCanvasWithPattern();
+        paintRaysScene(ctx, scene(), params.strokeColor);
     }
-    
-    // Функция заполнения канваса паттерном
-    function fillCanvasWithPattern() {
-        // Вычисляем реальные размеры модуля с учетом масштаба
-        const moduleWidth = baseModuleWidth * params.scale;
-        const moduleHeight = baseModuleHeight * params.scale;
-        const horizontalGap = params.horizontalGap * params.scale;
-        
-        // Вертикальный отступ применяется только в режиме смещения нечетных строк
-        const verticalGap = !params.offsetRows ? params.verticalGap * params.scale : params.verticalGap * params.scale;
-        
-        // Вычисляем количество модулей, которые поместятся на канвасе
-        const modulesInRow = Math.ceil(canvas.width / (moduleWidth + horizontalGap));
-        const modulesInColumn = Math.ceil(canvas.height / (moduleHeight + verticalGap));
-        
-        // Вычисляем смещение для нечетных строк
-        const rowOffset = !params.offsetRows ? (moduleWidth + horizontalGap) / 2 : 0;
-        
-        // Вычисляем общую ширину паттерна с учетом смещения
-        // Если используется смещение строк, добавляем половину модуля для последней нечетной строки
-        const extraWidth = !params.offsetRows && (modulesInColumn % 2 === 0) ? rowOffset : 0;
-        const totalPatternWidth = modulesInRow * moduleWidth + (modulesInRow - 1) * horizontalGap + extraWidth;
-        const totalPatternHeight = modulesInColumn * moduleHeight + (modulesInColumn - 1) * verticalGap;
-        
-        const offsetX = (canvas.width - totalPatternWidth) / 2;
-        const offsetY = (canvas.height - totalPatternHeight) / 2;
-        
-        // Отрисовываем модули паттерна
-        for (let row = 0; row < modulesInColumn; row++) {
-            // Вычисляем смещение для текущей строки (нечетные строки смещаются)
-            const currentRowOffset = (row % 2 === 1 && !params.offsetRows) ? rowOffset : 0;
-            
-            // Определяем, нужно ли добавить дополнительный модуль в нечетных строках
-            const additionalModule = (row % 2 === 1 && !params.offsetRows) ? 1 : 0;
-            const actualModulesInRow = modulesInRow + additionalModule;
-            
-            for (let col = 0; col < actualModulesInRow; col++) {
-                // Вычисляем позицию модуля с учетом смещения строки
-                const x = offsetX + currentRowOffset + col * (moduleWidth + horizontalGap);
-                const y = offsetY + row * (moduleHeight + verticalGap);
-                
-                // Отрисовываем модуль только если он видим на холсте
-                if (x < canvas.width && y < canvas.height && x + moduleWidth > 0 && y + moduleHeight > 0) {
-                    // Относительная позиция для растрового режима
-                    let relativeX = null;
-                    if (params.rasterMode || params.imageRasterMode) {
-                        // Вычисляем относительную позицию по X для всей ширины холста (от 0 до 1)
-                        relativeX = Math.min(1, Math.max(0, x / canvas.width));
-                    }
-                    
-                    // Отрисовываем модуль на этой позиции
-                    drawModuleAt(x, y, relativeX, y);
-                    
-                    // Отрисовываем вертикальную линию между модулями,
-                    // но только если это не последний модуль в ряду и не включен режим скрытия разделителей
-                    if (col < actualModulesInRow - 1 && !params.hideConnectingLines) {
-                        drawConnectingLine(x + moduleWidth, y);
-                    }
-                }
-            }
-        }
-    }
-    
-    // Создаем функцию для расчета длины луча и толщины линии
-    function calculateRayLengthAndLineWidth(params, relativeX, moduleY) {
-        // Значения по умолчанию
-        let rayLength = params.rayLength;
-        let lineWidth = params.lineWidth;
-        
-        // Если включен режим растра и передана позиция, интерполируем длину и толщину
-        if (params.rasterMode && relativeX !== undefined) {
-            // Используем параметр rayLength как коэффициент масштабирования для значений zeroRayLength и hundredRayLength
-            const baseRayLength = params.rayLength;
-            const scaleFactor = baseRayLength / 56; // 56 - значение rayLength по умолчанию
-            const zeroRayScaled = params.zeroRayLength * scaleFactor;
-            const hundredRayScaled = params.hundredRayLength * scaleFactor;
-            
-            // Линейно интерполируем длину между масштабированными значениями
-            rayLength = zeroRayScaled + relativeX * (hundredRayScaled - zeroRayScaled);
-            
-            // Линейно интерполируем толщину между значениями zeroLineWidth и hundredLineWidth
-            lineWidth = params.zeroLineWidth + relativeX * (params.hundredLineWidth - params.zeroLineWidth);
-        }
-        // Если включен режим изображения и есть данные изображения
-        else if (params.imageRasterMode && params.imageData && relativeX !== undefined) {
-            // Получаем яркость пикселя в зависимости от относительной позиции
-            const brightness = getPixelBrightness(params, relativeX, moduleY);
-            
-            // Используем параметр rayLength как коэффициент масштабирования для значений zeroRayLength и hundredRayLength
-            const baseRayLength = params.rayLength;
-            const scaleFactor = baseRayLength / 56; // 56 - значение rayLength по умолчанию
-            const zeroRayScaled = params.zeroRayLength * scaleFactor;
-            const hundredRayScaled = params.hundredRayLength * scaleFactor;
-            
-            // Инвертируем яркость, если изображение НЕ инвертировано (чтобы темные области соответствовали zeroRay)
-            // Если изображение инвертировано - оставляем как есть, так как логика уже будет перевернута
-            const adjustedBrightness = params.invertImage ? brightness : 1 - brightness;
-            
-            // Линейно интерполируем длину между масштабированными значениями в зависимости от яркости
-            // 1 - adjustedBrightness инвертирует логику: теперь 0% соответствует темным областям, 100% - светлым
-            rayLength = zeroRayScaled + adjustedBrightness * (hundredRayScaled - zeroRayScaled);
-            
-            // Линейно интерполируем толщину между значениями zeroLineWidth и hundredLineWidth
-            lineWidth = params.zeroLineWidth + adjustedBrightness * (params.hundredLineWidth - params.zeroLineWidth);
-        }
-        
-        return { rayLength, lineWidth };
-    }
-    
-    // Функция для получения яркости пикселя из изображения
-    function getPixelBrightness(params, relativeX, moduleY) {
-        // Если нет изображения, возвращаем 0.5 (средняя яркость)
-        if (!params.imageData) return 0.5;
-        
-        const { width, height, data } = params.imageData;
-        
-        // Определяем координаты пикселя в изображении
-        const x = Math.floor(relativeX * (width - 1));
-        const y = Math.floor((moduleY / canvas.height) * (height - 1));
-        
-        // Убедимся, что координаты в пределах изображения
-        const safeX = Math.max(0, Math.min(width - 1, x));
-        const safeY = Math.max(0, Math.min(height - 1, y));
-        
-        // Вычисляем индекс пикселя в массиве данных (каждый пиксель представлен 4 байтами: R, G, B, A)
-        const pixelIndex = (safeY * width + safeX) * 4;
-        
-        // Получаем компоненты RGB
-        const r = data[pixelIndex];
-        const g = data[pixelIndex + 1];
-        const b = data[pixelIndex + 2];
-        
-        // Вычисляем яркость пикселя
-        // Используем средневзвешенное значение RGB компонентов (стандартная формула для яркости)
-        let brightness = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-        
-        // Применяем контраст
-        if (params.brightnessContrast !== 1.0) {
-            // Настраиваем контраст: значения > 1 усиливают контраст, < 1 уменьшают
-            brightness = 0.5 + (brightness - 0.5) * params.brightnessContrast;
-            // Ограничиваем значение в диапазоне [0, 1]
-            brightness = Math.max(0, Math.min(1, brightness));
-        }
-        
-        return brightness;
-    }
-    
-    // Функция отрисовки соединительной линии между модулями
-    function drawConnectingLine(x, y) {
-        // Размеры элементов с учетом масштаба
-        const moduleWidth = baseModuleWidth * params.scale;
-        const moduleHeight = baseModuleHeight * params.scale;
-        const horizontalGap = params.horizontalGap * params.scale;
-        
-        // Вычисляем относительную позицию для определения длины линии
-        const relativeX = (params.rasterMode || params.imageRasterMode) ? x / canvas.width : undefined;
-        
-        // Получаем длину луча и толщину линии
-        const { rayLength, lineWidth } = calculateRayLengthAndLineWidth(params, relativeX, y);
-        
-        // Вычисляем длину линии с учетом масштаба
-        const lineLength = rayLength * params.scale;
-        
-        // Позиция X - по центру отступа
-        const lineX = x + horizontalGap / 2;
-        // Позиция Y - центр модуля по вертикали, с учетом длины линии
-        const lineY = y + moduleHeight / 2 - lineLength / 2;
-        
-        // Сохранение контекста
-        ctx.save();
-        
-        // Установка стилей рисования
-        ctx.strokeStyle = params.strokeColor;
-        ctx.lineWidth = lineWidth * params.scale;
-        ctx.lineCap = params.roundCap ? 'round' : 'butt';
-        
-        // Рисуем вертикальную линию
-        ctx.beginPath();
-        ctx.moveTo(lineX, lineY);
-        ctx.lineTo(lineX, lineY + lineLength);
-        ctx.stroke();
-        
-        // Восстановление контекста
-        ctx.restore();
-    }
-    
-    // Функция отрисовки одного модуля паттерна в указанной позиции
-    function drawModuleAt(x, y, relativeX, moduleY) {
-        // Сохранение контекста
-        ctx.save();
-        
-        // Размеры с учетом масштаба
-        const vanishingPointX = params.vanishingPoint.x * params.scale;
-        const vanishingPointY = params.vanishingPoint.y * params.scale;
-        
-        // Перемещение к позиции модуля
-        ctx.translate(x, y);
-        
-        // Масштабирование контекста рисования для размера модуля
-        ctx.scale(params.scale, params.scale);
-        
-        // Установка стилей рисования
-        ctx.strokeStyle = params.strokeColor;
-        ctx.lineWidth = params.lineWidth;
-        ctx.lineCap = params.roundCap ? 'round' : 'butt';
-        
-        // Отрисовка модуля
-        // В режиме растра передаем позицию для вычисления градиента
-        if (params.rasterMode || params.imageRasterMode) {
-            drawRays(params, relativeX, moduleY);
-        } else {
-            drawRays(params);
-        }
-        
-        // Восстановление контекста
-        ctx.restore();
-    }
-    
-    // Обновляем функцию drawRays для использования общей функции
-    function drawRays(params, relativeX, moduleY) {
-        const { vanishingPoint, gap, rayCount, baseRays } = params;
-        
-        // Определяем длину луча и толщину линии
-        const { rayLength, lineWidth } = calculateRayLengthAndLineWidth(params, relativeX, moduleY);
-        
-        // Устанавливаем текущую толщину линии
-        ctx.lineWidth = lineWidth;
-        
-        // Рисуем горизонтальные лучи (фиксированные)
-        baseRays.horizontal.forEach(angle => {
-            drawRay(angle, rayLength, moduleY);
-        });
-        
-        // Рисуем вертикальный луч (фиксированный)
-        drawRay(baseRays.vertical, rayLength, moduleY);
-        
-        // Определяем количество лучей в верхнем полукруге
-        // Вычитаем 3 базовых луча
-        const upperRaysCount = rayCount - 3;
-        
-        if (upperRaysCount > 0) {
-            // Специальный случай для 5 лучей (2 дополнительных) - диагонали под 45°
-            if (rayCount === 5) {
-                // Диагональ вверх-влево (225°)
-                drawRay(Math.PI * 1.25, rayLength, moduleY);
-                
-                // Диагональ вверх-вправо (315°)
-                drawRay(Math.PI * 1.75, rayLength, moduleY);
-            } else {
-                // Для остальных случаев равномерно распределяем лучи по верхнему полукругу
-                // Верхний полукруг: от 180° до 360° (не включая горизонтальные)
-                
-                // Равномерно распределяем лучи в верхнем полукруге
-                for (let i = 0; i < upperRaysCount; i++) {
-                    // Интерполируем угол от π до 2π (от 180° до 360°)
-                    const angle = Math.PI + (i + 1) * Math.PI / (upperRaysCount + 1);
-                    drawRay(angle, rayLength, moduleY);
-                }
-            }
-        }
-        
-        function drawRay(angle, rayLength, moduleY) {
-            // Длина видимой части луча уже учитывает масштабирование в соответствии с градиентом, если режим активен
-            
-            // Начальная точка луча (с отступом от точки схода)
-            const startX = vanishingPoint.x + Math.cos(angle) * gap;
-            const startY = vanishingPoint.y + Math.sin(angle) * gap;
-            
-            // Вычисляем конечную точку на основе текущего rayLength, а не фиксированного totalLength
-            // Это позволит правильно масштабировать лучи в режиме градиента
-            const endX = vanishingPoint.x + Math.cos(angle) * (gap + rayLength);
-            const endY = vanishingPoint.y + Math.sin(angle) * (gap + rayLength);
-            
-            // Рисуем луч
-            ctx.beginPath();
-            ctx.moveTo(startX, startY);
-            ctx.lineTo(endX, endY);
-            ctx.stroke();
-        }
-    }
-    
+
     // Функция переключения элементов управления растром
     function toggleRasterControls() {
         // Получаем контейнер для слайдеров растра
@@ -986,77 +706,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Функция экспорта в SVG
     function exportToSvg() {
-        // Создаем SVG элемент
-        const svgNS = 'http://www.w3.org/2000/svg';
-        const svg = document.createElementNS(svgNS, 'svg');
-        svg.setAttribute('width', canvas.width);
-        svg.setAttribute('height', canvas.height);
-        svg.setAttribute('xmlns', svgNS);
-        
-        // Вычисляем параметры для отрисовки
-        const moduleWidth = baseModuleWidth * params.scale;
-        const moduleHeight = baseModuleHeight * params.scale;
-        const horizontalGap = params.horizontalGap * params.scale;
-        
-        // Вертикальный отступ применяется только в режиме смещения нечетных строк
-        const verticalGap = !params.offsetRows ? params.verticalGap * params.scale : params.verticalGap * params.scale;
-        
-        // Вычисляем количество модулей
-        const modulesInRow = Math.ceil(canvas.width / (moduleWidth + horizontalGap));
-        const modulesInColumn = Math.ceil(canvas.height / (moduleHeight + verticalGap));
-        
-        // Вычисляем смещение для нечетных строк
-        const rowOffset = !params.offsetRows ? (moduleWidth + horizontalGap) / 2 : 0;
-        
-        // Вычисляем общую ширину паттерна с учетом смещения
-        const extraWidth = !params.offsetRows && (modulesInColumn % 2 === 0) ? rowOffset : 0;
-        const totalPatternWidth = modulesInRow * moduleWidth + (modulesInRow - 1) * horizontalGap + extraWidth;
-        const totalPatternHeight = modulesInColumn * moduleHeight + (modulesInColumn - 1) * verticalGap;
-        
-        const offsetX = (canvas.width - totalPatternWidth) / 2;
-        const offsetY = (canvas.height - totalPatternHeight) / 2;
-        
-        // Отрисовываем модули
-        for (let row = 0; row < modulesInColumn; row++) {
-            // Вычисляем смещение для текущей строки (нечетные строки смещаются)
-            const currentRowOffset = (row % 2 === 1 && !params.offsetRows) ? rowOffset : 0;
-            
-            // Определяем, нужно ли добавить дополнительный модуль в нечетных строках
-            const additionalModule = (row % 2 === 1 && !params.offsetRows) ? 1 : 0;
-            const actualModulesInRow = modulesInRow + additionalModule;
-            
-            for (let col = 0; col < actualModulesInRow; col++) {
-                // Вычисляем позицию модуля с учетом смещения строки
-                const x = offsetX + currentRowOffset + col * (moduleWidth + horizontalGap);
-                const y = offsetY + row * (moduleHeight + verticalGap);
-                
-                // Отрисовываем модуль только если он видим
-                if (x < canvas.width && y < canvas.height && x + moduleWidth > 0 && y + moduleHeight > 0) {
-                    // Создаем группу для модуля
-                    const moduleGroup = document.createElementNS(svgNS, 'g');
-                    moduleGroup.setAttribute('transform', `translate(${x}, ${y})`);
-                    
-                    // Добавляем лучи к группе модуля
-                    // В режиме растра передаем позицию для вычисления градиента
-                    if (params.rasterMode || params.imageRasterMode) {
-                        // Вычисляем относительную позицию по X для всей ширины холста (от 0 до 1)
-                        const relativeX = Math.min(1, Math.max(0, x / canvas.width));
-                        addRaysToSvg(moduleGroup, params, relativeX, y);
-                    } else {
-                        addRaysToSvg(moduleGroup, params);
-                    }
-                    
-                    // Добавляем группу к SVG
-                    svg.appendChild(moduleGroup);
-                    
-                    // Отрисовываем вертикальную линию между модулями
-                    if (col < actualModulesInRow - 1 && !params.hideConnectingLines) {
-                        addConnectingLineToSvg(svg, x + moduleWidth, y, horizontalGap, moduleHeight);
-                    }
-                }
-            }
-        }
-        
+        const svg = raysSvgElement(scene(), document);
+
         // Преобразуем SVG в строку
         const svgData = new XMLSerializer().serializeToString(svg);
         
@@ -1075,6 +726,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(link.href), 1000);
     }
     
     // Функция для генерации имени файла с параметрами
@@ -1099,8 +751,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (params.hideConnectingLines) fileName += '_hd1';  // Hide Dividers
         
         // Добавляем параметры растра, если режим растра активен
-        if (params.rasterMode) {
-            fileName += '_rm1';                           // Raster Mode
+        if (params.rasterMode || params.imageRasterMode) {
+            if (params.rasterMode) fileName += '_rm1';     // Raster Mode
             fileName += `_hl${params.zeroRayLength}`;     // Highlights Length
             fileName += `_hw${params.zeroLineWidth.toFixed(1)}`; // Highlights Width
             fileName += `_sl${params.hundredRayLength}`;  // Shadows Length
@@ -1120,110 +772,6 @@ document.addEventListener('DOMContentLoaded', function() {
         return fileName;
     }
     
-    // Обновляем функцию addRaysToSvg для использования общей функции
-    function addRaysToSvg(parentNode, params, relativeX, moduleY) {
-        const svgNS = 'http://www.w3.org/2000/svg';
-        const { vanishingPoint, gap, rayCount, baseRays, scale, roundCap } = params;
-        
-        // Вычисляем относительную позицию по горизонтали (0-1), если она указана
-        const effectiveRelativeX = relativeX !== undefined ? relativeX : undefined;
-        
-        // Определяем длину луча и толщину линии
-        const { rayLength, lineWidth } = calculateRayLengthAndLineWidth(params, effectiveRelativeX, moduleY);
-        
-        // Рисуем горизонтальные лучи (фиксированные)
-        baseRays.horizontal.forEach(angle => {
-            addRayToSvg(angle, rayLength);
-        });
-        
-        // Рисуем вертикальный луч (фиксированный)
-        addRayToSvg(baseRays.vertical, rayLength);
-        
-        // Определяем количество лучей в верхнем полукруге
-        const upperRaysCount = rayCount - 3;
-        
-        if (upperRaysCount > 0) {
-            // Специальный случай для 5 лучей (2 дополнительных) - диагонали под 45°
-            if (rayCount === 5) {
-                // Диагональ вверх-влево (225°)
-                addRayToSvg(Math.PI * 1.25, rayLength);
-                
-                // Диагональ вверх-вправо (315°)
-                addRayToSvg(Math.PI * 1.75, rayLength);
-            } else {
-                // Равномерно распределяем лучи в верхнем полукруге
-                for (let i = 0; i < upperRaysCount; i++) {
-                    // Интерполируем угол от π до 2π (от 180° до 360°)
-                    const angle = Math.PI + (i + 1) * Math.PI / (upperRaysCount + 1);
-                    addRayToSvg(angle, rayLength);
-                }
-            }
-        }
-        
-        function addRayToSvg(angle, rayLength) {
-            // Длина видимой части луча уже учитывает масштабирование в соответствии с градиентом, если режим активен
-            
-            // Начальная точка луча (с отступом от точки схода)
-            const startX = vanishingPoint.x * scale + Math.cos(angle) * gap * scale;
-            const startY = vanishingPoint.y * scale + Math.sin(angle) * gap * scale;
-            
-            // Вычисляем конечную точку на основе текущего rayLength, а не фиксированного totalLength
-            // Это позволит правильно масштабировать лучи в режиме градиента
-            const endX = vanishingPoint.x * scale + Math.cos(angle) * (gap + rayLength) * scale;
-            const endY = vanishingPoint.y * scale + Math.sin(angle) * (gap + rayLength) * scale;
-            
-            // Создаем линию
-            const line = document.createElementNS(svgNS, 'line');
-            line.setAttribute('x1', startX);
-            line.setAttribute('y1', startY);
-            line.setAttribute('x2', endX);
-            line.setAttribute('y2', endY);
-            line.setAttribute('stroke', '#000000'); // Черный цвет для SVG
-            line.setAttribute('stroke-width', lineWidth * scale);
-            if (roundCap) {
-                line.setAttribute('stroke-linecap', 'round');
-            }
-            
-            // Добавляем линию к родительскому элементу
-            parentNode.appendChild(line);
-        }
-    }
-    
-    // Обновляем функцию addConnectingLineToSvg для использования общей функции
-    function addConnectingLineToSvg(parentNode, x, y, horizontalGap, moduleHeight) {
-        const svgNS = 'http://www.w3.org/2000/svg';
-        
-        // Вычисляем относительную позицию
-        const relativeX = (params.rasterMode || params.imageRasterMode) ? x / canvas.width : undefined;
-        
-        // Получаем длину луча и толщину линии
-        const { rayLength, lineWidth } = calculateRayLengthAndLineWidth(params, relativeX, y);
-        
-        // Вычисляем длину линии
-        const lineLength = rayLength * params.scale;
-        
-        // Позиция X - после модуля, по центру отступа
-        const lineX = x + horizontalGap / 2;
-        // Позиция Y - центр модуля по вертикали, с учетом длины линии
-        const lineY = y + moduleHeight / 2 - lineLength / 2;
-        
-        // Создаем линию
-        const line = document.createElementNS(svgNS, 'line');
-        line.setAttribute('x1', lineX);
-        line.setAttribute('y1', lineY);
-        line.setAttribute('x2', lineX);
-        line.setAttribute('y2', lineY + lineLength);
-        line.setAttribute('stroke', '#000000'); // Черный цвет для SVG
-        line.setAttribute('stroke-width', lineWidth * params.scale);
-        if (params.roundCap) {
-            line.setAttribute('stroke-linecap', 'round');
-        }
-        
-        // Добавляем линию к родительскому элементу
-        parentNode.appendChild(line);
-    }
-    
-    // Функция для восстановления настроек из имени файла
     function restoreSettingsFromFileName(fileName) {
         // Удаляем расширение файла, если оно есть
         fileName = fileName.replace(/\.svg$/i, '');
@@ -1261,7 +809,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Парсим параметры растра
         restoredSettings.rasterMode = fileName.includes('_rm1');
         
-        if (restoredSettings.rasterMode) {
+        if (restoredSettings.rasterMode || fileName.includes('_im1')) {
             const highlightsLengthMatch = fileName.match(/_hl(\d+)/);
             if (highlightsLengthMatch) restoredSettings.zeroRayLength = parseInt(highlightsLengthMatch[1]);
             
@@ -1348,25 +896,25 @@ document.addEventListener('DOMContentLoaded', function() {
         params.rasterMode = settings.rasterMode;
         rasterModeCheckbox.checked = settings.rasterMode;
         
-        if (settings.rasterMode && settings.zeroRayLength !== undefined) {
+        if ((settings.rasterMode || settings.imageRasterMode) && settings.zeroRayLength !== undefined) {
             params.zeroRayLength = settings.zeroRayLength;
             zeroRayLengthSlider.value = settings.zeroRayLength;
             zeroRayLengthValueDisplay.textContent = settings.zeroRayLength;
         }
         
-        if (settings.rasterMode && settings.zeroLineWidth !== undefined) {
+        if ((settings.rasterMode || settings.imageRasterMode) && settings.zeroLineWidth !== undefined) {
             params.zeroLineWidth = settings.zeroLineWidth;
             zeroLineWidthSlider.value = settings.zeroLineWidth;
             zeroLineWidthValueDisplay.textContent = settings.zeroLineWidth.toFixed(1);
         }
         
-        if (settings.rasterMode && settings.hundredRayLength !== undefined) {
+        if ((settings.rasterMode || settings.imageRasterMode) && settings.hundredRayLength !== undefined) {
             params.hundredRayLength = settings.hundredRayLength;
             hundredRayLengthSlider.value = settings.hundredRayLength;
             hundredRayLengthValueDisplay.textContent = settings.hundredRayLength;
         }
         
-        if (settings.rasterMode && settings.hundredLineWidth !== undefined) {
+        if ((settings.rasterMode || settings.imageRasterMode) && settings.hundredLineWidth !== undefined) {
             params.hundredLineWidth = settings.hundredLineWidth;
             hundredLineWidthSlider.value = settings.hundredLineWidth;
             hundredLineWidthValueDisplay.textContent = settings.hundredLineWidth.toFixed(1);
@@ -1387,6 +935,7 @@ document.addEventListener('DOMContentLoaded', function() {
             imageInvertCheckbox.checked = settings.invertImage;
         }
         
+        params.totalLength = params.gap + params.rayLength;
         // Обновляем отображение элементов управления
         toggleRasterControls();
         toggleImageRasterControls();
@@ -1418,19 +967,21 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Обработчик для загрузки изображения
-    imageUpload.addEventListener('change', function(event) {
-        const file = event.target.files[0];
+    connectFileInput({ input: imageUpload, onSelect: (file, { controller }) => new Promise((resolve, reject) => {
+        const operationId = controller.operationId;
         
         if (file && file.type.match('image.*')) {
             const reader = new FileReader();
             
+            reader.onerror = () => reject(new Error('Could not read the image.'));
             reader.onload = function(e) {
-                imagePreview.src = e.target.result;
-                imagePreview.style.display = 'block';
                 
                 // Загружаем изображение в объект Image для дальнейшего использования
-                params.sourceImage = new Image();
-                params.sourceImage.onload = function() {
+                const decoded = new Image();
+                decoded.onerror = () => reject(new Error('Could not decode the image.'));
+                decoded.onload = function() {
+                    try {
+                    if (!controller.bound || controller.operationId !== operationId) { reject(new Error('Cancelled')); return; }
                     // Создаем временный canvas для получения данных изображения
                     // с размерами соответствующими канвасу
                     const tempCanvas = document.createElement('canvas');
@@ -1440,20 +991,38 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     // Рисуем изображение на временном canvas
                     // растягивая его на весь канвас
-                    tempCtx.drawImage(params.sourceImage, 0, 0, canvas.width, canvas.height);
+                    tempCtx.drawImage(decoded, 0, 0, canvas.width, canvas.height);
                     
                     // Получаем данные изображения в размере канваса
                     params.imageData = tempCtx.getImageData(0, 0, canvas.width, canvas.height);
+                    params.sourceImage = decoded;
+                    imagePreview.src = e.target.result;
+                    imagePreview.style.display = 'block';
                     
                     // Перерисовываем паттерн с использованием изображения
                     drawPattern();
                     // Сохраняем настройки после загрузки изображения
                     saveSettingsToLocalStorage();
+                    resolve();
+                    } catch (error) { reject(error); }
                 };
-                params.sourceImage.src = e.target.result;
+                decoded.src = e.target.result;
             };
             
             reader.readAsDataURL(file);
-        }
+        } else reject(new Error('Choose an image.'));
+    }), onRemove: () => {
+        params.sourceImage = null; params.imageData = null;
+        imagePreview.removeAttribute('src'); imagePreview.style.display = 'none';
+        drawPattern();
+    } });
+    mountGenerator({
+        id: 'rays_pattern_generator', title: 'Rays Pattern',
+        panels: [
+            { title: 'Pattern', selectors: ['.pattern-sliders', '.checkboxes-section'], summary: () => `${params.rayCount} · ${params.rayLength}×${params.lineWidth}` },
+            { title: 'Tone', selectors: ['.raster-controls-row', '#imageRasterControls'], summary: () => params.imageRasterMode ? 'Image' : params.rasterMode ? 'Gradient' : 'Uniform' },
+            { title: 'Settings', selectors: ['.settings-recovery-section', '#resetBtn'] }
+        ],
+        actions: [{ id: 'svg', button: 'exportSvgBtn', label: 'SVG', kind: 'export', group: 'primary', shortcut: 'mod+e', run: exportToSvg }]
     });
 });

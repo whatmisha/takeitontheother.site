@@ -56,13 +56,7 @@ function setup() {
 }
 
 // Add keyPressed function to handle spacebar for pause
-function keyPressed() {
-  if (key === ' ' && isRunning) { // Check for spacebar and if mic is running
-    isPaused = !isPaused;
-    console.log(isPaused ? 'Pause activated' : 'Pause deactivated');
-  }
-  return false; // Prevent default behavior
-}
+// Keyboard commands are owned by ToolUiController, never by p5's global hook.
 
 function draw() {
   if (!isRunning || isPaused) {
@@ -176,13 +170,24 @@ function draw() {
       threshold: dynamicThreshold
     };
   }
+  syncAudioControlValues();
+}
+
+function syncAudioControlValues() {
+  // p5's .value() is programmatic and does not emit input. Keep readouts truthful
+  // without dispatching events that would alter the private audio state.
+  if (typeof document === 'undefined') return;
+  for (const [id, slider] of [['modeX-sliderValue', modeXSlider], ['modeY-sliderValue', modeYSlider]]) {
+    const label = document.getElementById(id);
+    if (label) label.textContent = String(Number(Number(slider.value()).toFixed(2)));
+  }
 }
 
 // Function to toggle slider interactivity
 function toggleSliderInteractivity(enabled) {
   // Now we need to handle X and Y sliders separately
   if (modeXSlider) {
-    if (enabled && !useAudioReactiveXMode) {
+    if (!useAudioReactiveXMode || !isRunning) {
       modeXSlider.removeAttribute('disabled');
       modeXSlider.style('opacity', '1');
     } else {
@@ -192,7 +197,7 @@ function toggleSliderInteractivity(enabled) {
   }
   
   if (modeYSlider) {
-    if (enabled && !useAudioReactiveYMode) {
+    if (!useAudioReactiveYMode || !isRunning) {
       modeYSlider.removeAttribute('disabled');
       modeYSlider.style('opacity', '1');
     } else {
@@ -530,62 +535,64 @@ function drawStaticPattern(nX, nY) {
 }
 
 function setupInterface() {
-  // Button setup
-  const startButton = select('#start-button');
-  const stopButton = select('#stop-button');
-  const pauseButton = select('#pause-button'); // Pause button
-  const exportPNGButton = select('#export-png-button'); // PNG export button
-  
-  startButton.mousePressed(() => {
-    if (!isRunning) {
-      // Request microphone access with enhanced parameters
-      userStartAudio().then(() => {
-        mic.start();
-        // Set high gain level for microphone
-        mic.amp(1.0);
-        isRunning = true;
-        isPaused = false; // Reset pause on start
-        console.log('Microphone activated');
-        
-        // Disable sliders based on audio-reactive modes
-        toggleSliderInteractivity(false);
-      }).catch(err => {
-        console.error('Microphone access error:', err);
-        alert('Failed to access microphone. Please allow access and try again.');
-      });
+  const surface = document.querySelector('#canvas-container canvas');
+  surface.style.width = ''; surface.style.height = '';
+  // Keep p5's actual input nodes and their listeners, only replace legacy labels.
+  document.querySelectorAll('.slider-group').forEach(group => {
+    const range = group.querySelector('input[type="range"]');
+    const label = group.querySelector('label');
+    const container = range.parentElement;
+    range.id = container.id.replace('-container', '');
+    label.htmlFor = range.id;
+    const value = document.createElement('span');
+    value.className = 'value-display'; value.id = `${range.id}Value`;
+    const sync = () => { value.textContent = String(Number(Number(range.value).toFixed(2))); };
+    sync(); range.addEventListener('input', sync); label.append(value);
+    label.after(range); container.remove();
+  });
+  document.querySelectorAll('.checkbox-group, .sound-reactive-option').forEach(group => {
+    const caption = group.querySelector(':scope > label, :scope > span');
+    const checkbox = group.querySelector('input[type="checkbox"]');
+    if (caption && checkbox) {
+      checkbox.closest('label').append(document.createTextNode(caption.textContent));
+      caption.remove();
     }
   });
-  
-  stopButton.mousePressed(() => {
-    if (isRunning) {
-      mic.stop();
-      isRunning = false;
-      isPaused = false; // Reset pause on stop
-      console.log('Microphone stopped');
-      // Draw static pattern
-      drawStaticPattern(modeX, modeY);
-      
-      // Re-enable sliders when stopping microphone
-      toggleSliderInteractivity(true);
-    }
-  });
-  
-  // Add functionality to pause button
-  pauseButton.mousePressed(() => {
-    if (isRunning) {
-      isPaused = !isPaused;
-      console.log(isPaused ? 'Pause activated' : 'Pause deactivated');
-    }
-  });
-  
-  // Add functionality to PNG export button
-  exportPNGButton.mousePressed(() => {
+  Promise.all([
+    import('../infra/framework/src/ui/GeneratorHost.js?v=3'),
+    import('./capture-session.js')
+  ]).then(([{ mountGenerator }, { CaptureSession }]) => {
+    const session = new CaptureSession({
+      mic, unlock: () => userStartAudio(),
+      onReady: () => { isRunning = true; isPaused = false; toggleSliderInteractivity(false); },
+      onStop: () => { isRunning = false; isPaused = false; lastFrameState = null; toggleSliderInteractivity(true); drawStaticPattern(modeX, modeY); }
+    });
+    mountGenerator({
+      id: 'chladni-sound-pattern', title: 'Chladni Figures',
+      panels: [
+        { title: 'Pattern', selectors: ['.slider-controls'], summary: () => `${Number(modeX).toFixed(1)}×${Number(modeY).toFixed(1)}` },
+        { title: 'Microphone', selectors: ['#soundControls', '.controls'], summary: () => session.pending ? 'Requesting…' : isRunning ? isPaused ? 'Paused' : 'Running' : 'Stopped' }
+      ],
+      actions: [
+        { id: 'png', button: 'export-png-button', label: 'PNG', kind: 'export', group: 'primary', shortcut: 'mod+e', run: exportChladniPNG },
+        { id: 'start', button: 'start-button', label: 'Start microphone', kind: 'command', group: 'panel', run: () => session.start() },
+        { id: 'stop', button: 'stop-button', label: 'Stop microphone', kind: 'command', group: 'panel', run: () => session.stop() },
+        { id: 'pause', button: 'pause-button', label: 'Pause / resume', kind: 'command', group: 'panel', shortcut: 'space', run: () => { if (isRunning) isPaused = !isPaused; } }
+      ]
+    });
+    // Every departure, including repeated back/forward-cache restores, stops audio.
+    // Restoring a page never starts microphone capture automatically.
+    window.addEventListener('pagehide', () => session.stop());
+  }).catch(console.error);
+}
+
+async function exportChladniPNG() {
     // Create temporary canvas with double resolution
     let tempCanvas = createGraphics(width * 2, height * 2);
     tempCanvas.pixelDensity(1);
     
     // Draw current Chladni figure on temporary canvas with double scale
-    if (isPaused && lastFrameState) {
+    if (isRunning && lastFrameState) {
       // If paused, use last state
       drawExportChladniPattern(
         tempCanvas, 
@@ -609,11 +616,10 @@ function setupInterface() {
     }
     
     // Save image
-    saveCanvas(tempCanvas, 'chladni_pattern', 'png');
-    
-    // Remove temporary canvas
-    tempCanvas.remove();
-  });
+    try {
+      const { downloadCanvas } = await import('../infra/framework/src/ui/GeneratorHost.js?v=3');
+      await downloadCanvas(tempCanvas.canvas, 'chladni_pattern.png');
+    } finally { tempCanvas.remove(); }
 }
 
 // Function to draw on exportable canvas
@@ -730,4 +736,4 @@ function drawExportChladniPattern(targetCanvas, nX, nY, amplitude, threshold) {
     // Clean up the buffer
     particleBuffer.remove();
   }
-} 
+}

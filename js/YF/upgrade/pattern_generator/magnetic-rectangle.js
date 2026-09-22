@@ -93,6 +93,7 @@
      * Настройка обработчиков событий мыши
      */
     function setupMouseEvents() {
+        window.addEventListener('resize', fitCanvasToViewport);
         canvas.addEventListener('mousemove', function(event) {
             // Получаем координаты курсора относительно холста
             const rect = canvas.getBoundingClientRect();
@@ -151,6 +152,9 @@
         
         // Добавляем обработчик клавиш для управления
         document.addEventListener('keydown', function(event) {
+            if (!document.getElementById('magnetic-rect-tab').classList.contains('active')
+                || event.defaultPrevented || event.repeat || event.isComposing
+                || event.target?.closest('input, textarea, select, [contenteditable="true"], [role="dialog"]')) return;
             let needsRedraw = false;
             
             // Ctrl+Z - отмена последнего действия (удаление последней точки)
@@ -251,9 +255,17 @@
         // Устанавливаем размеры канваса с учетом плотности пикселей устройства
         canvas.width = canvasWidth * dpr;
         canvas.height = canvasHeight * dpr;
+
+        fitCanvasToViewport();
+        ctx.scale(dpr, dpr);
+        ctx.lineWidth = lineWidth;
+    }
+
+    // Display-only fit: never reset the buffer, segments or pinned magnets.
+    function fitCanvasToViewport() {
         
         // Фиксированный размер для отображения на странице
-        const fixedSize = 800;
+        const fixedSize = Math.max(120, Math.min(800, window.innerWidth - 680, window.innerHeight - 180));
         
         // Вычисляем масштаб для отображения на странице
         const scaleX = fixedSize / canvasWidth;
@@ -275,11 +287,6 @@
         canvas.style.width = `${displayWidth}px`;
         canvas.style.height = `${displayHeight}px`;
         
-        // Масштабируем контекст для рисования с учетом ретина-дисплея
-        ctx.scale(dpr, dpr);
-        
-        // Сбрасываем настройки линий для ретина-дисплея
-        ctx.lineWidth = lineWidth;
     }
     
     /**
@@ -466,7 +473,6 @@
             drawCanvas();
         });
         
-        document.getElementById('magnetic-rect-exportSvgBtn').addEventListener('click', exportSvg);
     }
     
     /**
@@ -766,4 +772,4 @@
         drawCanvas,
         exportSvg
     };
-})(); 
+})();

@@ -2,6 +2,8 @@
 
 2026-09-22. Решение пользователя заменяет предыдущую схему `tools/`.
 
+**После переноса папок:** все восемь новых приложений уже подключены к framework, Rays T.3b выполнен. Актуальная приёмка, исправления и остаток — [INTEGRATION_8_PROGRESS.md](INTEGRATION_8_PROGRESS.md). Проверки 625 tests ниже относятся к историческому шагу перемещения папок, не к последней интеграции.
+
 ## Структура
 
 ```text
@@ -61,9 +63,9 @@ npm run migration:sources:check
 
 Известные ограничения, не скрытые переносом:
 
-- Исторический `check:keyboard` ожидает у Pulsar три сворачиваемые панели, текущий интерфейс содержит две. Это прежнее расхождение inventory, не результат перемещения; manifest не подгонялся.
-- `manifest:check` требует оригинальный донор `js/othersite-ui-framework/v3`, которого сейчас нет по прежнему пути. Локальная проверка 50 immutable framework-файлов проходит без донора; новые восемь источников проверяются отдельной `migration:sources:check`.
-- Восемь новых инструментов остаются `migrating`: перенос папок не означает завершение унификации UI или принятие их исходных дефектов.
+- После интеграции `check:keyboard` читает актуальные две панели Pulsar из отдельного CURRENT_UI_INVENTORY, исторический manifest не переписан.
+- После интеграции `manifest:check` проверяет сохранённый source snapshot внутри upgrade; доступ к донору нужен только явной `manifest:check-originals`.
+- Восемь новых инструментов остаются `migrating`, хотя общий UI уже подключён: окончательная приёмка ещё не закрыта.
 
 ## Куда переходить
 
@@ -71,6 +73,6 @@ npm run migration:sources:check
 - Новые инструменты: `/upgrade/infra/qa/migrations/`.
 - UI-аудит: `/upgrade/infra/qa/ui-audit/`.
 - Общий UI-стенд: `/upgrade/infra/qa/ui-host/`.
-- План следующей работы: [REMAINING_YF_TOOLS_INTEGRATION_PLAN.md](REMAINING_YF_TOOLS_INTEGRATION_PLAN.md), Rays T.3b, затем T.4–T.7.
+- План следующей работы: [REMAINING_YF_TOOLS_INTEGRATION_PLAN.md](REMAINING_YF_TOOLS_INTEGRATION_PLAN.md), остаток T.7 из актуального отчёта.
 
 В этом шаге commit/push не выполняются: пользователь запросил изменение структуры, не публикацию.

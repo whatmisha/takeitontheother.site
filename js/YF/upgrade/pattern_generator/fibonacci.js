@@ -58,7 +58,6 @@ window.fibonacciModule = (function() {
         resetBtn.addEventListener('click', resetSettings);
         
         // Кнопка экспорта в SVG
-        exportSvgBtn.addEventListener('click', exportAsSvg);
         
         // Инициализация
         resizeCanvas();
@@ -208,4 +207,4 @@ window.fibonacciModule = (function() {
         resetSettings,
         exportAsSvg
     };
-})(); 
+})();

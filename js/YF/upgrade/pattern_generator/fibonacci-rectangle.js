@@ -68,7 +68,6 @@ window.fibonacciRectModule = (function() {
         });
         
         resetBtn.addEventListener('click', resetSettings);
-        exportSvgBtn.addEventListener('click', exportSvg);
         
         // Начальная инициализация
         resizeCanvas();
@@ -266,4 +265,4 @@ window.fibonacciRectModule = (function() {
         resetSettings,
         exportSvg
     };
-})(); 
+})();

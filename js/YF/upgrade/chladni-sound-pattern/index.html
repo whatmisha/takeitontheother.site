@@ -4,11 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Chladni Figures</title>
-  <link rel="stylesheet" href="style.css">
   <script src="../infra/framework/vendor/p5/1.9.0/lib/p5.min.js"></script>
   <script src="../infra/framework/vendor/p5/1.9.0/lib/addons/p5.sound.min.js"></script>
     <link rel="icon" href="data:,">
-    <link rel="stylesheet" href="../infra/framework/styles/migration-preview.css">
+    <link rel="stylesheet" href="../infra/framework/css/othersite-styles.css">
+    <link rel="stylesheet" href="../infra/framework/css/generator-host.css?v=3">
+    <link rel="stylesheet" href="../infra/framework/css/ui-contract.css">
 </head>
 <body>
     <a class="upgrade-migration-preview" href="../" aria-label="Upgrade Tools — return to main page">← Upgrade Tools <span>Migration preview</span></a>
@@ -20,7 +21,7 @@
       <div class="canvas-column">
         <div id="canvas-container"></div>
         <div class="controls-wrapper">
-          <div class="controls">
+          <div class="controls generator-actions">
             <button id="start-button">🔊 Start</button>
             <button id="stop-button">Stop</button>
             <button id="pause-button">Pause</button>
@@ -75,6 +76,7 @@
             <div id="diag-lines-checkbox-container" title="Enables or disables diagonal lines in figures"></div>
           </div>
           
+          <div id="soundControls">
           <h3>Sound Parameters</h3>
           <div class="slider-group">
             <label for="sensitivity-slider-container">Microphone Sensitivity</label>
@@ -85,6 +87,7 @@
             <div id="smoothing-slider-container" title="Smoothness of transitions between figure states"></div>
           </div>
           
+          </div>
           <div class="info">
             <h3>Tips</h3>
             <p>Use the microphone to see how sound affects the Chladni figures.</p>
@@ -94,6 +97,6 @@
       </div>
     </div>
   </div>
-  <script src="sketch.js"></script>
+  <script src="sketch.js?v=integration-3&layout=root-infra-1"></script>
 </body>
 </html> 

@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
   "scope": "upgrade-only",
-  "note": "Source-derived target contracts, not acceptance evidence. Existing eight retain their independent historical capability and acceptance manifests.",
+  "note": "Source-derived target contracts with partial implementation evidence. Partial is not passed; existing eight retain their independent historical acceptance manifests.",
   "tools": [
     {
       "id": "hyperspace",
-      "status": "isolated-copy",
+      "status": "ui-integration",
       "sourceRenderer": "p5-1.4.0",
       "modes": [
         "animation"
@@ -22,15 +22,23 @@
         "global shortcuts need editable guards"
       ],
       "acceptance": {
-        "status": "not-run",
-        "unit": [],
-        "artifact": [],
-        "browser": []
+        "status": "partial",
+        "unit": [
+          "infra/qa/migrations/batch7/integration.test.mjs",
+          "infra/qa/migrations/batch7/artifact-parity.test.mjs"
+        ],
+        "artifact": [
+          "infra/qa/migrations/INTEGRATION_EXPORT_EVIDENCE.json"
+        ],
+        "browser": [
+          "infra/docs/INTEGRATION_8_PROGRESS.md"
+        ],
+        "remaining": "See INTEGRATION_8_PROGRESS.md: console gate, real microphone permission/test, behavior decisions and remaining T.7 edge cases. Not accepted."
       }
     },
     {
       "id": "pattern_generator",
-      "status": "isolated-copy",
+      "status": "ui-integration",
       "sourceRenderer": "canvas",
       "modes": [
         "diagonal-grid",
@@ -52,15 +60,23 @@
         "rectangle exportSvg missing from public module"
       ],
       "acceptance": {
-        "status": "not-run",
-        "unit": [],
-        "artifact": [],
-        "browser": []
+        "status": "partial",
+        "unit": [
+          "infra/qa/migrations/batch7/integration.test.mjs",
+          "infra/qa/migrations/batch7/artifact-parity.test.mjs"
+        ],
+        "artifact": [
+          "infra/qa/migrations/INTEGRATION_EXPORT_EVIDENCE.json"
+        ],
+        "browser": [
+          "infra/docs/INTEGRATION_8_PROGRESS.md"
+        ],
+        "remaining": "See INTEGRATION_8_PROGRESS.md: console gate, real microphone permission/test, behavior decisions and remaining T.7 edge cases. Not accepted."
       }
     },
     {
       "id": "pattern_generator_02",
-      "status": "isolated-copy",
+      "status": "ui-integration",
       "sourceRenderer": "p5-1.7.0",
       "modes": [
         "grid"
@@ -75,15 +91,23 @@
       ],
       "knownSourceIssues": [],
       "acceptance": {
-        "status": "not-run",
-        "unit": [],
-        "artifact": [],
-        "browser": []
+        "status": "partial",
+        "unit": [
+          "infra/qa/migrations/batch7/integration.test.mjs",
+          "infra/qa/migrations/batch7/artifact-parity.test.mjs"
+        ],
+        "artifact": [
+          "infra/qa/migrations/INTEGRATION_EXPORT_EVIDENCE.json"
+        ],
+        "browser": [
+          "infra/docs/INTEGRATION_8_PROGRESS.md"
+        ],
+        "remaining": "See INTEGRATION_8_PROGRESS.md: console gate, real microphone permission/test, behavior decisions and remaining T.7 edge cases. Not accepted."
       }
     },
     {
       "id": "random_lines_generator",
-      "status": "isolated-copy",
+      "status": "ui-integration",
       "sourceRenderer": "canvas",
       "modes": [
         "ordinary",
@@ -102,15 +126,23 @@
         "sf parsed as scale: NaN"
       ],
       "acceptance": {
-        "status": "not-run",
-        "unit": [],
-        "artifact": [],
-        "browser": []
+        "status": "partial",
+        "unit": [
+          "infra/qa/migrations/batch7/integration.test.mjs",
+          "infra/qa/migrations/batch7/artifact-parity.test.mjs"
+        ],
+        "artifact": [
+          "infra/qa/migrations/INTEGRATION_EXPORT_EVIDENCE.json"
+        ],
+        "browser": [
+          "infra/docs/INTEGRATION_8_PROGRESS.md"
+        ],
+        "remaining": "See INTEGRATION_8_PROGRESS.md: console gate, real microphone permission/test, behavior decisions and remaining T.7 edge cases. Not accepted."
       }
     },
     {
       "id": "rays_pattern_generator",
-      "status": "isolated-copy",
+      "status": "ui-integration",
       "sourceRenderer": "canvas",
       "modes": [
         "ordinary",
@@ -135,15 +167,23 @@
         "export shortcut ignores editable, composition and repeat guards"
       ],
       "acceptance": {
-        "status": "not-run",
-        "unit": [],
-        "artifact": [],
-        "browser": []
+        "status": "partial",
+        "unit": [
+          "infra/qa/migrations/rays/scene.test.mjs",
+          "infra/qa/migrations/rays/isolated-copy.test.mjs"
+        ],
+        "artifact": [
+          "infra/qa/migrations/INTEGRATION_EXPORT_EVIDENCE.json"
+        ],
+        "browser": [
+          "infra/docs/INTEGRATION_8_PROGRESS.md"
+        ],
+        "remaining": "See INTEGRATION_8_PROGRESS.md: console gate, real microphone permission/test, behavior decisions and remaining T.7 edge cases. Not accepted."
       }
     },
     {
       "id": "asterisk_pattern_generator",
-      "status": "isolated-copy",
+      "status": "ui-integration",
       "sourceRenderer": "canvas",
       "modes": [
         "tessellation",
@@ -161,15 +201,23 @@
         "axes preview and SVG differ in zero-layer copies"
       ],
       "acceptance": {
-        "status": "not-run",
-        "unit": [],
-        "artifact": [],
-        "browser": []
+        "status": "partial",
+        "unit": [
+          "infra/qa/migrations/batch7/integration.test.mjs",
+          "infra/qa/migrations/batch7/artifact-parity.test.mjs"
+        ],
+        "artifact": [
+          "infra/qa/migrations/INTEGRATION_EXPORT_EVIDENCE.json"
+        ],
+        "browser": [
+          "infra/docs/INTEGRATION_8_PROGRESS.md"
+        ],
+        "remaining": "See INTEGRATION_8_PROGRESS.md: console gate, real microphone permission/test, behavior decisions and remaining T.7 edge cases. Not accepted."
       }
     },
     {
       "id": "calendar-randomizer",
-      "status": "isolated-copy",
+      "status": "ui-integration",
       "sourceRenderer": "svg",
       "modes": [
         "calend_01",
@@ -191,15 +239,23 @@
         "global SVG selectors may target UI icons"
       ],
       "acceptance": {
-        "status": "not-run",
-        "unit": [],
-        "artifact": [],
-        "browser": []
+        "status": "partial",
+        "unit": [
+          "infra/qa/migrations/batch7/integration.test.mjs",
+          "infra/qa/migrations/batch7/artifact-parity.test.mjs"
+        ],
+        "artifact": [
+          "infra/qa/migrations/INTEGRATION_EXPORT_EVIDENCE.json"
+        ],
+        "browser": [
+          "infra/docs/INTEGRATION_8_PROGRESS.md"
+        ],
+        "remaining": "See INTEGRATION_8_PROGRESS.md: console gate, real microphone permission/test, behavior decisions and remaining T.7 edge cases. Not accepted."
       }
     },
     {
       "id": "chladni-sound-pattern",
-      "status": "isolated-copy",
+      "status": "ui-integration",
       "sourceRenderer": "p5-1.9.0+sound",
       "modes": [
         "static",
@@ -220,10 +276,18 @@
         "running export threshold differs from preview"
       ],
       "acceptance": {
-        "status": "not-run",
-        "unit": [],
-        "artifact": [],
-        "browser": []
+        "status": "partial",
+        "unit": [
+          "infra/qa/migrations/batch7/integration.test.mjs",
+          "infra/qa/migrations/batch7/artifact-parity.test.mjs"
+        ],
+        "artifact": [
+          "infra/qa/migrations/INTEGRATION_EXPORT_EVIDENCE.json"
+        ],
+        "browser": [
+          "infra/docs/INTEGRATION_8_PROGRESS.md"
+        ],
+        "remaining": "See INTEGRATION_8_PROGRESS.md: console gate, real microphone permission/test, behavior decisions and remaining T.7 edge cases. Not accepted."
       }
     }
   ]

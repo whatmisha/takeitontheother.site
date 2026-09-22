@@ -10,6 +10,7 @@ const manifest = JSON.parse(await readFile(
     path.join(upgradeRoot, 'infra/KEYBOARD_ACCEPTANCE.json'),
     'utf8'
 ));
+const current = JSON.parse(await readFile(path.join(upgradeRoot, 'infra/qa/CURRENT_UI_INVENTORY.json'), 'utf8'));
 
 const expectedApps = [
     'dither',
@@ -70,7 +71,12 @@ for (const app of manifest.apps) {
         source,
         /<(?:button|span)\b[^>]*class="[^"]*\b(?:collapse-icon|collapse-toggle)\b[^"]*"/gu
     );
-    assert.equal(collapseControls, app.collapseControls, `${app.id} collapse count changed`);
+    const inventory = current.overrides[app.id];
+    if (inventory) {
+        const actualPanels = [...source.matchAll(/<aside\b[^>]*class="controls-panel"[^>]*id="([^"]+)"/gu)].map(match => match[1]);
+        assert.deepEqual(actualPanels, inventory.panelIds, `${app.id} current panel inventory changed`);
+    }
+    assert.equal(collapseControls, inventory?.collapseControls ?? app.collapseControls, `${app.id} collapse count changed`);
 
     const hasPresetMenu = /aria-haspopup="listbox"[^>]*aria-controls=/u.test(source);
     assert.equal(hasPresetMenu, app.presetMenu, `${app.id} preset-menu contract changed`);

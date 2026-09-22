@@ -53,7 +53,14 @@ function setup() {
   setupSliderEvents();
   
   // Добавление обработчика клавиш
-  document.addEventListener('keydown', handleKeyPress);
+  import('../infra/framework/src/ui/GeneratorHost.js?v=3').then(({ mountGenerator }) => mountGenerator({
+    id: 'hyperspace', title: 'Hyperspace',
+    panels: [{ title: 'Animation', selectors: ['.controls'], summary: () => `${lineCount} · ${speed}×${isPaused ? ' · Paused' : ''}` }],
+    actions: [
+      { id: 'png', button: 'exportButton', label: 'PNG', kind: 'export', group: 'primary', shortcut: 'mod+e', run: exportCanvas },
+      { id: 'pause', button: 'pauseButton', label: 'Pause / resume', kind: 'command', group: 'panel', shortcut: 'space', run: () => { isPaused = !isPaused; } }
+    ]
+  })).catch(console.error);
 }
 
 function draw() {
@@ -112,7 +119,8 @@ function drawVanishingPoints() {
   ellipse(vanishingPoint.x, vanishingPoint.y, 6, 6);
 }
 
-function mousePressed() {
+function mousePressed(event) {
+  if (event?.target?.closest('.controls-panel, .action-dock, .top-links')) return true;
   // Получаем элемент панели управления
   let controlsPanel = document.querySelector('.controls');
   let controlsRect = controlsPanel.getBoundingClientRect();
@@ -137,7 +145,8 @@ function mousePressed() {
   return true;
 }
 
-function mouseDragged() {
+function mouseDragged(event) {
+  if (event?.target?.closest('.controls-panel, .action-dock, .top-links')) return true;
   // Если мышь зажата и перетаскивается для рисования
   if (isMouseDragging) {
     // Получаем элемент панели управления
@@ -412,7 +421,6 @@ function setupSliderEvents() {
   document.getElementById('useColorGradient').addEventListener('change', updateParameters);
   
   // Добавление обработчика для кнопки экспорта
-  document.getElementById('exportButton').addEventListener('click', exportCanvas);
   
   // Добавление обработчика для кнопки возврата в центр
   document.getElementById('centerButton').addEventListener('click', centerVanishingPoint);
@@ -443,7 +451,7 @@ function windowResized() {
 }
 
 // Функция для экспорта канваса в PNG
-function exportCanvas() {
+async function exportCanvas() {
   // Создаем временный канвас для рендеринга изображения без UI
   let tempCanvas = createGraphics(width, height);
   
@@ -537,32 +545,10 @@ function exportCanvas() {
                  '.png';
   
   // Сохраняем изображение
-  tempCanvas.save(filename);
-  
-  // Удаляем временный канвас
-  tempCanvas.remove();
-  
-  // Показываем сообщение о сохранении
-  let button = document.getElementById('exportButton');
-  let originalText = button.textContent;
-  let originalBackground = button.style.background;
-  let originalColor = button.style.color;
-  button.textContent = 'Сохранено!';
-  button.style.background = '#3B53FD';
-  button.style.color = 'white';
-  button.style.boxShadow = 'none';
-  
-  // Возвращаем исходный текст кнопки через 2 секунды
-  setTimeout(function() {
-    button.textContent = originalText;
-    button.style.background = originalBackground;
-    button.style.color = originalColor;
-    if (button !== document.getElementById('centerButton')) {
-      button.style.boxShadow = '';
-    } else {
-      button.style.boxShadow = '0 0 0 2px white inset';
-    }
-  }, 2000);
+  try {
+    const { downloadCanvas } = await import('../infra/framework/src/ui/GeneratorHost.js?v=3');
+    await downloadCanvas(tempCanvas.canvas, filename);
+  } finally { tempCanvas.remove(); }
 }
 
 // Вспомогательная функция для добавления ведущих нулей

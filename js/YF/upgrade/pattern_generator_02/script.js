@@ -85,7 +85,15 @@ function setup() {
   setupHTMLControls();
   
   // Добавляем обработчик клавиатуры для хоткеев
-  setupKeyboardShortcuts();
+  import('../infra/framework/src/ui/GeneratorHost.js?v=3').then(({ mountGenerator }) => mountGenerator({
+    id: 'pattern_generator_02', title: 'Pattern 02',
+    panels: [{ title: 'Pattern', selectors: ['#patternControls'], summary: () => `${squareSize} · ${cornerRadiusPercent}% · ${lineLengthPercent}%` }],
+    actions: [
+      { id: 'svg', button: 'export-button', label: 'SVG', kind: 'export', group: 'primary', shortcut: 'mod+e', run: exportSVG },
+      { id: 'undo', button: 'undoButton', label: 'Undo', kind: 'command', group: 'panel', shortcut: 'mod+z', run: undoLastChange },
+      { id: 'redo', button: 'redoButton', label: 'Redo', kind: 'command', group: 'panel', shortcut: 'mod+shift+z', run: redoLastChange }
+    ]
+  })).catch(console.error);
   
   // Определяем платформу для кнопки экспорта
   setupPlatformSpecificUI();
@@ -97,6 +105,10 @@ function setup() {
 
 // Функция настройки HTML контролов
 function setupHTMLControls() {
+  // A drag can finish outside the input; never leave the next edit in its transaction.
+  document.addEventListener('mouseup', () => { isInteractingWithControl = false; });
+  document.addEventListener('touchend', () => { isInteractingWithControl = false; });
+  document.addEventListener('touchcancel', () => { isInteractingWithControl = false; });
   // Кэшируем все DOM элементы
   domElements.radiusSlider = document.getElementById('radius-slider');
   domElements.lengthSlider = document.getElementById('length-slider');
@@ -209,11 +221,20 @@ function setupHTMLControls() {
   });
   
   // Обработчик для кнопки экспорта
-  domElements.exportButton.addEventListener('click', exportSVG);
 }
 
 // Функция настройки слайдера с сохранением истории
 function setupSliderWithHistory(slider, valueDisplay, callback) {
+  slider.addEventListener('keydown', event => {
+    if (!event.metaKey && !event.ctrlKey && !event.altKey
+        && ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown'].includes(event.key)
+        && !isUpdatingControls && !isInteractingWithControl) {
+      saveCurrentStateImmediately();
+      isInteractingWithControl = true;
+    }
+  });
+  slider.addEventListener('keyup', () => { isInteractingWithControl = false; });
+  slider.addEventListener('blur', () => { isInteractingWithControl = false; });
   // Обработчик начала взаимодействия
   slider.addEventListener('mousedown', () => {
     if (!isUpdatingControls && !isInteractingWithControl) {
@@ -939,4 +960,4 @@ function restoreState(state) {
   checkerboardMode = state.checkerboardMode;
   lineBLengthPercent = state.lineBLengthPercent;
   bothSquaresBMode = state.bothSquaresBMode;
-} 
+}

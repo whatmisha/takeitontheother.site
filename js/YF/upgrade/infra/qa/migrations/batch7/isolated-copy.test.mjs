@@ -6,6 +6,7 @@ import vm from 'node:vm';
 
 const root = new URL('../../../../', import.meta.url);
 const read = file => readFile(new URL(file, root), 'utf8');
+const frozen = file => read(`infra/qa/migrations/batch7/frozen/${file}`);
 const hash = text => createHash('sha256').update(text).digest('hex');
 const manifest = JSON.parse(await read('infra/qa/migrations/BATCH7_COPY_MANIFEST.json'));
 const baseline = JSON.parse(await read('infra/qa/migrations/SOURCE_BASELINE.json'));
@@ -15,36 +16,36 @@ const uiTextPatches = JSON.parse(await read('infra/qa/migrations/batch7/ui-text-
 const ids = ['hyperspace', 'pattern_generator', 'pattern_generator_02', 'random_lines_generator', 'asterisk_pattern_generator', 'calendar-randomizer', 'chladni-sound-pattern'];
 const restoreNamespaces = text => Object.entries(manifest.namespaces).reduce((text, [before, after]) => text.replaceAll(`'${after}'`, `'${before}'`).replaceAll(`"${after}"`, `"${before}"`), text);
 
-test('all seven tools are isolated, auditable copies, not falsely accepted releases', async () => {
+test('all seven tools retain a frozen baseline and declare UI integration, not unverified acceptance', async () => {
     assert.deepEqual(manifest.tools.map(tool => tool.id), ids);
     assert.equal(manifest.tools.reduce((n, tool) => n + tool.files.length, 0), 29);
     const hub = await read('index.html');
     const audit = await read('infra/qa/ui-audit/index.html');
     for (const id of ids) {
         assert.equal(catalog.tools.find(tool => tool.id === id).state, 'migrating');
-        assert.equal(contracts.tools.find(tool => tool.id === id).status, 'isolated-copy');
-        assert.equal(contracts.tools.find(tool => tool.id === id).acceptance.status, 'not-run');
+        assert.equal(contracts.tools.find(tool => tool.id === id).status, 'ui-integration');
+        assert.equal(contracts.tools.find(tool => tool.id === id).acceptance.status, 'partial');
         assert.ok(audit.includes(`value="${id}" data-tool-state="migrating"`));
         assert.ok(!hub.includes(`href="${id}/"`));
     }
 });
 
 for (const tool of manifest.tools) {
-    test(`${tool.id}: complete file set and copy checksums; no unnoticed post-copy rewrites`, async () => {
+    test(`T.2 frozen ${tool.id}: complete file set and original copy checksums`, async () => {
         const original = baseline.tools.find(item => item.id === tool.id);
         assert.equal(tool.sourceRoot, original.sourceRoot);
         assert.deepEqual(tool.files.map(file => file.path), original.files.map(file => file.path));
         for (const file of tool.files) {
             assert.equal(file.sourceSha256, original.files.find(item => item.path === file.path).sha256);
-            const contents = await read(`${tool.id}/${file.path}`);
+            const contents = await frozen(`${tool.id}/${file.path}`);
             const snapshot = file.path.endsWith('.html') ? contents.replaceAll('../infra/framework/', '../../framework/').replaceAll('href="../"', 'href="../../"') : contents;
             assert.equal(hash(snapshot), file.copySha256, file.path);
             assert.equal(Buffer.byteLength(snapshot), file.bytes, file.path);
         }
     });
-    test(`${tool.id}: original algorithms/assets unchanged except settings namespace and service fonts`, async () => {
+    test(`T.2 frozen ${tool.id}: original algorithms/assets except settings namespace and service fonts`, async () => {
         for (const file of tool.files.filter(file => /\.(?:js|svg)$/.test(file.path))) {
-            const contents = await read(`${tool.id}/${file.path}`);
+            const contents = await frozen(`${tool.id}/${file.path}`);
             let restored = restoreNamespaces(contents);
             for (const patch of uiTextPatches.filter(patch => patch.file === `${tool.id}/${file.path}`)) {
                 assert.equal(restored.split(patch.after).length, 2, 'One explicit UI text change');
@@ -52,12 +53,12 @@ for (const tool of manifest.tools) {
             }
             assert.equal(hash(restored), file.sourceSha256, file.path);
         }
-        const html = restoreNamespaces(await read(`${tool.id}/index.html`));
+        const html = restoreNamespaces(await frozen(`${tool.id}/index.html`));
         const scripts = [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)].filter(match => !/\bsrc\s*=/.test(match[1])).map(match => hash(match[2]));
         assert.deepEqual(scripts, tool.inlineScriptHashes, 'Inline calendar logic must not silently change');
     });
-    test(`${tool.id}: every declared control, range, default and option is retained`, async () => {
-        const html = await read(`${tool.id}/index.html`);
+    test(`T.2 frozen ${tool.id}: every original control, range, default and option is retained`, async () => {
+        const html = await frozen(`${tool.id}/index.html`);
         assert.deepEqual([...html.matchAll(/<(?:input|button|select|textarea|option)\b[^>]*>/gi)].map(match => match[0]), tool.htmlControls);
         assert.match(html, /href="\.\.\/"[^>]*>← Upgrade Tools/);
         assert.match(html, /Migration preview/);
@@ -73,10 +74,10 @@ for (const tool of manifest.tools) {
     });
 }
 
-test('Random Lines and Calendar storage calls never read/write the original namespaces', async () => {
+test('T.2 frozen Random Lines and Calendar namespaces remain isolated', async () => {
     const allCalls = [];
     for (const tool of manifest.tools) for (const file of tool.files.filter(file => /\.(?:js|html)$/.test(file.path))) {
-        const contents = await read(`${tool.id}/${file.path}`);
+        const contents = await frozen(`${tool.id}/${file.path}`);
         const accesses = [...contents.matchAll(/(?:localStorage|sessionStorage)\.(getItem|setItem|removeItem)\(\s*['"]([^'"]+)['"]/g)];
         for (const match of accesses) {
             assert.ok(Object.values(manifest.namespaces).includes(match[2]));
@@ -106,7 +107,7 @@ test('each p5 app retains its exact original major/minor/patch and local path', 
     assert.match(await read('chladni-sound-pattern/index.html'), /p5\/1\.9\.0\/lib\/addons\/p5\.sound\.min\.js/);
 });
 
-test('Chladni setup/draw and Pause/Stop do not request microphone capture; Start is explicit', async () => {
+test('T.2 frozen Chladni baseline: setup/draw do not capture audio; Start is explicit', async () => {
     const handlers = new Map();
     const calls = { audio: 0, start: 0, static: 0 };
     const context = vm.createContext({
@@ -116,7 +117,7 @@ test('Chladni setup/draw and Pause/Stop do not request microphone capture; Start
         select: selector => ({ mousePressed: handler => handlers.set(selector, handler) }),
         userStartAudio: () => { calls.audio++; return Promise.resolve(); }
     });
-    vm.runInContext(await read('chladni-sound-pattern/sketch.js'), context);
+    vm.runInContext(await frozen('chladni-sound-pattern/sketch.js'), context);
     // Stub only rendering/control construction; execute the real setup, draw and button handlers.
     context.createControlSliders = () => {};
     context.toggleSliderInteractivity = () => {};

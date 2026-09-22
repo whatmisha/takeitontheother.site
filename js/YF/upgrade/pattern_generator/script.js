@@ -12,8 +12,42 @@ document.addEventListener('DOMContentLoaded', function() {
     handleResize();
     
     // Инициализация горячих клавиш
-    initHotkeys();
+    import('../infra/framework/src/ui/GeneratorHost.js?v=3').then(({ mountGenerator }) => {
+        const groups = [...document.querySelectorAll('.tab-content .controls')];
+        groups.forEach(group => {
+            group.dataset.mode = group.closest('.tab-content').id.replace(/-tab$/, '');
+            group.querySelectorAll('.export-btn, h2').forEach(element => element.remove());
+        });
+        const syncMode = () => {
+            const active = document.querySelector('.tab-button.active').dataset.tab;
+            groups.forEach(group => { group.hidden = group.dataset.mode !== active; });
+            document.querySelectorAll('.tab-button').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.tab === active)));
+        };
+        mountGenerator({
+            id: 'pattern_generator', title: 'Pattern 01',
+            panels: [
+                { title: 'Mode', selectors: ['.tabs'], summary: d => d.querySelector('.tab-button.active')?.textContent || '' },
+                { title: 'Pattern', selectors: ['.tab-content .controls'] }
+            ],
+            actions: [{ id: 'svg', button: 'patternExport', label: 'SVG', kind: 'export', group: 'primary', shortcut: 'mod+e', run: exportActivePattern }],
+            afterMount: syncMode
+        });
+        document.querySelectorAll('.tab-button').forEach(button => button.addEventListener('click', syncMode));
+    }).catch(console.error);
 });
+
+function exportActivePattern() {
+    const mode = document.querySelector('.tab-button.active').dataset.tab;
+    const routes = {
+        'magnetic-rect': () => window.magneticRectModule.exportSvg(),
+        fibonacci: () => window.fibonacciModule.exportAsSvg(),
+        voronoi: () => window.voronoiModule.exportAsSvg(),
+        rectangle: () => window.rectangleModule.exportSvg(),
+        'fibonacci-rect': () => window.fibonacciRectModule.exportSvg()
+    };
+    if (!routes[mode]) throw new Error('Unknown pattern mode');
+    return routes[mode]();
+}
 
 /**
  * Инициализация системы вкладок
@@ -100,4 +134,4 @@ function initHotkeys() {
             }
         }
     });
-} 
+}

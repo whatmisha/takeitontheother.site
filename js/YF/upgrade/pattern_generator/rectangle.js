@@ -61,7 +61,6 @@ window.rectangleModule = (function() {
         });
         
         regenerateBtn.addEventListener('click', generatePoints);
-        exportSvgBtn.addEventListener('click', exportSvg);
         
         // Начальная инициализация
         resizeCanvas();
@@ -229,6 +228,7 @@ window.rectangleModule = (function() {
     return {
         resizeCanvas,
         generatePoints,
-        drawPoints
+        drawPoints,
+        exportSvg
     };
-})(); 
+})();

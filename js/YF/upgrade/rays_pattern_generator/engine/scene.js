@@ -1,5 +1,5 @@
 // Private Rays geometry, with no DOM, storage, renderer or file dependencies.
-// T.3a: verified against frozen legacy fixtures; not wired into the UI yet.
+// Used by both live Canvas preview and SVG export; verified against frozen fixtures.
 export const ALLOWED_RAY_COUNTS = Object.freeze([3, 4, 5, 6, 8, 10, 12, 14, 16, 18, 20, 24]);
 export const DEFAULT_PARAMETERS = Object.freeze({
     lineWidth: 2, gap: 19, rayLength: 56, rayCount: 5, scale: 1,

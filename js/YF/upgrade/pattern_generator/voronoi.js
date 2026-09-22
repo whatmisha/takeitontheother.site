@@ -50,7 +50,6 @@ window.voronoiModule = (function() {
         regenerateBtn.addEventListener('click', generatePoints);
         
         // Кнопка экспорта в SVG
-        exportSvgBtn.addEventListener('click', exportAsSvg);
         
         // Инициализация
         resizeCanvas();
@@ -220,4 +219,4 @@ window.voronoiModule = (function() {
         drawPoints,
         exportAsSvg
     };
-})(); 
+})();

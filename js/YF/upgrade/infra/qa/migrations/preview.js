@@ -11,7 +11,7 @@ try {
         const heading = document.createElement('h2');
         heading.textContent = tool.name;
         const status = document.createElement('p');
-        status.textContent = `${catalog.groups.find(group => group.id === tool.group).name} · ${tool.state === 'accepted' ? 'Принят' : 'Перенос / исходный UI'}`;
+        status.textContent = `${catalog.groups.find(group => group.id === tool.group).name} · ${tool.state === 'accepted' ? 'Принят' : 'Общий интерфейс / проверка интеграции'}`;
         const links = document.createElement('div');
         links.className = 'links';
         const open = document.createElement('a');

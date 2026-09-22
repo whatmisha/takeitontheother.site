@@ -494,7 +494,9 @@ body,
     .mobile-desktop-hint {
         position: fixed;
         left: 50%;
-        bottom: calc(60px + env(safe-area-inset-bottom, 0px));
+        /* 12px dock inset + 54px button row + 18px clear gap. */
+        bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+        margin: 0;
         z-index: 2;
         display: block;
         width: calc(100% - 32px);

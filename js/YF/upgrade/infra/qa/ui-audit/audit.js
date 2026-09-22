@@ -2,7 +2,7 @@
 import { isAuditableState } from '../../catalog/registry.js';
 
 const $ = selector => document.querySelector(selector);
-const AUDITOR_VERSION = 'int-01';
+const AUDITOR_VERSION = 'int-04';
 const subject = $('#subject');
 const sparky = $('#sparkyReference');
 const word = $('#wordReference');
@@ -121,9 +121,11 @@ function collect() {
     const exports = find(doc, '[data-action-dock-primary-export]');
     const panelActions = find(doc, '.controls-panel .panel-action, .controls-panel #resetTransform').filter(resting);
     for (const action of panelActions) {
-        results.push(pinned(`Кнопка панели ${identify(action)}`, action, {
+        const pressed = action.getAttribute('aria-pressed') === 'true';
+        results.push(pinned(`${action.hasAttribute('aria-pressed') ? 'Переключатель' : 'Кнопка'} панели ${identify(action)}`, action, {
             fontSize: '16px', fontWeight: '500', height: '36px', borderTopWidth: '0px',
-            backgroundColor: 'rgb(0, 0, 0)', color: 'rgb(210, 210, 210)'
+            backgroundColor: pressed ? 'rgb(210, 210, 210)' : 'rgb(0, 0, 0)',
+            color: pressed ? 'rgb(0, 0, 0)' : 'rgb(210, 210, 210)'
         }));
     }
     if (loadedTool === 'dither') {

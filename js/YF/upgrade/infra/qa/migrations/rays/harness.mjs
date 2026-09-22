@@ -9,7 +9,7 @@ export const controls = [...source['index.html'].matchAll(/<input\b([^>]*)>/gu)]
 const classes = () => { const values = new Set(); return { add: value => values.add(value), remove: value => values.delete(value), contains: value => values.has(value) }; };
 const escape = value => String(value).replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;');
 
-export function createLegacy({ script = source['script.js'], html = source['index.html'], saved = null, storageKey = 'rayPatternSettings', dpr = 1 } = {}) {
+export function createLegacy({ script = source['script.js'], html = source['index.html'], saved = null, storageKey = 'rayPatternSettings', dpr = 1, dependencies = {} } = {}) {
     const listeners = new Map(), nodes = new Map(), downloads = [], urls = new Map(), revoked = [], log = [], timers = [];
     const storage = new Map([['rayPatternSettings', 'original sentinel']]);
     if (storageKey === 'rayPatternSettings') storage.delete(storageKey);
@@ -37,6 +37,7 @@ export function createLegacy({ script = source['script.js'], html = source['inde
                 if (attrs.type === 'range') value = String(Math.max(Number(attrs.min ?? 0), Math.min(Number(attrs.max ?? 100), Number(next))));
             },
             setAttribute(key, next) { this.attrs[key] = String(next); }, getAttribute(key) { return this.attrs[key] ?? null; },
+            removeAttribute(key) { delete this.attrs[key]; },
             addEventListener(type, callback) { if (!handlers.has(type)) handlers.set(type, []); handlers.get(type).push(callback); },
             dispatch(type, extra = {}) { for (const fn of handlers.get(type) || []) fn.call(this, { target: this, preventDefault() {}, ...extra }); },
             appendChild(child) { this.children.push(child); child.parentElement = this; return child; },
@@ -66,15 +67,26 @@ export function createLegacy({ script = source['script.js'], html = source['inde
     function serialize(node) { return `<${node.tagName.toLowerCase()}${Object.entries(node.attrs).map(([key, val]) => ` ${key}="${escape(val)}"`).join('')}>${node.children.map(serialize).join('')}</${node.tagName.toLowerCase()}>`; }
     let svg = null;
     const sandbox = { document, window: { devicePixelRatio: dpr }, navigator: { platform: 'MacIntel' }, Blob,
+        // UI-free renderer harness: bind the actual action callback. Framework
+        // command behavior is tested separately against ToolUiController itself.
+        mountGenerator: ({ actions }) => actions.forEach(action => nodes.get(action.button).addEventListener('click', action.run)),
+        connectFileInput: ({ input, onSelect, onRemove }) => {
+            input.removeImage = onRemove;
+            input.addEventListener('change', event => {
+                const file = event.target.files[0]; event.target.value = '';
+                void onSelect(file, { controller: { bound: true } });
+            });
+        },
         localStorage: { getItem: key => storage.get(key) ?? null, setItem: (key, val) => storage.set(key, val), removeItem: key => storage.delete(key) },
         URL: { createObjectURL(blob) { const id = `blob:test-${urls.size}`; urls.set(id, blob); return id; }, revokeObjectURL: id => { revoked.push(id); urls.delete(id); } },
         XMLSerializer: class { serializeToString(node) { svg = node; return serialize(node); } },
         FileReader: class { readAsDataURL(file) { pendingImage = file.pixels; this.onload?.({ target: { result: 'data:image/png;base64,TEST' } }); } },
         Image: class { set src(value) { this.onload?.(); } },
         setTimeout: fn => { timers.push(fn); return timers.length; },
+        alert: message => log.push(['alert', message]),
         console: { log: (...args) => log.push(args), error: (...args) => log.push(args) }
     };
-    runInNewContext(script, sandbox, { filename: 'frozen-rays/script.js', timeout: 5000 });
+    runInNewContext(script, { ...sandbox, ...dependencies }, { filename: 'rays/script.js', timeout: 5000 });
     for (const fn of listeners.get('DOMContentLoaded') || []) fn();
     return {
         nodes, context, storage, downloads, urls, revoked, log, get imageDecodes() { return imageDecodes; },
