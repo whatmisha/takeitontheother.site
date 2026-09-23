@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="css/framework-base.css?v=g6-choice-1&layout=root-infra-1">
     <link rel="stylesheet" href="css/yf-styles.css?v=g5-reset-1">
     <link rel="stylesheet" href="pulsar-styles.css?v=g5-reset-1">
-    <link rel="stylesheet" href="../infra/framework/css/ui-contract.css?v=uiq-2">
+    <link rel="stylesheet" href="../infra/framework/css/ui-contract.css?v=uiq-5">
 </head>
 <body>
     <div class="container">
@@ -57,8 +57,7 @@
                 <div class="panel-content">
                     <!-- Payload Input -->
                     <section class="control-section">
-                        <h3>Payload</h3>
-                        <textarea id="payloadInput" placeholder="Enter your message (ASCII/UTF-8)..." rows="4">The truth is out there</textarea>
+                        <textarea id="payloadInput" aria-label="Message" placeholder="Enter your message (ASCII/UTF-8)..." rows="4">The truth is out there</textarea>
                         <div class="textarea-footer">
                             <span class="char-counter" id="charCounter">22 characters</span>
                         </div>
@@ -66,7 +65,6 @@
 
                     <!-- Ray Parameters -->
                     <section class="control-section">
-                        <h3>Ray Parameters</h3>
                         
                         <div class="control-group">
                             <label for="rayCountSlider">

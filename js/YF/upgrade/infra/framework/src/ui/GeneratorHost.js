@@ -1,4 +1,4 @@
-import { ToolUiController } from './ToolUiController.js';
+import { ToolUiController } from './ToolUiController.js?v=2';
 import { PanelManager } from './PanelManager.js';
 import { UnifiedColorPicker } from './UnifiedColorPicker.js';
 import { FileIntakeController } from './FileIntakeController.js?v=2';
@@ -24,6 +24,22 @@ const node = (tag, className, text) => {
     if (text) element.textContent = text;
     return element;
 };
+
+/** Same vector chevron as the established tool panels, independent of UI fonts. */
+export function createCollapseButton(ownerDocument = globalThis.document) {
+    const button = ownerDocument.createElement('button');
+    button.className = 'collapse-icon';
+    button.type = 'button';
+    button.setAttribute('aria-label', 'Collapse panel');
+    button.setAttribute('aria-expanded', 'true');
+    const svg = ownerDocument.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    for (const [name, value] of Object.entries({ width: '10', height: '6', viewBox: '0 0 12 8', fill: 'none', 'aria-hidden': 'true', focusable: 'false' })) svg.setAttribute(name, value);
+    const path = ownerDocument.createElementNS('http://www.w3.org/2000/svg', 'path');
+    for (const [name, value] of Object.entries({ d: 'M1 1L6 6L11 1', stroke: 'currentColor', 'stroke-width': '1.5', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' })) path.setAttribute(name, value);
+    svg.append(path);
+    button.append(svg);
+    return button;
+}
 
 /** Adapt existing generator controls without taking ownership of their model/canvas.
  * Call once, after private controls have been created. Never clones input nodes or
@@ -54,6 +70,7 @@ export function mountGenerator({ id, title, panels, actions, summaries = {}, onE
     const utility = node('div', 'action-dock__slot action-dock__slot--utility');
     dock.append(utility, primary); document.body.append(dock);
     for (const action of actions) {
+        if (action.group === 'keyboard') continue;
         const button = document.getElementById(action.button);
         if (!button) throw new Error(`${id}: missing action ${action.button}`);
         button.removeAttribute('style');
@@ -69,9 +86,8 @@ export function mountGenerator({ id, title, panels, actions, summaries = {}, onE
         panel.id = config.id || `${id}-panel-${index}`;
         const header = node('div', 'panel-header'); header.id = `${panel.id}-header`;
         header.append(node('span', '', config.title));
-        const collapse = node('button', 'collapse-icon', '⌄');
-        collapse.type = 'button'; collapse.setAttribute('aria-label', 'Collapse panel');
-        collapse.setAttribute('aria-expanded', 'true'); header.append(collapse);
+        const collapse = createCollapseButton();
+        header.append(collapse);
         const content = node('div', 'panel-content');
         const section = node('div', 'control-section generator-controls');
         for (const selector of config.selectors) {

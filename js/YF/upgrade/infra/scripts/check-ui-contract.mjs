@@ -41,16 +41,17 @@ assert.match(contractCss, /\.ui-shortcut-help__list[\s\S]*?gap:\s*9px 18px/u);
 assert.match(contractCss, /\.controls-panel > \.panel-content::-webkit-scrollbar-thumb[\s\S]*?background:\s*#000/u);
 assert.match(contractCss, /\.controls-panel \.pill-toggle:has\(input:checked:not\(:disabled\)\)[\s\S]*?background:\s*var\(--ui-foreground\)\s*!important/u);
 assert.match(contractCss, /\.controls-panel \.opentype-features-label[\s\S]*?font-size:\s*0\.8rem\s*!important/u);
-assert.match(contractCss, /\.controls-panel \.feature-chip > span[\s\S]*?min-height:\s*24px[\s\S]*?padding:\s*4px 10px\s*!important[\s\S]*?font-weight:\s*500\s*!important/u);
+assert.match(contractCss, /\.controls-panel \.feature-chip > span[\s\S]*?min-height:\s*24px[\s\S]*?padding:\s*4px 10px\s*!important[\s\S]*?font-weight:\s*400\s*!important/u);
 assert.match(contractCss, /\.controls-panel \.feature-chip input:checked \+ span[\s\S]*?background:\s*var\(--ui-foreground\)\s*!important/u);
 assert.match(contractCss, /button:is\(\.color-dot, \.color-preview\)[\s\S]*?width:\s*30px\s*!important[\s\S]*?padding:\s*6px\s*!important[\s\S]*?background-clip:\s*content-box\s*!important/u);
 assert.doesNotMatch(contractCss, /\b(?:600|700|800|900|bold)\b/u);
 assert.doesNotMatch(contractCss, /Arial|TT Commons|CoFo Sans/u);
+assert.match(contractCss, /\.btn-export-pdf,[\s\S]*?font-weight:\s*400\s*!important/u, 'Dark PDF export must use regular weight');
 
 entrypoints.forEach((html, index) => {
     const app = applications[index];
-    const version = app === 'dither' ? 'uiq-4' : 'uiq-2';
-    const controllerVersion = app === 'pulsar_coder' ? 'uiq-3' : version;
+    const version = 'uiq-5';
+    const controllerVersion = app === 'pulsar_coder' ? 'uiq-3' : app === 'dither' ? 'uiq-4' : 'uiq-2';
     assert.ok(html.includes(`infra/framework/css/ui-contract.css?v=${version}`), `${app}: missing final UI CSS`);
     assert.ok(html.includes(`infra/framework/src/ui/unifiedUiAutoInit.js?v=${controllerVersion}`), `${app}: missing shared UI controller`);
     if (app !== 'grid_generator') {

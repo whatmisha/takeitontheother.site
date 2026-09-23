@@ -15,6 +15,10 @@
 
 ## Общий механизм
 
+Текущая UI-доработка 2026-09-23: английские интерфейсы всех 16 инструментов, подписи хоткеев только у основного экспорта, вес 400 у тёмных кнопок, удаление двух заголовков Pulsar и кнопок истории Pattern 02 с сохранением undo/redo. Общие версии теперь CSS `uiq-5`, GeneratorHost `v=6`, входы новых инструментов `integration-8`. Пройдено 692 Node tests и браузерный проход всех 16 инструментов. Подробности и границы проверки — [UI policy](UI_POLICY_2026_09_23.md). Эти UI-правки не опубликованы.
+
+После INT-08, 2026-09-23: исправлена стрелка сворачивания GeneratorHost. Вместо шрифтового символа используется тот же SVG 10×6 / `M1 1L6 6L11 1`, что в Sparky и Wordplayer. Исправлены также Canvas demo и шаблон новых инструментов UI Garage. Все восемь новых приложений подключают host `v=5` через входы `integration-7`. Проверены 14 стрелок в браузере, сворачивание Asterisk до 300×47 и раскрытие с клавиатуры; добавлены два framework-теста и один portable-template тест. Прошли framework (101), migration-foundation (141), portable visual (4), portable manifest/verify, isolation и originals check. Накопленное основное покрытие — 688 Node tests; полный tier1/tier2 последний раз выполнялся в INT-08. Эта UI-правка ещё не закоммичена и не опубликована.
+
 `infra/framework/src/ui/GeneratorHost.js` — opt-in adapter поверх существующих ToolUiController, PanelManager, UnifiedColorPicker и FileIntakeController. Старые восемь приложений его не подключают.
 
 - Настоящие input/select/button перемещаются в общие панели, а не клонируются. Сохраняются их ID, диапазоны, частные обработчики и история.

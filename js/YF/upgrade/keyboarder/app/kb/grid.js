@@ -61,17 +61,17 @@ export function layoutRow(items, block, grid, y) {
 
     const flexCount = widths.filter((w) => w === null).length;
     if (flexCount > 1) {
-        throw new Error(`layoutRow: в ряду блока "${block.id}" ${flexCount} flex-клавиш, допустима одна`);
+        throw new Error(`layoutRow: block "${block.id}" has ${flexCount} flex keys in one row; only one is allowed`);
     }
     if (flexCount === 1) {
         if (block.width == null) {
-            throw new Error(`layoutRow: flex требует width у блока "${block.id}"`);
+            throw new Error(`layoutRow: flex requires a width for block "${block.id}"`);
         }
         const fixed = widths.reduce((s, w) => s + (w || 0), 0);
         const gaps = (list.length - 1) * gap;
         const rest = block.width - fixed - gaps;
         if (rest <= 0) {
-            throw new Error(`layoutRow: ряд блока "${block.id}" не вмещается, flex получил ${rest.toFixed(3)}`);
+            throw new Error(`layoutRow: block "${block.id}" row does not fit; flex width is ${rest.toFixed(3)}`);
         }
         widths[widths.indexOf(null)] = rest;
     }
@@ -136,7 +136,7 @@ export function buildLayout(layout, gridOverride) {
         for (const [blockId, items] of Object.entries(row)) {
             if (blockId.startsWith('__') || !Array.isArray(items)) continue;
             const block = blocks.get(blockId);
-            if (!block) throw new Error(`buildLayout: неизвестный блок "${blockId}" в ряду ${r}`);
+            if (!block) throw new Error(`buildLayout: unknown block "${blockId}" in row ${r}`);
             for (const k of layoutRow(items, block, grid, y)) {
                 keys.push({ ...k, row: r, sourceRow, i: keys.length });
             }

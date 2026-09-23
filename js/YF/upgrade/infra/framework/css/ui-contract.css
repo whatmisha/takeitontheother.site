@@ -18,7 +18,7 @@ body,
     box-sizing: border-box;
 }
 
-:where(.top-link, .mode-nav-button, .preset-dropdown-toggle, .zoom-indicator, .btn-fixed, .btn-primary, .btn-secondary),
+:where(.top-link, .btn-fixed, .btn-primary),
 .panel-header > span:first-child,
 .control-section > h3:not(.control-field-heading),
 .modal h2,
@@ -37,6 +37,7 @@ body,
 .mode-nav-back:hover {
     background: #000 !important;
     color: var(--ui-foreground) !important;
+    font-weight: 400 !important;
 }
 
 .control-group > label,
@@ -86,7 +87,7 @@ body,
     background: #000;
     color: var(--ui-foreground);
     font-size: 1rem;
-    font-weight: 500 !important;
+    font-weight: 400 !important;
     line-height: normal;
     cursor: pointer;
     transition: background-color 140ms ease, color 140ms ease;
@@ -257,7 +258,7 @@ body,
     padding: 4px 10px !important;
     color: var(--ui-foreground) !important;
     font-size: 0.8rem !important;
-    font-weight: 500 !important;
+    font-weight: 400 !important;
     line-height: 1 !important;
 }
 
@@ -344,6 +345,18 @@ body,
     border: 0;
     font-size: 1rem;
     font-weight: 500 !important;
+}
+
+/* Dark actions stay regular in every dark state, including primary hover/disabled.
+ * Keep this semantic: never inspect artwork colors or rewrite styles from JS. */
+:is(.action-dock, .controls-panel, .modal, .modal-overlay, .top-links, .preset-toolbar) :is(
+    .btn-secondary, .btn-close, .btn-add-object, .panel-action,
+    .preset-dropdown-toggle, .preset-toolbar-save-btn, .preset-toolbar-share-btn,
+    .btn-fixed--muted, .btn-intro-help, .btn-export-settings, .btn-import-settings, .btn-export-pdf,
+    [data-action-dock-extra], [data-shortcut-help-button], .zoom-indicator
+),
+:is(.action-dock, .controls-panel, .modal, .modal-overlay) :is(.btn-fixed, .btn-primary, .btn-apply):is(:hover, :disabled) {
+    font-weight: 400 !important;
 }
 
 .ui-shortcut-help {

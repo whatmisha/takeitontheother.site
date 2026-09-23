@@ -1,6 +1,6 @@
 import { buildRaysScene } from './engine/scene.js?layout=root-infra-1';
 import { paintRaysScene, raysSvgElement } from './engine/renderers.js';
-import { mountGenerator, connectFileInput } from '../infra/framework/src/ui/GeneratorHost.js?v=4';
+import { mountGenerator, connectFileInput } from '../infra/framework/src/ui/GeneratorHost.js?v=6';
 
 document.addEventListener('DOMContentLoaded', function() {
     const canvas = document.getElementById('patternCanvas');

@@ -1,5 +1,5 @@
 import { createCalendarScene } from './scene.js?v=2';
-import { bindPageLifecycle } from '../infra/framework/src/ui/GeneratorHost.js?v=4';
+import { bindPageLifecycle } from '../infra/framework/src/ui/GeneratorHost.js?v=6';
 
 document.addEventListener('DOMContentLoaded', function() {
     let calendarEvents = null;
@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Проверяем успешность запроса
             if (!data.success) {
-                throw new Error(data.error || 'Неизвестная ошибка');
+                throw new Error(data.error || 'Unknown error');
             }
             
             const files = data.files || [];
@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (files.length === 0) {
                 const option = document.createElement('option');
                 option.value = '';
-                option.textContent = 'Файлы SVG не найдены';
+                option.textContent = 'No SVG files found';
                 svgSelector.appendChild(option);
             } else {
                 // Добавляем опции для каждого файла
@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Ошибка при загрузке списка файлов:', error);
             const option = document.createElement('option');
             option.value = '';
-            option.textContent = 'Ошибка загрузки списка';
+            option.textContent = 'Could not load templates';
             svgSelector.innerHTML = '';
             svgSelector.appendChild(option);
             
@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded', function() {
         calendarEvents?.abort();
         console.log('Загрузка SVG:', svgPath);
         const svgContainer = document.getElementById('svg-container');
-        svgContainer.innerHTML = '<div class="loading">Загрузка SVG...</div>';
+        svgContainer.innerHTML = '<div class="loading">Loading SVG…</div>';
         
         // Добавляем случайный параметр для предотвращения кеширования
         const noCachePath = svgPath + '?v=' + new Date().getTime();
@@ -134,8 +134,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Если не удалось загрузить SVG, показываем сообщение
                     svgContainer.innerHTML = `
                     <div style="padding: 20px; background-color: #f8d7da; color: #721c24; border-radius: 5px;">
-                        <p style="font-size: 18px;">Не удалось загрузить SVG файл.</p>
-                        <p>Ошибка: ${xhr.statusText || 'Файл не найден'}</p>
+                        <p style="font-size: 18px;">Could not load the SVG file.</p>
+                        <p>Error: ${xhr.statusText || 'File not found'}</p>
                     </div>`;
                 }
             }
@@ -350,7 +350,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const svgElement = document.querySelector('#svg-container > svg');
                 if (!svgElement) {
                     console.error('SVG элемент не найден');
-                    alert('Ошибка: SVG элемент не найден');
+                    alert('Error: SVG element not found');
                     throw new Error('No calendar template loaded');
                 }
                 
@@ -383,13 +383,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log('SVG экспортирован успешно');
             } catch (error) {
                 console.error('Ошибка при экспорте SVG:', error);
-                alert('Произошла ошибка при экспорте: ' + error.message);
+                alert('Export failed: ' + error.message);
                 throw error;
             }
         }
         
         // Привязываем обработчик события к кнопке экспорта
-        import('../infra/framework/src/ui/GeneratorHost.js?v=4').then(({ mountGenerator }) => {
+        import('../infra/framework/src/ui/GeneratorHost.js?v=6').then(({ mountGenerator }) => {
             if (lifecycle.signal.aborted) return;
             mountGenerator({
                 id: 'calendar-randomizer', title: 'Calendar Randomizer',

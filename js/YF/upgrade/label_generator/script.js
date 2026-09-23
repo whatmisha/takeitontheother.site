@@ -1754,10 +1754,10 @@ class GridGenerator {
             console.log(`✅ Preset "${this.currentPresetName}" loaded successfully`);
         } catch (error) {
             console.error('Ошибка при загрузке пресета:', error);
-            const errorMessage = error.message || 'Неизвестная ошибка';
+            const errorMessage = error.message || 'Unknown error';
             await this.feedbackDialogHost.alert({
-                title: 'Ошибка загрузки пресета',
-                text: `Не удалось загрузить пресет "${filename}": ${errorMessage}`
+                title: 'Preset loading failed',
+                text: `Could not load preset "${filename}": ${errorMessage}`
             });
             throw error; // Пробрасываем ошибку дальше для обработки на верхнем уровне
         }
@@ -9308,8 +9308,8 @@ class GridGenerator {
         } catch (error) {
             console.error('Ошибка при экспорте SVG:', error);
             await this.feedbackDialogHost.alert({
-                title: 'Ошибка экспорта SVG',
-                text: `Не удалось экспортировать SVG: ${error.message || 'Неизвестная ошибка'}`
+                title: 'SVG export failed',
+                text: `Could not export SVG: ${error.message || 'Unknown error'}`
             });
             throw error;
         }
@@ -9359,8 +9359,8 @@ class GridGenerator {
         } catch (error) {
             console.error('Ошибка при экспорте PDF:', error);
             await this.feedbackDialogHost.alert({
-                title: 'Ошибка экспорта PDF',
-                text: `Не удалось экспортировать PDF: ${error.message || 'Неизвестная ошибка'}`
+                title: 'PDF export failed',
+                text: `Could not export PDF: ${error.message || 'Unknown error'}`
             });
             throw error;
         }
@@ -9373,8 +9373,8 @@ class GridGenerator {
         } catch (error) {
             console.error('Ошибка при экспорте текущего лейбла SVG:', error);
             await this.feedbackDialogHost.alert({
-                title: 'Ошибка экспорта SVG',
-                text: `Не удалось экспортировать SVG: ${error.message || 'Неизвестная ошибка'}`
+                title: 'SVG export failed',
+                text: `Could not export SVG: ${error.message || 'Unknown error'}`
             });
             throw error;
         }
@@ -9471,7 +9471,7 @@ class GridGenerator {
             this.showDataStatus(`Successfully exported ${this.loadedTableData.length} SVG file(s)`, 'success');
         } catch (error) {
             console.error('Ошибка при экспорте всех SVG:', error);
-            this.showDataStatus(`Error: ${error.message || 'Неизвестная ошибка'}`, 'error');
+            this.showDataStatus(`Error: ${error.message || 'Unknown error'}`, 'error');
         } finally {
             // Включаем кнопку обратно
             this.dom.exportAllSvgBtn.disabled = false;
@@ -9542,7 +9542,7 @@ class GridGenerator {
             return exportSvg;
         } catch (error) {
             console.error('Ошибка при создании SVG для экспорта:', error);
-            throw new Error(`Не удалось создать SVG для экспорта: ${error.message || 'Неизвестная ошибка'}`);
+            throw new Error(`Could not create SVG for export: ${error.message || 'Unknown error'}`);
         }
     }
     
@@ -9630,8 +9630,8 @@ class GridGenerator {
         } catch (error) {
             console.error('❌ Failed to import settings:', error);
             await this.feedbackDialogHost.alert({
-                title: 'Ошибка импорта настроек',
-                text: 'Ошибка при импорте настроек: ' + error.message
+                title: 'Settings import failed',
+                text: 'Could not import settings: ' + error.message
             });
             throw error;
         }
@@ -9675,7 +9675,7 @@ class GridGenerator {
         const match = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
         
         if (!match) {
-            throw new Error('Неверный формат URL Google Sheets');
+            throw new Error('Invalid Google Sheets URL');
         }
         
         const sheetId = match[1];
@@ -9794,7 +9794,7 @@ class GridGenerator {
             const response = await fetch(csvUrl);
             
             if (!response.ok) {
-                throw new Error(`Ошибка загрузки: ${response.status} ${response.statusText}`);
+                throw new Error(`Loading failed: ${response.status} ${response.statusText}`);
             }
 
             const csvText = await response.text();
@@ -10448,7 +10448,7 @@ class GridGenerator {
         }
 
         if (!rows || rows.length === 0) {
-            this.dom.dataPreview.innerHTML = '<p>Нет данных</p>';
+            this.dom.dataPreview.innerHTML = '<p>No data</p>';
             return;
         }
 
@@ -10459,12 +10459,12 @@ class GridGenerator {
         const maxRows = Math.min(5, rows.length);
         for (let rowIndex = 0; rowIndex < maxRows; rowIndex++) {
             const row = rows[rowIndex];
-            html += `<div style="margin-bottom: 8px;"><strong>Строка ${rowIndex + 1}:</strong></div>`;
+            html += `<div style="margin-bottom: 8px;"><strong>Row ${rowIndex + 1}:</strong></div>`;
             
             row.forEach((value, colIndex) => {
                 if (colIndex < columns.length) {
                     html += `<div style="margin-left: 16px; font-family: monospace; font-size: 0.85rem;">
-                        <strong>${columns[colIndex]}:</strong> ${value || '(пусто)'}
+                        <strong>${columns[colIndex]}:</strong> ${value || '(empty)'}
                     </div>`;
                 }
             });
@@ -10472,7 +10472,7 @@ class GridGenerator {
 
         if (rows.length > maxRows) {
             html += `<div style="margin-top: 8px; color: #888; font-size: 0.85rem;">
-                ... и еще ${rows.length - maxRows} строк(и)
+                ... and ${rows.length - maxRows} more rows
             </div>`;
         }
 

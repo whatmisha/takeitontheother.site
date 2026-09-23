@@ -85,13 +85,13 @@ function setup() {
   setupHTMLControls();
   
   // Добавляем обработчик клавиатуры для хоткеев
-  import('../infra/framework/src/ui/GeneratorHost.js?v=4').then(({ mountGenerator }) => mountGenerator({
+  import('../infra/framework/src/ui/GeneratorHost.js?v=6').then(({ mountGenerator }) => mountGenerator({
     id: 'pattern_generator_02', title: 'Pattern 02',
     panels: [{ title: 'Pattern', selectors: ['#patternControls'], summary: () => `${squareSize} · ${cornerRadiusPercent}% · ${lineLengthPercent}%` }],
     actions: [
       { id: 'svg', button: 'export-button', label: 'SVG', kind: 'export', group: 'primary', shortcut: 'mod+e', run: exportSVG },
-      { id: 'undo', button: 'undoButton', label: 'Undo', kind: 'command', group: 'panel', shortcut: 'mod+z', run: undoLastChange },
-      { id: 'redo', button: 'redoButton', label: 'Redo', kind: 'command', group: 'panel', shortcut: 'mod+shift+z', run: redoLastChange }
+      { id: 'undo', label: 'Undo', kind: 'command', group: 'keyboard', shortcut: 'mod+z', run: undoLastChange },
+      { id: 'redo', label: 'Redo', kind: 'command', group: 'keyboard', shortcut: 'mod+shift+z', run: redoLastChange }
     ]
   })).catch(console.error);
   

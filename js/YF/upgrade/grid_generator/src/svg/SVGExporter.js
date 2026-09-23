@@ -1,5 +1,5 @@
 import { BrowserFileTransfer } from './BrowserFileTransfer.js';
-import { PDFExporter } from './PDFExporter.js';
+import { PDFExporter } from './PDFExporter.js?v=ui-en-1&layout=root-infra-1';
 import { PresetFileCodec } from './PresetFileCodec.js';
 
 /** Coordinates SVG, PDF and JSON file export/import. */

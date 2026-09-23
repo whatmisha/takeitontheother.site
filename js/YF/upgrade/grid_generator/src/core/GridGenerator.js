@@ -39,7 +39,7 @@ import { TextBlockRenderer } from '../elements/TextBlockRenderer.js';
 import { TextLayout } from '../elements/TextLayout.js';
 import { TextStyleResolver } from '../elements/TextStyleResolver.js';
 import { ObjectEditorPanelController } from '../elements/ObjectEditorPanelController.js';
-import { ObjectEditorInputController } from '../elements/ObjectEditorInputController.js';
+import { ObjectEditorInputController } from '../elements/ObjectEditorInputController.js?v=ui-en-1&layout=root-infra-1';
 import { TextEditorPositionController } from '../elements/TextEditorPositionController.js';
 import { LunnenDisplayEditorController } from '../elements/LunnenDisplayEditorController.js';
 import { GraphicsEditorInputController } from '../elements/GraphicsEditorInputController.js';
@@ -51,7 +51,7 @@ import { ObjectPlacementController } from '../elements/ObjectPlacementController
 import { GraphicsAssetController } from '../elements/GraphicsAssetController.js';
 import { BuiltInGraphicsController } from '../elements/BuiltInGraphicsController.js';
 
-import { SVGExporter } from '../svg/SVGExporter.js';
+import { SVGExporter } from '../svg/SVGExporter.js?v=ui-en-1&layout=root-infra-1';
 import { ExportController } from '../svg/ExportController.js';
 import { ExportDocumentBuilder } from '../svg/ExportDocumentBuilder.js';
 import { SvgSanitizer } from '../svg/SvgSanitizer.js';

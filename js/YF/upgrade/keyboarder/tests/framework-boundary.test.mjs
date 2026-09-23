@@ -20,7 +20,7 @@ assert.match(toolSource, /readyApp\.exporter\s*=\s*new SVGExporter/, 'Keyboarder
 assert.match(toolSource, /installPdfExport\(readyApp\)/, 'editable PDF integration changed');
 assert.match(toolSource, /installCleanExports\(readyApp\)/, 'clean export wrapper changed');
 assert.match(toolSource, /readyApp\.exportFeedback = bindKeyboarderExportActions/u);
-assert.match(htmlSource, /app\/tool\.js\?v=uiq-3/u);
+assert.match(htmlSource, /app\/tool\.js\?v=uiq-4/u);
 for (const id of ['exportSvgBtn', 'exportPngBtn', 'exportPdfBtn', 'exportJsonBtn']) {
     assert.match(htmlSource, new RegExp(`id="${id}"[^>]*data-export-feedback="explicit"[^>]*aria-describedby="${id}Status"`));
     assert.match(htmlSource, new RegExp(`id="${id}Status"[^>]*role="status"[^>]*aria-live="polite"`));
@@ -50,7 +50,7 @@ assert.match(
     'Keyboarder must keep document utilities, primary exports and Outline in their ActionDock slots'
 );
 assert.doesNotMatch(themeSource, /CoFoSans-(?:Regular|Medium)\.woff2/u, 'Keyboarder UI must use the shared system stack');
-assert.match(htmlSource, /framework\/css\/ui-contract\.css\?v=uiq-2/u, 'Keyboarder must load the shared system-font UI contract');
+assert.match(htmlSource, /framework\/css\/ui-contract\.css\?v=uiq-5/u, 'Keyboarder must load the shared system-font UI contract');
 assert.match(themeSource, /\.\.\/fonts\/YS%20Text%20Variable\/YSText-Upright-weight-VF\.ttf/, 'application YS Text font changed');
 assert.match(typographySource, /\.\.\/\.\.\/vendor\/lib\/opentype\.module\.js/, 'Keyboarder typography dependency changed');
 assert.match(

@@ -171,8 +171,8 @@
     },
     {
       "path": "scripts/create-tool.mjs",
-      "bytes": 10695,
-      "sha256": "5231aa314c3d5d5d82d39fefbbb7c4cb2c25c7c016e3f3f680e0780422476dfa"
+      "bytes": 10990,
+      "sha256": "8b61364d1f6bae115ca2a2eb71d127a3df0bfd504c272333d23b6ad22fb13337"
     },
     {
       "path": "scripts/verify-portable.mjs",
@@ -696,8 +696,8 @@
     },
     {
       "path": "tests/visual-style-source.test.mjs",
-      "bytes": 2980,
-      "sha256": "37d10893284d988e87edf48fcf49fb0808aff0e35dbf9908c68680b1bb0a5317"
+      "bytes": 3585,
+      "sha256": "dda16365c91aeeccc5420f82da069fdbae9233b48e464bb93b6694c192ddcf3b"
     },
     {
       "path": "vendor/README.md",

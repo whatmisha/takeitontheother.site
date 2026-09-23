@@ -26,6 +26,15 @@ test('portable surfaces use the canonical vector chrome icons', async () => {
     }
 });
 
+test('new-tool scaffolds never reintroduce the font-dependent collapse glyph', async () => {
+    const script = await readFile(path.join(root, 'scripts/create-tool.mjs'), 'utf8');
+    assert.doesNotMatch(script, /\u2304/u);
+    const button = script.match(/<button class="collapse-icon"[\s\S]*?<\/button>/u)?.[0];
+    assert.ok(button);
+    assert.match(button, /<svg width="10" height="6" viewBox="0 0 12 8" fill="none" aria-hidden="true" focusable="false">/u);
+    assert.match(button, /d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1\.5" stroke-linecap="round" stroke-linejoin="round"/u);
+});
+
 test('portable CSS gives icon, file-intake and ActionDock visuals complete defaults', async () => {
     const css = await readFile(path.join(root, 'css/framework.css'), 'utf8');
     assert.match(css, /\.preset-dropdown-arrow\s*\{[^}]*display:\s*block/isu);

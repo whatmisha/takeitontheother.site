@@ -559,7 +559,7 @@ function setupInterface() {
     }
   });
   Promise.all([
-    import('../infra/framework/src/ui/GeneratorHost.js?v=4'),
+    import('../infra/framework/src/ui/GeneratorHost.js?v=6'),
     import('./capture-session.js?v=2')
   ]).then(([{ mountGenerator }, { CaptureSession }]) => {
     const phaseLabels = {
@@ -627,7 +627,7 @@ async function exportChladniPNG() {
     
     // Save image
     try {
-      const { downloadCanvas } = await import('../infra/framework/src/ui/GeneratorHost.js?v=4');
+      const { downloadCanvas } = await import('../infra/framework/src/ui/GeneratorHost.js?v=6');
       await downloadCanvas(tempCanvas.canvas, 'chladni_pattern.png');
     } finally { tempCanvas.remove(); }
 }

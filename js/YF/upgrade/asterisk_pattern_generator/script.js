@@ -101,7 +101,7 @@ function init() {
         drawPattern();
     });
 
-    import('../infra/framework/src/ui/GeneratorHost.js?v=4').then(({ mountGenerator }) => mountGenerator({
+    import('../infra/framework/src/ui/GeneratorHost.js?v=6').then(({ mountGenerator }) => mountGenerator({
         id: 'asterisk_pattern_generator', title: 'Asterisk Pattern',
         panels: [{ title: 'Pattern', selectors: ['.sliders-row', '.checkboxes-row'], summary: () => `${params.duplicateLayers} layers · 1:${getScaleFactor()}` }],
         actions: [{ id: 'svg', button: 'exportSVG', label: 'SVG', kind: 'export', group: 'primary', shortcut: 'mod+e', run: exportToSVG }],

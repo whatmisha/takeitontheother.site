@@ -164,7 +164,7 @@ test('Calendar cancels stale template loads, rebinds once and retains original s
         }
     });
     const source = (await read('calendar-randomizer/script.js')).replace(/^import .*;\n/gm, '')
-        .replace("import('../infra/framework/src/ui/GeneratorHost.js?v=4')", 'Promise.resolve({mountGenerator:testMount})');
+        .replace("import('../infra/framework/src/ui/GeneratorHost.js?v=6')", 'Promise.resolve({mountGenerator:testMount})');
     vm.runInContext(source, context); start(); await Promise.resolve();
     for (let i=0;i<20;i++) {
         element('svgSelector').value = `source/calend_0${i%4+1}.svg`;

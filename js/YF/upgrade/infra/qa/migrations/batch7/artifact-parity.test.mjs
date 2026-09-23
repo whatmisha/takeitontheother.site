@@ -142,7 +142,7 @@ test('Chladni recorded numeric FFT fixtures preserve mode/smoothing/threshold ma
 test('Chladni PNG uses last rendered threshold and waits for encoding before disposal', async () => {
     let finish, removed = false, rendered;
     const surface = { canvas: {}, pixelDensity() {}, remove() { removed = true; } };
-    const source = (await read('chladni-sound-pattern/sketch.js')).replaceAll("import('../infra/framework/src/ui/GeneratorHost.js?v=4')", 'Promise.resolve({downloadCanvas:testDownloadCanvas})');
+    const source = (await read('chladni-sound-pattern/sketch.js')).replaceAll("import('../infra/framework/src/ui/GeneratorHost.js?v=6')", 'Promise.resolve({downloadCanvas:testDownloadCanvas})');
     const context = vm.createContext({ width: 600, height: 600,
         createGraphics(w,h) { assert.equal(w,1200); assert.equal(h,1200); return surface; },
         testDownloadCanvas: () => new Promise(resolve => { finish = resolve; }),

@@ -33,19 +33,19 @@ export class PDFExporter {
                 })
                 .catch(error => {
                     this.loadingPromise = null;
-                    throw new Error(`Не удалось загрузить PDF-библиотеки: ${error.message}`);
+                    throw new Error(`Could not load PDF libraries: ${error.message}`);
                 });
             await this.loadingPromise;
         }
         if (!this.jsPDF || !this.svg2pdf) {
-            throw new Error('Не удалось инициализировать библиотеки PDF-экспорта');
+            throw new Error('Could not initialize PDF export libraries');
         }
         this.libsLoaded = true;
     }
 
     async export(svgElement, filename = 'grid.pdf', options = {}) {
         if (!this.textToPath) {
-            throw new Error('TextToPath не доступен. Конвертация текста в кривые обязательна для PDF экспорта.');
+            throw new Error('TextToPath is unavailable. PDF export requires text outlines.');
         }
         await this.loadLibraries();
         const svg = svgElement.cloneNode(true);
@@ -53,7 +53,7 @@ export class PDFExporter {
         try {
             await this.textToPath.convertAllTextToPaths(svg);
         } catch (error) {
-            throw new Error(`Не удалось конвертировать текст в кривые. Убедитесь, что шрифты доступны. ${error.message}`);
+            throw new Error(`Could not outline text. Make sure the fonts are available. ${error.message}`);
         }
 
         const svgWidth = Number.parseFloat(svg.getAttribute('width')) || Number.parseFloat(svg.viewBox.baseVal.width);
@@ -73,7 +73,7 @@ export class PDFExporter {
             await this.svg2pdf(svg, pdf, { xOffset: 0, yOffset: 0, width: pageWidth, height: pageHeight });
             pdf.save(filename);
         } catch (error) {
-            throw new Error(`Ошибка при экспорте PDF: ${error.message}`);
+            throw new Error(`PDF export failed: ${error.message}`);
         }
     }
 }

@@ -53,7 +53,7 @@ function setup() {
   setupSliderEvents();
   
   // Добавление обработчика клавиш
-  import('../infra/framework/src/ui/GeneratorHost.js?v=4').then(({ mountGenerator }) => mountGenerator({
+  import('../infra/framework/src/ui/GeneratorHost.js?v=6').then(({ mountGenerator }) => mountGenerator({
     id: 'hyperspace', title: 'Hyperspace',
     panels: [{ title: 'Animation', selectors: ['.controls'], summary: () => `${lineCount} · ${speed}×${isPaused ? ' · Paused' : ''}` }],
     actions: [
@@ -83,7 +83,7 @@ function draw() {
     fill(255);
     textSize(16);
     textAlign(LEFT, CENTER);
-    text("ПАУЗА", 20, height - 25);
+    text("PAUSED", 20, height - 25);
   }
   
   // Отображение точки схода (для отладки)
@@ -548,7 +548,7 @@ async function exportCanvas() {
   
   // Сохраняем изображение
   try {
-    const { downloadCanvas } = await import('../infra/framework/src/ui/GeneratorHost.js?v=4');
+    const { downloadCanvas } = await import('../infra/framework/src/ui/GeneratorHost.js?v=6');
     await downloadCanvas(tempCanvas.canvas, filename);
   } finally { tempCanvas.remove(); }
 }

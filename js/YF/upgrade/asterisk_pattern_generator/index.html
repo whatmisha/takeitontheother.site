@@ -1,14 +1,14 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <script src="../infra/qa/ui-audit/runtime-probe.js?v=2"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Генератор паттерна</title>
+    <title>Asterisk Pattern</title>
     <link rel="icon" href="data:,">
     <link rel="stylesheet" href="../infra/framework/css/othersite-styles.css">
     <link rel="stylesheet" href="../infra/framework/css/generator-host.css?v=3">
-    <link rel="stylesheet" href="../infra/framework/css/ui-contract.css">
+    <link rel="stylesheet" href="../infra/framework/css/ui-contract.css?v=uiq-5">
 </head>
 <body>
     <a class="upgrade-migration-preview" href="../" aria-label="Upgrade Tools — return to main page">← Upgrade Tools <span>Migration preview</span></a>
@@ -18,22 +18,22 @@
     <div class="controls">
         <div class="sliders-row">
             <div class="control-group">
-                <label for="lineThickness">Толщина линии:</label>
+                <label for="lineThickness">Line width</label>
                 <input type="range" id="lineThickness" min="1" max="100" step="1" value="50">
                 <span id="lineThicknessValue">50px</span>
             </div>
             <div class="control-group">
-                <label for="cornerRadius">Радиус скругления угла:</label>
+                <label for="cornerRadius">Corner radius</label>
                 <input type="range" id="cornerRadius" min="0" max="360" step="1" value="120">
                 <span id="cornerRadiusValue">120px</span>
             </div>
             <div class="control-group">
-                <label for="duplicateLayers">Количество слоев дубликатов:</label>
+                <label for="duplicateLayers">Duplicate layers</label>
                 <input type="range" id="duplicateLayers" min="0" max="100" step="1" value="0">
                 <span id="duplicateLayersValue">0</span>
             </div>
             <div class="control-group">
-                <label for="scaleDown">Масштаб:</label>
+                <label for="scaleDown">Scale</label>
                 <input type="range" id="scaleDown" min="0" max="7" step="1" value="0">
                 <span id="scaleDownValue">1:1</span>
             </div>
@@ -41,19 +41,19 @@
         <div class="checkboxes-row">
             <div class="control-group">
                 <input type="checkbox" id="roundedCaps">
-                <label for="roundedCaps">Скругленные окончания</label>
+                <label for="roundedCaps">Round caps</label>
             </div>
             <div class="control-group">
                 <input type="checkbox" id="tessellationMode" checked>
-                <label for="tessellationMode">Режим теселяции</label>
+                <label for="tessellationMode">Tessellation</label>
             </div>
             <div class="control-group">
                 <input type="checkbox" id="showGrid" checked>
-                <label for="showGrid">Показывать модульную сетку</label>
+                <label for="showGrid">Show grid</label>
             </div>
-            <button id="exportSVG">Экспорт в SVG (⌘E)</button>
+            <button id="exportSVG">SVG ⌘E</button>
         </div>
     </div>
-    <script src="script.js?v=integration-4&layout=root-infra-1"></script>
+    <script src="script.js?v=integration-8&layout=root-infra-1"></script>
 </body>
 </html> 

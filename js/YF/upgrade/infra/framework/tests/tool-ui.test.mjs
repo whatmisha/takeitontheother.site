@@ -67,6 +67,40 @@ test('commands named generate/export never acquire export feedback', async () =>
     h.ui.destroy();
 });
 
+test('only the primary export prints its shortcut; all commands remain in help', () => {
+    const h = harness();
+    assert.equal(h.buttons.get('png').textContent, 'PNG ⌘E');
+    assert.equal(h.buttons.get('json').textContent, 'JSON');
+    assert.equal(h.buttons.get('generateExport').textContent, 'Generate');
+    assert.deepEqual(h.ui.shortcutRows(), [['PNG', '⌘E'], ['JSON', '⌘J'], ['Generate', 'Space'], ['JSON actions', 'J']]);
+    h.ui.refresh();
+    assert.equal(h.buttons.get('json').textContent, 'JSON');
+    h.ui.destroy();
+});
+
+test('keyboard-only undo/redo needs no buttons and keeps typing guards and lifecycle', async () => {
+    const h = harness(); h.ui.destroy();
+    h.options.actions.push(
+        { id: 'undo', label: 'Undo', kind: 'command', group: 'keyboard', shortcut: 'mod+z', run: () => h.calls.push('undo') },
+        { id: 'redo', label: 'Redo', kind: 'command', group: 'keyboard', shortcut: 'mod+shift+z', run: () => h.calls.push('redo') }
+    );
+    const ui = h.make().init();
+    ui.handleKeydown(h.key('z', { metaKey: true, target: { tagName: 'TEXTAREA' } }));
+    assert.deepEqual(h.calls, []);
+    ui.handleKeydown(h.key('я', { code: 'KeyZ', metaKey: true }));
+    ui.handleKeydown(h.key('z', { ctrlKey: true, shiftKey: true }));
+    await Promise.all(ui.bindings.map(binding => binding.pending));
+    assert.deepEqual(h.calls, ['undo', 'redo']);
+    assert.ok(ui.shortcutRows().some(([label, key]) => label === 'Undo' && key === '⌘Z'));
+    ui.refresh(); ui.destroy();
+    ui.handleKeydown(h.key('z', { metaKey: true }));
+    assert.deepEqual(h.calls, ['undo', 'redo']);
+    assert.equal(h.listeners.get('keydown').size, 0);
+    for (const invalid of [{ button: 'png' }, { kind: 'export' }, { shortcut: null }]) {
+        assert.throws(() => new ToolUiController({ ...h.options, actions: [{ ...h.options.actions.at(-1), ...invalid }] }), /Keyboard-only/);
+    }
+});
+
 test('Russian J reveals extras; hidden JSON direct export stays usable', async () => {
     const h = harness();
     assert.equal(h.buttons.get('json').hidden, true);

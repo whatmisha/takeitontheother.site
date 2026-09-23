@@ -1,33 +1,33 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <script src="../infra/qa/ui-audit/runtime-probe.js?v=2"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Календарь</title>
+    <title>Calendar Randomizer</title>
     <link rel="icon" href="data:,">
     <link rel="stylesheet" href="../infra/framework/css/othersite-styles.css">
     <link rel="stylesheet" href="../infra/framework/css/generator-host.css?v=3">
-    <link rel="stylesheet" href="../infra/framework/css/ui-contract.css">
+    <link rel="stylesheet" href="../infra/framework/css/ui-contract.css?v=uiq-5">
 </head>
 <body>
     <a class="upgrade-migration-preview" href="../" aria-label="Upgrade Tools — return to main page">← Upgrade Tools <span>Migration preview</span></a>
     <div class="svg-container" id="svg-container">
-        <div class="loading">Загрузка...</div>
+        <div class="loading">Loading…</div>
     </div>
     
     <div class="controls">
         <div class="control-group">
-            <span class="control-label">Файл</span>
+            <span class="control-label">Template</span>
             <select id="svgSelector" class="svg-select">
-                <option value="">Загрузка...</option>
+                <option value="">Loading…</option>
             </select>
         </div>
         
         <div class="separator"></div>
         
         <div class="control-group">
-            <span class="control-label">Цвет графики</span>
+            <span class="control-label">Artwork color</span>
             <div class="color-picker-container">
                 <input type="color" id="colorPicker" class="color-picker" value="#d2d1c9">
                 <input type="text" id="hexInput" class="hex-input" value="#D2D1C9" maxlength="7" placeholder="#D2D1C9">
@@ -35,7 +35,7 @@
         </div>
         
         <div class="control-group">
-            <span class="control-label">Цвет фона</span>
+            <span class="control-label">Background color</span>
             <div class="color-picker-container">
                 <input type="color" id="bgColorPicker" class="color-picker" value="#f7f6f2">
                 <input type="text" id="bgHexInput" class="hex-input" value="#F7F6F2" maxlength="7" placeholder="#F7F6F2">
@@ -45,7 +45,7 @@
         <div class="separator"></div>
         
         <div class="control-group">
-            <span class="control-label">Степень перемещения</span>
+            <span class="control-label">Displacement</span>
             <div class="slider-container">
                 <input type="range" min="1" max="200" value="30" class="slider" id="randomRange">
                 <span class="slider-value" id="rangeValue">30px</span>
@@ -53,7 +53,7 @@
         </div>
         
         <div class="control-group">
-            <span class="control-label">Тип анимации</span>
+            <span class="control-label">Easing</span>
             <select id="easingSelect" class="easing-select">
                 <option value="linear">Linear</option>
                 <option value="ease" selected>Ease</option>
@@ -68,7 +68,7 @@
         </div>
         
         <div class="control-group">
-            <span class="control-label">Скорость</span>
+            <span class="control-label">Duration</span>
             <div class="slider-container">
                 <input type="range" min="0.1" max="3" step="0.1" value="1.2" class="slider" id="speedRange">
                 <span class="slider-value" id="speedValue">1.2s</span>
@@ -78,15 +78,15 @@
         <div class="separator"></div>
         
         <div class="generator-actions">
-            <button id="randomize">Вжух</button>
-            <button id="reset">Сбросить</button>
-            <button id="exportSVG">Экспорт SVG</button>
+            <button id="randomize">Randomize</button>
+            <button id="reset">Reset</button>
+            <button id="exportSVG">SVG</button>
         </div>
     </div>
     
-    <div class="toggle-panel" id="togglePanel" title="Свернуть/развернуть панель"></div>
+    <div class="toggle-panel" id="togglePanel" title="Collapse / expand panel"></div>
     
     <script src="list-svgs.js"></script>
-    <script type="module" src="script.js?v=integration-6"></script>
+    <script type="module" src="script.js?v=integration-8"></script>
 </body>
 </html> 

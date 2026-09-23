@@ -15,7 +15,7 @@ import {
 } from '../../infra/framework/src/index.js?v=uiq-3';
 import { bindKeyboarderExportActions } from './export-actions.js?v=uiq-3';
 import { installKeyboarderPerf, perfEnabled, perfMarkStartup, perfNow, perfRecord, perfSince } from './perf.js';
-import { buildLayout, gapOf, widthInU } from './kb/grid.js';
+import { buildLayout, gapOf, widthInU } from './kb/grid.js?v=ui-en-1&layout=root-infra-1';
 import { attachGuides } from './kb/guides.js';
 import { LAYOUT_OPTIONS, LAYOUTS, LCAKB23 } from './kb/layouts.js';
 import { toMm, toPx } from './kb/units.js';

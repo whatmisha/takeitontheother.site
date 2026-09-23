@@ -8,7 +8,7 @@ const [html, css] = await Promise.all([
 ]);
 
 assert.match(html, /\.\.\/css\/othersite-styles\.css\?v=g6-choice-1/u);
-assert.match(html, /\.\.\/css\/ui-contract\.css\?v=uiq-4/u);
+assert.match(html, /\.\.\/css\/ui-contract\.css\?v=uiq-5/u);
 assert.ok(html.lastIndexOf('ui-contract.css') > html.lastIndexOf('./styles.css'), 'Lab must use the same final CSS layer as the applications');
 assert.match(html, /<h3 class="control-field-heading"/u);
 assert.match(html, /<div class="control-field-heading"/u);

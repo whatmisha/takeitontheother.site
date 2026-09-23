@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', function() {
     handleResize();
     
     // Инициализация горячих клавиш
-    import('../infra/framework/src/ui/GeneratorHost.js?v=4').then(({ mountGenerator }) => {
+    import('../infra/framework/src/ui/GeneratorHost.js?v=6').then(({ mountGenerator }) => {
         const groups = [...document.querySelectorAll('.tab-content .controls')];
         groups.forEach(group => {
             group.dataset.mode = group.closest('.tab-content').id.replace(/-tab$/, '');

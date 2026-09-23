@@ -2,7 +2,7 @@
 import { isAuditableState } from '../../catalog/registry.js';
 
 const $ = selector => document.querySelector(selector);
-const AUDITOR_VERSION = 'int-06';
+const AUDITOR_VERSION = 'ui-policy-1';
 const subject = $('#subject');
 const sparky = $('#sparkyReference');
 const word = $('#wordReference');
@@ -123,7 +123,7 @@ function collect() {
     for (const action of panelActions) {
         const pressed = action.getAttribute('aria-pressed') === 'true';
         results.push(pinned(`${action.hasAttribute('aria-pressed') ? 'Переключатель' : 'Кнопка'} панели ${identify(action)}`, action, {
-            fontSize: '16px', fontWeight: '500', height: '36px', borderTopWidth: '0px',
+            fontSize: '16px', fontWeight: '400', height: '36px', borderTopWidth: '0px',
             backgroundColor: pressed ? 'rgb(210, 210, 210)' : 'rgb(0, 0, 0)',
             color: pressed ? 'rgb(0, 0, 0)' : 'rgb(210, 210, 210)'
         }));
@@ -169,6 +169,16 @@ function collect() {
     const forbidden = ui.filter(element => {const s = subject.contentWindow.getComputedStyle(element); return !['400', '500'].includes(s.fontWeight) || /Arial|TT.?Commons|CoFo/i.test(s.fontFamily);});
     results.push({ name: 'Запрещённые шрифты и жирности', status: !ui.length ? 'unavailable' : forbidden.length ? 'diff' : 'match', detail: `${ui.length} видимых UI-элементов проверено на Arial, TT Commons, CoFo и жирности кроме 400/500; отклонений: ${forbidden.length}. Шрифты самой генерации исключены. Проверяется CSS-стек, не фактически выбранный системный глиф.`, differences: forbidden.map(element => ({ element: identify(element), property: 'fontFamily / fontWeight', actual: `${subject.contentWindow.getComputedStyle(element).fontFamily} / ${subject.contentWindow.getComputedStyle(element).fontWeight}`, expected: 'system / Inter / Segoe UI / Roboto; 400 или 500' })) });
     const help = doc.querySelector('[data-shortcut-help-popup]');
+    const visibleButtons = find(doc, 'button, .top-link, .mode-nav-back');
+    const darkButtons = visibleButtons.filter(element => {
+        const color = subject.contentWindow.getComputedStyle(element).backgroundColor;
+        const rgb = color.match(/^rgb\(\s*(\d+),\s*(\d+),\s*(\d+)\)$/u)?.slice(1).map(Number);
+        return rgb && Math.max(...rgb) <= 96 && Math.max(...rgb) - Math.min(...rgb) <= 18;
+    });
+    const darkWeightErrors = darkButtons.filter(element => subject.contentWindow.getComputedStyle(element).fontWeight !== '400');
+    results.push({ name: 'Тёмные кнопки — вес 400', status: darkWeightErrors.length ? 'diff' : 'match', detail: `${darkButtons.length} кнопок с непрозрачным чёрным/тёмно-серым фоном; отклонений: ${darkWeightErrors.length}. Проверено текущее состояние, не hover и скрытые меню.`, differences: darkWeightErrors.map(element => ({ element: identify(element), property: 'fontWeight', actual: subject.contentWindow.getComputedStyle(element).fontWeight, expected: '400' })) });
+    const extraShortcutLabels = visibleButtons.filter(element => (element.textContent.match(/(?:⇧)?⌘[A-Z\\]|Ctrl\+[A-Z]|\bSpace\b/gu) || []).some(key => key !== '⌘E' && key !== 'Ctrl+E'));
+    results.push({ name: 'На кнопках — только шоткат основного экспорта', status: extraShortcutLabels.length ? 'diff' : 'match', detail: 'Остальные комбинации остаются в справке «?», а не в подписях кнопок.', differences: extraShortcutLabels.map(element => ({ element: identify(element), property: 'textContent', actual: element.textContent.trim(), expected: 'Без хоткея, кроме ⌘E / Ctrl+E' })) });
     const documented = help?.textContent || '';
     const shortcuts = [...new Set(find(doc, '.action-dock button, [data-file-shortcut]').flatMap(element => element.textContent.match(/(?:⇧)?⌘[A-Z\\]/g) || []))];
     const absent = shortcuts.filter(shortcut => !documented.includes(shortcut));

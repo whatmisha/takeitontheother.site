@@ -15,9 +15,11 @@ export class ToolUiController {
         this.onError = onError;
         const ids = new Set(), shortcuts = new Set(), buttons = new Set();
         this.actions = actions.map(action => {
-            if (!action.id || ids.has(action.id) || !action.button || buttons.has(action.button) || !action.label || typeof action.run !== 'function') throw new TypeError('Each action requires a unique id/button, label and run callback.');
+            const keyboardOnly = action.group === 'keyboard';
+            if (!action.id || ids.has(action.id) || (!keyboardOnly && (!action.button || buttons.has(action.button))) || !action.label || typeof action.run !== 'function') throw new TypeError('Each action requires a unique id/button, label and run callback.');
+            if (keyboardOnly && (action.button || action.kind !== 'command' || !action.shortcut)) throw new TypeError('Keyboard-only actions require a command and shortcut, without a button.');
             if (!['command', 'import', 'export'].includes(action.kind)) throw new TypeError(`${action.id}: explicit kind is required.`);
-            if (!['panel', 'primary', 'extra'].includes(action.group)) throw new TypeError(`${action.id}: explicit group is required.`);
+            if (!['panel', 'primary', 'extra', 'keyboard'].includes(action.group)) throw new TypeError(`${action.id}: explicit group is required.`);
             if (action.enabled != null && typeof action.enabled !== 'function') throw new TypeError(`${action.id}: enabled must be a callback.`);
             if (action.group === 'primary' && action.kind !== 'export') throw new TypeError('Primary dock actions must be exports.');
             const spec = action.shortcut ? parseCommandShortcut(action.shortcut) : null;
@@ -29,7 +31,7 @@ export class ToolUiController {
                 if (spec.key === 'j' && spec.mod && (action.group !== 'extra' || spec.alt || (spec.shift ? action.kind !== 'import' : action.kind !== 'export'))) throw new TypeError('mod+j / mod+shift+j belong to JSON extras.');
                 shortcuts.add(identity);
             }
-            ids.add(action.id); buttons.add(action.button);
+            ids.add(action.id); if (action.button) buttons.add(action.button);
             return { ...action, spec };
         });
         this.bindings = [];
@@ -51,19 +53,22 @@ export class ToolUiController {
     init() {
         if (this.bound) return this;
         const resolved = this.actions.map(action => {
+            if (action.group === 'keyboard') return { action, button: null };
             const button = typeof action.button === 'string' ? this.document.getElementById(action.button) : action.button;
             if (!button) throw new Error(`${action.id}: action button not found.`);
             if (action.group !== 'panel' && !button.closest('.action-dock')) throw new Error(`${action.id}: export/extra must be in ActionDock.`);
             if (action.group === 'panel' && button.closest('.action-dock')) throw new Error(`${action.id}: source/generation actions belong in panels.`);
             return { action, button };
         });
-        if (new Set(resolved.map(item => item.button)).size !== resolved.length) throw new TypeError('Each action must resolve to a different button.');
+        const physicalButtons = resolved.map(item => item.button).filter(Boolean);
+        if (new Set(physicalButtons).size !== physicalButtons.length) throw new TypeError('Each action must resolve to a different button.');
         this.document[ownerKey]?.destroy();
         this.document[ownerKey] = this;
         this.abort = new AbortController();
         this.revision++;
         this.bound = true;
         this.bindings = resolved.map(({ action, button }) => {
+            if (!button) return { action, button: null, feedback: null, pending: null };
             const snapshot = { text: button.textContent, hidden: button.hidden, disabled: button.disabled,
                 attributes: new Map(managedAttributes.map(name => [name, button.getAttribute(name)])) };
             button.dataset.toolAction = action.id;
@@ -85,7 +90,9 @@ export class ToolUiController {
 
     refresh() {
         for (const { action, button } of this.bindings) {
-            const label = action.spec ? `${action.label} ${shortcutLabel(action.spec)}` : action.label;
+            if (!button) continue;
+            const primaryExport = action.kind === 'export' && action.group === 'primary' && action.spec?.mod && action.spec.key === 'e';
+            const label = primaryExport ? `${action.label} ${shortcutLabel(action.spec)}` : action.label;
             if (button.textContent !== label) button.textContent = label;
             if (action.enabled) button.disabled = !action.enabled();
         }
@@ -94,7 +101,7 @@ export class ToolUiController {
 
     execute(binding) {
         const { action, button, feedback } = binding;
-        if (!this.bound || button.disabled || action.enabled && !action.enabled()) return Promise.resolve({ status: 'unavailable' });
+        if (!this.bound || button?.disabled || action.enabled && !action.enabled()) return Promise.resolve({ status: 'unavailable' });
         if (binding.pending) return binding.pending;
         const revision = this.revision, signal = this.abort.signal;
         const operation = async () => {
@@ -119,7 +126,7 @@ export class ToolUiController {
             handled = this.dock.toggleExtras({ forceCollapsed: key === 'escape' });
         } else {
             const binding = this.bindings.find(item => item.action.spec && matchesCommand(event, item.action.spec));
-            if (binding && !binding.button.disabled && (!binding.action.enabled || binding.action.enabled())) {
+            if (binding && !binding.button?.disabled && (!binding.action.enabled || binding.action.enabled())) {
                 void this.execute(binding);
                 handled = true;
             }
@@ -135,6 +142,7 @@ export class ToolUiController {
         this.document.removeEventListener('keydown', this.handleKeydown, true);
         this.ui.destroy();
         for (const { button, listener, feedback, snapshot } of this.bindings) {
+            if (!button) continue;
             button.removeEventListener('click', listener);
             feedback?.destroy();
             button.textContent = snapshot.text;
