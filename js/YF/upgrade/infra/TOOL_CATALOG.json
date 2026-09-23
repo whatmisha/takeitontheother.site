@@ -121,7 +121,7 @@
       "name": "Hyperspace",
       "group": "lunnen",
       "entry": "hyperspace/index.html",
-      "state": "migrating",
+      "state": "accepted",
       "cohort": "migration",
       "referenceViewport": {
         "width": 1440,
@@ -134,7 +134,7 @@
       "name": "Pattern 01",
       "group": "lunnen",
       "entry": "pattern_generator/index.html",
-      "state": "migrating",
+      "state": "accepted",
       "cohort": "migration",
       "referenceViewport": {
         "width": 1440,
@@ -147,7 +147,7 @@
       "name": "Pattern 02",
       "group": "lunnen",
       "entry": "pattern_generator_02/index.html",
-      "state": "migrating",
+      "state": "accepted",
       "cohort": "migration",
       "referenceViewport": {
         "width": 1440,
@@ -160,7 +160,7 @@
       "name": "Random Lines",
       "group": "lunnen",
       "entry": "random_lines_generator/index.html",
-      "state": "migrating",
+      "state": "accepted",
       "cohort": "migration",
       "referenceViewport": {
         "width": 1440,
@@ -173,7 +173,7 @@
       "name": "Rays Pattern",
       "group": "lunnen",
       "entry": "rays_pattern_generator/index.html",
-      "state": "migrating",
+      "state": "accepted",
       "cohort": "migration",
       "referenceViewport": {
         "width": 1440,
@@ -186,7 +186,7 @@
       "name": "Asterisk Pattern",
       "group": "lunnen",
       "entry": "asterisk_pattern_generator/index.html",
-      "state": "migrating",
+      "state": "accepted",
       "cohort": "migration",
       "referenceViewport": {
         "width": 1440,
@@ -199,7 +199,7 @@
       "name": "Calendar Randomizer",
       "group": "muted",
       "entry": "calendar-randomizer/index.html",
-      "state": "migrating",
+      "state": "accepted",
       "cohort": "migration",
       "referenceViewport": {
         "width": 1440,
@@ -212,7 +212,7 @@
       "name": "Chladni Sound Pattern",
       "group": "muted",
       "entry": "chladni-sound-pattern/index.html",
-      "state": "migrating",
+      "state": "accepted",
       "cohort": "migration",
       "referenceViewport": {
         "width": 1440,

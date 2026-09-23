@@ -1,6 +1,28 @@
+import { createCalendarScene } from './scene.js?v=2';
+import { bindPageLifecycle } from '../infra/framework/src/ui/GeneratorHost.js?v=4';
+
 document.addEventListener('DOMContentLoaded', function() {
     let calendarEvents = null;
     let pendingRequest = null;
+    let currentScene = null;
+    let suspended = false;
+    let lastSvgPath = '';
+    let interruptedLoad = false;
+    bindPageLifecycle({
+        suspend() {
+            suspended = true;
+            calendarEvents?.abort();
+            interruptedLoad = Boolean(pendingRequest);
+            const request = pendingRequest;
+            pendingRequest = null;
+            request?.abort();
+        },
+        resume() {
+            suspended = false;
+            if (interruptedLoad || !currentScene) loadSvg(lastSvgPath || svgSelector.value);
+            else initializeCalendar();
+        }
+    });
     // Загружаем список SVG файлов
     loadSvgFilesList();
     
@@ -63,7 +85,11 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Функция для загрузки SVG
     function loadSvg(svgPath) {
-        pendingRequest?.abort();
+        lastSvgPath = svgPath;
+        if (suspended) { interruptedLoad = true; return; }
+        const previous = pendingRequest;
+        pendingRequest = null;
+        previous?.abort();
         calendarEvents?.abort();
         console.log('Загрузка SVG:', svgPath);
         const svgContainer = document.getElementById('svg-container');
@@ -80,6 +106,8 @@ document.addEventListener('DOMContentLoaded', function() {
         xhr.onreadystatechange = function() {
             if (pendingRequest !== xhr) return;
             if (xhr.readyState === 4) {
+                pendingRequest = null;
+                interruptedLoad = false;
                 if (xhr.status === 200) {
                     svgContainer.innerHTML = xhr.responseText;
                     console.log('SVG успешно загружен через XMLHttpRequest');
@@ -124,6 +152,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const bgHexInput = document.getElementById('bgHexInput');
         
         function initializeCalendar() {
+            if (suspended) return;
             calendarEvents?.abort();
             const lifecycle = new AbortController();
             calendarEvents = lifecycle;
@@ -142,8 +171,8 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log(`Найдено ${groups.length} групп`);
             
             // Получаем все анимируемые элементы SVG
-            const animatableElements = svgElement.querySelectorAll(':scope > :not(defs):not(style), :scope > g > *, :scope > g > g > *');
-            console.log(`Найдено ${animatableElements.length} анимируемых элементов`);
+            if (currentScene?.svg !== svgElement) currentScene = { svg: svgElement, scene: createCalendarScene(svgElement) };
+            const { scene } = currentScene;
             
             // Применяем цвет графики по умолчанию из пикера
             const defaultColor = colorPicker.value;
@@ -160,6 +189,13 @@ document.addEventListener('DOMContentLoaded', function() {
             const easingSelect = document.getElementById('easingSelect');
             const speedRange = document.getElementById('speedRange');
             const speedValue = document.getElementById('speedValue');
+            // BFCache/form restoration can change range values without an input event.
+            const syncReadouts = () => {
+                rangeValueDisplay.textContent = `${randomRangeSlider.value}px`;
+                speedValue.textContent = `${speedRange.value}s`;
+            };
+            syncReadouts();
+            requestAnimationFrame(() => { if (!lifecycle.signal.aborted) syncReadouts(); });
             
             // Обработчик изменения значения слайдера перемещения
             listen(randomRangeSlider, 'input', function() {
@@ -173,56 +209,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Функция для изменения цвета всех элементов SVG
         function changeAllColors(color) {
-            const svgElement = document.querySelector('#svg-container > svg');
-            if (!svgElement) return;
-            
-            // 1. Обрабатываем CSS внутри <style> тегов
-            const styleTags = svgElement.querySelectorAll('style');
-            styleTags.forEach(styleTag => {
-                let css = styleTag.textContent;
-                
-                // Заменяем все fill: значения на новый цвет
-                css = css.replace(/fill:\s*#[0-9a-fA-F]{3,6}/gi, `fill: ${color}`);
-                css = css.replace(/fill:\s*rgb\([^)]+\)/gi, `fill: ${color}`);
-                css = css.replace(/fill:\s*rgba\([^)]+\)/gi, `fill: ${color}`);
-                
-                // Заменяем все stroke: значения на новый цвет
-                css = css.replace(/stroke:\s*#[0-9a-fA-F]{3,6}/gi, `stroke: ${color}`);
-                css = css.replace(/stroke:\s*rgb\([^)]+\)/gi, `stroke: ${color}`);
-                css = css.replace(/stroke:\s*rgba\([^)]+\)/gi, `stroke: ${color}`);
-                
-                styleTag.textContent = css;
-                console.log('CSS внутри <style> обновлён');
-            });
-            
-            // 2. Обрабатываем прямые атрибуты fill и stroke
-            const allElements = svgElement.querySelectorAll('*');
-            allElements.forEach(element => {
-                // Меняем fill, если он есть и не равен 'none'
-                const fill = element.getAttribute('fill');
-                if (fill && fill !== 'none') {
-                    element.setAttribute('fill', color);
-                }
-                
-                // Меняем stroke, если он есть и не равен 'none'
-                const stroke = element.getAttribute('stroke');
-                if (stroke && stroke !== 'none') {
-                    element.setAttribute('stroke', color);
-                }
-                
-                // Проверяем инлайн стили
-                const style = element.getAttribute('style');
-                if (style) {
-                    let newStyle = style;
-                    // Заменяем fill в стилях
-                    newStyle = newStyle.replace(/fill:\s*[^;]+/gi, `fill: ${color}`);
-                    // Заменяем stroke в стилях
-                    newStyle = newStyle.replace(/stroke:\s*[^;]+/gi, `stroke: ${color}`);
-                    element.setAttribute('style', newStyle);
-                }
-            });
-            
-            console.log(`Цвет всех элементов изменён на: ${color}`);
+            scene.recolor(color);
         }
         
         // Функция для валидации и нормализации hex-кода
@@ -329,20 +316,7 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log(`Тип анимации: ${easing}`);
             console.log(`Скорость анимации: ${speed}s`);
             
-            animatableElements.forEach((element, index) => {
-                // Настраиваем анимацию перехода с выбранными параметрами
-                element.style.transition = `transform ${speed}s ${easing}`;
-                
-                // Генерируем случайные значения для трансформации с учетом выбранного диапазона
-                const randomX = Math.random() * randomRange * 2 - randomRange; // от -randomRange до randomRange
-                const randomY = Math.random() * randomRange * 2 - randomRange; // от -randomRange до randomRange
-                
-                // Применяем только перемещение
-                const transform = `translate(${randomX}px, ${randomY}px)`;
-                
-                element.style.transform = transform;
-                console.log(`Элемент ${index} получил трансформацию: ${transform}`);
-            });
+            scene.randomize({ range: randomRange, speed, easing });
         }
         
         // Функция для сброса положения групп
@@ -355,14 +329,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             console.log(`Сброс с анимацией: ${easing}, скорость: ${speed}s`);
             
-            animatableElements.forEach((element, index) => {
-                // Настраиваем анимацию возврата с выбранными параметрами
-                element.style.transition = `transform ${speed}s ${easing}`;
-                
-                // Сбрасываем все трансформации
-                element.style.transform = 'translate(0, 0)';
-                console.log(`Элемент ${index} сброшен в исходное положение`);
-            });
+            scene.reset({ speed, easing });
             
             // Дополнительно форсируем перерисовку SVG
             const svgElement = document.querySelector('#svg-container > svg');
@@ -387,34 +354,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     throw new Error('No calendar template loaded');
                 }
                 
-                const svgClone = svgElement.cloneNode(true);
-                
-                // Получаем все анимируемые элементы в клонированном SVG
-                const elements = svgClone.querySelectorAll(':not(defs), g > *, g > g > *');
-                console.log(`Найдено ${elements.length} элементов для экспорта`);
-                
-                // Получаем текущее значение слайдера
-                const randomRange = parseInt(randomRangeSlider.value);
-                
-                // Применяем случайные перемещения к каждому элементу
-                elements.forEach((element, index) => {
-                    const randomX = Math.random() * randomRange * 2 - randomRange; // от -randomRange до randomRange
-                    const randomY = Math.random() * randomRange * 2 - randomRange; // от -randomRange до randomRange
-                    
-                    // Получаем текущую трансформацию, если она есть
-                    let currentTransform = element.getAttribute('transform') || '';
-                    
-                    // Добавляем перемещение к трансформации
-                    let newTransform = `${currentTransform} translate(${randomX}, ${randomY})`;
-                    newTransform = newTransform.trim();
-                    
-                    // Устанавливаем новую трансформацию
-                    element.setAttribute('transform', newTransform);
-                    
-                    // Удаляем инлайн стили, если они есть
-                    element.removeAttribute('style');
-                    console.log(`Элемент ${index}: добавлена трансформация ${newTransform}`);
-                });
+                const svgClone = scene.exportClone({ range: parseInt(randomRangeSlider.value) });
                 
                 // Получаем SVG как строку
                 const serializer = new XMLSerializer();

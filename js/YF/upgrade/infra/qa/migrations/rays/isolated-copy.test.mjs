@@ -126,9 +126,12 @@ for (const stage of ['read', 'decode', 'late-decode-after-return']) {
     });
 }
 
-test('Rays enters runtime/audit while staying unpublished on the hub', async () => {
+test('accepted Rays has evidence and exactly one hub link while staying in runtime/audit', async () => {
     const catalog = JSON.parse(await read('infra/TOOL_CATALOG.json'));
-    assert.equal(catalog.tools.find(tool => tool.id === 'rays_pattern_generator').state,'migrating');
-    assert.match(await read('infra/qa/ui-audit/index.html'), /value="rays_pattern_generator" data-tool-state="migrating">Rays Pattern — перенос/u);
-    assert.doesNotMatch(await read('index.html'), /href="(?:tools\/)?rays_pattern_generator\//u);
+    assert.equal(catalog.tools.find(tool => tool.id === 'rays_pattern_generator').state,'accepted');
+    const contract = JSON.parse(await read('infra/qa/migrations/CONTRACTS.json')).tools.find(tool => tool.id === 'rays_pattern_generator');
+    assert.equal(contract.acceptance.status, 'passed');
+    assert.ok(contract.acceptance.browser.includes('infra/docs/INT_05_RUNTIME_AND_SOURCE_ACCEPTANCE.md'));
+    assert.match(await read('infra/qa/ui-audit/index.html'), /value="rays_pattern_generator" data-tool-state="accepted">Rays Pattern/u);
+    assert.equal((await read('index.html')).match(/href="rays_pattern_generator\//gu)?.length, 1);
 });

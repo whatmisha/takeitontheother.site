@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "scope": "upgrade-only",
+  "checkedAt": "2026-09-22T22:38:00Z",
+  "method": "Actual browser downloads, read-only inspection of task-specific files. Calendar exported immediately after Randomize. PNG IHDR and decompressed IDAT checked. No hardware microphone or pixel-parity claim.",
+  "artifacts": [
+    { "tool": "calendar-randomizer", "template": "calend_01", "filename": "calendar_randomized (4).svg", "modifiedAt": "2026-09-22T22:31:12.596Z", "bytes": 153454, "sha256": "f94bfcb89957dc9aaabab3f6ae77a03aefbce380aae1c5b1710ac136e5d01bde", "viewBox": "0 0 720 320", "transformedElements": 208, "nonfinite": false },
+    { "tool": "calendar-randomizer", "template": "calend_02", "filename": "calendar_randomized (5).svg", "modifiedAt": "2026-09-22T22:31:13.414Z", "bytes": 52986, "sha256": "18a5193dd006b8e702178a6e9d01d316fe50c3050ba2aec44c4318edb1fa2821", "viewBox": "0 0 720 320", "transformedElements": 74, "nonfinite": false },
+    { "tool": "calendar-randomizer", "template": "calend_03", "filename": "calendar_randomized (6).svg", "modifiedAt": "2026-09-22T22:31:14.089Z", "bytes": 49166, "sha256": "8e48b35b959a275cc3cc37f99083424eaf1274fb3eb327ebadb064e5d58510b6", "viewBox": "0 0 720 320", "transformedElements": 65, "nonfinite": false },
+    { "tool": "calendar-randomizer", "template": "calend_04", "filename": "calendar_randomized (7).svg", "modifiedAt": "2026-09-22T22:31:14.934Z", "bytes": 51986, "sha256": "a2123b5e6659aff27cbd8aac0e9ecf6b96b946d121d62ef4390eef06d558f640", "viewBox": "0 0 720 320", "transformedElements": 69, "nonfinite": false },
+    { "tool": "hyperspace", "filename": "hyperspace_20260923_003532.png", "modifiedAt": "2026-09-22T22:35:32.725Z", "bytes": 229051, "sha256": "0fe64bfb718c54b9ea8b4663b749d964912a1f71e9076451af16c7f264a187f7", "width": 2048, "height": 1536, "decodedBytes": 12584448 }
+  ]
+}

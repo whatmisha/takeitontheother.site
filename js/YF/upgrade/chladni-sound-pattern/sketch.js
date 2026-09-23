@@ -560,10 +560,20 @@ function setupInterface() {
   });
   Promise.all([
     import('../infra/framework/src/ui/GeneratorHost.js?v=4'),
-    import('./capture-session.js')
+    import('./capture-session.js?v=2')
   ]).then(([{ mountGenerator }, { CaptureSession }]) => {
+    const phaseLabels = {
+      'activating-audio': 'Waiting for browser audio activation…',
+      'requesting-microphone': 'Waiting for microphone permission…',
+      running: 'Microphone active', stopped: 'Microphone stopped', error: ''
+    };
     const session = new CaptureSession({
       mic, unlock: () => userStartAudio(),
+      onStateChange: phase => {
+        // Reuse the host's status surface; do not overlap export/error messages.
+        const status = document.querySelector('.generator-status');
+        if (status) status.textContent = phaseLabels[phase];
+      },
       onReady: () => { isRunning = true; isPaused = false; toggleSliderInteractivity(false); },
       onStop: () => { isRunning = false; isPaused = false; lastFrameState = null; toggleSliderInteractivity(true); drawStaticPattern(modeX, modeY); }
     });
@@ -571,7 +581,7 @@ function setupInterface() {
       id: 'chladni-sound-pattern', title: 'Chladni Figures',
       panels: [
         { title: 'Pattern', selectors: ['.slider-controls'], summary: () => `${Number(modeX).toFixed(1)}×${Number(modeY).toFixed(1)}` },
-        { title: 'Microphone', selectors: ['#soundControls', '.controls'], summary: () => session.pending ? 'Requesting…' : isRunning ? isPaused ? 'Paused' : 'Running' : 'Stopped' }
+        { title: 'Microphone', selectors: ['#soundControls', '.controls'], summary: () => session.phase === 'activating-audio' ? 'Activating audio…' : session.phase === 'requesting-microphone' ? 'Requesting…' : isRunning ? isPaused ? 'Paused' : 'Running' : 'Stopped' }
       ],
       actions: [
         { id: 'png', button: 'export-png-button', label: 'PNG', kind: 'export', group: 'primary', shortcut: 'mod+e', run: exportChladniPNG },

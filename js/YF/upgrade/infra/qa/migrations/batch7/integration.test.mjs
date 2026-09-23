@@ -23,7 +23,7 @@ function declarations(source) {
 // Explicit changed-function inventory. All other private model/renderer functions
 // must stay byte-identical to the independently hashed T.2 snapshot.
 const allowed = {
-    'hyperspace/sketch.js': ['setup', 'mousePressed', 'mouseDragged', 'setupSliderEvents', 'exportCanvas'],
+    'hyperspace/sketch.js': ['setup', 'mousePressed', 'mouseDragged', 'setupSliderEvents', 'windowResized', 'exportCanvas'],
     'pattern_generator/script.js': [],
     'pattern_generator/fibonacci.js': ['init'],
     'pattern_generator/voronoi.js': ['init'],

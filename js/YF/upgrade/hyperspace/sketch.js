@@ -427,9 +427,11 @@ function setupSliderEvents() {
 }
 
 function windowResized() {
+  const wasCentered = vanishingPoint.x === width / 2 && vanishingPoint.y === height / 2
+    && targetVanishingPoint.x === width / 2 && targetVanishingPoint.y === height / 2;
   resizeCanvas(windowWidth, windowHeight);
   // При изменении размера окна, если точка схода была в центре, оставляем ее в центре
-  if (vanishingPoint.x === width / 2 && vanishingPoint.y === height / 2) {
+  if (wasCentered) {
     let centerX = windowWidth / 2;
     let centerY = windowHeight / 2;
     vanishingPoint.x = centerX;

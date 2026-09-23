@@ -5,7 +5,7 @@
   "tools": [
     {
       "id": "hyperspace",
-      "status": "ui-integration",
+      "status": "accepted",
       "sourceRenderer": "p5-1.4.0",
       "modes": [
         "animation"
@@ -22,23 +22,26 @@
         "global shortcuts need editable guards"
       ],
       "acceptance": {
-        "status": "partial",
+        "status": "passed",
         "unit": [
           "infra/qa/migrations/batch7/integration.test.mjs",
-          "infra/qa/migrations/batch7/artifact-parity.test.mjs"
+          "infra/qa/migrations/batch7/artifact-parity.test.mjs",
+          "infra/qa/migrations/batch7/runtime-matrix.test.mjs"
         ],
         "artifact": [
-          "infra/qa/migrations/INTEGRATION_EXPORT_EVIDENCE.json"
+          "infra/qa/migrations/INTEGRATION_EXPORT_EVIDENCE.json",
+          "infra/qa/migrations/INT_06_EXPORT_EVIDENCE.json"
         ],
         "browser": [
+          "infra/docs/INT_06_REMAINING_ACCEPTANCE.md",
           "infra/docs/INTEGRATION_8_PROGRESS.md"
         ],
-        "remaining": "See INTEGRATION_8_PROGRESS.md: console gate, real microphone permission/test, behavior decisions and remaining T.7 edge cases. Not accepted."
+        "remaining": "No blocking scenarios in the agreed desktop migration scope. Preserved export/resize/tone behavior and exact acceptance limitations are recorded in INT_06_REMAINING_ACCEPTANCE.md."
       }
     },
     {
       "id": "pattern_generator",
-      "status": "ui-integration",
+      "status": "accepted",
       "sourceRenderer": "canvas",
       "modes": [
         "diagonal-grid",
@@ -60,23 +63,25 @@
         "rectangle exportSvg missing from public module"
       ],
       "acceptance": {
-        "status": "partial",
+        "status": "passed",
         "unit": [
           "infra/qa/migrations/batch7/integration.test.mjs",
-          "infra/qa/migrations/batch7/artifact-parity.test.mjs"
+          "infra/qa/migrations/batch7/artifact-parity.test.mjs",
+          "infra/qa/migrations/batch7/runtime-matrix.test.mjs"
         ],
         "artifact": [
           "infra/qa/migrations/INTEGRATION_EXPORT_EVIDENCE.json"
         ],
         "browser": [
+          "infra/docs/INT_06_REMAINING_ACCEPTANCE.md",
           "infra/docs/INTEGRATION_8_PROGRESS.md"
         ],
-        "remaining": "See INTEGRATION_8_PROGRESS.md: console gate, real microphone permission/test, behavior decisions and remaining T.7 edge cases. Not accepted."
+        "remaining": "No blocking scenarios in the agreed desktop migration scope. Preserved export/resize/tone behavior and exact acceptance limitations are recorded in INT_06_REMAINING_ACCEPTANCE.md."
       }
     },
     {
       "id": "pattern_generator_02",
-      "status": "ui-integration",
+      "status": "accepted",
       "sourceRenderer": "p5-1.7.0",
       "modes": [
         "grid"
@@ -91,23 +96,25 @@
       ],
       "knownSourceIssues": [],
       "acceptance": {
-        "status": "partial",
+        "status": "passed",
         "unit": [
           "infra/qa/migrations/batch7/integration.test.mjs",
-          "infra/qa/migrations/batch7/artifact-parity.test.mjs"
+          "infra/qa/migrations/batch7/artifact-parity.test.mjs",
+          "infra/qa/migrations/batch7/runtime-matrix.test.mjs"
         ],
         "artifact": [
           "infra/qa/migrations/INTEGRATION_EXPORT_EVIDENCE.json"
         ],
         "browser": [
+          "infra/docs/INT_06_REMAINING_ACCEPTANCE.md",
           "infra/docs/INTEGRATION_8_PROGRESS.md"
         ],
-        "remaining": "See INTEGRATION_8_PROGRESS.md: console gate, real microphone permission/test, behavior decisions and remaining T.7 edge cases. Not accepted."
+        "remaining": "No blocking scenarios in the agreed desktop migration scope. Preserved export/resize/tone behavior and exact acceptance limitations are recorded in INT_06_REMAINING_ACCEPTANCE.md."
       }
     },
     {
       "id": "random_lines_generator",
-      "status": "ui-integration",
+      "status": "accepted",
       "sourceRenderer": "canvas",
       "modes": [
         "ordinary",
@@ -126,23 +133,25 @@
         "sf parsed as scale: NaN"
       ],
       "acceptance": {
-        "status": "partial",
+        "status": "passed",
         "unit": [
           "infra/qa/migrations/batch7/integration.test.mjs",
-          "infra/qa/migrations/batch7/artifact-parity.test.mjs"
+          "infra/qa/migrations/batch7/artifact-parity.test.mjs",
+          "infra/qa/migrations/batch7/runtime-matrix.test.mjs"
         ],
         "artifact": [
           "infra/qa/migrations/INTEGRATION_EXPORT_EVIDENCE.json"
         ],
         "browser": [
+          "infra/docs/INT_06_REMAINING_ACCEPTANCE.md",
           "infra/docs/INTEGRATION_8_PROGRESS.md"
         ],
-        "remaining": "See INTEGRATION_8_PROGRESS.md: console gate, real microphone permission/test, behavior decisions and remaining T.7 edge cases. Not accepted."
+        "remaining": "No blocking scenarios in the agreed desktop migration scope. Preserved export/resize/tone behavior and exact acceptance limitations are recorded in INT_06_REMAINING_ACCEPTANCE.md."
       }
     },
     {
       "id": "rays_pattern_generator",
-      "status": "ui-integration",
+      "status": "accepted",
       "sourceRenderer": "canvas",
       "modes": [
         "ordinary",
@@ -167,23 +176,25 @@
         "export shortcut ignores editable, composition and repeat guards"
       ],
       "acceptance": {
-        "status": "partial",
+        "status": "passed",
         "unit": [
           "infra/qa/migrations/rays/scene.test.mjs",
           "infra/qa/migrations/rays/isolated-copy.test.mjs"
         ],
         "artifact": [
-          "infra/qa/migrations/INTEGRATION_EXPORT_EVIDENCE.json"
+          "infra/qa/migrations/INTEGRATION_EXPORT_EVIDENCE.json",
+          "infra/qa/migrations/INT_05_EXPORT_EVIDENCE.json"
         ],
         "browser": [
+          "infra/docs/INT_05_RUNTIME_AND_SOURCE_ACCEPTANCE.md",
           "infra/docs/INTEGRATION_8_PROGRESS.md"
         ],
-        "remaining": "See INTEGRATION_8_PROGRESS.md: console gate, real microphone permission/test, behavior decisions and remaining T.7 edge cases. Not accepted."
+        "remaining": "No blocking migration scenarios remaining in the agreed desktop scope. Preserved legacy format/geometry caveats and independently reproduced browser-environment issue: INT_05_RUNTIME_AND_SOURCE_ACCEPTANCE.md."
       }
     },
     {
       "id": "asterisk_pattern_generator",
-      "status": "ui-integration",
+      "status": "accepted",
       "sourceRenderer": "canvas",
       "modes": [
         "tessellation",
@@ -201,23 +212,25 @@
         "axes preview and SVG differ in zero-layer copies"
       ],
       "acceptance": {
-        "status": "partial",
+        "status": "passed",
         "unit": [
           "infra/qa/migrations/batch7/integration.test.mjs",
           "infra/qa/migrations/batch7/artifact-parity.test.mjs"
         ],
         "artifact": [
-          "infra/qa/migrations/INTEGRATION_EXPORT_EVIDENCE.json"
+          "infra/qa/migrations/INTEGRATION_EXPORT_EVIDENCE.json",
+          "infra/qa/migrations/INT_05_EXPORT_EVIDENCE.json"
         ],
         "browser": [
+          "infra/docs/INT_05_RUNTIME_AND_SOURCE_ACCEPTANCE.md",
           "infra/docs/INTEGRATION_8_PROGRESS.md"
         ],
-        "remaining": "See INTEGRATION_8_PROGRESS.md: console gate, real microphone permission/test, behavior decisions and remaining T.7 edge cases. Not accepted."
+        "remaining": "No blocking migration scenarios remaining in the agreed desktop scope. Preserved legacy format/geometry caveats and independently reproduced browser-environment issue: INT_05_RUNTIME_AND_SOURCE_ACCEPTANCE.md."
       }
     },
     {
       "id": "calendar-randomizer",
-      "status": "ui-integration",
+      "status": "accepted",
       "sourceRenderer": "svg",
       "modes": [
         "calend_01",
@@ -239,23 +252,27 @@
         "global SVG selectors may target UI icons"
       ],
       "acceptance": {
-        "status": "partial",
+        "status": "passed",
         "unit": [
           "infra/qa/migrations/batch7/integration.test.mjs",
-          "infra/qa/migrations/batch7/artifact-parity.test.mjs"
+          "infra/qa/migrations/batch7/artifact-parity.test.mjs",
+          "infra/qa/migrations/batch7/runtime-matrix.test.mjs"
         ],
         "artifact": [
-          "infra/qa/migrations/INTEGRATION_EXPORT_EVIDENCE.json"
+          "infra/qa/migrations/INTEGRATION_EXPORT_EVIDENCE.json",
+          "infra/qa/migrations/INT_06_EXPORT_EVIDENCE.json"
         ],
         "browser": [
-          "infra/docs/INTEGRATION_8_PROGRESS.md"
+          "infra/docs/INT_06_REMAINING_ACCEPTANCE.md",
+          "infra/docs/INTEGRATION_8_PROGRESS.md",
+          "infra/qa/migrations/batch7/calendar-fixtures.html"
         ],
-        "remaining": "See INTEGRATION_8_PROGRESS.md: console gate, real microphone permission/test, behavior decisions and remaining T.7 edge cases. Not accepted."
+        "remaining": "No blocking scenarios in the agreed desktop migration scope. Preserved export/resize/tone behavior and exact acceptance limitations are recorded in INT_06_REMAINING_ACCEPTANCE.md."
       }
     },
     {
       "id": "chladni-sound-pattern",
-      "status": "ui-integration",
+      "status": "accepted",
       "sourceRenderer": "p5-1.9.0+sound",
       "modes": [
         "static",
@@ -276,18 +293,22 @@
         "running export threshold differs from preview"
       ],
       "acceptance": {
-        "status": "partial",
+        "status": "passed",
         "unit": [
           "infra/qa/migrations/batch7/integration.test.mjs",
-          "infra/qa/migrations/batch7/artifact-parity.test.mjs"
+          "infra/qa/migrations/batch7/artifact-parity.test.mjs",
+          "infra/qa/migrations/batch7/capture-status.test.mjs"
         ],
         "artifact": [
-          "infra/qa/migrations/INTEGRATION_EXPORT_EVIDENCE.json"
+          "infra/qa/migrations/INTEGRATION_EXPORT_EVIDENCE.json",
+          "infra/qa/migrations/INT_08_EXPORT_EVIDENCE.json"
         ],
         "browser": [
+          "infra/docs/INT_08_CHLADNI_LIVE_ACCEPTANCE.md",
+          "infra/docs/INT_07_MICROPHONE_PERMISSION.md",
           "infra/docs/INTEGRATION_8_PROGRESS.md"
         ],
-        "remaining": "See INTEGRATION_8_PROGRESS.md: console gate, real microphone permission/test, behavior decisions and remaining T.7 edge cases. Not accepted."
+        "remaining": "No blocking scenarios in the agreed desktop migration scope. INT-08 verified actual microphone input, four independent axis modes, pause/resume, identical paused PNG downloads, Stop/restart and navigation back without auto-capture. Permission-denial/retry, late grants and exact silence are deterministic tests, not OS-dialog manipulations. Native capture indicator was not observable; cleanup is supported by live lifecycle behavior, CaptureSession tests and the pinned p5 AudioIn.stop implementation. See INT_08_CHLADNI_LIVE_ACCEPTANCE.md for evidence and limits."
       }
     }
   ]

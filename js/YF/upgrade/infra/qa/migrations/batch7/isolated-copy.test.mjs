@@ -16,17 +16,17 @@ const uiTextPatches = JSON.parse(await read('infra/qa/migrations/batch7/ui-text-
 const ids = ['hyperspace', 'pattern_generator', 'pattern_generator_02', 'random_lines_generator', 'asterisk_pattern_generator', 'calendar-randomizer', 'chladni-sound-pattern'];
 const restoreNamespaces = text => Object.entries(manifest.namespaces).reduce((text, [before, after]) => text.replaceAll(`'${after}'`, `'${before}'`).replaceAll(`"${after}"`, `"${before}"`), text);
 
-test('all seven tools retain a frozen baseline and declare UI integration, not unverified acceptance', async () => {
+test('all seven are accepted with evidence while retaining frozen baselines', async () => {
     assert.deepEqual(manifest.tools.map(tool => tool.id), ids);
     assert.equal(manifest.tools.reduce((n, tool) => n + tool.files.length, 0), 29);
     const hub = await read('index.html');
     const audit = await read('infra/qa/ui-audit/index.html');
     for (const id of ids) {
-        assert.equal(catalog.tools.find(tool => tool.id === id).state, 'migrating');
-        assert.equal(contracts.tools.find(tool => tool.id === id).status, 'ui-integration');
-        assert.equal(contracts.tools.find(tool => tool.id === id).acceptance.status, 'partial');
-        assert.ok(audit.includes(`value="${id}" data-tool-state="migrating"`));
-        assert.ok(!hub.includes(`href="${id}/"`));
+        assert.equal(catalog.tools.find(tool => tool.id === id).state, 'accepted');
+        assert.equal(contracts.tools.find(tool => tool.id === id).status, 'accepted');
+        assert.equal(contracts.tools.find(tool => tool.id === id).acceptance.status, 'passed');
+        assert.ok(audit.includes(`value="${id}" data-tool-state="accepted"`));
+        assert.ok(hub.includes(`href="${id}/"`));
     }
 });
 

@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "scope": "upgrade-only",
+  "checkedAt": "2026-09-22T21:47:56.767Z",
+  "method": "Actual browser downloads inspected read-only; metadata/finite SVG check, not a screenshot pixel comparison. Prior artifacts remain in INTEGRATION_EXPORT_EVIDENCE.json.",
+  "artifacts": [
+    {
+      "tool": "asterisk_pattern_generator",
+      "filename": "pattern (2).svg",
+      "scenario": "tessellation, layers=7, scale=1:128, round, Show grid=false; legacy duplicate grid retained",
+      "bytes": 532446,
+      "modifiedAt": "2026-09-22T21:40:38.408Z",
+      "sha256": "3007092d9442c6442eb498695597994e8747a25f07e21d9b737257d84d38c721",
+      "format": "svg",
+      "width": "1920",
+      "height": "1080",
+      "viewBox": "0 0 1920 1080",
+      "primitives": 4728,
+      "nonfinite": false,
+      "closed": true
+    },
+    {
+      "tool": "asterisk_pattern_generator",
+      "filename": "pattern (3).svg",
+      "scenario": "axes, layers=7, scale=1:1, butt, Show grid=true",
+      "bytes": 118446,
+      "modifiedAt": "2026-09-22T21:41:09.002Z",
+      "sha256": "f8aa60772d5650d8c3e6d75a640e925cd43e64f93bdb35b3a25387285c0f19a1",
+      "format": "svg",
+      "width": "1920",
+      "height": "1080",
+      "viewBox": "0 0 1920 1080",
+      "primitives": 1075,
+      "nonfinite": false,
+      "closed": true
+    },
+    {
+      "tool": "rays_pattern_generator",
+      "filename": "ray_pattern_lw2.0_ll56_lc5_co19_sc1.0_hg20_vg10.svg",
+      "scenario": "Rays default SVG via Cmd+E",
+      "bytes": 164554,
+      "modifiedAt": "2026-09-22T21:46:16.638Z",
+      "sha256": "9bde49939a5ce1465273b21000c5307e6f7d7a64841c2606ebf8d9c5c5fdee98",
+      "format": "svg",
+      "width": "3000",
+      "height": "1000",
+      "viewBox": null,
+      "primitives": 1290,
+      "nonfinite": false,
+      "closed": true
+    }
+  ]
+}
