@@ -1,0 +1,34 @@
+/* Layout only: controls, typography, pills, dock and feedback use ui-contract. */
+.generator-tool { margin: 0; overflow: hidden; background: #000; }
+.generator-panel { position: fixed; width: 300px; max-height: var(--generator-panel-height, calc(100vh - var(--generator-panel-top, 76px) - 88px)); }
+.generator-panel .panel-content { max-height: calc(var(--generator-panel-height, calc(100vh - var(--generator-panel-top, 76px) - 88px)) - 54px); overflow-y: auto; }
+.generator-panel.panel-collapsed .panel-content { display: none; }
+.generator-controls { display: flex; flex-direction: column; gap: 20px; }
+.generator-controls > * { min-width: 0; }
+.generator-controls .control-group { min-width: 0; }
+.generator-controls .generator-range { margin-bottom: 20px; }
+.generator-controls .generator-range:last-child { margin-bottom: 0; }
+.generator-controls .pill-toggle-row { display: inline-flex; width: auto; flex-wrap: wrap; gap: 6px; margin: 0 4px 6px 0; }
+.generator-controls .raster-checkboxes, .generator-controls .checkboxes-section, .generator-controls .checkboxes-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.generator-controls .settings-recovery-section, .generator-controls .image-settings { display: grid; gap: 12px; }
+.generator-controls .generator-actions, .generator-controls .button-container { display: flex; flex-wrap: wrap; gap: 8px; }
+.generator-controls .settings-input, .generator-controls .number-input { width: 100%; box-sizing: border-box; }
+.generator-controls .image-raster-controls-row { flex-direction: column; gap: 20px; }
+.generator-controls .image-preview { width: 100%; max-height: 100px; object-fit: contain; }
+.generator-controls input[type="file"] { max-width: 100%; font: inherit; }
+.generator-controls .color-input-group, .generator-controls .color-picker-container { display: flex; align-items: center; gap: 8px; }
+.generator-controls input[type="color"] { flex: 0 0 32px; width: 32px; height: 32px; padding: 0; border: 0; }
+.generator-status { position: fixed; bottom: 74px; left: 50%; transform: translateX(-50%); max-width: 600px; color: #d2d2d2; font-size: 12px; pointer-events: none; z-index: 10001; }
+.generator-status:empty { display: none; }
+.generator-tool .generator-artboard { position: fixed; inset: 76px 340px 90px; width: auto; height: auto; }
+.generator-tool .generator-artboard :where(canvas, svg) { max-width: 100%; max-height: 100%; object-fit: contain; outline: 1px solid #333; outline-offset: -1px; }
+.generator-tool[data-generator-panels="0"] .generator-artboard { inset-inline: 20px; }
+.generator-tool[data-generator-panels="1"] .generator-artboard { inset-right: 20px; }
+.generator-controls [hidden] { display: none; }
+
+@media (max-width: 760px) {
+    .generator-tool { overflow: auto; }
+    .generator-panel { position: relative; inset: auto !important; width: calc(100% - 32px); max-height: none; margin: 16px; }
+    .generator-panel .panel-content { max-height: none; }
+    .generator-tool .generator-artboard { position: relative; inset: auto; min-height: 50vh; margin: 16px; }
+}

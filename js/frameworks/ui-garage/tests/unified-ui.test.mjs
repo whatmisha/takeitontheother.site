@@ -1,0 +1,184 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+
+import { UnifiedUiController } from '../src/ui/UnifiedUiController.js';
+
+function classes(initial = []) {
+    const values = new Set(initial);
+    return {
+        contains: name => values.has(name),
+        toggle(name, force) {
+            if (force) values.add(name);
+            else values.delete(name);
+        }
+    };
+}
+
+test('UnifiedUiController synchronizes collapsed panel class and accessibility state', () => {
+    const attributes = new Map();
+    const icon = {
+        classList: classes(),
+        setAttribute: (name, value) => attributes.set(name, String(value))
+    };
+    const panel = {
+        classList: classes(),
+        querySelector: () => icon
+    };
+    const controller = new UnifiedUiController({ ownerDocument: {}, ownerWindow: {} });
+
+    controller.setPanelCollapsed(panel, true);
+    assert.equal(panel.classList.contains('panel-collapsed'), true);
+    assert.equal(icon.classList.contains('collapsed'), true);
+    assert.equal(attributes.get('aria-expanded'), 'false');
+    assert.equal(attributes.get('aria-label'), 'Expand panel');
+
+    controller.setPanelCollapsed(panel, false);
+    assert.equal(panel.classList.contains('panel-collapsed'), false);
+    assert.equal(attributes.get('aria-expanded'), 'true');
+});
+
+test('UnifiedUiController receives tool-specific copy and summaries through config', () => {
+    const ownerDocument = {
+        title: 'Fallback title',
+        documentElement: { dataset: { toolName: 'Markup title' } }
+    };
+    const provider = () => 'Configured summary';
+    const controller = new UnifiedUiController({
+        ownerDocument,
+        ownerWindow: {},
+        toolName: 'New Generator',
+        summaryProviders: { settingsPanel: provider },
+        shortcutRows: [['Play / pause', 'Space']]
+    });
+
+    assert.equal(controller.toolName, 'New Generator');
+    assert.equal(controller.summaryProviders.settingsPanel, provider);
+    assert.deepEqual(controller.extraShortcutRows, [['Play / pause', 'Space']]);
+});
+
+test('open-file shortcut uses a declarative selector instead of an app name', () => {
+    const trigger = {
+        getClientRects: () => [{ width: 10 }]
+    };
+    const documentRef = { querySelectorAll: selector => selector === '[data-shortcut-open-file]' ? [trigger] : [] };
+    const windowRef = { getComputedStyle: () => ({ display: 'block' }) };
+    const controller = new UnifiedUiController({ ownerDocument: documentRef, ownerWindow: windowRef });
+
+    assert.equal(controller.mainFileTrigger(), trigger);
+});
+
+test('Command/Control backslash owns the shared collapse route', () => {
+    const controller = new UnifiedUiController({ ownerDocument: {}, ownerWindow: {} });
+    let toggles = 0;
+    controller.togglePanels = () => { toggles += 1; return true; };
+    const event = {
+        key: '\\', metaKey: true, ctrlKey: false, altKey: false, shiftKey: false, repeat: false,
+        prevented: false, stopped: false,
+        preventDefault() { this.prevented = true; },
+        stopImmediatePropagation() { this.stopped = true; }
+    };
+
+    controller.handleKeydown(event);
+    assert.equal(toggles, 1);
+    assert.equal(event.prevented, true);
+    assert.equal(event.stopped, true);
+});
+
+test('zoom indicator offers Fit on hover without claiming browser size shortcuts', () => {
+    const indicator = {
+        dataset: {},
+        textContent: '125%',
+        contains: () => false
+    };
+    const documentRef = {
+        querySelector: selector => selector === '.zoom-indicator' ? indicator : null,
+        querySelectorAll: () => []
+    };
+    const controller = new UnifiedUiController({ ownerDocument: documentRef, ownerWindow: {} });
+    const target = { closest: selector => selector === '.zoom-indicator' ? indicator : null };
+
+    controller.handleMouseover({ target, relatedTarget: null });
+    assert.equal(indicator.textContent, 'Fit');
+    controller.handleMouseout({ target, relatedTarget: null });
+    assert.equal(indicator.textContent, '125%');
+    assert.equal(controller.shortcutRows().some(([label]) => label.includes('actual size')), false);
+});
+
+test('overflowing summaries drop expendable units before CSS ellipsis', () => {
+    const controller = new UnifiedUiController({ ownerDocument: {}, ownerWindow: {} });
+    const target = { clientWidth: 120, scrollWidth: 240 };
+    assert.equal(
+        controller.compactSummary('104 keys · 412.5 mm · 22 characters', target),
+        '104 · 412.5 · 22 chars'
+    );
+    assert.equal(
+        controller.compactSummary('104 keys · 412.5 mm', { clientWidth: 240, scrollWidth: 120 }),
+        '104 keys · 412.5 mm'
+    );
+});
+
+test('fast export feedback is restartable and never disables its action', () => {
+    const callbacks = [];
+    const cleared = [];
+    const windowRef = {
+        setTimeout(callback) { callbacks.push(callback); return callbacks.length; },
+        clearTimeout(id) { cleared.push(id); }
+    };
+    const button = {
+        dataset: {},
+        disabled: false,
+        closest: () => null
+    };
+    const controller = new UnifiedUiController({ ownerDocument: {}, ownerWindow: windowRef });
+
+    controller.showExportFeedback(button);
+    assert.equal(button.dataset.exportFeedbackState, 'success');
+    assert.equal(button.disabled, false);
+    controller.showExportFeedback(button);
+    assert.deepEqual(cleared, [1]);
+    callbacks.at(-1)();
+    assert.equal(button.dataset.exportFeedbackState, undefined);
+});
+
+test('disabled or aria-busy exports keep a working state until the owner finishes', () => {
+    const callbacks = [];
+    const windowRef = {
+        setTimeout(callback) { callbacks.push(callback); return callbacks.length; },
+        clearTimeout() {}
+    };
+    const button = {
+        dataset: {},
+        disabled: true,
+        closest: () => null,
+        getAttribute: name => name === 'aria-busy' ? 'false' : null
+    };
+    const controller = new UnifiedUiController({ ownerDocument: {}, ownerWindow: windowRef });
+    controller.exportButtons = () => [button];
+
+    controller.syncExportStates();
+    assert.equal(button.dataset.exportFeedbackState, 'working');
+    button.disabled = false;
+    controller.syncExportStates();
+    assert.equal(button.dataset.exportFeedbackState, 'success');
+    callbacks.at(-1)();
+    assert.equal(button.dataset.exportFeedbackState, undefined);
+});
+
+test('destroy clears pending export feedback timers', () => {
+    const cleared = [];
+    const documentRef = { removeEventListener() {} };
+    const windowRef = {
+        setTimeout: () => 17,
+        clearTimeout: id => cleared.push(id),
+        clearInterval() {}
+    };
+    const button = { dataset: {}, disabled: false };
+    const controller = new UnifiedUiController({ ownerDocument: documentRef, ownerWindow: windowRef });
+    controller.bound = true;
+
+    controller.showExportFeedback(button);
+    controller.destroy();
+
+    assert.deepEqual(cleared, [17]);
+    assert.equal(controller.exportTimerIds.size, 0);
+});

@@ -1,0 +1,13 @@
+{
+  "width": 800,
+  "height": 800,
+  "columns": 8,
+  "rows": 8,
+  "scale": 0.72,
+  "rotation": 0,
+  "square": false,
+  "showGuides": false,
+  "color": "#ff5c35",
+  "background": "#f5f5f2",
+  "seed": 50421
+}

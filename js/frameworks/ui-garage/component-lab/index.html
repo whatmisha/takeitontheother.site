@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>UI Garage — Component Lab</title>
+    <link rel="stylesheet" href="../css/framework.css?v=2.0.0">
+    <link rel="stylesheet" href="../css/ui-contract.css?v=2.0.0">
+    <link rel="stylesheet" href="../css/generator-host.css?v=2.0.0">
+    <link rel="stylesheet" href="./styles.css?v=2.0.0">
+</head>
+<body>
+    <main class="component-lab">
+        <header class="component-lab__header">
+            <a class="top-link" href="../">← Framework</a>
+            <div>
+                <p class="component-lab__eyebrow">Framework QA</p>
+                <h1>Component Lab</h1>
+                <p>Stable visual states without application data or render logic.</p>
+            </div>
+        </header>
+
+        <section class="component-lab__section" aria-labelledby="chromeTitle">
+            <h2 id="chromeTitle">Navigation, presets and zoom</h2>
+            <div class="component-lab__chrome top-links" data-contract-family="chrome">
+                <a class="top-link" href="#chromeTitle">UI Garage</a>
+                <div class="preset-dropdown" id="labPresetDropdown">
+                    <button class="preset-dropdown-toggle" id="labPresetToggle" type="button"
+                            aria-haspopup="listbox" aria-expanded="false" aria-controls="labPresetMenu">
+                        <span class="preset-dropdown-text">Starter</span>
+                        <svg class="preset-dropdown-arrow" width="12" height="8" viewBox="0 0 12 8" fill="none" aria-hidden="true">
+                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                    <ul class="preset-dropdown-menu" id="labPresetMenu" role="listbox">
+                        <li role="option" aria-selected="true" tabindex="0">Starter</li>
+                        <li role="option" aria-selected="false" tabindex="-1">Alternate</li>
+                    </ul>
+                </div>
+                <button class="preset-toolbar-share-btn" type="button" aria-label="Copy share link" data-tooltip="Copy share link">
+                    <svg viewBox="0 0 12 12" width="18" height="18" fill="none" aria-hidden="true">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2" d="M5.74 3.43l.61-.61a2 2 0 0 1 2.83 2.83l-.61.61M6.26 8.57l-.61.61a2 2 0 0 1-2.83-2.83l.61-.61M7.52 4.48 4.48 7.52"/>
+                    </svg>
+                </button>
+                <button class="zoom-indicator" type="button" data-tooltip="Click to fit">100%</button>
+            </div>
+        </section>
+
+        <section class="component-lab__section" aria-labelledby="buttonStatesTitle">
+            <h2 id="buttonStatesTitle">Action states</h2>
+            <div class="component-lab__states">
+                <article data-state="normal"><span>Normal</span><button class="btn-fixed">SVG ⌘E</button></article>
+                <article data-state="hover"><span>Hover</span><button class="btn-fixed lab-hover">SVG ⌘E</button></article>
+                <article data-state="focus"><span>Focus</span><button class="btn-fixed lab-focus">SVG ⌘E</button></article>
+                <article data-state="disabled"><span>Disabled</span><button class="btn-fixed" disabled>SVG ⌘E</button></article>
+                <article data-state="active"><span>Active</span><button class="btn-fixed" aria-pressed="true">Active</button></article>
+                <article data-state="selected"><span>Selected</span><button class="btn-fixed btn-fixed--selected">Selected</button></article>
+                <article data-state="loading"><span>Loading</span><button class="btn-fixed lab-loading" aria-busy="true">Preparing…</button></article>
+                <article data-state="success"><span>Success</span><button class="btn-fixed btn-fixed--success">Saved</button></article>
+                <article data-state="warning"><span>Warning</span><button class="btn-fixed btn-fixed--warning">Review</button></article>
+                <article data-state="error"><span>Error</span><button class="btn-fixed btn-fixed--danger">Try again</button></article>
+            </div>
+        </section>
+
+        <section class="component-lab__section" aria-labelledby="dockTitle">
+            <h2 id="dockTitle">Centered ActionDock</h2>
+            <nav class="bottom-buttons action-dock component-lab__dock" role="toolbar" aria-label="Example export actions">
+                <div class="action-dock__slot action-dock__slot--utility">
+                    <button class="btn-fixed btn-fixed--muted" data-action-dock-extra-toggle aria-expanded="false">JSON</button>
+                    <button class="btn-fixed" data-action-dock-json-export data-action-dock-extra hidden>Export JSON</button>
+                    <button class="btn-fixed" data-action-dock-json-import data-action-dock-extra hidden>Import JSON</button>
+                </div>
+                <div class="action-dock__slot action-dock__slot--primary">
+                    <button class="btn-fixed">PNG</button>
+                    <button class="btn-fixed" data-action-dock-primary-export>SVG ⌘E</button>
+                </div>
+                <div class="action-dock__slot action-dock__slot--options">
+                    <label class="toggle-label">
+                        <span class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></span>
+                        <span class="toggle-label-text">Transparent</span>
+                    </label>
+                </div>
+            </nav>
+        </section>
+
+        <section class="component-lab__section" aria-labelledby="explicitUiTitle">
+            <h2 id="explicitUiTitle">Explicit tool UI</h2>
+            <p class="component-lab__note">Panel commands stay in a panel. Primary export is the only dock button that prints its shortcut, and success appears only after the export promise resolves.</p>
+            <div class="component-lab__explicit-grid" data-contract-family="tool-ui">
+                <aside class="controls-panel component-lab__panel" aria-label="Modern controls example">
+                    <div class="panel-header">
+                        <span>Appearance <span class="panel-params ui-panel-summary">Lines · Active</span></span>
+                        <button class="collapse-icon" type="button" aria-label="Collapse panel" aria-expanded="true">
+                            <svg width="10" height="6" viewBox="0 0 12 8" fill="none" aria-hidden="true"><path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </button>
+                    </div>
+                    <div class="panel-content">
+                        <div class="control-section">
+                            <div class="control-field-heading">Rendering</div>
+                            <div class="pill-toggle-row">
+                                <label class="pill-toggle"><input class="sr-only" type="checkbox" checked><span>Guides</span></label>
+                                <label class="pill-toggle"><input class="sr-only" type="checkbox"><span>Invert</span></label>
+                            </div>
+                            <button class="panel-action" type="button">Regenerate</button>
+                        </div>
+                    </div>
+                </aside>
+                <article class="component-lab__feedback-card">
+                    <span>Promise-owned export feedback</span>
+                    <button id="labExplicitExport" class="btn-fixed" type="button">SVG ⌘E</button>
+                    <output id="labExplicitExportStatus" class="starter-status" role="status"></output>
+                </article>
+            </div>
+        </section>
+
+        <section class="component-lab__section" aria-labelledby="dialogTitleLab">
+            <h2 id="dialogTitleLab">Dialog shell</h2>
+            <div class="modal-overlay active component-lab__dialog-preview" data-state="open">
+                <div class="modal-content">
+                    <h2>Export complete</h2>
+                    <div class="modal-body"><p>The generated file is ready.</p></div>
+                    <div class="modal-buttons">
+                        <button class="modal-btn modal-btn-primary" type="button">Done</button>
+                        <button class="modal-btn modal-btn-ghost" type="button">Close</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="component-lab__section component-lab__columns" aria-label="Choice and intake components">
+            <article>
+                <h2>Choice semantics</h2>
+                <div class="segmented-control" role="radiogroup" aria-label="Example scale">
+                    <input type="radio" id="lab1x" name="labScale" checked><label for="lab1x">1×</label>
+                    <input type="radio" id="lab2x" name="labScale"><label for="lab2x">2×</label>
+                    <input type="radio" id="lab4x" name="labScale"><label for="lab4x">4×</label>
+                    <input type="radio" id="lab8x" name="labScale"><label for="lab8x">8×</label>
+                </div>
+                <div class="component-lab__choice-states">
+                    <label class="checkbox-label"><input type="checkbox" checked><span>Selected</span></label>
+                    <label class="checkbox-label"><input type="checkbox" disabled><span>Disabled</span></label>
+                    <label class="checkbox-label"><input type="checkbox" checked disabled><span>Readonly</span></label>
+                </div>
+            </article>
+            <article>
+                <h2>FileIntake states</h2>
+                <div class="component-lab__intakes">
+                    <div class="file-intake" data-file-state="empty"><button class="file-intake__trigger">Empty</button><span>Choose a file</span></div>
+                    <div class="file-intake" data-file-state="loading" aria-busy="true"><button class="file-intake__trigger" aria-busy="true">Loading</button><span role="status">Reading…</span></div>
+                    <div class="file-intake" data-file-state="ready"><button class="file-intake__trigger">Replace</button><span role="status">Ready</span></div>
+                    <div class="file-intake" data-file-state="error"><button class="file-intake__trigger">Try again</button><span role="status">Error</span></div>
+                </div>
+            </article>
+        </section>
+
+        <section class="component-lab__section" aria-labelledby="controlsTitle">
+            <h2 id="controlsTitle">Controls and colors</h2>
+            <div class="component-lab__control-grid">
+                <article data-state="normal">
+                    <div class="control-group">
+                        <label for="labControlRange"><span>Intensity</span><input class="value-display" value="50"></label>
+                        <input id="labControlRange" type="range" min="0" max="100" value="50">
+                    </div>
+                </article>
+                <article data-state="disabled">
+                    <div class="control-group">
+                        <label for="labDisabledRange"><span>Disabled</span><input class="value-display" value="30" disabled></label>
+                        <input id="labDisabledRange" type="range" min="0" max="100" value="30" disabled>
+                    </div>
+                </article>
+                <article data-state="readonly">
+                    <label for="labReadonly">Readonly value</label>
+                    <input id="labReadonly" class="value-display" value="72" readonly>
+                </article>
+                <article data-state="open">
+                    <div class="color-swatch-compact">
+                        <button class="color-dot color-dot--expandable" type="button" aria-expanded="true" aria-label="Open color"></button>
+                        <span class="color-label">Color open</span><input class="color-swatch-hex" value="#ff5c35">
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <section class="component-lab__section" aria-labelledby="rangeSlidersTitle">
+            <h2 id="rangeSlidersTitle">Range sliders</h2>
+            <p class="component-lab__note">Tab selects a handle. Arrow keys add or subtract one fine step; Shift + Arrow adds or subtracts the configured coarse step exactly (for example 0.25 → 0.35 with step 0.1). Home and End move to the nearest allowed boundary.</p>
+            <div class="component-lab__range-grid" data-contract-family="range-slider">
+                <article data-state="normal">
+                    <div class="control-group">
+                        <label><span>Integer interval</span></label>
+                        <div class="range-slider-wrapper">
+                            <div id="labIntegerRange" class="range-slider-container"></div>
+                            <div class="range-slider-values">
+                                <input id="labIntegerMin" class="value-display" value="20" inputmode="numeric" aria-label="Integer interval minimum">
+                                <input id="labIntegerMax" class="value-display" value="80" inputmode="numeric" aria-label="Integer interval maximum">
+                            </div>
+                        </div>
+                        <output id="labIntegerRangeStatus" class="component-lab__range-status" aria-live="polite">20–80</output>
+                    </div>
+                </article>
+                <article data-state="normal">
+                    <div class="control-group">
+                        <label><span>Decimal interval</span></label>
+                        <div class="range-slider-wrapper">
+                            <div id="labDecimalRange" class="range-slider-container"></div>
+                            <div class="range-slider-values">
+                                <input id="labDecimalMin" class="value-display" value="0.25" inputmode="decimal" aria-label="Decimal interval minimum">
+                                <input id="labDecimalMax" class="value-display" value="0.75" inputmode="decimal" aria-label="Decimal interval maximum">
+                            </div>
+                        </div>
+                        <output id="labDecimalRangeStatus" class="component-lab__range-status" aria-live="polite">0.25–0.75</output>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <section class="component-lab__section" aria-labelledby="panelTitle">
+            <h2 id="panelTitle">Panel shell</h2>
+            <div class="component-lab__panel-grid">
+            <aside class="controls-panel component-lab__panel" aria-label="Expanded example panel" data-lab-live-panel>
+                <div class="panel-header">
+                    <span>Texture Settings <span class="panel-params">FS · Pixel 1</span></span>
+                    <button class="collapse-icon" type="button" aria-label="Collapse panel" aria-expanded="true">
+                        <svg width="10" height="6" viewBox="0 0 12 8" aria-hidden="true"><path d="M1 1 6 6 11 1" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+                    </button>
+                </div>
+                <div class="panel-content">
+                    <div class="control-group">
+                        <label for="labRange"><span>Intensity</span><output class="value-display">50</output></label>
+                        <input id="labRange" type="range" min="0" max="100" value="50">
+                    </div>
+                </div>
+            </aside>
+            <aside class="controls-panel component-lab__panel panel-collapsed" aria-label="Collapsed example panel">
+                <div class="panel-header"><span>Collapsed <span class="panel-params">Summary</span></span>
+                    <button class="collapse-icon collapsed" type="button" aria-label="Expand panel" aria-expanded="false">
+                        <svg width="10" height="6" viewBox="0 0 12 8" fill="none" aria-hidden="true">
+                            <path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="panel-content"><p>Hidden panel content</p></div>
+            </aside>
+            </div>
+        </section>
+
+        <section class="component-lab__section" aria-labelledby="transientTitle">
+            <h2 id="transientTitle">Transient, feedback and motion states</h2>
+            <div class="component-lab__transients">
+                <article data-state="open"><div class="ui-shortcut-help__popup lab-popup" role="dialog" aria-label="Shortcut example"><dl><dt>Export</dt><dd>⌘E</dd></dl></div></article>
+                <article data-state="closed"><button class="btn-fixed" aria-expanded="false">Closed popup</button></article>
+                <article data-state="success"><span class="starter-status" role="status" data-state="success">Saved</span></article>
+                <article data-state="warning"><span class="starter-status lab-warning" role="status">Review settings</span></article>
+                <article data-state="error"><span class="starter-status lab-error" role="alert">Export failed</span></article>
+                <article data-state="mobile"><button class="btn-fixed" data-action-dock-primary-export>Mobile primary</button></article>
+                <article data-state="reduced-motion"><button class="btn-fixed lab-reduced-motion">No transition</button></article>
+            </div>
+        </section>
+    </main>
+    <script type="module" src="./lab.js?v=2.0.0"></script>
+</body>
+</html>
