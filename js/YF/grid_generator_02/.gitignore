@@ -1,0 +1,8 @@
+.DS_Store
+**/.DS_Store
+server.log
+build/
+tools/node_modules/
+tools/.vite/
+tools/*-output.log
+tools/isolation-baseline.json

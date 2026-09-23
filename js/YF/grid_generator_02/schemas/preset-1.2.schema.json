@@ -1,0 +1,367 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lunnen.local/schemas/preset-1.2.schema.json",
+  "title": "Lunnen Grid Generator preset 1.2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "presetName",
+    "version",
+    "dimensions",
+    "surfaces",
+    "texts",
+    "grid",
+    "colors",
+    "typography",
+    "display",
+    "graphics"
+  ],
+  "properties": {
+    "presetName": { "type": "string" },
+    "version": { "const": "1.2" },
+    "timestamp": {
+      "anyOf": [
+        { "type": "string" },
+        { "type": "null" }
+      ]
+    },
+    "dimensions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["width", "height", "thickness", "unit"],
+      "properties": {
+        "width": { "$ref": "#/$defs/positiveDimension" },
+        "height": { "$ref": "#/$defs/positiveDimension" },
+        "thickness": { "$ref": "#/$defs/nonNegativeDimension" },
+        "unit": { "const": "mm" }
+      }
+    },
+    "surfaces": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "front": { "$ref": "#/$defs/surface" },
+        "left": { "$ref": "#/$defs/surface" },
+        "right": { "$ref": "#/$defs/surface" },
+        "top": { "$ref": "#/$defs/surface" },
+        "bottom": { "$ref": "#/$defs/surface" }
+      }
+    },
+    "texts": {
+      "type": "array",
+      "maxItems": 1000,
+      "items": { "$ref": "#/$defs/textBlock" }
+    },
+    "grid": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "module",
+        "margins",
+        "marginsUnit",
+        "columns",
+        "rows",
+        "rowHeight",
+        "locks",
+        "visibility"
+      ],
+      "properties": {
+        "module": { "$ref": "#/$defs/positiveGridNumber" },
+        "margins": { "$ref": "#/$defs/nonNegativeGridNumber" },
+        "marginsUnit": { "$ref": "#/$defs/gridUnit" },
+        "columns": { "$ref": "#/$defs/gridCount" },
+        "rows": { "$ref": "#/$defs/gridCount" },
+        "rowHeight": { "$ref": "#/$defs/positiveGridNumber" },
+        "linkMode": { "enum": ["off", "rows-height", "module"] },
+        "locks": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["module", "margins", "moduleValue", "marginsValue"],
+          "properties": {
+            "module": { "type": "boolean" },
+            "margins": { "type": "boolean" },
+            "moduleValue": { "$ref": "#/$defs/nullableNonNegativeGridNumber" },
+            "marginsValue": { "$ref": "#/$defs/nullableNonNegativeGridNumber" }
+          }
+        },
+        "visibility": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "columns": { "type": "boolean" },
+            "rows": { "type": "boolean" },
+            "baseline": { "type": "boolean" }
+          }
+        }
+      }
+    },
+    "colors": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "background": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{6}$"
+        }
+      }
+    },
+    "typography": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["units", "headline", "text", "caption", "lunnenDisplay"],
+      "properties": {
+        "units": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["size", "lineHeight"],
+          "properties": {
+            "size": { "enum": ["mod", "pt"] },
+            "lineHeight": { "enum": ["mod", "pt"] }
+          }
+        },
+        "headline": { "$ref": "#/$defs/typographyStyleWithWeight" },
+        "text": { "$ref": "#/$defs/typographyStyleWithWeight" },
+        "caption": { "$ref": "#/$defs/typographyStyleWithWeight" },
+        "lunnenDisplay": { "$ref": "#/$defs/typographyStyle" }
+      }
+    },
+    "display": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "dimensions": { "type": "boolean" },
+        "labels": { "type": "boolean" },
+        "sidePanels": { "type": "boolean" },
+        "objects": { "type": "boolean" }
+      }
+    },
+    "graphics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["blocks", "icons", "claim"],
+      "properties": {
+        "blocks": {
+          "type": "array",
+          "maxItems": 1000,
+          "items": { "$ref": "#/$defs/graphicBlock" }
+        },
+        "icons": {
+          "anyOf": [
+            { "$ref": "#/$defs/builtInGraphic" },
+            { "type": "null" }
+          ]
+        },
+        "claim": {
+          "anyOf": [
+            { "$ref": "#/$defs/builtInGraphic" },
+            { "type": "null" }
+          ]
+        },
+        "claim2026": {
+          "anyOf": [
+            { "$ref": "#/$defs/builtInGraphic" },
+            { "type": "null" }
+          ]
+        }
+      }
+    }
+  },
+  "$defs": {
+    "positiveDimension": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 10000
+    },
+    "nonNegativeDimension": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 10000
+    },
+    "positiveGridNumber": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 10000
+    },
+    "nonNegativeGridNumber": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 10000
+    },
+    "nullableNonNegativeGridNumber": {
+      "anyOf": [
+        { "$ref": "#/$defs/nonNegativeGridNumber" },
+        { "type": "null" }
+      ]
+    },
+    "gridCount": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1000
+    },
+    "gridUnit": { "enum": ["mod", "mm"] },
+    "surfaceId": { "enum": ["front", "left", "right", "top", "bottom"] },
+    "position": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["column", "row", "baseline"],
+      "properties": {
+        "column": { "type": "number", "minimum": 0, "maximum": 10000 },
+        "row": { "type": "number", "minimum": 0, "maximum": 10000 },
+        "baseline": { "type": "number", "minimum": 0, "maximum": 10000 }
+      }
+    },
+    "surfaceGrid": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["module", "margins", "columns", "rows", "rowHeight"],
+      "properties": {
+        "module": { "$ref": "#/$defs/positiveGridNumber" },
+        "margins": { "$ref": "#/$defs/nonNegativeGridNumber" },
+        "columns": { "$ref": "#/$defs/gridCount" },
+        "rows": { "$ref": "#/$defs/gridCount" },
+        "rowHeight": { "$ref": "#/$defs/positiveGridNumber" },
+        "marginsUnit": { "$ref": "#/$defs/gridUnit" },
+        "lockedModule": { "type": "boolean" },
+        "lockedMargins": { "type": "boolean" }
+      }
+    },
+    "surface": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["visible", "rotation", "gridMode"],
+      "properties": {
+        "visible": { "type": "boolean" },
+        "rotation": { "enum": [0, 90, 180, 270] },
+        "gridMode": { "enum": ["main", "own"] },
+        "grid": { "$ref": "#/$defs/surfaceGrid" }
+      }
+    },
+    "textBlock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "content",
+        "style",
+        "position",
+        "width",
+        "alignment",
+        "textAlign",
+        "alignmentMode",
+        "surface",
+        "showBounds",
+        "visible",
+        "lockPosition"
+      ],
+      "properties": {
+        "id": { "type": "string" },
+        "content": { "type": "string" },
+        "style": { "enum": ["headline", "text", "caption", "lunnenDisplay"] },
+        "position": { "$ref": "#/$defs/position" },
+        "width": { "type": "number", "exclusiveMinimum": 0, "maximum": 10000 },
+        "alignment": { "enum": ["left", "center", "right"] },
+        "textAlign": { "enum": ["left", "center", "right"] },
+        "alignmentMode": { "enum": ["baseline", "x-height", "cap-height"] },
+        "surface": { "$ref": "#/$defs/surfaceId" },
+        "showBounds": { "type": "boolean" },
+        "visible": { "type": "boolean" },
+        "lockPosition": { "type": "boolean" },
+        "layer": { "type": "integer", "minimum": 0, "maximum": 2000 },
+        "fontWeight": { "type": "number", "minimum": 1, "maximum": 1000 },
+        "fontFeatures": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "salt": { "type": "boolean" },
+            "aalt": { "type": "boolean" },
+            "ss01": { "type": "boolean" },
+            "ss02": { "type": "boolean" },
+            "tnum": { "type": "boolean" },
+            "dlig": { "type": "boolean" }
+          }
+        }
+      }
+    },
+    "typographyStyle": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "size": { "type": "number", "exclusiveMinimum": 0, "maximum": 10000 },
+        "lineHeight": { "type": "number", "exclusiveMinimum": 0, "maximum": 10000 },
+        "tracking": { "type": "number", "minimum": -10, "maximum": 10 },
+        "useXHeight": { "type": "boolean" }
+      }
+    },
+    "typographyStyleWithWeight": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "size": { "type": "number", "exclusiveMinimum": 0, "maximum": 10000 },
+        "lineHeight": { "type": "number", "exclusiveMinimum": 0, "maximum": 10000 },
+        "tracking": { "type": "number", "minimum": -10, "maximum": 10 },
+        "useXHeight": { "type": "boolean" },
+        "fontWeight": { "type": "number", "minimum": 1, "maximum": 1000 }
+      }
+    },
+    "graphicCore": {
+      "type": "object",
+      "required": [
+        "position",
+        "height",
+        "sizeMode",
+        "alignment",
+        "surface",
+        "showBounds",
+        "visible",
+        "lockPosition",
+        "svg"
+      ],
+      "properties": {
+        "position": { "$ref": "#/$defs/position" },
+        "height": { "type": "number", "exclusiveMinimum": 0, "maximum": 10000 },
+        "widthInColumns": {
+          "anyOf": [
+            { "type": "number", "exclusiveMinimum": 0, "maximum": 10000 },
+            { "type": "null" }
+          ]
+        },
+        "widthInModules": {
+          "anyOf": [
+            { "type": "number", "exclusiveMinimum": 0, "maximum": 10000 },
+            { "type": "null" }
+          ]
+        },
+        "sizeMode": { "enum": ["height", "width"] },
+        "originalWidth": { "type": "number", "exclusiveMinimum": 0, "maximum": 1000000 },
+        "originalHeight": { "type": "number", "exclusiveMinimum": 0, "maximum": 1000000 },
+        "alignment": { "enum": ["left", "center", "right"] },
+        "surface": { "$ref": "#/$defs/surfaceId" },
+        "showBounds": { "type": "boolean" },
+        "visible": { "type": "boolean" },
+        "lockPosition": { "type": "boolean" },
+        "layer": { "type": "integer", "minimum": 0, "maximum": 2000 },
+        "svg": { "type": "string" }
+      }
+    },
+    "graphicBlock": {
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/$defs/graphicCore" },
+        {
+          "type": "object",
+          "required": ["id", "name"],
+          "properties": {
+            "id": { "type": "string" },
+            "name": { "type": "string" }
+          }
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "builtInGraphic": {
+      "type": "object",
+      "allOf": [{ "$ref": "#/$defs/graphicCore" }],
+      "unevaluatedProperties": false
+    }
+  }
+}
