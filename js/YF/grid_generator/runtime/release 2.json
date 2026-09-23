@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "fingerprint": "4c6998a74f82fdb65c354f54aff9105446e7d656841ad40d372c1829880ca595",
+  "entry": {
+    "script": "runtime/assets/PublicEntry-C2TuqEhB.js",
+    "style": "runtime/assets/PublicEntry-C5lPs97m.css"
+  },
+  "files": [
+    "LunnenDisplay-VariableVF-5DlFmosS.woff2",
+    "LunnenDisplay-VariableVF-nXG1IVZg.ttf",
+    "PublicEntry-C2TuqEhB.js",
+    "PublicEntry-C5lPs97m.css",
+    "TT_Commons_Classic_Medium-C-Nzrc8f.woff2",
+    "TT_Commons_Classic_Regular-BUtFdW8L.woff2",
+    "actions-BIOt6vRv.html",
+    "jspdf.umd.min-BBnSvupt.js",
+    "object-editors-Dh9iNQFE.html",
+    "objects-BQmilPPg.html",
+    "opentype.min-GVQsE5jZ.js",
+    "svg2pdf.umd.min-CUIcJZ9R.js",
+    "typography-Ch_Gwuph.html",
+    "workspace-8hfTr2Ay.html"
+  ]
+}

@@ -4,21 +4,22 @@ import { readFile, readdir, lstat } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { validateDirectoryCoverage, runtimeTools, validateCatalog } from '../registry.js';
 import { resolveToolPath } from '../../scripts/lib/upgrade-paths.mjs';
-import { compatibilityRoots } from '../../navigation/routes.mjs';
 
 const root = new URL('../../../', import.meta.url);
 const catalog = JSON.parse(await readFile(new URL('infra/TOOL_CATALOG.json', root), 'utf8'));
 
-test('root contains sixteen tool directories, infrastructure and redirect-only compatibility roots', async () => {
+test('root contains only sixteen tool directories and infrastructure', async () => {
     const entries = await readdir(root, { withFileTypes: true });
-    assert.deepEqual(entries.filter(item => item.isDirectory()).map(item => item.name).sort(), [...runtimeTools(catalog).map(tool => tool.id), 'infra', ...compatibilityRoots].sort());
+    assert.deepEqual(entries.filter(item => item.isDirectory()).map(item => item.name).sort(), [...runtimeTools(catalog).map(tool => tool.id), 'infra'].sort());
     assert.deepEqual(entries.filter(item => !item.isDirectory() && item.name !== '.DS_Store').map(item => item.name).sort(), ['.gitignore', 'index.html', 'package.json']);
     validateDirectoryCoverage(catalog, entries.filter(item => item.isDirectory() && item.name !== 'infra').map(item => item.name));
     for (const tool of catalog.tools) {
         assert.equal(tool.entry, tool.id + '/index.html');
         assert.ok(!(await lstat(new URL(tool.id + '/', root))).isSymbolicLink());
     }
-    await assert.rejects(lstat(new URL('tools/', root)), { code: 'ENOENT' });
+    for (const retired of ['tools/', 'upgrade/', 'lunnen/', 'muted/']) {
+        await assert.rejects(lstat(new URL(retired, root)), { code: 'ENOENT' });
+    }
 });
 
 test('historical paths resolve without rewriting historical evidence', () => {

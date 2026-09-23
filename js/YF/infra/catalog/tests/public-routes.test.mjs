@@ -1,35 +1,34 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { readFile, lstat } from 'node:fs/promises';
 import vm from 'node:vm';
-import { legacyRoutes, redirectDocument } from '../../navigation/routes.mjs';
+import { publishedTools, toolHref, validateDirectoryCoverage, runtimeTools } from '../registry.js';
 const root = new URL('../../../', import.meta.url);
 const read = file => readFile(new URL(file, root), 'utf8');
 const catalog = JSON.parse(await read('infra/TOOL_CATALOG.json'));
 
-test('every previously published catalogue link and upgrade link has one checked-in redirect', async () => {
-    const routes = legacyRoutes(catalog);
-    assert.equal(routes.length, 60);
-    assert.equal(new Set(routes.map(route => route.path)).size, 60);
-    for (const route of routes) {
-        assert.equal(await read(route.path + 'index.html'), redirectDocument(route));
-        await read(route.target + 'index.html');
-    }
-    for (const id of ['pattern_generator_02', 'random_lines_generator', 'rays_pattern_generator']) {
-        assert.ok(routes.some(route => route.path === `lunnen/${id}/01/` && route.target === `${id}/`));
+test('every published catalogue link opens its canonical tool directly', async () => {
+    const hub = await read('index.html');
+    const tools = publishedTools(catalog);
+    const links = [...hub.matchAll(/<li><a href="([^"]+)">/gu)].map(match => match[1]);
+    assert.equal(tools.length, 16);
+    assert.equal(new Set(links).size, tools.length);
+    assert.deepEqual([...links].sort(), tools.map(toolHref).sort());
+    for (const tool of tools) {
+        assert.equal(toolHref(tool), `${tool.id}/`);
+        assert.doesNotMatch(await read(tool.entry), /data-yf-target|http-equiv=["']refresh|navigation\/redirect\.js/iu, tool.id);
     }
 });
 
-test('legacy redirects preserve shared-preset query and hash for both directory and index.html URLs', async () => {
-    const script = await read('infra/navigation/redirect.js');
-    for (const route of legacyRoutes(catalog)) for (const index of ['', 'index.html']) {
-        const href = `https://takeitontheother.site/js/yf/${route.path}${index}?preset=Basic&s=a%2Bb%3D#scene`;
-        const url = new URL(href), link = { getAttribute: () => '../'.repeat(route.path.split('/').filter(Boolean).length) + route.target };
-        let replaced;
-        vm.runInNewContext(script, { URL, document: { querySelector: () => link }, location: { href, origin: url.origin, search: url.search, hash: url.hash, replace: value => { replaced = value; } } });
-        assert.equal(replaced, `https://takeitontheother.site/js/yf/${route.target}?preset=Basic&s=a%2Bb%3D#scene`, route.path);
-        assert.equal(link.href, replaced);
+test('retired URL trees and redirect generation cannot return as compatibility exceptions', async () => {
+    for (const retired of ['upgrade', 'lunnen', 'muted', 'tools']) {
+        await assert.rejects(lstat(new URL(`${retired}/`, root)), { code: 'ENOENT' });
+        assert.throws(() => validateDirectoryCoverage(catalog, [...runtimeTools(catalog).map(tool => tool.id), retired]), /unregistered tool/u);
     }
+    for (const retired of ['infra/navigation/redirect.js', 'infra/navigation/routes.mjs', 'infra/scripts/sync-legacy-routes.mjs']) {
+        await assert.rejects(lstat(new URL(retired, root)), { code: 'ENOENT' });
+    }
+    assert.equal(JSON.parse(await read('package.json')).scripts['routes:sync'], undefined);
 });
 
 test('all canonical tool navigation and titles are free of experimental branding', async () => {

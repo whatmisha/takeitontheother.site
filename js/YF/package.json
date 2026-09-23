@@ -3,8 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "routes:sync": "node infra/scripts/sync-legacy-routes.mjs --write",
-    "routes:check": "node infra/scripts/sync-legacy-routes.mjs",
+    "routes:check": "node --test infra/catalog/tests/public-routes.test.mjs",
     "catalog:sync": "node infra/scripts/sync-tool-catalog.mjs --write",
     "catalog:check": "node infra/scripts/sync-tool-catalog.mjs --check",
     "check:catalog": "node infra/scripts/check-tool-catalog.mjs && npm run catalog:check",

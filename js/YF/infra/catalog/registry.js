@@ -1,5 +1,4 @@
 // Shared, DOM-free catalog policy. Generated HTML also works without JavaScript.
-import { compatibilityRoots } from '../navigation/routes.mjs';
 export const isAuditableState = state => state === 'migrating' || state === 'accepted';
 export const runtimeTools = catalog => catalog.tools.filter(tool => isAuditableState(tool.state));
 export const publishedTools = catalog => catalog.tools.filter(tool => tool.state === 'accepted');
@@ -10,7 +9,6 @@ export function validateDirectoryCoverage(catalog, directoryNames) {
     const directories = new Set(directoryNames);
     const known = new Set(catalog.tools.map(tool => tool.id));
     for (const directory of directories) {
-        if (compatibilityRoots.has(directory)) continue; // audited as redirect-only trees
         if (!known.has(directory)) throw new Error(`${directory}: unregistered tool directory`);
     }
     for (const tool of catalog.tools) {
@@ -36,7 +34,7 @@ export function validateCatalog(catalog) {
     for (const tool of catalog.tools) {
         if (!/^[a-z][a-z0-9_-]*$/.test(tool.id) || ids.has(tool.id)) fail('invalid/duplicate tool id');
         ids.add(tool.id);
-        if (tool.entry !== `${toolDirectory(tool.id)}/index.html`) fail(`${tool.id}: entry must stay in its own upgrade root directory`);
+        if (tool.entry !== `${toolDirectory(tool.id)}/index.html`) fail(`${tool.id}: entry must stay in its own YF root directory`);
         if (typeof tool.name !== 'string' || !tool.name.trim() || !groups.has(tool.group)) fail(`${tool.id}: missing name/group`);
         if (!['planned', 'migrating', 'accepted'].includes(tool.state)) fail(`${tool.id}: invalid state`);
         if (!['original', 'migration'].includes(tool.cohort)) fail(`${tool.id}: invalid cohort`);
