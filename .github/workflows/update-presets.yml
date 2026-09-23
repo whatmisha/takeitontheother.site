@@ -1,13 +1,13 @@
-name: Grid Generator CI
+name: YF Tools CI
 
 on:
   push:
     paths:
-      - 'js/YF/lunnen/grid_generator/**'
+      - 'js/YF/**'
       - '.github/workflows/update-presets.yml'
   pull_request:
     paths:
-      - 'js/YF/lunnen/grid_generator/**'
+      - 'js/YF/**'
       - '.github/workflows/update-presets.yml'
 
 concurrency:
@@ -27,13 +27,13 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: js/YF/lunnen/grid_generator/tools/package-lock.json
+          cache-dependency-path: js/YF/grid_generator/tools/package-lock.json
 
       - name: Install tooling
-        run: npm ci --prefix js/YF/lunnen/grid_generator/tools
+        run: npm ci --prefix js/YF/grid_generator/tools
 
       - name: Verify source, presets, public runtime and tests
-        run: npm --prefix js/YF/lunnen/grid_generator/tools test
+        run: npm --prefix js/YF run test:tier1 && npm --prefix js/YF run test:tier2 && npm --prefix js/YF run check:migration-foundation && npm --prefix js/YF run check:isolation
 
       - name: Build production runtime
-        run: npm --prefix js/YF/lunnen/grid_generator/tools run build
+        run: npm --prefix js/YF/grid_generator/tools run build

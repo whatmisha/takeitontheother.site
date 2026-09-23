@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <script src="../infra/qa/ui-audit/runtime-probe.js?v=2"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendar Randomizer</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="../infra/framework/css/othersite-styles.css">
+    <link rel="stylesheet" href="../infra/framework/css/generator-host.css?v=3">
+    <link rel="stylesheet" href="../infra/framework/css/ui-contract.css?v=uiq-5">
+</head>
+<body>
+    <a class="upgrade-migration-preview" href="../" aria-label="YF Tools — return to main page">← YF Tools</a>
+    <div class="svg-container" id="svg-container">
+        <div class="loading">Loading…</div>
+    </div>
+
+    <div class="controls">
+        <div class="control-group">
+            <span class="control-label">Template</span>
+            <select id="svgSelector" class="svg-select">
+                <option value="">Loading…</option>
+            </select>
+        </div>
+
+        <div class="separator"></div>
+
+        <div class="control-group">
+            <span class="control-label">Artwork color</span>
+            <div class="color-picker-container">
+                <input type="color" id="colorPicker" class="color-picker" value="#d2d1c9">
+                <input type="text" id="hexInput" class="hex-input" value="#D2D1C9" maxlength="7" placeholder="#D2D1C9">
+            </div>
+        </div>
+
+        <div class="control-group">
+            <span class="control-label">Background color</span>
+            <div class="color-picker-container">
+                <input type="color" id="bgColorPicker" class="color-picker" value="#f7f6f2">
+                <input type="text" id="bgHexInput" class="hex-input" value="#F7F6F2" maxlength="7" placeholder="#F7F6F2">
+            </div>
+        </div>
+
+        <div class="separator"></div>
+
+        <div class="control-group">
+            <span class="control-label">Displacement</span>
+            <div class="slider-container">
+                <input type="range" min="1" max="200" value="30" class="slider" id="randomRange">
+                <span class="slider-value" id="rangeValue">30px</span>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <span class="control-label">Easing</span>
+            <select id="easingSelect" class="easing-select">
+                <option value="linear">Linear</option>
+                <option value="ease" selected>Ease</option>
+                <option value="ease-in">Ease In</option>
+                <option value="ease-out">Ease Out</option>
+                <option value="ease-in-out">Ease In-Out</option>
+                <option value="cubic-bezier(0.34, 1.56, 0.64, 1)">Bounce</option>
+                <option value="cubic-bezier(0.68, -0.55, 0.265, 1.55)">Elastic</option>
+                <option value="cubic-bezier(0.175, 0.885, 0.32, 1.275)">Back</option>
+                <option value="cubic-bezier(0.6, -0.28, 0.735, 0.045)">Anticipate</option>
+            </select>
+        </div>
+
+        <div class="control-group">
+            <span class="control-label">Duration</span>
+            <div class="slider-container">
+                <input type="range" min="0.1" max="3" step="0.1" value="1.2" class="slider" id="speedRange">
+                <span class="slider-value" id="speedValue">1.2s</span>
+            </div>
+        </div>
+
+        <div class="separator"></div>
+
+        <div class="generator-actions">
+            <button id="randomize">Randomize</button>
+            <button id="reset">Reset</button>
+            <button id="exportSVG">SVG</button>
+        </div>
+    </div>
+
+    <div class="toggle-panel" id="togglePanel" title="Collapse / expand panel"></div>
+
+    <script src="list-svgs.js"></script>
+    <script type="module" src="script.js?v=integration-9"></script>
+</body>
+</html>

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <script src="../infra/qa/ui-audit/runtime-probe.js?v=2"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pattern 02</title>
+    <script src="../infra/framework/vendor/p5/1.7.0/lib/p5.min.js"></script>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="../infra/framework/css/othersite-styles.css">
+    <link rel="stylesheet" href="../infra/framework/css/generator-host.css?v=3">
+    <link rel="stylesheet" href="../infra/framework/css/ui-contract.css?v=uiq-5">
+</head>
+<body>
+    <a class="upgrade-migration-preview" href="../" aria-label="YF Tools — return to main page">← YF Tools</a>
+    <!-- Панель настроек -->
+    <div class="controls-panel" id="patternControls">
+        <div class="control-group">
+            <label for="radius-slider">Corner radius <span id="radius-value">50%</span></label>
+            <input type="range" id="radius-slider" min="0" max="100" value="50">
+        </div>
+
+        <div class="control-group">
+            <label for="length-slider">Line A length <span id="length-value">50%</span></label>
+            <input type="range" id="length-slider" min="0" max="100" value="50">
+        </div>
+
+        <div class="control-group">
+            <label for="length-b-slider">Line B length <span id="length-b-value">100%</span></label>
+            <input type="range" id="length-b-slider" min="0" max="100" value="100">
+        </div>
+
+        <div class="control-group">
+            <label for="thickness-slider">Line weight <span id="thickness-value">3%</span></label>
+            <input type="range" id="thickness-slider" min="1" max="100" value="3">
+        </div>
+
+        <div class="control-group">
+            <label for="spacing-slider">Spacing <span id="spacing-value">50%</span></label>
+            <input type="range" id="spacing-slider" min="0" max="100" value="50">
+        </div>
+
+        <div class="control-group">
+            <label for="size-slider">Module size <span id="size-value">20px</span></label>
+            <input type="range" id="size-slider" min="10" max="200" value="20">
+        </div>
+
+        <div class="checkbox-group">
+            <input type="checkbox" id="caps-checkbox" checked>
+            <label for="caps-checkbox">Round caps</label>
+        </div>
+
+        <div class="checkbox-group">
+            <input type="checkbox" id="checkerboard-checkbox" checked>
+            <label for="checkerboard-checkbox">Checkerboard</label>
+        </div>
+
+        <div class="checkbox-group">
+            <input type="checkbox" id="both-squares-checkbox">
+            <label for="both-squares-checkbox">Double arcs</label>
+        </div>
+
+        <button id="export-button" class="export-btn">
+            <span class="mac-shortcut">SVG (⌘E)</span>
+            <span class="pc-shortcut">SVG (Ctrl+E)</span>
+        </button>
+    </div>
+
+    <script src="script.js?v=integration-9&layout=root-infra-1"></script>
+</body>
+</html>

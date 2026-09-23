@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <script src="runtime-probe.js?v=2" data-audit-probe></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>YF Tools — UI-аудит</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <main>
+        <header>
+            <a href="../../../">← YF Tools</a>
+            <h1>UI-аудит</h1>
+            <p>Реальные страницы и вычисленные стили. Эталоны: кнопки и контролы Sparky, заголовки групп Wordplayer.</p>
+        </header>
+        <form id="auditForm" class="toolbar">
+            <label>Инструмент <select id="tool">
+<!-- catalog:audit:start -->
+                <option value="sparky" data-tool-state="accepted">Sparky</option>
+                <option value="grid_generator" data-tool-state="accepted">Pizza Boxer</option>
+                <option value="label_generator" data-tool-state="accepted">Sticky Fingers</option>
+                <option value="keyboarder" data-tool-state="accepted">Keyboarder</option>
+                <option value="wordplayer" data-tool-state="accepted">Wordplayer</option>
+                <option value="dither" data-tool-state="accepted">Dither Wizard</option>
+                <option value="wander_bender" data-tool-state="accepted" selected>Wander Bender</option>
+                <option value="pulsar_coder" data-tool-state="accepted">Pulsar Coder</option>
+                <option value="hyperspace" data-tool-state="accepted">Hyperspace</option>
+                <option value="pattern_generator" data-tool-state="accepted">Pattern 01</option>
+                <option value="pattern_generator_02" data-tool-state="accepted">Pattern 02</option>
+                <option value="random_lines_generator" data-tool-state="accepted">Random Lines</option>
+                <option value="rays_pattern_generator" data-tool-state="accepted">Rays Pattern</option>
+                <option value="asterisk_pattern_generator" data-tool-state="accepted">Asterisk Pattern</option>
+                <option value="calendar-randomizer" data-tool-state="accepted">Calendar Randomizer</option>
+                <option value="chladni-sound-pattern" data-tool-state="accepted">Chladni Sound Pattern</option>
+<!-- catalog:audit:end -->
+            </select></label>
+            <label>Окно инструмента <select id="viewport">
+                <option value="1440x900">1440 × 900</option>
+                <option value="1280x800">1280 × 800</option>
+                <option value="1024x768">1024 × 768</option>
+            </select></label>
+            <button id="loadButton" type="submit">Открыть и проверить</button>
+            <button id="scanButton" type="button" disabled>Повторить замер</button>
+            <button id="reportButton" type="button" disabled>Скачать отчёт .md</button>
+        </form>
+        <p id="status" role="status" aria-live="polite">Выберите инструмент.</p>
+        <p><a href="#previewTitle">К рабочему окну ↓</a> · <a href="../ui-host/">Тест подключения нового UI</a> · <a href="../../docs/UI_QUALITY_AND_MIGRATION_PLAN.md">План исправлений и миграции</a></p>
+        <p class="notice">Проверяется только текущее состояние. Можно менять режимы и открывать панели в окне ниже, затем повторить замер. Страница измеряет интерфейс, но сама не нажимает экспорт и не меняет настройки. Встроенные приложения используют своё обычное локальное хранилище.</p>
+        <section aria-labelledby="resultsTitle">
+            <h2 id="resultsTitle">Отклонения и покрытие</h2>
+            <div id="results"></div>
+        </section>
+        <section class="notes" aria-labelledby="notesTitle">
+            <h2 id="notesTitle">Поведение — проверить руками</h2>
+            <p>Эти пункты не считаются пройденными по одному совпадению CSS.</p>
+            <ul>
+                <li>⌘E и клик выполняют один экспорт; «Done» появляется после успешного создания файла, ошибка не выглядит как успех.</li>
+                <li>?, Escape, ⌘\, J / О и JSON-команды; ввод в текстовые поля не перехватывается шоткатами.</li>
+                <li>Сворачивание не меняет ширину панели; длинная сводка сокращается. Панели можно вернуть после перетаскивания.</li>
+                <li>Повторный выбор того же файла, отмена загрузки, неверный файл, переключение режимов и возврат.</li>
+                <li>Слайдер ↔ числовое поле, Hue ↔ Saturation/Brightness; auto/fixed, hover, focus и disabled.</li>
+            </ul>
+            <label for="reproduction">Состояние, шаги и наблюдения для следующего исправления</label>
+            <textarea id="reproduction" rows="3" placeholder="Например: Dither → удалить Image → PNG недоступен, но показывает Exporting…; ожидаю просто disabled."></textarea>
+        </section>
+        <section aria-labelledby="previewTitle">
+            <h2 id="previewTitle">Рабочее окно</h2>
+            <p>Размер внутри фиксирован. Если окно шире страницы, используйте горизонтальную прокрутку.</p>
+            <div class="preview"><iframe id="subject" title="Проверяемый инструмент"></iframe></div>
+        </section>
+        <details>
+            <summary>Что измеряет эта версия</summary>
+            <p>Навигацию, основные кнопки экспорта и ?, заголовки групп, подписи и геометрию обычных range, положение нижней панели, допустимые шрифты и жирности, соответствие написанных шоткатов справке. Скрытые элементы не считаются проверенными. Цвета во время hover, focus, disabled или export feedback требуют отдельного замера.</p>
+            <p>Эталоны также проверяются по зафиксированным значениям. Одновременное отклонение двух инструментов не делает результат корректным. Это ещё не автоматическая приёмка всех режимов, экспортных файлов и мобильного Sparky.</p>
+            <p><a href="../../docs/UI_QUALITY_AND_MIGRATION_PLAN.md">Подробный план контроля и миграции</a> · <a href="../../framework/component-lab/">Существующий Component Lab</a></p>
+        </details>
+        <div class="references" aria-hidden="true" inert>
+            <iframe id="sparkyReference" title="Эталон Sparky" tabindex="-1"></iframe>
+            <iframe id="wordReference" title="Эталон Wordplayer" tabindex="-1"></iframe>
+        </div>
+    </main>
+    <script type="module" src="audit.js?v=ui-policy-1"></script>
+</body>
+</html>

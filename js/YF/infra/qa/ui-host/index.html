@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>UI host fixture</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="../../framework/css/othersite-styles.css">
+  <link rel="stylesheet" href="fixture.css">
+  <link rel="stylesheet" href="../../framework/css/ui-contract.css?v=uiq-5">
+</head>
+<body>
+  <div class="top-links"><a class="top-link" href="../../../">← YF Tools</a></div>
+  <main>
+    <div id="canvasContainer" class="ui-artboard"><canvas id="mainCanvas" aria-label="Fixture circles"></canvas></div>
+    <p class="fixture-note">QA only: PNG is encoded, not downloaded. JSON and audio-source actions are simulated; no files, storage or microphone access.</p>
+  </main>
+  <section class="controls-panel" id="shapePanel">
+    <div class="panel-header" id="shapeHeader"><span>Fixture</span><button class="collapse-icon" type="button" aria-label="Collapse panel"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="m2 4 4 4 4-4" fill="none" stroke="currentColor"/></svg></button></div>
+    <div class="panel-content"><div class="control-section">
+      <h3 class="control-field-heading">Shape</h3>
+      <div class="control-group"><label class="stacked-select-label" for="fixtureMode">Mode<select class="select-input" id="fixtureMode"><option value="circles">Circles</option><option value="lines">Lines</option></select></label></div>
+      <div class="ui-control-stack">
+        <div class="control-group"><label for="countSlider"><span>Count</span><input id="countValue" class="value-display" type="text" value="8"></label><input id="countSlider" type="range" min="3" max="16" value="8"></div>
+      </div>
+      <div class="fixture-actions">
+        <button class="panel-action" id="generateExportCandidate" type="button">Generate</button>
+        <button class="panel-action" id="sourceButton" type="button">Load sample</button>
+        <button class="panel-action" id="audioButton" type="button">Audio simulation</button>
+        <button class="panel-action" id="reinitButton" type="button">Reinitialize UI</button>
+      </div>
+      <div class="control-group pill-toggle-row"><label class="pill-toggle"><input class="sr-only" type="checkbox" id="failExport"><span>Fail export</span></label><label class="pill-toggle"><input class="sr-only" type="checkbox" id="disableExport"><span>Disable export</span></label></div>
+      <div class="control-group"><label for="typingTest">Typing test</label><input class="text-input" id="typingTest" type="text" placeholder="Shortcuts must not fire here"></div>
+      <p id="fixtureStatus" role="status" aria-live="polite">Ready</p>
+    </div></div>
+  </section>
+  <section class="controls-panel" id="linePanel" hidden>
+    <div class="panel-header" id="lineHeader"><span>Line mode</span><button class="collapse-icon" type="button" aria-label="Collapse line panel"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="m2 4 4 4 4-4" fill="none" stroke="currentColor"/></svg></button></div>
+    <div class="panel-content"><div class="control-section"><div class="ui-control-stack"><div class="control-group"><label for="lengthSlider"><span>Length</span><input id="lengthValue" class="value-display" type="text" value="24"></label><input id="lengthSlider" type="range" min="8" max="60" value="24"></div></div></div></div>
+  </section>
+  <nav class="bottom-buttons action-dock" aria-label="Export actions" role="toolbar">
+    <div class="action-dock__slot action-dock__slot--utility"><button class="btn-fixed" id="jsonButton" hidden>JSON</button><button class="btn-fixed" id="importButton" hidden>JSON import</button></div>
+    <div class="action-dock__slot action-dock__slot--primary"><button class="btn-fixed" id="pngButton">PNG</button></div>
+  </nav>
+  <script type="module" src="fixture.js"></script>
+</body>
+</html>

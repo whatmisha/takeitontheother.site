@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <script src="../infra/qa/ui-audit/runtime-probe.js?v=2"></script>
+    <script src="../infra/navigation/legacy-storage.js?v=yf-1" data-tool="random_lines_generator"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random Lines Generator</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="../infra/framework/css/othersite-styles.css">
+    <link rel="stylesheet" href="../infra/framework/css/generator-host.css?v=3">
+    <link rel="stylesheet" href="../infra/framework/css/ui-contract.css?v=uiq-5">
+</head>
+<body>
+    <a class="upgrade-migration-preview" href="../" aria-label="YF Tools — return to main page">← YF Tools</a>
+    <div class="container">
+        <canvas id="patternCanvas" width="3000" height="1000"></canvas>
+
+        <div class="controls-wrapper">
+            <!-- Первая строка с основными настройками -->
+            <div class="controls main-controls-row">
+                <div class="pattern-checkbox control-group">
+                    <label class="checkbox-label" style="margin-left: 0; padding-left: 0;">
+                        <span class="checkbox-text" style="margin-left: 0; padding-left: 0;">Pattern Settings</span>
+                    </label>
+                </div>
+
+                <div class="pattern-sliders">
+                    <div class="control-group">
+                        <label for="lineLengthInput">Line Length<span class="colon">:</span> <span class="unit">px</span></label>
+                        <input type="text" id="lineLengthInput" class="number-input" value="24" autocomplete="off">
+                    </div>
+
+                    <div class="control-group">
+                        <label for="lineWidthInput">Line Width<span class="colon">:</span> <span class="unit">px</span></label>
+                        <input type="text" id="lineWidthInput" class="number-input" value="8" autocomplete="off">
+                    </div>
+
+                    <div class="control-group">
+                        <label for="safeFieldInput">Safe Field<span class="colon">:</span> <span class="unit">px</span></label>
+                        <input type="text" id="safeFieldInput" class="number-input" value="12" autocomplete="off">
+                    </div>
+
+                    <div class="control-group">
+                        <label for="lineCountInput">Line Density (max 5000)<span class="colon">:</span></label>
+                        <input type="text" id="lineCountInput" class="number-input" value="3000" autocomplete="off">
+                    </div>
+
+                    <div class="control-group">
+                        <label for="scaleInput">Scale<span class="colon">:</span></label>
+                        <input type="text" id="scaleInput" class="number-input" value="1.0" autocomplete="off">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Вторая строка с настройками растра -->
+            <div class="controls raster-controls-row">
+                <div class="raster-checkboxes">
+                <div class="raster-checkbox control-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="rasterModeCheckbox">
+                        <span class="checkbox-text">Raster Gradient</span>
+                    </label>
+                    </div>
+
+                    <div class="raster-checkbox control-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="imageRasterModeCheckbox">
+                            <span class="checkbox-text">Image Raster</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="raster-sliders">
+                        <div class="control-group">
+                        <label for="zeroLineLengthInput">Highlights Length<span class="colon">:</span> <span class="unit">px</span></label>
+                            <input type="text" id="zeroLineLengthInput" class="number-input" value="30" autocomplete="off">
+                        </div>
+
+                    <div class="control-group">
+                        <label for="zeroLineWidthInput">Highlights Width<span class="colon">:</span> <span class="unit">px</span></label>
+                        <input type="text" id="zeroLineWidthInput" class="number-input" value="1.0" autocomplete="off">
+                    </div>
+
+                        <div class="control-group">
+                        <label for="hundredLineLengthInput">Shadows Length<span class="colon">:</span> <span class="unit">px</span></label>
+                            <input type="text" id="hundredLineLengthInput" class="number-input" value="100" autocomplete="off">
+                        </div>
+
+                    <div class="control-group">
+                        <label for="hundredLineWidthInput">Shadows Width<span class="colon">:</span> <span class="unit">px</span></label>
+                        <input type="text" id="hundredLineWidthInput" class="number-input" value="2.0" autocomplete="off">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Секция для загрузки изображения -->
+            <div id="imageRasterControls" class="controls image-raster-controls-row" style="display: none;">
+                <div class="image-upload-container">
+                    <label for="imageUpload" class="image-upload-label">Upload Image</label>
+                    <input type="file" id="imageUpload" accept="image/*" class="image-upload-input">
+                    <div class="image-preview-container">
+                        <img id="imagePreview" class="image-preview" alt="Preview" style="display: none;">
+                    </div>
+                </div>
+                <div class="image-settings">
+                        <div class="control-group">
+                        <label for="brightnessContrastInput">Contrast<span class="colon">:</span></label>
+                        <input type="text" id="brightnessContrastInput" class="number-input" value="1.0" autocomplete="off">
+                        </div>
+                        <div class="control-group">
+                        <label for="imageInvertCheckbox" class="checkbox-label">
+                            <input type="checkbox" id="imageInvertCheckbox">
+                            <span class="checkbox-text">Invert Brightness</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="control-buttons-container">
+        <div class="checkboxes-section">
+            <label class="checkbox-label">
+                <input type="checkbox" id="roundCapCheckbox">
+                <span class="checkbox-text">Round Line Caps</span>
+            </label>
+        </div>
+
+        <div class="settings-recovery-section">
+            <input type="text" id="settingsInput" placeholder="Paste filename to restore settings" class="settings-input" autocomplete="off" spellcheck="false">
+            <button id="restoreSettingsBtn" class="restore-btn">Restore</button>
+        </div>
+
+        <div class="buttons-section">
+            <button id="generateBtn" class="generate-btn">Generate</button>
+            <p id="generationStatus" class="file-intake-status" role="status"></p>
+            <button id="resetBtn" class="reset-btn">Reset</button>
+            <button id="exportSvgBtn" class="export-btn">Export SVG (⌘E)</button>
+        </div>
+    </div>
+
+    <script src="script.js?v=integration-9&layout=root-infra-1"></script>
+</body>
+</html>
