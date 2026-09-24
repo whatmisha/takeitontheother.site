@@ -40,7 +40,7 @@ export class ObjectNavigatorController {
 
     addText(overrides = {}) {
         this.host.historyManager.beginAction('add text block', this.host.getStateSnapshot());
-        const block = this.host.objectDocument.addTextBlock(overrides);
+        const block = this.host.objectDocument.addTextBlock({ ...overrides, surface: overrides.surface ?? this.newObjectSurface() });
         this.render();
         this.host.updateGrid();
         this.host.historyManager.commitAction(this.host.getStateSnapshot());
@@ -51,12 +51,19 @@ export class ObjectNavigatorController {
 
     addGraphics(asset = {}) {
         this.host.historyManager.beginAction('add graphics block', this.host.getStateSnapshot());
-        const block = this.host.objectDocument.addGraphicsBlock(asset);
+        const block = this.host.objectDocument.addGraphicsBlock({ ...asset, surface: asset.surface ?? this.newObjectSurface() });
         this.render();
         this.host.updateGrid();
         this.host.historyManager.commitAction(this.host.getStateSnapshot());
         this.host.markAsChanged?.();
         return block;
+    }
+
+    newObjectSurface() {
+        const id = this.host.surfacePanelController?.activeSurface;
+        if (!id || !this.host.surfaceManager?.isActive(id)) return 'front';
+        if (!this.host.surfaceManager.isVisible(id)) this.host.surfaceManager.update(id, { visible: true });
+        return id;
     }
 
     render() {

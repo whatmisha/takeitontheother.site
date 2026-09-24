@@ -32,15 +32,22 @@ export class PanelDragController {
 
         let begin = null;
         if (panel.config.draggable && panel.header) {
-            panel.header.style.cursor = 'grab';
+            const headers = this.headers(panel);
+            headers.forEach(header => { header.style.cursor = 'grab'; });
             begin = event => {
                 if (event.button !== undefined && event.button !== 0) return;
                 if (event.target.closest('.collapse-toggle, .collapse-icon')) return;
                 this.start(panelId, event);
             };
-            this.listeners.listen(panel.header, 'mousedown', begin);
+            headers.forEach(header => this.listeners.listen(header, 'mousedown', begin));
         }
         this.bindings.set(panelId, { panel, raise, begin });
+    }
+
+    headers(panel) {
+        return panel.element.classList.contains('controls-panel-stack')
+            ? [...panel.element.querySelectorAll('.panel-header')]
+            : panel.header ? [panel.header] : [];
     }
 
     start(panelId, event) {
@@ -56,7 +63,7 @@ export class PanelDragController {
             initialX: rect.left,
             initialY: rect.top
         };
-        if (panel.header) panel.header.style.cursor = 'grabbing';
+        this.headers(panel).forEach(header => { header.style.cursor = 'grabbing'; });
         panel.element.style.transition = 'none';
         this.registry.bringToFront(panelId);
     }
@@ -78,7 +85,7 @@ export class PanelDragController {
     stop() {
         if (!this.state.isDragging) return;
         const panel = this.registry.get(this.state.panel);
-        if (panel?.header) panel.header.style.cursor = 'grab';
+        if (panel) this.headers(panel).forEach(header => { header.style.cursor = 'grab'; });
         if (panel?.element) panel.element.style.transition = '';
         this.state = { ...EMPTY_DRAG_STATE };
     }

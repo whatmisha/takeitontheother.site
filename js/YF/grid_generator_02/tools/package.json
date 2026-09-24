@@ -4,9 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite --config vite.config.js",
-    "build": "npm run source:check && vite build --config vite.config.js",
-    "preview": "vite preview --config vite.config.js",
+    "dev": "node node_modules/vite/bin/vite.js --config vite.config.js",
+    "build": "npm run source:check && node node_modules/vite/bin/vite.js build --config vite.config.js",
+    "preview": "node node_modules/vite/bin/vite.js preview --config vite.config.js",
     "test": "npm run public:check && node --test ../tests/*.test.mjs",
     "schema": "node generate-preset-validator.js",
     "schema:check": "node generate-preset-validator.js --check",

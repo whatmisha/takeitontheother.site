@@ -36,15 +36,17 @@ export class SurfaceManager {
     update(surface, patch = {}) { return this.state.update(surface, patch); }
     setAllSideVisibility(visible) { return this.state.setAllSideVisibility(visible); }
     syncMasterVisibility() { return this.state.syncMasterVisibility(); }
+    isActive(surface) { return this.state.isActive(surface); }
+    getActiveIds() { return SURFACE_IDS.filter(id => this.isActive(id)); }
     isVisible(surface) { return this.state.isVisible(surface); }
     getGridContext(surface, width, height) { return this.state.getGridContext(surface, width, height); }
 
     getPhysicalRect(surface, layout) {
-        return getSurfacePhysicalRect(surface, layout);
+        return getSurfacePhysicalRect(surface, { ...this.settings.getAll(), ...layout });
     }
 
     getGeometry(surface, layout) {
-        return getSurfaceGeometry(surface, layout, this.get(surface).rotation);
+        return getSurfaceGeometry(surface, { ...this.settings.getAll(), ...layout }, this.get(surface).rotation);
     }
 
     globalToLocal(surface, point, layout) {

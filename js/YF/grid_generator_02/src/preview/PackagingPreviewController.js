@@ -1,11 +1,13 @@
-const FACE_NAMES = { front: 'Lid', left: 'Left', right: 'Right', top: 'Top', bottom: 'Bottom' };
+import { PANEL_NAMES as FACE_NAMES, CONSTRUCTION_NAMES, constructionType, panelNames } from '../packaging/PackagingModel.js';
 
 export class PackagingPreviewController {
-    constructor({ getModel, buildArtwork, editSurface }) {
+    constructor({ getModel, buildArtwork, editSurface, onSelectFace = () => {} }) {
         this.getModel = getModel;
         this.buildArtwork = buildArtwork;
         this.editSurface = editSurface;
+        this.onSelectFace = onSelectFace;
         this.mode = '2d';
+        this.selectedFace = null;
         this.revision = 0;
         this.fold = 1;
         this.disposed = false;
@@ -14,13 +16,18 @@ export class PackagingPreviewController {
         this.status = document.getElementById('previewStatus');
         this.abort = new AbortController();
         const listen = (element, event, action) => element.addEventListener(event, action, { signal: this.abort.signal });
-        this.modeButtons = [...document.querySelectorAll('[data-workspace-mode]')];
-        this.modeButtons.forEach(button => listen(button, 'click', () => this.setMode(button.dataset.workspaceMode)));
+        this.modeInputs = [...document.querySelectorAll('[data-workspace-mode]')];
+        this.modeInputs.forEach(input => listen(input, 'change', () => { if (input.checked) this.setMode(input.dataset.workspaceMode); }));
         document.querySelectorAll('[data-camera-view]').forEach(button => listen(button, 'click', () => {
             const view = button.dataset.cameraView;
-            this.scene?.setView(view);
+            if (view === 'inside' && constructionType(this.getModel()) !== 'lid') {
+                this.setOpening(1);
+                this.scene?.setView('iso');
+            } else this.scene?.setView(view);
             this.selectFace(FACE_NAMES[view] ? view : null);
         }));
+        this.openInput = document.getElementById('previewOpen');
+        listen(this.openInput, 'input', () => this.setOpening(Number(this.openInput.value) / 100));
         this.foldInput = document.getElementById('previewFold');
         listen(this.foldInput, 'input', () => this.setFold(Number(this.foldInput.value) / 100));
         listen(document.getElementById('previewUnfold'), 'click', () => this.animateFold(0));
@@ -38,7 +45,7 @@ export class PackagingPreviewController {
         document.body.dataset.workspaceView = mode;
         this.section.hidden = mode !== '3d';
         document.getElementById('canvasContainer').inert = mode === '3d';
-        this.modeButtons.forEach(button => button.setAttribute('aria-pressed', String(button.dataset.workspaceMode === mode)));
+        this.modeInputs.forEach(input => { input.checked = input.dataset.workspaceMode === mode; });
         if (this.scene) this.scene.visible = mode === '3d';
         if (mode !== '3d') { cancelAnimationFrame(this.animation); return; }
         try {
@@ -63,6 +70,7 @@ export class PackagingPreviewController {
             this.scene.resize();
             this.scene.setModel(this.getModel());
             this.scene.setFold(this.fold);
+            this.scene.select(this.selectedFace);
             this.invalidate();
         } catch (error) {
             this.scenePromise = null;
@@ -78,7 +86,10 @@ export class PackagingPreviewController {
         this.scene.setModel(model);
         if (this.selectedFace && !model.visibleSurfaces.includes(this.selectedFace)) this.selectFace(null);
         document.getElementById('previewDimensions').textContent = `${model.frontWidth} × ${model.frontHeight} × ${model.thickness} mm`;
-        document.querySelector('.preview-heading > span').textContent = `${model.visibleSurfaces.length}-panel lid`;
+        document.querySelector('.preview-heading > span').textContent = CONSTRUCTION_NAMES[constructionType(model)];
+        const isLid = constructionType(model) === 'lid';
+        document.getElementById('previewOpenRow').hidden = isLid;
+        this.section.classList.toggle('has-opening', !isLid);
         document.querySelectorAll('[data-camera-view]').forEach(button => {
             button.disabled = Boolean(FACE_NAMES[button.dataset.cameraView] && !model.visibleSurfaces.includes(button.dataset.cameraView));
         });
@@ -106,6 +117,12 @@ export class PackagingPreviewController {
         }
     }
 
+    setOpening(value) {
+        this.openInput.value = Math.round(value * 100);
+        document.getElementById('previewOpenValue').value = `${Math.round(value * 100)}%`;
+        this.scene?.setOpening(value);
+    }
+
     setFold(value) {
         cancelAnimationFrame(this.animation);
         this.fold = value;
@@ -123,14 +140,16 @@ export class PackagingPreviewController {
             const progress = Math.min(1, (now - start) / 600);
             this.setFold(from + (target - from) * (progress * progress * (3 - 2 * progress)));
             if (progress < 1 && !this.disposed && this.mode === '3d') this.animation = requestAnimationFrame(tick);
+            else if (!this.disposed && this.mode === '3d') this.scene?.setView('iso');
         };
         this.animation = requestAnimationFrame(tick);
     }
 
-    selectFace(id) {
+    selectFace(id, { notify = true } = {}) {
         this.selectedFace = id;
+        if (notify) this.onSelectFace(id);
         this.scene?.select(id);
-        document.getElementById('previewSelectedFace').textContent = id ? `${FACE_NAMES[id]} selected` : 'Select a face to edit its layout';
+        document.getElementById('previewSelectedFace').textContent = id ? `${panelNames(this.getModel())[id]} selected` : 'Select a face to edit its layout';
         document.getElementById('previewEditFace').hidden = !id;
         document.querySelectorAll('[data-camera-view]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.cameraView === id)));
     }

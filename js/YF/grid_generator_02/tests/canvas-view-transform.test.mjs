@@ -65,3 +65,18 @@ test('cursor-centered zoom and Fit return deterministic view state', () => {
         maxZoom: 10
     }), { zoom: 1, baseZoom: 1, panX: -240, panY: -230 });
 });
+
+
+test('Fit shrinks a full net between panels and respects quarter-turn rotation', () => {
+    for (const rotation of [0, 90, 180, 270]) {
+        const bbox = { x: 20, y: 40, width: 800, height: 1300 };
+        const containerRect = { width: 1280, height: 720 };
+        const view = calculateFitView({ bbox, containerRect, originalWidth: 1000, originalHeight: 1000,
+            minZoom: 0.1, maxZoom: 10, rotation });
+        const scale = getSvgRenderScale(containerRect, { width: 1000 / view.zoom, height: 1000 / view.zoom }, rotation);
+        const rotated = rotation % 180 !== 0;
+        assert.ok((rotated ? bbox.height : bbox.width) * scale <= 600 + 1e-8);
+        assert.ok((rotated ? bbox.width : bbox.height) * scale <= 480 + 1e-8);
+        assert.ok(view.zoom < 1);
+    }
+});

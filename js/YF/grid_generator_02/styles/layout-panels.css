@@ -70,12 +70,15 @@
     flex: 0 0 auto;
 }
 
-.controls-panel-stack > #gridPanel {
-    flex: 0 0 auto;
+.controls-panel-stack-left {
+    left: var(--spacing-3xl);
+    right: auto;
+    max-height: calc(100dvh - 330px);
 }
 
-.controls-panel-stack #surfacePanelHeader {
-    cursor: default;
+.controls-panel-stack > .controls-panel > .panel-content {
+    min-height: 0;
+    overflow-y: auto;
 }
 
 .panel-content {

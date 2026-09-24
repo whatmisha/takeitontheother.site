@@ -1,5 +1,8 @@
+import { SurfaceAdditionCommands } from '../packaging/SurfaceAddition.js';
+import { SurfaceNetController } from '../surfaces/SurfaceNetController.js';
 import { PackagingPreviewController } from '../preview/PackagingPreviewController.js';
 import { PreviewArtworkBuilder } from '../preview/PreviewArtworkBuilder.js';
+import { ConstructionController } from '../packaging/ConstructionController.js';
 import { TextToPath } from '../utils/TextToPath.js';
 
 import { Settings } from './Settings.js';
@@ -72,7 +75,7 @@ import { SurfaceCoordinateMapper } from '../surfaces/SurfaceCoordinateMapper.js'
 import { SurfaceRenderer } from '../surfaces/SurfaceRenderer.js';
 
 export class GridGenerator {
-    constructor() {
+    constructor({ draftDatabaseName } = {}) {
         this.isInitializing = true;
         this.disposed = false;
         this.lifecycle = new ApplicationLifecycle();
@@ -251,18 +254,26 @@ export class GridGenerator {
                 visibleSurfaces: SURFACE_IDS.filter(id => this.surfaceManager.isVisible(id))
             }),
             buildArtwork: () => previewArtwork.build(),
+            onSelectFace: id => {
+                this.surfacePanelController?.select(id, { notify: false });
+                this.surfaceNetController?.draw();
+            },
             editSurface: id => {
-                const input = document.querySelector(`#surfaceSettingsTabs input[data-surface="${id}"]`);
-                input?.click();
-                if (id !== 'front') this.panelManager?.setCollapsed('surfacePanel', false);
-                const zoom = this.zoomPanManager;
-                const rect = this.surfaceManager.getPhysicalRect(id, this.currentSurfaceLayout);
-                if (zoom && rect) {
-                    zoom.panX = rect.x + rect.width / 2 - zoom.originalWidth / zoom.zoom / 2;
-                    zoom.panY = rect.y + rect.height / 2 - zoom.originalHeight / zoom.zoom / 2;
-                    zoom.updateTransform();
-                }
+                this.surfacePanelController?.select(id);
+                this.focusSurface(id);
             }
+        }));
+        this.constructionController = this.lifecycle.own(new ConstructionController({
+            settings: this.settingsModule,
+            begin: label => this.historyManager.beginAction(label, this.getStateSnapshot()),
+            commit: () => this.historyManager.commitAction(this.getStateSnapshot()),
+            changed: () => this.markAsChanged(),
+            render: () => {
+                this.surfaceManager.syncMasterVisibility();
+                this.syncApplicationUI();
+                this.updateGrid();
+            },
+            fit: () => this.zoomPanManager?.fitToScreen()
         }));
         this.exportController = new ExportController(createExportPort(this));
         this.presetApplicationController = new PresetApplicationController(
@@ -286,7 +297,7 @@ export class GridGenerator {
             onError: error => this.errorPresenter.show(error, { title: 'Preset loading failed' })
         }));
         this.draftRecoveryController = this.lifecycle.own(new DraftRecoveryController({
-            store: new DraftStore(),
+            store: new DraftStore({ databaseName: draftDatabaseName }),
             createDraft: () => ({
                 presetKey: this.presetManager?.currentPreset || null,
                 presetName: this.currentPresetName || 'Custom',
@@ -399,11 +410,29 @@ export class GridGenerator {
      * Инициализация управления отдельными боковыми поверхностями.
      */
     initSurfaceControls() {
+        const additions = new SurfaceAdditionCommands({
+            settings: this.settingsModule, surfaceManager: this.surfaceManager,
+            begin: label => this.historyManager.beginAction(label, this.getStateSnapshot()),
+            commit: () => this.historyManager.commitAction(this.getStateSnapshot()),
+            changed: () => this.markAsChanged(),
+            render: () => { this.syncApplicationUI(); this.updateGrid(); },
+            fit: () => this.zoomPanManager?.fitToScreen()
+        });
         this.surfacePanelController = this.lifecycle.own(new SurfacePanelController({
             dom: this.dom,
             surfaceManager: this.surfaceManager,
             sliderController: this.sliderController,
             sideSurfaces: SIDE_SURFACE_IDS,
+            additions,
+            onSelect: id => {
+                this.packagingPreview?.selectFace(id, { notify: false });
+                this.surfaceNetController?.draw();
+                if (id) this.panelManager?.setCollapsed('surfacePanel', false);
+            },
+            onFocus: id => this.focusSurface(id),
+            onEditMainGrid: () => {
+                this.panelManager.setCollapsed('gridPanel', false);
+            },
             onBeginAction: action => this.historyManager.beginAction(action, this.getStateSnapshot()),
             onCommitAction: () => this.historyManager.commitAction(this.getStateSnapshot()),
             onMarkChanged: () => this.markAsChanged(),
@@ -412,6 +441,22 @@ export class GridGenerator {
             onRenderDebounced: () => this.updateGridDebounced()
         }));
         this.surfacePanelController.init();
+        this.surfaceNetController = this.lifecycle.own(new SurfaceNetController({
+            svg: this.dom.svg, surfaceManager: this.surfaceManager,
+            getLayout: () => this.currentSurfaceLayout,
+            getSelected: () => this.surfacePanelController.activeSurface,
+            onSelect: id => this.surfacePanelController.select(id),
+            onAdd: id => this.surfacePanelController.add(id),
+            isPanning: () => this.zoomPanManager.eventController.isSpacePressed || this.zoomPanManager.eventController.isPanning
+        }));
+    }
+
+    focusSurface(id) {
+        this.panelManager?.setCollapsed('surfacePanel', false);
+        if (this.packagingPreview?.mode === '3d') { this.packagingPreview.scene?.setView(id); return; }
+        const zoom = this.zoomPanManager;
+        const rect = this.surfaceManager.getPhysicalRect(id, this.currentSurfaceLayout);
+        if (zoom && rect) zoom.fitToScreen(rect);
     }
 
     syncSurfaceControls() {
@@ -606,12 +651,11 @@ export class GridGenerator {
     initPanels() {
         // Регистрируем все панели через PanelManager
         const panels = [
-            { id: 'controlsPanel', headerId: 'panelHeader', draggable: true },
-            { id: 'rightSettingsStack', headerId: 'gridPanelHeader', draggable: true },
+            { id: 'leftSettingsStack', headerId: 'panelHeader', draggable: true },
+            { id: 'rightSettingsStack', headerId: 'surfacePanelHeader', draggable: true },
             { id: 'textPanel', headerId: 'textPanelHeader', draggable: true },
             { id: 'paragraphPanel', headerId: 'paragraphPanelHeader', draggable: true },
-            { id: 'graphicsPanel', headerId: 'graphicsPanelHeader', draggable: true },
-            { id: 'elementsNavigator', headerId: 'elementsNavigatorHeader', draggable: true }
+            { id: 'graphicsPanel', headerId: 'graphicsPanelHeader', draggable: true }
         ];
 
         panels.forEach(panel => {

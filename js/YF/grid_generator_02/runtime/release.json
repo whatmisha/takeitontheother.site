@@ -1,25 +1,25 @@
 {
   "version": 1,
-  "fingerprint": "8b7e7b93bcd2169904dbcc0b5de983473d4cf7377762ef4dc79faec93257c958",
+  "fingerprint": "d08d054d913638c025f4e4f881901aec32cd41b1271bf3c6fe5517caa4e8a384",
   "entry": {
-    "script": "runtime/assets/PublicEntry-DWn_ga8X.js",
-    "style": "runtime/assets/PublicEntry-crLdgDL-.css"
+    "script": "runtime/assets/PublicEntry-BRhw4b_8.js",
+    "style": "runtime/assets/PublicEntry-COwDfKxA.css"
   },
   "files": [
-    "LidPreviewScene-CWBaOmRH.js",
+    "LidPreviewScene-Cau-66Kj.js",
     "LunnenDisplay-VariableVF-5DlFmosS.woff2",
     "LunnenDisplay-VariableVF-nXG1IVZg.ttf",
-    "PublicEntry-DWn_ga8X.js",
-    "PublicEntry-crLdgDL-.css",
+    "PublicEntry-BRhw4b_8.js",
+    "PublicEntry-COwDfKxA.css",
     "TT_Commons_Classic_Medium-C-Nzrc8f.woff2",
     "TT_Commons_Classic_Regular-BUtFdW8L.woff2",
     "actions-BIOt6vRv.html",
     "jspdf.umd.min-BBnSvupt.js",
-    "object-editors-Dh9iNQFE.html",
+    "object-editors-BseEXva9.html",
     "objects-BQmilPPg.html",
     "opentype.min-GVQsE5jZ.js",
     "svg2pdf.umd.min-CUIcJZ9R.js",
     "typography-Ch_Gwuph.html",
-    "workspace-WnzAyB6-.html"
+    "workspace-D8tb4vbj.html"
   ]
 }

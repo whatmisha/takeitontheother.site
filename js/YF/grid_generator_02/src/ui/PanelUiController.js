@@ -38,8 +38,10 @@ export class PanelUiController {
             this.host.panelManager?.setCollapsed?.(panel.id, initiallyCollapsed);
             this.syncCollapseIcon(icon, initiallyCollapsed);
 
-            const bottomAnchored = panel.classList.contains('elements-navigator') ||
-                panel.classList.contains('controls-panel-text');
+            const bottomAnchored = !panel.closest('.controls-panel-stack') && (
+                panel.classList.contains('elements-navigator') ||
+                panel.classList.contains('controls-panel-text')
+            );
             const textPanel = panel.classList.contains('controls-panel-text');
             if (bottomAnchored && !panel.dataset.originalTop) {
                 panel.dataset.originalTop = panel.getBoundingClientRect().top;

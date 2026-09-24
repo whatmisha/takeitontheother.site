@@ -68,6 +68,12 @@ export class PanelRegistry {
         const element = this.getElement(panelId);
         if (!element) return false;
         element.classList.toggle('panel-collapsed', collapsed);
+        const icon = element.querySelector?.('.collapse-icon');
+        if (icon) {
+            icon.classList.toggle('collapsed', collapsed);
+            icon.setAttribute('aria-expanded', String(!collapsed));
+            icon.setAttribute('aria-label', collapsed ? 'Expand panel' : 'Collapse panel');
+        }
         const panel = this.get(panelId);
         if (panel) panel.isCollapsed = collapsed;
         return true;

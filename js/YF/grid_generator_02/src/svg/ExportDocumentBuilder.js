@@ -1,3 +1,4 @@
+import { packagingNet } from '../packaging/PackagingModel.js';
 import { SvgAssetTemplateCache } from './SvgAssetTemplateCache.js';
 
 const STYLE_REFERENCES = Object.freeze([
@@ -58,9 +59,10 @@ export class ExportDocumentBuilder {
 
     async buildDocument(includeReferenceElements = true) {
         const host = this.host;
-        const { frontWidth, frontHeight, thickness } = host.settingsModule.getAll();
-        const totalWidth = frontWidth + 2 * thickness;
-        const totalHeight = frontHeight + 2 * thickness;
+        const settings = host.settingsModule.getAll();
+        const { frontWidth, frontHeight, thickness } = settings;
+        const net = packagingNet(settings);
+        const totalWidth = net.width, totalHeight = net.height;
         const scale = 1;
         const svg = this.createElement('svg', {
             xmlns: 'http://www.w3.org/2000/svg',
@@ -79,11 +81,11 @@ export class ExportDocumentBuilder {
             scale
         );
 
-        const frontX = thickness;
-        const frontY = thickness;
+        const { x: frontX, y: frontY } = net.panels.front;
         const grid = this.createGroup(svg, 'grid');
         this.drawFrontGrid(grid, frontX, frontY, frontWidth, frontHeight, scale);
         host.surfaceRenderer.drawSideLayers(svg, {
+            ...settings,
             x: 0,
             y: 0,
             frontWidth,

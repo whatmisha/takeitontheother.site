@@ -101,7 +101,7 @@ test('JSON export reads object data from the document source of truth', () => {
     const data = controller.exportSettings();
 
     assert.equal(data, exported.data);
-    assert.equal(data.version, '1.2');
+    assert.equal(data.version, '2.0');
     assert.equal(data.textBlocks, textBlocks);
     assert.equal(data.graphicsBlocks, graphicsBlocks);
     assert.equal('iconsBlock' in data, false);

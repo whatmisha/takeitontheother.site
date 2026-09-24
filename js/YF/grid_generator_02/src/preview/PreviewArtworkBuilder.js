@@ -1,3 +1,4 @@
+import { packagingNet, activePanelIds } from '../packaging/PackagingModel.js';
 import { ExportDocumentBuilder } from '../svg/ExportDocumentBuilder.js';
 
 const FONT_FILES = [
@@ -33,8 +34,10 @@ export class PreviewArtworkBuilder {
 
     async build() {
         const host = this.host;
-        const { frontWidth, frontHeight, thickness, boxColor } = host.settingsModule.getAll();
-        const width = frontWidth + 2 * thickness, height = frontHeight + 2 * thickness;
+        const settings = host.settingsModule.getAll();
+        const { frontWidth, frontHeight, thickness, boxColor } = settings;
+        const { width, height, panels } = packagingNet(settings);
+        const { x: frontX, y: frontY } = panels.front;
         const svg = this.documentBuilder.createElement('svg', {
             xmlns: 'http://www.w3.org/2000/svg', viewBox: `0 0 ${width} ${height}`
         });
@@ -42,11 +45,11 @@ export class PreviewArtworkBuilder {
         this.documentBuilder.createElement('rect', { width, height, fill: boxColor }, svg);
         const defs = this.documentBuilder.createElement('defs', {}, svg);
         const clip = this.documentBuilder.createElement('clipPath', { id: 'preview-front-clip' }, defs);
-        this.documentBuilder.createElement('rect', { x: thickness, y: thickness, width: frontWidth, height: frontHeight }, clip);
+        this.documentBuilder.createElement('rect', { x: frontX, y: frontY, width: frontWidth, height: frontHeight }, clip);
         const front = this.documentBuilder.createElement('g', { 'clip-path': 'url(#preview-front-clip)' }, svg);
-        this.documentBuilder.drawFrontObjects(front, thickness, thickness, frontWidth, frontHeight, 1);
-        const layout = { x: 0, y: 0, frontWidth, frontHeight, thickness };
-        for (const surface of ['left', 'right', 'top', 'bottom']) {
+        this.documentBuilder.drawFrontObjects(front, frontX, frontY, frontWidth, frontHeight, 1);
+        const layout = { ...settings, x: 0, y: 0 };
+        for (const surface of activePanelIds(settings).filter(id => id !== 'front')) {
             const { layer, geometry } = host.surfaceRenderer.createLayer(svg, surface, layout, 'preview');
             host.surfaceRenderer.drawObjects(layer, surface, geometry, 1, true);
         }

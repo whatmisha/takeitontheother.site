@@ -22,7 +22,10 @@ async function startApplication() {
         }
 
         globalThis[APPLICATION_INSTANCE]?.dispose?.();
-        application = new GridGenerator();
+        application = new GridGenerator({
+            draftDatabaseName: new URLSearchParams(location.search).has('browser-smoke')
+                ? 'upgrade-pizza-boxer-02-browser-smoke-v1' : undefined
+        });
         globalThis[APPLICATION_INSTANCE] = application;
         await application.startupController.initialize();
     } catch (error) {

@@ -1,6 +1,7 @@
 import * as THREE from '../../vendor/three/three.module.js';
 import { OrbitControls } from '../../vendor/three/OrbitControls.js';
-import { createLidPanels, foldAngle, panelUV } from './LidGeometry.js';
+import { createPackagingModel } from '../packaging/PackagingModel.js';
+import { foldAngle, panelUV } from './LidGeometry.js';
 
 const VIEWS = {
     iso: [1, 1.25, 1.5], front: [0, 1, 0.001], inside: [0, -1, 0.001],
@@ -11,9 +12,14 @@ const VIEWS = {
 export class LidPreviewScene {
     constructor(container, { onSelect, onError }) {
         this.container = container;
+        const ui = getComputedStyle(container);
+        this.selectionColor = ui.getPropertyValue('--ui-foreground').trim() || '#d2d2d2';
+        this.outlineColor = ui.getPropertyValue('--color-text-dim').trim() || '#666666';
         this.onSelect = onSelect;
         this.onError = onError;
         this.fold = 1;
+        this.opening = 0;
+        this.joints = new Map();
         this.visible = true;
         this.disposed = false;
         this.panels = [];
@@ -45,6 +51,10 @@ export class LidPreviewScene {
         this.model = new THREE.Group();
         this.model.rotation.x = -Math.PI / 2;
         this.scene.add(this.model);
+        this.openingPivot = new THREE.Group();
+        this.assembly = new THREE.Group();
+        this.model.add(this.openingPivot);
+        this.openingPivot.add(this.assembly);
         this.raycaster = new THREE.Raycaster();
         this.abort = new AbortController();
         const options = { signal: this.abort.signal };
@@ -59,16 +69,26 @@ export class LidPreviewScene {
     }
 
     setModel(settings) {
-        const specs = createLidPanels(settings);
-        const key = JSON.stringify(specs);
+        const definition = createPackagingModel(settings);
+        const specs = definition.panels;
+        const key = JSON.stringify([specs, settings.visibleSurfaces]);
+        const typeChanged = this.definition?.type !== definition.type;
+        this.definition = definition;
         this.settings = settings;
         if (key === this.modelKey) return;
         const firstModel = !this.modelKey;
         this.modelKey = key;
         this.clearPanels();
-        this.panels = specs.map(spec => {
+        this.openingPivot.position.y = settings.frontHeight / 2;
+        this.assembly.position.y = -settings.frontHeight / 2;
+        for (const spec of specs) {
             const hinge = new THREE.Group();
             hinge.position.fromArray(spec.hinge);
+            this.joints.set(spec.id, hinge);
+        }
+        for (const spec of specs) (this.joints.get(spec.parent) || this.assembly).add(this.joints.get(spec.id));
+        this.panels = specs.filter(spec => !settings.visibleSurfaces || settings.visibleSurfaces.includes(spec.id)).map(spec => {
+            const hinge = this.joints.get(spec.id);
             const geometry = new THREE.PlaneGeometry(spec.width, spec.height);
             const uv = geometry.attributes.uv;
             for (let i = 0; i < uv.count; i++) uv.setXY(i, ...panelUV(spec, uv.getX(i), uv.getY(i)));
@@ -80,15 +100,24 @@ export class LidPreviewScene {
             const interior = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ color: 0xe5e1d8, roughness: 1, side: THREE.BackSide }));
             interior.position.copy(exterior.position);
             interior.userData.surface = spec.id;
-            const outline = new THREE.LineSegments(new THREE.EdgesGeometry(geometry), new THREE.LineBasicMaterial({ color: 0x777777, transparent: true, opacity: 0.35 }));
+            const outline = new THREE.LineSegments(new THREE.EdgesGeometry(geometry), new THREE.LineBasicMaterial({ color: this.outlineColor, transparent: true, opacity: 0.35 }));
             outline.position.copy(exterior.position);
             hinge.add(exterior, interior, outline);
-            this.model.add(hinge);
+            // The thin-sheet preview has no material caliper yet. Keep the tucked
+            // flap behind the coincident front wall instead of flickering.
+            if (spec.id === 'flap') {
+                printed.polygonOffset = true;
+                printed.polygonOffsetFactor = 1;
+                printed.polygonOffsetUnits = 1;
+                interior.material.polygonOffset = true;
+                interior.material.polygonOffsetFactor = -1;
+                interior.material.polygonOffsetUnits = -1;
+            }
             return { spec, hinge, exterior, interior, outline };
         });
         this.setFold(this.fold);
         this.select(this.selected);
-        if (firstModel) this.setView('iso');
+        if (firstModel || typeChanged) this.setView('iso');
         else this.render();
     }
 
@@ -109,12 +138,21 @@ export class LidPreviewScene {
 
     setFold(value) {
         this.fold = Math.max(0, Math.min(1, value));
-        this.panels.forEach(({ hinge, spec }) => { hinge.rotation[spec.axis] = foldAngle(spec, this.fold); });
+        this.definition?.panels.forEach(spec => {
+            this.joints.get(spec.id).rotation[spec.axis] = foldAngle(spec, this.fold, this.opening, this.definition.type);
+        });
+        this.openingPivot.rotation.x = this.definition?.type === 'lid' ? 0 : -this.opening * this.fold * Math.PI / 2;
         this.render();
     }
 
+    setOpening(value) {
+        this.opening = Math.max(0, Math.min(1, value));
+        this.setFold(this.fold);
+    }
+
     setView(view) {
-        if (!this.settings || !VIEWS[view]) return;
+        const selected = this.panels.find(panel => panel.spec.id === view);
+        if (!this.settings || (!VIEWS[view] && !selected)) return;
         const { frontWidth: w, frontHeight: h, thickness: d } = this.settings;
         this.model.updateMatrixWorld(true);
         const box = new THREE.Box3().setFromObject(this.model);
@@ -122,8 +160,12 @@ export class LidPreviewScene {
         const radius = box.getSize(new THREE.Vector3()).length() / 2;
         const halfFov = Math.atan(Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2)) * Math.min(this.camera.aspect, 1));
         const distance = radius / Math.sin(halfFov) * 1.12;
-        this.controls.target.copy(center);
-        this.camera.position.copy(center).add(new THREE.Vector3(...VIEWS[view]).normalize().multiplyScalar(distance));
+        const target = selected ? selected.exterior.getWorldPosition(new THREE.Vector3()) : center;
+        const direction = selected
+            ? new THREE.Vector3(0, 0, 1).transformDirection(selected.exterior.matrixWorld)
+            : new THREE.Vector3(...VIEWS[view]).normalize();
+        this.controls.target.copy(target);
+        this.camera.position.copy(target).add(direction.multiplyScalar(distance));
         this.camera.near = Math.max(0.05, Math.min(w, h, d) / 100);
         this.camera.far = distance * 30;
         this.camera.updateProjectionMatrix();
@@ -145,7 +187,7 @@ export class LidPreviewScene {
     select(id) {
         this.selected = this.panels.some(p => p.spec.id === id) ? id : null;
         this.panels.forEach(({ spec, outline }) => {
-            outline.material.color.set(spec.id === this.selected ? 0xc4f36c : 0x777777);
+            outline.material.color.set(spec.id === this.selected ? this.selectionColor : this.outlineColor);
             outline.material.opacity = spec.id === this.selected ? 1 : 0.35;
         });
         this.render();
@@ -164,7 +206,7 @@ export class LidPreviewScene {
 
     clearPanels() {
         this.panels.forEach(({ hinge, exterior, interior, outline }) => {
-            this.model.remove(hinge);
+            hinge.removeFromParent();
             exterior.geometry.dispose();
             exterior.material.dispose();
             interior.material.dispose();
@@ -172,6 +214,8 @@ export class LidPreviewScene {
             outline.material.dispose();
         });
         this.panels = [];
+        this.assembly.clear();
+        this.joints.clear();
     }
 
     dispose() {

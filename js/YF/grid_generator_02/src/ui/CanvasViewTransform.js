@@ -101,19 +101,20 @@ export function calculateFitView({
     originalHeight,
     minZoom,
     maxZoom,
-    paddingHorizontal = 360,
+    rotation = 0,
+    paddingHorizontal = 340,
     paddingVertical = 120
 }) {
     const availableWidth = Math.max(100, containerRect.width - paddingHorizontal * 2);
     const availableHeight = Math.max(100, containerRect.height - paddingVertical * 2);
-    const scale = Math.min(availableWidth / bbox.width, availableHeight / bbox.height);
-    const zoom = Math.max(minZoom, Math.min(maxZoom, scale));
-    const baseZoom = zoom <= 1 ? 1 : zoom;
-    const normalizedZoom = zoom <= 1 ? 1 : zoom;
-
+    const rotated = normalizeRotation(rotation) % 180 !== 0;
+    const scale = Math.min(availableWidth / Math.max(1, rotated ? bbox.height : bbox.width),
+        availableHeight / Math.max(1, rotated ? bbox.width : bbox.height));
+    const naturalScale = getSvgRenderScale(containerRect, { width: originalWidth, height: originalHeight }, rotation);
+    const zoom = Math.max(minZoom, Math.min(maxZoom, scale / naturalScale));
     return {
-        zoom: normalizedZoom,
-        baseZoom,
-        ...calculateCenteredPan(bbox, originalWidth, originalHeight, normalizedZoom)
+        zoom,
+        baseZoom: zoom,
+        ...calculateCenteredPan(bbox, originalWidth, originalHeight, zoom)
     };
 }

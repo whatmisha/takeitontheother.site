@@ -78,7 +78,7 @@ export class ExportController {
     exportSettings() {
         const host = this.host;
         const data = {
-            version: '1.2',
+            version: '2.0',
             timestamp: this.now().toISOString(),
             settings: host.settingsModule.getAll(),
             textBlocks: host.objectDocument.textBlocks,

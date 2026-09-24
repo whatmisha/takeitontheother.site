@@ -55,6 +55,7 @@ export class ApplicationUiSynchronizer {
         host.colorPanelController.sync(settings.boxColor);
         host.gridSettingsController.generateRowPresets();
         host.surfacePanelController?.sync();
+        host.constructionController?.sync();
     }
 
     getDisplayValue(settingKey, settings) {

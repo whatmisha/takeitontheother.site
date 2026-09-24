@@ -188,7 +188,8 @@ test('Pizza Boxer layers shared CSS below its production compatibility skin', as
         /(?:^|\})\s*\.(?:bottom-buttons|btn-fixed)(?:\s|:|\{|,)/u,
         'Pizza Boxer must not override the shared action shell responsively'
     );
-    assert.match(sideStyles, /\.surface-tabs\.segmented-control label\s*\{/u);
+    assert.match(workspace, /class="element-item-wrapper surface-row"/u, 'Sides reuses the Objects list row');
+    assert.match(workspace, /class="btn-add-object surface-add-toggle"/u, 'Add Side reuses the existing add button');
     assert.match(sideStyles, /\.surface-visible-chip,\s*\.surface-own-grid-chip\s*\{/u);
     assert.match(frameworkStyles, /(?:^|\n)\.toggle-chip\s*\{/u);
     assert.match(frameworkStyles, /(?:^|\n)\.checkbox-label\s*\{/u);
@@ -220,15 +221,15 @@ test('Pizza Boxer layers shared CSS below its production compatibility skin', as
         (workspace.match(/class="value-display(?!-)/gu)?.length || 0)
             + (typography.match(/class="value-display(?!-)/gu)?.length || 0)
             + (editors.match(/class="value-display(?!-)/gu)?.length || 0),
-        38,
-        'Pizza Boxer value-display inventory changed'
+        39,
+        'Pizza Boxer 02 value-display inventory includes flap depth'
     );
     assert.equal(
         (workspace.match(/<input\b[^>]*\btype="range"[^>]*>/gu)?.length || 0)
             + (typography.match(/<input\b[^>]*\btype="range"[^>]*>/gu)?.length || 0)
             + (editors.match(/<input\b[^>]*\btype="range"[^>]*>/gu)?.length || 0),
-        30,
-        'Pizza Boxer 02 range inventory includes the fold control'
+        31,
+        'Pizza Boxer 02 range inventory includes fold and opening controls'
     );
     assert.match(
         controlsWithoutComments,

@@ -23,7 +23,7 @@ test('New and Front presets use the front orientation profile', () => {
             Object.entries(createDefaultSurfaceSettings('front'))
                 .map(([surface, settings]) => [surface, settings.rotation])
         ),
-        { front: 0, left: 90, right: 270, top: 180, bottom: 0 }
+        { front: 0, left: 90, right: 270, top: 180, bottom: 0, base: 0, flap: 0 }
     );
 });
 

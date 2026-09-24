@@ -1,7 +1,8 @@
+import { ALL_PANEL_IDS, activePanelIds } from '../packaging/PackagingModel.js';
 import { cloneJson } from '../utils/cloneJson.js';
 
-export const SURFACE_IDS = Object.freeze(['front', 'left', 'right', 'top', 'bottom']);
-export const SIDE_SURFACE_IDS = Object.freeze(['left', 'right', 'top', 'bottom']);
+export const SURFACE_IDS = ALL_PANEL_IDS;
+export const SIDE_SURFACE_IDS = Object.freeze(ALL_PANEL_IDS.filter(id => id !== 'front'));
 export const SURFACE_ROTATIONS = Object.freeze([0, 90, 180, 270]);
 
 const ORIENTATION_PROFILES = Object.freeze({
@@ -36,7 +37,7 @@ export function createDefaultSurfaceSettings(profile = 'front', mainGrid = {}) {
     };
     return Object.fromEntries(SURFACE_IDS.map(surface => [surface, {
         visible: true,
-        rotation: rotations[surface],
+        rotation: rotations[surface] ?? 0,
         gridMode: 'main',
         grid: clone(grid)
     }]));
@@ -127,15 +128,17 @@ export class SurfaceStateStore {
     syncMasterVisibility() {
         this.settings.set(
             'showSidePanels',
-            SIDE_SURFACE_IDS.some(surface => this.getAll()[surface].visible !== false),
+            SIDE_SURFACE_IDS.some(surface => this.isActive(surface) && this.getAll()[surface].visible !== false),
             true
         );
     }
 
+    isActive(surface) { return activePanelIds(this.settings.getAll()).includes(surface); }
+
     isVisible(surface) {
-        return surface === 'front' || (
+        return this.isActive(surface) && (surface === 'front' || (
             this.settings.get('showSidePanels') !== false && this.get(surface).visible !== false
-        );
+        ));
     }
 
     getGridContext(surface, localWidthMm, localHeightMm) {

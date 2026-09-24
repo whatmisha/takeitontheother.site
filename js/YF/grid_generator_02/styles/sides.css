@@ -13,20 +13,6 @@
     border-top: 0;
 }
 
-.surface-tabs.segmented-control {
-    display: flex;
-    width: 100%;
-    margin-top: 0;
-}
-
-.surface-tabs.segmented-control label {
-    min-width: 0;
-    padding: var(--spacing-lg) var(--spacing-sm);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
 .surface-quick-controls {
     display: flex;
     align-items: center;
@@ -119,3 +105,41 @@
 .surface-grid-controls .control-group:last-child {
     margin-bottom: 0;
 }
+
+/* Reuse Objects' list rows, active/hidden states and action buttons.
+ * Only the face-specific label layout and keyboard focus live here. */
+.surface-row { position: relative; }
+.surface-row[hidden], .surface-row [data-surface-visibility][hidden],
+.surface-add-choices[hidden], #surfaceBehaviorControls[hidden], #surfaceMainGridHint[hidden] { display: none; }
+.surface-row-label {
+    display: flex;
+    align-items: center;
+    align-self: stretch;
+    min-height: 20px;
+    gap: var(--spacing-md);
+    cursor: pointer;
+}
+.surface-row-label [data-surface-name] { overflow: hidden; text-overflow: ellipsis; }
+.surface-row-label small { margin-left: auto; flex-shrink: 0; font-size: 0.7rem; font-variant-numeric: tabular-nums; opacity: 0.65; }
+.surface-row .element-actions { min-width: 20px; }
+.surface-row .element-item:focus-within .element-actions { opacity: 1; }
+.surface-row:has(input:focus-visible) .element-item { outline: 2px solid var(--ui-foreground); outline-offset: -2px; }
+.surface-add-toggle { width: 100%; margin-top: var(--spacing-lg); }
+.surface-add-toggle:disabled { opacity: 0.5; cursor: default; pointer-events: none; }
+.surface-add-choices { position: static; width: 100%; margin-top: var(--spacing-sm); }
+.surface-add-choices:not([hidden]) { display: block; }
+.surface-add-choices .dropdown-item { display: flex; justify-content: space-between; align-items: center; gap: var(--spacing-md); text-align: left; }
+.surface-add-choices small { color: var(--color-text-muted); font-size: 0.7rem; white-space: nowrap; }
+.surface-help { font-size: 0.75rem; line-height: 1.4; margin: var(--spacing-md) 0 0; color: var(--color-text-muted); }
+.surface-selection-heading { display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--color-border); padding-top: var(--spacing-lg); font-size: 0.75rem; }
+.surface-help .text-preset-chip { margin-left: var(--spacing-sm); }
+.surface-selection-heading button:disabled { opacity: 0.4; cursor: default; }
+.surface-quick-controls { border-top: 0; padding-bottom: 0; }
+/* SVG handles are editor overlays; their palette and font follow the UI tokens. */
+.surface-net-placeholder { fill: var(--ui-foreground); stroke: var(--color-text-muted); }
+.surface-net-add { cursor: pointer; }
+.surface-net-add rect { fill: var(--color-bg); stroke: var(--color-border); stroke-width: 1; }
+.surface-net-add text { fill: var(--ui-foreground); font-family: var(--ui-font-stack); font-size: 14px; pointer-events: none; user-select: none; }
+.surface-net-add:hover rect, .surface-net-add:focus-visible rect { fill: var(--ui-foreground); stroke: var(--ui-foreground); }
+.surface-net-add:hover text, .surface-net-add:focus-visible text { fill: var(--color-bg); }
+.surface-net-add:focus { outline: none; }

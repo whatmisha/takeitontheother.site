@@ -179,6 +179,8 @@ export class PresetApplicationController {
         if (options.defaultMissingUnits && !hasOwn(settings, 'lineHeightUnit')) {
             settings.lineHeightUnit = 'mod';
         }
+        settings.constructionType ??= 'lid';
+        settings.flapDepth ??= 20;
         this.normalizeLocks(settings);
 
         this.host.settingsModule.setMultiple(settings, true);

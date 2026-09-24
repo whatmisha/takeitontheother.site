@@ -91,9 +91,11 @@ export class PresetDocumentDeserializer {
         const caption = typography.caption;
         const display = typography.lunnenDisplay;
         const settings = compact({
+            constructionType: data.construction?.type ?? 'lid',
+            flapDepth: data.construction?.flapDepth ?? 20,
             frontWidth: data.dimensions?.width,
             frontHeight: data.dimensions?.height,
-            thickness: data.dimensions?.thickness,
+            thickness: data.version === '2.0' ? data.dimensions?.depth : data.dimensions?.thickness,
             gridModule: grid.module,
             margins: grid.margins,
             marginsUnit: grid.marginsUnit,

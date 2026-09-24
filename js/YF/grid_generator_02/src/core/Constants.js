@@ -7,6 +7,8 @@ export const DEFAULT_SETTINGS = Object.freeze({
     frontWidth: 500,
     frontHeight: 500,
     thickness: 50,
+    constructionType: 'lid',
+    flapDepth: 20,
     boxColor: '#404040',
     gridModule: 5.0505,
     margins: 2,

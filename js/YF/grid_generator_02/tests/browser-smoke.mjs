@@ -21,7 +21,7 @@ async function waitFor(predicate, message, timeout = 8000) {
 }
 
 async function loadApplication() {
-    const draftStore = new DraftStore();
+    const draftStore = new DraftStore({ databaseName: 'upgrade-pizza-boxer-02-browser-smoke-v1' });
     await draftStore.clear();
     draftStore.dispose();
     const loaded = new Promise((resolve, reject) => {
@@ -135,6 +135,60 @@ async function run() {
         application?.getPerformanceMetrics().render.count > 0,
         'render performance metrics record application startup'
     );
+    const panelGroups = [
+        ['leftSettingsStack', ['controlsPanel', 'gridPanel']],
+        ['rightSettingsStack', ['surfacePanel', 'elementsNavigator']]
+    ];
+    for (const [stackId, panelIds] of panelGroups) {
+        const stack = appDocument.getElementById(stackId);
+        assert([...stack.children].map(panel => panel.id).join(',') === panelIds.join(','), `${stackId} contains the requested pair in order`);
+        for (const id of panelIds) {
+            const panel = appDocument.getElementById(id);
+            assert(panel.classList.contains('panel-collapsed') === (id !== 'surfacePanel'), `${id} starts in the requested collapsed state`);
+            const icon = panel.querySelector('.collapse-icon');
+            icon.click();
+            icon.click();
+            assert(!panel.style.top && !panel.style.bottom, `${id} stays in its stack after collapsing`);
+            const header = panel.querySelector('.panel-header');
+            const rect = header.getBoundingClientRect();
+            const original = stack.getBoundingClientRect();
+            header.dispatchEvent(new appWindow.MouseEvent('mousedown', { button: 0, clientX: rect.x + 30, clientY: rect.y + 10, bubbles: true }));
+            appDocument.dispatchEvent(new appWindow.MouseEvent('mousemove', { clientX: rect.x + 20, clientY: rect.y + 20, bubbles: true }));
+            appDocument.dispatchEvent(new appWindow.MouseEvent('mouseup', { bubbles: true }));
+            assert(Math.abs(stack.getBoundingClientRect().x - original.x + 10) < 1, `${id} header moves the whole panel pair`);
+            application.panelManager.resetPosition(stackId);
+        }
+    }
+    assert(!appDocument.querySelector('[data-selected-surface], #surfaceSettingsTabs input:checked'), 'no side is selected or outlined at startup');
+    const leftSideRow = appDocument.querySelector('[data-surface-row="left"]');
+    leftSideRow.dispatchEvent(new appWindow.MouseEvent('mouseenter'));
+    assert(!appDocument.querySelector('[data-selected-surface]'), 'hovering a side does not draw a selection outline');
+    const selectionSnapshot = JSON.stringify(application.getStateSnapshot());
+    appDocument.getElementById('surfaceSettingsLeft').click();
+    assert(appDocument.querySelector('[data-selected-surface="left"]'), 'an explicit list click outlines that side');
+    const selectionCanvas = appDocument.getElementById('canvasContainer');
+    const selectionSvg = appDocument.getElementById('gridSvg');
+    const clickCanvas = (target, point, offset = 0) => {
+        target.dispatchEvent(new appWindow.PointerEvent('pointerdown', { button: 0, clientX: point.x, clientY: point.y, bubbles: true }));
+        target.dispatchEvent(new appWindow.MouseEvent('click', { button: 0, clientX: point.x + offset, clientY: point.y, bubbles: true }));
+    };
+    const emptyPoint = new appWindow.DOMPoint(-1000, -1000).matrixTransform(selectionSvg.getScreenCTM());
+    clickCanvas(selectionSvg, emptyPoint, 20);
+    assert(appDocument.querySelector('[data-selected-surface="left"]'), 'dragging across empty canvas does not clear the selection');
+    clickCanvas(selectionSvg, emptyPoint);
+    assert(!appDocument.querySelector('[data-selected-surface], #surfaceSettingsTabs input:checked') && application.packagingPreview.selectedFace === null, 'clicking outside the net clears both the outline and side selection');
+    const lidRect = application.surfaceManager.getPhysicalRect('front', application.currentSurfaceLayout);
+    const lidPoint = new appWindow.DOMPoint(lidRect.x + lidRect.width / 2, lidRect.y + lidRect.height / 2).matrixTransform(selectionSvg.getScreenCTM());
+    clickCanvas(selectionSvg, lidPoint);
+    assert(appDocument.querySelector('[data-selected-surface="front"]'), 'clicking a face on the net explicitly selects it');
+    appDocument.getElementById('surfaceMainGridButton').click();
+    assert(!appDocument.getElementById('gridPanel').classList.contains('panel-collapsed') && appDocument.querySelector('#gridPanel .collapse-icon').getAttribute('aria-expanded') === 'true' && !appDocument.getElementById('surfacePanel').classList.contains('panel-collapsed'), 'Edit grid opens the left grid with matching disclosure state without collapsing Sides');
+    appDocument.querySelector('#gridPanel .collapse-icon').click();
+    clickCanvas(selectionCanvas, emptyPoint);
+    application.updateGrid();
+    assert(!appDocument.querySelector('[data-selected-surface], #surfaceSettingsTabs input:checked'), 'empty container clicks and subsequent renders keep selection cleared');
+    assert(JSON.stringify(application.getStateSnapshot()) === selectionSnapshot, 'face selection and deselection do not alter the document');
+
     const exportMetricsBefore = application.getPerformanceMetrics().export;
     await application.exportDocumentBuilder.build(false);
     const exportMetricsAfter = application.getPerformanceMetrics().export;
@@ -530,13 +584,15 @@ async function run() {
     const surfacePanel = appDocument.getElementById('surfacePanel');
     const surfaceHeader = appDocument.getElementById('surfacePanelHeader');
     const surfaceCollapse = surfaceHeader.querySelector('.collapse-icon');
-    assert(surfaceHeader.firstElementChild.textContent.trim() === 'Sides', 'collapsed panel title contains only Sides');
-    assert(surfacePanel.classList.contains('panel-collapsed'), 'Sides starts collapsed');
-    assert(surfaceCollapse.getAttribute('aria-expanded') === 'false', 'collapsed Sides exposes correct ARIA state');
-
+    assert(surfaceHeader.firstElementChild.textContent.includes('Sides'), 'panel title identifies Sides and its count');
+    assert(!surfacePanel.classList.contains('panel-collapsed'), 'Sides starts expanded');
+    assert(surfaceCollapse.getAttribute('aria-expanded') === 'true', 'expanded Sides exposes correct ARIA state');
+    surfaceCollapse.click();
+    assert(surfacePanel.classList.contains('panel-collapsed'), 'Sides can be collapsed');
     surfaceCollapse.click();
     await waitFor(() => !surfacePanel.classList.contains('panel-collapsed'), 'Sides expansion');
     assert(surfaceCollapse.getAttribute('aria-expanded') === 'true', 'Sides expands through its header control');
+    appDocument.getElementById('surfaceSettingsLeft').click();
 
     const ownGridToggle = appDocument.getElementById('surfaceOwnGridToggle');
     ownGridToggle.click();
@@ -544,7 +600,7 @@ async function run() {
     assert(!appDocument.getElementById('surfaceOwnGridControls').hidden, 'Own Grid reveals independent controls');
 
     const gridContent = appDocument.querySelector('#gridPanel > .panel-content');
-    assert(gridContent.scrollHeight <= gridContent.clientHeight, 'Own Grid does not add overflow to Grid panel');
+    assert(!gridContent.contains(appDocument.getElementById('surfaceOwnGridControls')), 'Own Grid controls stay in the selected side panel');
 
     const hexColorInput = appDocument.getElementById('hexColorInput');
     const colorBeforeInvalidInput = hexColorInput.value;
@@ -931,6 +987,116 @@ async function run() {
     const scene = preview.scene;
     await preview.setMode('3d');
     assert(preview.scene === scene && preview.fold === 0.5, 'view changes reuse the scene and preserve folding');
+    // Exercise complete construction workflows through the same controls used by designers.
+    application.surfaceManager.setAllSideVisibility(true);
+    const constructionSelect = appDocument.getElementById('constructionTypeSelect');
+    const setConstruction = type => {
+        constructionSelect.value = type;
+        constructionSelect.dispatchEvent(new appWindow.Event('change', { bubbles: true }));
+    };
+    preview.setFold(1);
+    setConstruction('box');
+    assert(scene.panels.length === 6 && appDocument.querySelectorAll('#gridSvg [data-panel-outline]').length === 6, 'six-panel construction has the same six faces in 2D and 3D');
+    setConstruction('tuck-box');
+    assert(scene.panels.length === 7 && appDocument.querySelectorAll('#gridSvg [data-panel-outline]').length === 7, 'tuck-box construction has seven matching faces');
+    const baseMesh = scene.panels.find(panel => panel.spec.id === 'base').exterior;
+    scene.model.updateMatrixWorld(true);
+    const baseWorld = baseMesh.matrixWorld.elements.slice();
+    const openInput = appDocument.getElementById('previewOpen');
+    openInput.value = '80';
+    openInput.dispatchEvent(new appWindow.Event('input', { bubbles: true }));
+    scene.model.updateMatrixWorld(true);
+    assert(baseMesh.matrixWorld.elements.every((value, i) => Math.abs(value - baseWorld[i]) < 1e-8), 'opening the lid leaves the assembled body in place');
+    assert(scene.opening === 0.8, 'lid opening is controlled independently from the net folding');
+    const flapInput = appDocument.getElementById('flapDepthInput');
+    flapInput.value = '30';
+    flapInput.dispatchEvent(new appWindow.Event('change', { bubbles: true }));
+    assert(scene.panels.find(panel => panel.spec.id === 'flap').spec.height === 30, 'flap depth changes both construction and preview');
+    const baseBlock = {
+        ...application.objectDocument.textBlocks[0], id: 'construction-base-text',
+        content: 'Основание\nВторая строка', surface: 'base', x: 1, row: 1,
+        baselineOffset: 0, width: 4, visible: true
+    };
+    application.objectDocument.textBlocks.push(baseBlock);
+    application.updateGrid();
+    assert(appDocument.querySelector('#surface-display-base #text-group-construction-base-text'), 'the new base supports editable text using its own surface geometry');
+    const physical = application.settingsModule.getAll();
+    const exported = await application.exportDocumentBuilder.build(false);
+    assert(exported.querySelector('#surface-export-base #text-group-construction-base-text'), 'base artwork is included in the vector export');
+    assert(Number.parseFloat(exported.getAttribute('height')) === 2 * physical.frontHeight + 2 * physical.thickness + 30, 'export artboard encloses the complete seven-panel net in millimeters');
+    const document2 = presetFormat.organize({ settings: physical, textBlocks: application.objectDocument.textBlocks, graphicsBlocks: application.objectDocument.graphicsBlocks });
+    const restored2 = presetFormat.normalize(JSON.parse(JSON.stringify(document2)));
+    assert(document2.version === '2.0' && document2.dimensions.depth === physical.thickness && restored2.settings.constructionType === 'tuck-box', 'document 2.0 records construction and box depth explicitly');
+    assert(restored2.textBlocks.find(block => block.id === baseBlock.id).content === baseBlock.content, 'new-face text survives JSON export/import with paragraph breaks');
+    setConstruction('lid');
+    assert(!appDocument.querySelector('#surface-display-base') && scene.panels.length === 5, 'switching back to a lid hides unused faces in both views');
+    assert(application.objectDocument.textBlocks.some(block => block.id === baseBlock.id), 'switching construction preserves artwork on inactive faces');
+    application.undo();
+    assert(constructionSelect.value === 'tuck-box' && scene.panels.length === 7, 'Undo restores construction, controls and 3D together');
+    application.redo();
+    assert(constructionSelect.value === 'lid' && scene.panels.length === 5, 'Redo reapplies construction without losing extra-face artwork');
+    setConstruction('tuck-box');
+    appDocument.querySelector('[data-camera-view="base"]').click();
+    appDocument.getElementById('previewEditFace').click();
+    assert(appDocument.getElementById('surfaceSettingsBase').checked && appDocument.body.dataset.workspaceView === '2d', 'the new Base face is navigable from 3D to its 2D controls');
+    const geometry = application.surfaceManager.getGeometry('base', application.currentSurfaceLayout);
+    assert(Math.abs(geometry.localWidth / application.currentSurfaceLayout.scale - physical.frontWidth) < 1e-8, 'scaled 2D geometry retains the physical base width');
+    await application.draftRecoveryController.saveNow();
+    const constructionDraft = await application.draftRecoveryController.store.load();
+    assert(constructionDraft.snapshot.settings.constructionType === 'tuck-box' && constructionDraft.snapshot.document.textBlocks.some(block => block.id === baseBlock.id), 'autosave includes construction and new-face artwork');
+    // Additions use real panel/net controls and the same undo history as artwork.
+    setConstruction('lid');
+    application.surfaceManager.setAllSideVisibility(true);
+    application.updateGrid();
+    appDocument.getElementById('surfaceAddToggle').click();
+    assert(!appDocument.getElementById('surfaceAddChoices').hidden, 'Add side exposes the next construction face');
+    appDocument.querySelector('[data-add-surface="base"]').click();
+    assert(constructionSelect.value === 'box' && !appDocument.querySelector('[data-selected-surface]'), 'adding Base from the panel creates the sixth face without selecting it');
+    application.undo();
+    assert(constructionSelect.value === 'lid' && appDocument.querySelector('[data-net-add="base"]'), 'one Undo removes the added Base and restores its net handle');
+    application.redo();
+    assert(constructionSelect.value === 'box', 'Redo restores the added face');
+    appDocument.querySelector('[data-net-add="flap"]').dispatchEvent(new appWindow.KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    assert(constructionSelect.value === 'tuck-box' && !appDocument.querySelector('[data-selected-surface]'), 'keyboard activation of the net handle adds the flap without selecting it');
+    const beforeSelection = JSON.stringify(application.getStateSnapshot());
+    appDocument.getElementById('surfaceSettingsBase').click();
+    assert(JSON.stringify(application.getStateSnapshot()) === beforeSelection, 'face selection does not change the design document');
+    assert(appDocument.querySelector('[data-selected-surface="base"]'), 'panel selection highlights the same face on the net');
+    appDocument.querySelector('[data-surface-visibility="base"]').click();
+    assert(!application.surfaceManager.isVisible('base') && appDocument.querySelector('[data-net-add="base"]'), 'hiding a face exposes a restore handle on the net');
+    appDocument.querySelector('[data-net-add="base"]').dispatchEvent(new appWindow.MouseEvent('click', { bubbles: true }));
+    assert(application.surfaceManager.isVisible('base') && application.objectDocument.textBlocks.find(block => block.id === baseBlock.id).content === baseBlock.content, 'restoring a face from the net retains its artwork');
+    const leftRect = appDocument.querySelector('[data-panel-outline="left"]');
+    const leftBox = application.surfaceManager.getPhysicalRect('left', application.currentSurfaceLayout);
+    const leftPoint = new appWindow.DOMPoint(leftBox.x + leftBox.width / 2, leftBox.y + leftBox.height / 2).matrixTransform(appDocument.getElementById('gridSvg').getScreenCTM());
+    const clickPoint = { bubbles: true, button: 0, clientX: leftPoint.x, clientY: leftPoint.y };
+    leftRect.dispatchEvent(new appWindow.PointerEvent('pointerdown', clickPoint));
+    leftRect.dispatchEvent(new appWindow.MouseEvent('click', clickPoint));
+    assert(appDocument.getElementById('surfaceSettingsLeft').checked, 'clicking a net face selects its controls even on a rotated canvas');
+    await preview.setMode('3d');
+    appDocument.getElementById('surfaceSettingsRight').click();
+    assert(preview.selectedFace === 'right' && scene.selected === 'right', 'panel selection highlights the corresponding 3D face');
+    appDocument.querySelector('[data-camera-view="base"]').click();
+    assert(appDocument.getElementById('surfaceSettingsBase').checked, '3D selection follows back into the Sides panel');
+    const previewCanvas = appDocument.querySelector('#previewViewport canvas');
+    const previewRect = previewCanvas.getBoundingClientRect();
+    scene.pointerStart = [previewRect.x + 1, previewRect.y + 1];
+    scene.pick({ button: 0, clientX: previewRect.x + 1, clientY: previewRect.y + 1 });
+    assert(application.packagingPreview.selectedFace === null && !appDocument.querySelector('#surfaceSettingsTabs input:checked, [data-selected-surface]'), 'clicking the 3D background clears selection in 3D, Sides and the net');
+
+    appDocument.getElementById('surfaceSettingsBase').click();
+    const createdOnBase = application.objectNavigatorController.addText({ content: 'Added to selected side' });
+    assert(createdOnBase.surface === 'base', 'new text starts on the selected side');
+    application.undo();
+    assert(!application.objectDocument.getTextBlock(createdOnBase.id), 'Undo removes the newly added side text');
+    appDocument.querySelector('[data-surface-visibility="base"]').click();
+    appDocument.getElementById('surfaceSettingsBase').click();
+    const addedGraphic = application.objectNavigatorController.addGraphics({ name: 'Side test', svgContent: '<rect width="10" height="10"/>', originalWidth: 10, originalHeight: 10 });
+    assert(addedGraphic.surface === 'base' && application.surfaceManager.isVisible('base'), 'new graphics restores the selected hidden side in the same action');
+    application.undo();
+    assert(!application.surfaceManager.isVisible('base') && !application.objectDocument.getGraphicsBlock(addedGraphic.id), 'Undo restores both hidden-side state and object list');
+    const cleanExport = await application.exportDocumentBuilder.build(false);
+    assert(!cleanExport.querySelector('[data-surface-overlay], [data-net-add], [data-selected-surface]'), 'editor handles and selection outlines never enter the exported artwork');
     await application.draftRecoveryController.clearDraft();
     application.hasUnsavedChanges = false;
     application.dispose();

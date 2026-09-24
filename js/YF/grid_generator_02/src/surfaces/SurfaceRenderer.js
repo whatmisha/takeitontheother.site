@@ -1,7 +1,7 @@
 import { SurfaceGridPainter } from './SurfaceGridPainter.js';
 import { SurfaceLayerFactory } from './SurfaceLayerFactory.js';
 
-const DEFAULT_SIDE_SURFACES = Object.freeze(['left', 'right', 'top', 'bottom']);
+const DEFAULT_SIDE_SURFACES = Object.freeze(['left', 'right', 'top', 'bottom', 'base', 'flap']);
 /**
  * Renders side-surface grids and objects without owning editor state.
  */

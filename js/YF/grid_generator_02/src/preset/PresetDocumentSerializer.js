@@ -1,3 +1,4 @@
+import { constructionType } from '../packaging/PackagingModel.js';
 import { cloneJson as clone } from '../utils/cloneJson.js';
 const compact = object => Object.fromEntries(
     Object.entries(object).filter(([, value]) => value !== undefined)
@@ -89,12 +90,13 @@ export class PresetDocumentSerializer {
         const claim2026 = graphicsBlocks.find(block => block.id === 'claim2026');
         return {
             presetName: presetName ?? data.presetName ?? data.currentPresetName ?? 'Custom',
-            version: data.version ?? '1.2',
+            version: '2.0',
+            construction: { type: constructionType(settings), flapDepth: settings.flapDepth ?? 20 },
             timestamp: data.timestamp,
             dimensions: {
                 width: settings.frontWidth,
                 height: settings.frontHeight,
-                thickness: settings.thickness,
+                depth: settings.thickness,
                 unit: 'mm'
             },
             surfaces: clone(settings.surfaceSettings) ?? null,

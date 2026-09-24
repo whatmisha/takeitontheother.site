@@ -17,7 +17,7 @@ export class ZoomPanManager {
         this.svg = svgElement;
         this.zoom = 1;
         this.baseZoom = 1;
-        this.minZoom = 1;
+        this.minZoom = 0.1;
         this.maxZoom = 10;
         this.panX = 0;
         this.panY = 0;
@@ -167,25 +167,12 @@ export class ZoomPanManager {
         this.svg.style.transform = this.rotation === 0 ? '' : `rotate(${this.rotation}deg)`;
     }
 
-    resetZoom() {
-        this.zoom = 1;
-        this.baseZoom = 1;
-        Object.assign(
-            this,
-            calculateCenteredPan(
-                this.svg.getBBox(),
-                this.originalWidth,
-                this.originalHeight,
-                this.zoom
-            )
-        );
-        this.updateTransform();
-        this.notifyZoomChange();
-    }
+    resetZoom() { this.fitToScreen(); }
 
-    fitToScreen() {
+    fitToScreen(bbox = this.svg.getBBox()) {
         Object.assign(this, calculateFitView({
-            bbox: this.svg.getBBox(),
+            rotation: this.rotation,
+            bbox,
             containerRect: this.container.getBoundingClientRect(),
             originalWidth: this.originalWidth,
             originalHeight: this.originalHeight,

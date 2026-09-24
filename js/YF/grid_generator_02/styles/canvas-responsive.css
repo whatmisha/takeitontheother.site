@@ -104,6 +104,12 @@
         max-height: calc(100vh - 3 * var(--spacing-lg) - var(--button-height) - var(--spacing-sm));
     }
     
+    .controls-panel-stack-left {
+        left: var(--spacing-lg);
+        right: auto;
+        max-height: calc(100dvh - 330px);
+    }
+
     .controls-panel-text {
         bottom: var(--spacing-3xl); /* Same spacing as desktop */
     }

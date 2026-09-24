@@ -1,3 +1,4 @@
+import { packagingNet, panelNames, activePanelIds } from '../packaging/PackagingModel.js';
 import { ColorUtils } from '../framework/FrameworkAdapter.js?layout=root-infra-1';
 import { DOMUtils } from '../utils/DOMUtils.js';
 
@@ -7,9 +8,8 @@ export class CanvasRendererController {
         this.host = host;
     }
 
-    static calculateLayout({ frontWidth, frontHeight, thickness, displaySize, padding }) {
-        const totalWidth = frontWidth + 2 * thickness;
-        const totalHeight = frontHeight + 2 * thickness;
+    static calculateLayout({ frontWidth, frontHeight, thickness, constructionType = 'lid', flapDepth = 20, displaySize, padding }) {
+        const { width: totalWidth, height: totalHeight } = packagingNet({ frontWidth, frontHeight, thickness, constructionType, flapDepth });
         const maxDimension = Math.max(totalWidth, totalHeight, 1);
         const availableSize = Math.max(1, displaySize - 2 * padding);
         const scale = availableSize / maxDimension;
@@ -22,6 +22,8 @@ export class CanvasRendererController {
             frontWidth: frontWidth * scale,
             frontHeight: frontHeight * scale,
             thickness: thickness * scale,
+            constructionType,
+            flapDepth: flapDepth * scale,
             scale,
             svgSize: displaySize,
             totalWidth: scaledTotalWidth,
@@ -43,6 +45,8 @@ export class CanvasRendererController {
             frontWidth: settings.frontWidth,
             frontHeight: settings.frontHeight,
             thickness: settings.thickness,
+            constructionType: settings.constructionType,
+            flapDepth: settings.flapDepth,
             displaySize: host.DISPLAY_SIZE,
             padding: host.PADDING
         });
@@ -75,16 +79,18 @@ export class CanvasRendererController {
             );
         }
 
-        const frontX = layout.x + layout.thickness;
-        const frontY = layout.y + layout.thickness;
+        const { x: frontX, y: frontY } = packagingNet(layout).panels.front;
         this.drawFrontGrid(svg, frontX, frontY, layout);
         host.surfaceRenderer.drawSideLayers(svg, layout, layout.scale);
         this.drawFrontObjects(svg, frontX, frontY, layout);
 
         host.objectNavigatorController.bindCanvasHover();
         host.typographyUnitController.updateDisplays();
+        host.constructionController?.sync();
         host.objectNavigatorController.render();
+        host.surfacePanelController?.sync();
         this.restoreZoom(zoomState);
+        host.surfaceNetController?.draw();
         return layout;
     }
 
@@ -170,74 +176,23 @@ export class CanvasRendererController {
             'stroke-width': strokeWidth
         }, container);
 
-        rect({ x: x + thickness, y: y + thickness, width: frontWidth, height: frontHeight });
-        if (!this.host.settingsModule.get('showSidePanels')) return;
-
-        if (this.host.surfaceManager.isVisible('left')) {
-            rect({ x, y: y + thickness, width: thickness, height: frontHeight });
-        }
-        if (this.host.surfaceManager.isVisible('right')) {
-            rect({
-                x: x + thickness + frontWidth,
-                y: y + thickness,
-                width: thickness,
-                height: frontHeight
-            });
-        }
-        if (this.host.surfaceManager.isVisible('top')) {
-            rect({ x: x + thickness, y, width: frontWidth, height: thickness });
-        }
-        if (this.host.surfaceManager.isVisible('bottom')) {
-            rect({
-                x: x + thickness,
-                y: y + thickness + frontHeight,
-                width: frontWidth,
-                height: thickness
-            });
+        const layout = { constructionType: this.host.settingsModule.get('constructionType'), x, y, frontWidth, frontHeight, thickness,
+            flapDepth: (this.host.settingsModule.get('flapDepth') ?? 20) * scale };
+        const net = packagingNet(layout);
+        for (const id of activePanelIds(layout)) {
+            if (id === 'front' || (this.host.settingsModule.get('showSidePanels') && this.host.surfaceManager.isVisible(id))) rect({ ...net.panels[id], 'data-panel-outline': id });
         }
     }
 
     drawLabels(container, x, y, frontWidth, frontHeight, thickness, scale = 1) {
-        const fontSize = scale === 1 ? '4' : null;
-        this.createLabel(
-            container,
-            x + thickness + frontWidth / 2,
-            y + thickness + frontHeight / 2,
-            'FRONT',
-            false,
-            fontSize
-        );
-        if (this.host.surfaceManager.isVisible('left')) {
-            this.createLabel(
-                container, x + thickness / 2, y + thickness + frontHeight / 2,
-                'LEFT', true, fontSize
-            );
-        }
-        if (this.host.surfaceManager.isVisible('right')) {
-            this.createLabel(
-                container,
-                x + thickness + frontWidth + thickness / 2,
-                y + thickness + frontHeight / 2,
-                'RIGHT',
-                true,
-                fontSize
-            );
-        }
-        if (this.host.surfaceManager.isVisible('top')) {
-            this.createLabel(
-                container, x + thickness + frontWidth / 2, y + thickness / 2,
-                'TOP', false, fontSize
-            );
-        }
-        if (this.host.surfaceManager.isVisible('bottom')) {
-            this.createLabel(
-                container,
-                x + thickness + frontWidth / 2,
-                y + thickness + frontHeight + thickness / 2,
-                'BOTTOM',
-                false,
-                fontSize
-            );
+        const layout = { constructionType: this.host.settingsModule.get('constructionType'), x, y, frontWidth, frontHeight, thickness,
+            flapDepth: (this.host.settingsModule.get('flapDepth') ?? 20) * scale };
+        const net = packagingNet(layout);
+        for (const id of activePanelIds(layout)) {
+            if (!this.host.surfaceManager.isVisible(id)) continue;
+            const rect = net.panels[id];
+            this.createLabel(container, rect.x + rect.width / 2, rect.y + rect.height / 2,
+                panelNames(layout)[id].toUpperCase(), id === 'left' || id === 'right', scale === 1 ? '4' : null);
         }
     }
 

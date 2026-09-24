@@ -171,7 +171,10 @@ test('root shell stays minimal while HTML and CSS modules retain unique element 
         fs.readFileSync(path.join(fragmentsDir, `${name}.html`), 'utf8')
     ));
 
-    fragmentNames.forEach(name => assert.match(index, new RegExp(`data-ui-fragment="${name}"`)));
+    fragmentNames.forEach(name => assert.equal(
+        ([index, ...fragments].join("\n").match(new RegExp(`data-ui-fragment="${name}"`, "g")) || []).length,
+        1, `one mount slot for ${name}, either in the root or a parent fragment`
+    ));
     assert.ok(index.split('\n').length < 50);
     assert.equal((style.match(/^@import /gm) || []).length, 9);
 

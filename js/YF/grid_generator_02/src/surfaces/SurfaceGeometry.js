@@ -1,13 +1,8 @@
+import { packagingNet } from '../packaging/PackagingModel.js';
+
 export function getSurfacePhysicalRect(surface, layout) {
-    const { x = 0, y = 0, frontWidth, frontHeight, thickness } = layout;
-    const rects = {
-        left: { x, y: y + thickness, width: thickness, height: frontHeight },
-        right: { x: x + thickness + frontWidth, y: y + thickness, width: thickness, height: frontHeight },
-        top: { x: x + thickness, y, width: frontWidth, height: thickness },
-        bottom: { x: x + thickness, y: y + thickness + frontHeight, width: frontWidth, height: thickness },
-        front: { x: x + thickness, y: y + thickness, width: frontWidth, height: frontHeight }
-    };
-    return rects[surface] || rects.front;
+    const { panels } = packagingNet(layout);
+    return panels[surface] || panels.front;
 }
 
 export function getSurfaceGeometry(surface, layout, rotation = 0) {

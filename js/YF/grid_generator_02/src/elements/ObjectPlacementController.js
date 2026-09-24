@@ -7,8 +7,9 @@ export class ObjectPlacementController {
     }
 
     constrainAll() {
-        this.host.objectDocument.textBlocks.forEach(block => this.constrain(block, 'text'));
-        this.host.objectDocument.graphicsBlocks.forEach(block => this.constrain(block, 'graphics'));
+        const active = block => this.host.surfaceManager?.isActive?.(block.surface || 'front') !== false;
+        this.host.objectDocument.textBlocks.filter(active).forEach(block => this.constrain(block, 'text'));
+        this.host.objectDocument.graphicsBlocks.filter(active).forEach(block => this.constrain(block, 'graphics'));
     }
 
     getColumnMetrics(context) {
