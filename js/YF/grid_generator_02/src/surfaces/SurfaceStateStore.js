@@ -1,4 +1,5 @@
 import { ALL_PANEL_IDS, activePanelIds } from '../packaging/PackagingModel.js';
+import { mainGridDimensions } from './MainGridDimensions.js';
 import { cloneJson } from '../utils/cloneJson.js';
 
 export const SURFACE_IDS = ALL_PANEL_IDS;
@@ -67,7 +68,7 @@ export class SurfaceStateStore {
             const fallback = defaults[surface];
             return [surface, {
                 visible: surface === 'front' || incoming.visible !== false,
-                rotation: surface === 'front' ? 0 : normalizeRotation(incoming.rotation, fallback.rotation),
+                rotation: normalizeRotation(incoming.rotation, fallback.rotation),
                 gridMode: surface === 'front' ? 'main' : (incoming.gridMode === 'own' || incoming.ownGrid === true ? 'own' : 'main'),
                 grid: this.normalizeGrid(incomingGrid, fallback.grid)
             }];
@@ -106,12 +107,12 @@ export class SurfaceStateStore {
     }
 
     update(surface, patch = {}) {
-        if (!SIDE_SURFACE_IDS.includes(surface)) return this.get('front');
+        if (!SURFACE_IDS.includes(surface)) return this.get('front');
         const next = clone(this.getAll());
         const current = next[surface];
-        if ('visible' in patch) current.visible = patch.visible !== false;
+        if (surface !== 'front' && 'visible' in patch) current.visible = patch.visible !== false;
         if ('rotation' in patch) current.rotation = normalizeRotation(patch.rotation, current.rotation);
-        if ('gridMode' in patch) current.gridMode = patch.gridMode === 'own' ? 'own' : 'main';
+        if (surface !== 'front' && 'gridMode' in patch) current.gridMode = patch.gridMode === 'own' ? 'own' : 'main';
         if (patch.grid && typeof patch.grid === 'object') current.grid = this.normalizeGrid(patch.grid, current.grid);
         this.settings.set('surfaceSettings', next);
         this.syncMasterVisibility();
@@ -148,8 +149,8 @@ export class SurfaceStateStore {
         if (surface !== 'front' && surfaceSettings.gridMode === 'own') {
             grid = surfaceSettings.grid;
         } else if (surface !== 'front') {
-            const frontWidth = finitePositive(this.settings.get('frontWidth'), localWidthMm);
-            const frontHeight = finitePositive(this.settings.get('frontHeight'), localHeightMm);
+            const frontWidth = finitePositive(mainGridDimensions(this.settings).frontWidth, localWidthMm);
+            const frontHeight = finitePositive(mainGridDimensions(this.settings).frontHeight, localHeightMm);
             const mainColumnWidth = Math.max(main.module, (frontWidth - 2 * main.margins * main.module - (main.columns - 1) * main.module) / main.columns);
             const availableWidth = Math.max(main.module, localWidthMm - 2 * main.margins * main.module);
             const columns = Math.abs(localWidthMm - frontWidth) < 0.001

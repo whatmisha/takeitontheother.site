@@ -1,3 +1,4 @@
+import { loadRasterPreview } from './RasterAsset.js';
 import { SvgSanitizer } from '../svg/SvgSanitizer.js';
 
 /** Loads, normalizes and applies SVG assets used by graphics objects. */
@@ -20,34 +21,35 @@ export class GraphicsAssetController {
     }
 
     async handleFile(file) {
-        const content = await this.readFile(file);
-        const asset = this.process(content, 'claim-fill');
-        if (!asset) return null;
-
-        const name = file.name.replace(/\.svg$/i, '');
-        this.host.uploadedSvgData = { ...asset, name };
-        const placeholder = this.host.dom.fileUploadArea
-            ?.querySelector('.upload-placeholder p');
-        if (placeholder) placeholder.textContent = `✓ ${file.name}`;
-
         const editingId = this.host.currentEditingGraphicsId;
+        const history = this.host.historyManager;
+        const isSvg = file.type === 'image/svg+xml' || /\.svg$/i.test(file.name);
+        const raster = isSvg ? null : await loadRasterPreview(file);
+        const asset = isSvg ? this.process(await this.readFile(file), 'claim-fill') : null;
+        if (isSvg && !asset) throw new Error('This file does not contain a valid SVG.');
+        if (this.host.historyManager !== history) throw new Error('The preset changed while loading. Please add the file again.');
+        const name = file.name;
+        const fields = { svgContent: asset?.content || '', raster: raster || undefined, missingAsset: false, name,
+            originalWidth: asset?.width || raster.width, originalHeight: asset?.height || raster.height };
+        const placeholder = this.host.dom.fileUploadArea?.querySelector('.upload-placeholder p');
         if (editingId) {
             const block = this.host.objectDocument.getGraphicsBlock(editingId);
             if (!block) return null;
-            block.svgContent = asset.content;
-            block.name = name;
-            block.originalWidth = asset.width;
-            block.originalHeight = asset.height;
+            history.beginAction('replace graphic asset', this.host.getStateSnapshot());
+            // Relinking the same kind preserves the chosen frame and crop mode.
+            if ((block.raster && raster) || (block.missingAsset && !raster)) {
+                fields.originalWidth = block.originalWidth;
+                fields.originalHeight = block.originalHeight;
+                if (raster) fields.raster.fit = block.raster.fit || 'cover';
+            }
+            Object.assign(block, fields);
             this.syncEditedBlock(block, placeholder);
+            history.commitAction(this.host.getStateSnapshot());
+            this.host.markAsChanged();
+            if (this.host.currentEditingGraphicsId === editingId) this.host.objectEditorPanelController.openGraphicsPanel(editingId);
             return block;
         }
-
-        const block = this.host.objectNavigatorController.addGraphics({
-            svgContent: asset.content,
-            name,
-            originalWidth: asset.width,
-            originalHeight: asset.height
-        });
+        const block = this.host.objectNavigatorController.addGraphics(fields);
         this.host.objectEditorPanelController.closeGraphicsPanel();
         return block;
     }
@@ -89,7 +91,7 @@ export class GraphicsAssetController {
                 : name;
         }
         if (placeholder) {
-            placeholder.textContent = `Current: ${block.name || 'Graphic'} — Upload new SVG to replace`;
+            placeholder.textContent = `Current: ${block.name || 'Graphic'} — Upload an image or SVG to replace`;
         }
         this.host.objectNavigatorController.render();
         this.host.updateGrid();

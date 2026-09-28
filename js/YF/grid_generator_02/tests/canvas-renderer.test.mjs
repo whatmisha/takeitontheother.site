@@ -92,7 +92,7 @@ test('canvas renderer composes grid, side layers, objects and restores zoom', ()
 test('box surfaces respect the global sides toggle and per-surface visibility', () => {
     const values = { boxColor: '#82A9D9', showSidePanels: true };
     const host = {
-        settingsModule: { get: key => values[key] },
+        settingsModule: { get: key => values[key], getAll: () => ({ ...values }) },
         surfaceManager: { isVisible: surface => surface !== 'right' }
     };
     const controller = new CanvasRendererController(host);

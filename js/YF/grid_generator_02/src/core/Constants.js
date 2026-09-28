@@ -1,3 +1,5 @@
+import { TUBE_DEFAULTS } from '../packaging/TubeModel.js';
+
 export const SVG = Object.freeze({
     EXPORT_STROKE_WIDTH: '0.088194444',
     DISPLAY_STROKE_WIDTH: '1'
@@ -9,6 +11,8 @@ export const DEFAULT_SETTINGS = Object.freeze({
     thickness: 50,
     constructionType: 'lid',
     flapDepth: 20,
+    ...TUBE_DEFAULTS,
+    boxDimensions: null,
     boxColor: '#404040',
     gridModule: 5.0505,
     margins: 2,

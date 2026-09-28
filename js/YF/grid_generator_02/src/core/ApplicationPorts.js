@@ -104,6 +104,7 @@ export function createObjectEditorPort(application) {
         objectDocument: application.objectDocument,
         objectPlacementController: application.objectPlacementController,
         surfaceCoordinates: application.surfaceCoordinates,
+        get panelManager() { return application.panelManager; },
         get sliderController() { return application.sliderController; },
         get historyManager() { return application.historyManager; },
         get objectEditorPanelController() { return application.objectEditorPanelController; },

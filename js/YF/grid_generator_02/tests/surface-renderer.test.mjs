@@ -45,6 +45,7 @@ test('side object rendering forwards one resolved context and never rewrites glo
     assert.equal(calls[0][0], 'text');
     assert.equal(calls[1][0], 'graphic');
     assert.equal(calls[0].at(-1), context);
-    assert.equal(calls[1].at(-1), context);
+    assert.equal(calls[1].at(-2), context);
+    assert.deepEqual(calls[1].at(-1), {});
     assert.deepEqual(calls[0].slice(3, 9), [0, 0, 500, 50, 2, context]);
 });

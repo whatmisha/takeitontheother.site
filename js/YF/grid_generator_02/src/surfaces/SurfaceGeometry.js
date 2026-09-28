@@ -7,7 +7,7 @@ export function getSurfacePhysicalRect(surface, layout) {
 
 export function getSurfaceGeometry(surface, layout, rotation = 0) {
     const rect = getSurfacePhysicalRect(surface, layout);
-    const normalizedRotation = surface === 'front' ? 0 : rotation;
+    const normalizedRotation = ((Number(rotation) % 360) + 360) % 360;
     const swapsAxes = normalizedRotation === 90 || normalizedRotation === 270;
     const transforms = {
         90: `translate(${rect.x + rect.width} ${rect.y}) rotate(90)`,

@@ -1,16 +1,19 @@
-export const CONSTRUCTION_TYPES = Object.freeze(['lid', 'box', 'tuck-box']);
-export const ALL_PANEL_IDS = Object.freeze(['front', 'left', 'right', 'top', 'bottom', 'base', 'flap']);
-export const PANEL_NAMES = Object.freeze({ front: 'Lid', left: 'Left', right: 'Right', top: 'Rear', bottom: 'Front wall', base: 'Base', flap: 'Flap' });
-export const CONSTRUCTION_NAMES = Object.freeze({ lid: '5-panel lid', box: '6-panel box', 'tuck-box': '7-panel tuck box' });
+import { isTube, tubeNet, createTubeModel } from './TubeModel.js';
+export const CONSTRUCTION_TYPES = Object.freeze(['lid', 'box', 'tuck-box', 'tube', 'telescopic-tube']);
+export const ALL_PANEL_IDS = Object.freeze(['front', 'left', 'right', 'top', 'bottom', 'base', 'flap', 'tubeCap']);
+export const PANEL_NAMES = Object.freeze({ front: 'Lid', left: 'Left', right: 'Right', top: 'Rear', bottom: 'Front wall', base: 'Base', flap: 'Flap', tubeCap: 'Cap wrap' });
+export const CONSTRUCTION_NAMES = Object.freeze({ lid: '5-panel lid', box: '6-panel box', 'tuck-box': '7-panel tuck box', tube: 'Rigid tube', 'telescopic-tube': 'Telescopic tube' });
 
 export function constructionType(settings = {}) {
     return CONSTRUCTION_TYPES.includes(settings.constructionType) ? settings.constructionType : 'lid';
 }
 export function panelNames(settings = {}) {
+    if (isTube(settings)) return { ...PANEL_NAMES, front: 'Body wrap' };
     return { ...PANEL_NAMES, ...(constructionType(settings) === 'lid' ? { top: 'Top', bottom: 'Bottom' } : {}) };
 }
 export function activePanelIds(settings = {}) {
     const type = constructionType(settings);
+    if (isTube(settings)) return type === 'tube' ? ['front'] : ['front', 'tubeCap'];
     return ALL_PANEL_IDS.slice(0, type === 'lid' ? 5 : type === 'box' ? 6 : 7);
 }
 export function effectiveFlapDepth(settings = {}) {
@@ -20,6 +23,7 @@ export function effectiveFlapDepth(settings = {}) {
 
 /** One millimeter net shared by editing, hit testing, export and texture UVs. */
 export function packagingNet(settings) {
+    if (isTube(settings)) return tubeNet(settings);
     const { frontWidth: w, frontHeight: h, thickness: d, x = 0, y = 0 } = settings;
     const type = constructionType(settings), f = effectiveFlapDepth(settings);
     const rect = (dx, dy, width, height) => ({ x: x + dx, y: y + dy, width, height });
@@ -37,6 +41,7 @@ export function packagingNet(settings) {
 
 /** A tree of panels and hinges. Hidden faces keep their joints for descendants. */
 export function createPackagingModel(settings) {
+    if (isTube(settings)) return createTubeModel(settings);
     const { frontWidth: w, frontHeight: h, thickness: d } = settings;
     if (![w, h, d].every(value => Number.isFinite(value) && value > 0)) throw new Error('Packaging needs positive width, height and depth.');
     const net = packagingNet(settings), type = net.type, f = effectiveFlapDepth(settings);

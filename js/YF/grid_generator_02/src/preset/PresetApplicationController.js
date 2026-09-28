@@ -1,3 +1,4 @@
+import { normalizeConstructionSettings, TUBE_DEFAULTS } from '../packaging/TubeModel.js';
 import { HistoryManager } from '../history/HistoryManager.js';
 import { SvgSanitizer } from '../svg/SvgSanitizer.js';
 import { cloneJson as clone } from '../utils/cloneJson.js';
@@ -175,7 +176,7 @@ export class PresetApplicationController {
 
     applyDocumentState(source, options = {}) {
         const state = clone(source) || {};
-        const settings = state.settings || {};
+        const settings = normalizeConstructionSettings({ ...TUBE_DEFAULTS, boxDimensions: null, ...state.settings });
         if (options.defaultMissingUnits && !hasOwn(settings, 'lineHeightUnit')) {
             settings.lineHeightUnit = 'mod';
         }

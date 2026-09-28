@@ -36,6 +36,7 @@
                             <option value="bottom">Bottom</option>
                         <option value="base">Base</option>
                         <option value="flap">Flap</option>
+                            <option value="tubeCap">Cap wrap</option>
                         </select>
                     </label>
                 </div>
@@ -221,11 +222,22 @@
             <section class="control-section">
                 <div class="control-group">
                     <div class="file-upload-area file-intake" id="fileUploadArea">
-                        <input type="file" id="svgFileInput" accept=".svg,image/svg+xml" hidden>
+                        <input type="file" id="svgFileInput" accept=".svg,image/svg+xml,.png,image/png,.jpg,.jpeg,image/jpeg,.webp,image/webp" hidden>
                         <div class="upload-placeholder">
-                            <p class="file-intake__status" id="svgFileStatus">Click or drag & drop SVG file here</p>
+                            <p class="file-intake__status" id="svgFileStatus">Click or drop SVG, PNG, JPEG or WebP here</p>
                         </div>
                     </div>
+                </div>
+                <div id="rasterControls" hidden>
+                    <div class="control-group">
+                        <label for="rasterFrameSelect">Image frame</label>
+                        <select class="style-select" id="rasterFrameSelect" aria-label="Image frame"><option value="original">Original ratio</option><option value="1">Square</option><option value="1.5">3:2</option><option value="1.3333333333333333">4:3</option><option value="1.7777777777777777">16:9</option></select>
+                    </div>
+                    <div class="control-group">
+                        <label for="rasterFitSelect">Image fit</label>
+                        <select class="style-select" id="rasterFitSelect" aria-label="Image fit"><option value="cover">Fill frame (crop)</option><option value="contain">Fit entire image</option></select>
+                    </div>
+                    <p class="surface-help">Preview only. SVG and PDF export an editable vector frame. Share links keep the frame; relink the image after opening.</p>
                 </div>
 
                 <div class="control-group">
@@ -239,6 +251,7 @@
                             <option value="bottom">Bottom</option>
                         <option value="base">Base</option>
                         <option value="flap">Flap</option>
+                            <option value="tubeCap">Cap wrap</option>
                         </select>
                     </label>
                 </div>

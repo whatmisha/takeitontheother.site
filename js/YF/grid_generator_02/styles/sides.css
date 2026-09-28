@@ -143,3 +143,8 @@
 .surface-net-add:hover rect, .surface-net-add:focus-visible rect { fill: var(--ui-foreground); stroke: var(--ui-foreground); }
 .surface-net-add:hover text, .surface-net-add:focus-visible text { fill: var(--color-bg); }
 .surface-net-add:focus { outline: none; }
+
+.surface-visible-chip[hidden], .surface-own-grid-chip[hidden] { display: none; }
+
+#rasterControls[hidden] { display: none; }
+#rasterControls select { width: 100%; }

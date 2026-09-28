@@ -1,3 +1,4 @@
+import { scaledPackagingSettings } from '../packaging/TubeModel.js';
 import { packagingNet, panelNames, activePanelIds } from '../packaging/PackagingModel.js';
 import { ColorUtils } from '../framework/FrameworkAdapter.js?layout=root-infra-1';
 import { DOMUtils } from '../utils/DOMUtils.js';
@@ -8,8 +9,9 @@ export class CanvasRendererController {
         this.host = host;
     }
 
-    static calculateLayout({ frontWidth, frontHeight, thickness, constructionType = 'lid', flapDepth = 20, displaySize, padding }) {
-        const { width: totalWidth, height: totalHeight } = packagingNet({ frontWidth, frontHeight, thickness, constructionType, flapDepth });
+    static calculateLayout(settings) {
+        const { frontWidth, frontHeight, thickness, constructionType = 'lid', flapDepth = 20, displaySize, padding } = settings;
+        const { width: totalWidth, height: totalHeight } = packagingNet(settings);
         const maxDimension = Math.max(totalWidth, totalHeight, 1);
         const availableSize = Math.max(1, displaySize - 2 * padding);
         const scale = availableSize / maxDimension;
@@ -17,6 +19,7 @@ export class CanvasRendererController {
         const scaledTotalHeight = totalHeight * scale;
 
         return {
+            ...scaledPackagingSettings(settings, scale),
             x: (displaySize - scaledTotalWidth) / 2,
             y: (displaySize - scaledTotalHeight) / 2,
             frontWidth: frontWidth * scale,
@@ -42,6 +45,7 @@ export class CanvasRendererController {
         } : null;
         const settings = host.settingsModule.getAll();
         const layout = CanvasRendererController.calculateLayout({
+            ...settings,
             frontWidth: settings.frontWidth,
             frontHeight: settings.frontHeight,
             thickness: settings.thickness,
@@ -80,9 +84,17 @@ export class CanvasRendererController {
         }
 
         const { x: frontX, y: frontY } = packagingNet(layout).panels.front;
-        this.drawFrontGrid(svg, frontX, frontY, layout);
-        host.surfaceRenderer.drawSideLayers(svg, layout, layout.scale);
-        this.drawFrontObjects(svg, frontX, frontY, layout);
+        if (settings.surfaceSettings?.front?.rotation) {
+            const { layer, geometry } = host.surfaceRenderer.createLayer(svg, 'front', layout);
+            const localLayout = { ...layout, frontWidth: geometry.localWidth, frontHeight: geometry.localHeight };
+            this.drawFrontGrid(layer, 0, 0, localLayout);
+            this.drawFrontObjects(layer, 0, 0, localLayout);
+            host.surfaceRenderer.drawSideLayers(svg, layout, layout.scale);
+        } else {
+            this.drawFrontGrid(svg, frontX, frontY, layout);
+            host.surfaceRenderer.drawSideLayers(svg, layout, layout.scale);
+            this.drawFrontObjects(svg, frontX, frontY, layout);
+        }
 
         host.objectNavigatorController.bindCanvasHover();
         host.typographyUnitController.updateDisplays();
@@ -176,7 +188,7 @@ export class CanvasRendererController {
             'stroke-width': strokeWidth
         }, container);
 
-        const layout = { constructionType: this.host.settingsModule.get('constructionType'), x, y, frontWidth, frontHeight, thickness,
+        const layout = { ...scaledPackagingSettings(this.host.settingsModule.getAll(), scale), x, y, frontWidth, frontHeight, thickness,
             flapDepth: (this.host.settingsModule.get('flapDepth') ?? 20) * scale };
         const net = packagingNet(layout);
         for (const id of activePanelIds(layout)) {
@@ -185,7 +197,7 @@ export class CanvasRendererController {
     }
 
     drawLabels(container, x, y, frontWidth, frontHeight, thickness, scale = 1) {
-        const layout = { constructionType: this.host.settingsModule.get('constructionType'), x, y, frontWidth, frontHeight, thickness,
+        const layout = { ...scaledPackagingSettings(this.host.settingsModule.getAll(), scale), x, y, frontWidth, frontHeight, thickness,
             flapDepth: (this.host.settingsModule.get('flapDepth') ?? 20) * scale };
         const net = packagingNet(layout);
         for (const id of activePanelIds(layout)) {

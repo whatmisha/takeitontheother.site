@@ -3,7 +3,7 @@ import { panelNames } from '../packaging/PackagingModel.js';
 import { ListenerScope } from '../core/ListenerScope.js';
 import { SurfacePanelCommands } from './SurfacePanelCommands.js';
 
-const DEFAULT_SIDE_SURFACES = Object.freeze(['left', 'right', 'top', 'bottom', 'base', 'flap']);
+const DEFAULT_SIDE_SURFACES = Object.freeze(['left', 'right', 'top', 'bottom', 'base', 'flap', 'tubeCap']);
 
 /**
  * UI controller for the Side Surfaces panel.
@@ -25,6 +25,7 @@ export class SurfacePanelController {
         onCommitAction = () => {},
         onMarkChanged = () => {},
         onConstrainObjects = () => {},
+        onMainRotation = () => {},
         onRender = () => {},
         onRenderDebounced = () => {}
     }) {
@@ -42,6 +43,7 @@ export class SurfacePanelController {
             onCommitAction,
             onMarkChanged,
             onConstrainObjects,
+            onMainRotation,
             onRender,
             onRenderDebounced
         });
@@ -202,7 +204,9 @@ export class SurfacePanelController {
             eye.innerHTML = `<span class="element-action-icon">${visible ? EYE_VISIBLE : EYE_HIDDEN}</span>`;
         });
         const isMain = this.activeSurface === 'front';
-        document.getElementById('surfaceBehaviorControls').hidden = !this.activeSurface || isMain;
+        document.getElementById('surfaceBehaviorControls').hidden = !this.activeSurface;
+        document.querySelector('.surface-visible-chip').hidden = isMain;
+        document.querySelector('.surface-own-grid-chip').hidden = isMain;
         document.getElementById('surfaceMainGridHint').hidden = !isMain;
         document.getElementById('surfaceSelectionTitle').textContent = names[this.activeSurface] || 'Select a side';
         document.getElementById('surfaceFocusButton').disabled = !this.surfaceManager.isVisible(this.activeSurface);

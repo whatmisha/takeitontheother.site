@@ -82,6 +82,9 @@
         },
         "flap": {
           "$ref": "#/$defs/surface"
+        },
+        "tubeCap": {
+          "$ref": "#/$defs/surface"
         }
       }
     },
@@ -307,15 +310,110 @@
           "enum": [
             "lid",
             "box",
-            "tuck-box"
+            "tuck-box",
+            "tube",
+            "telescopic-tube"
           ]
         },
         "flapDepth": {
           "type": "number",
           "exclusiveMinimum": 0,
           "maximum": 1000
+        },
+        "tube": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "tubeDiameter",
+            "tubeBodyHeight",
+            "tubeCapHeight",
+            "tubeOverlap",
+            "tubeWall",
+            "tubeClearance"
+          ],
+          "properties": {
+            "tubeDiameter": {
+              "type": "number",
+              "minimum": 10,
+              "maximum": 500
+            },
+            "tubeBodyHeight": {
+              "type": "number",
+              "minimum": 10,
+              "maximum": 1000
+            },
+            "tubeCapHeight": {
+              "type": "number",
+              "minimum": 5,
+              "maximum": 1000
+            },
+            "tubeOverlap": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1000
+            },
+            "tubeWall": {
+              "type": "number",
+              "minimum": 0.1,
+              "maximum": 10
+            },
+            "tubeClearance": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 3
+            }
+          }
+        },
+        "boxDimensions": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "frontWidth",
+                "frontHeight",
+                "thickness"
+              ],
+              "properties": {
+                "frontWidth": {
+                  "$ref": "#/$defs/positiveDimension"
+                },
+                "frontHeight": {
+                  "$ref": "#/$defs/positiveDimension"
+                },
+                "thickness": {
+                  "$ref": "#/$defs/positiveDimension"
+                }
+              }
+            }
+          ]
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "enum": [
+                  "tube",
+                  "telescopic-tube"
+                ]
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "tube"
+            ],
+            "properties": {
+              "tube": {}
+            }
+          }
+        }
+      ]
     }
   },
   "$defs": {
@@ -368,7 +466,8 @@
         "top",
         "bottom",
         "base",
-        "flap"
+        "flap",
+        "tubeCap"
       ]
     },
     "position": {
@@ -715,6 +814,41 @@
         },
         "svg": {
           "type": "string"
+        },
+        "missingAsset": {
+          "type": "boolean"
+        },
+        "raster": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "dataUrl",
+            "width",
+            "height"
+          ],
+          "properties": {
+            "dataUrl": {
+              "type": "string",
+              "maxLength": 2000000,
+              "pattern": "^(data:image/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+)?$"
+            },
+            "width": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 100000
+            },
+            "height": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 100000
+            },
+            "fit": {
+              "enum": [
+                "cover",
+                "contain"
+              ]
+            }
+          }
         }
       }
     },

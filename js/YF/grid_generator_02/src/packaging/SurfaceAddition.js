@@ -1,3 +1,4 @@
+import { tubeNet } from './TubeModel.js';
 import { activePanelIds, constructionType, packagingNet, panelNames } from './PackagingModel.js';
 
 /** The same available additions drive the panel and the net handles. */
@@ -7,7 +8,11 @@ export function surfaceAdditions(settings, isVisible) {
         id, name: names[id], restore: true, rect: net.panels[id],
         anchor: { x: net.panels[id].x + net.panels[id].width / 2, y: net.panels[id].y + net.panels[id].height / 2 }
     }));
-    if (type === 'lid') {
+    if (type === 'tube') {
+        const cap = tubeNet({ ...settings, constructionType: 'telescopic-tube' }).panels.tubeCap;
+        additions.push({ id: 'tubeCap', name: names.tubeCap, type: 'telescopic-tube', rect: cap,
+            anchor: { x: net.panels.front.x + net.width / 2, y: net.panels.front.y }, outside: -1 });
+    } else if (type === 'lid') {
         const edge = net.panels.top;
         additions.push({ id: 'base', name: names.base, type: 'box',
             rect: { x: edge.x, y: edge.y - settings.frontHeight, width: edge.width, height: settings.frontHeight },

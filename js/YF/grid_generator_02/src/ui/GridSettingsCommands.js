@@ -16,6 +16,8 @@ export class GridSettingsCommands {
 
     handleWidthChange() {
         this.host.markAsChanged();
+        const rotation = this.host.settingsModule.get('surfaceSettings')?.front?.rotation;
+        if (rotation === 90 || rotation === 270) this.recalculateLinkedValues();
         this.host.constrainAllObjectsToGrid();
         this.host.updateGridDebounced();
     }
@@ -78,7 +80,11 @@ export class GridSettingsCommands {
         this.host.updateGridDebounced();
     }
 
-    handleColumnCountChange() { this.handleWidthChange(); }
+    handleColumnCountChange() {
+        this.host.markAsChanged();
+        this.host.constrainAllObjectsToGrid();
+        this.host.updateGridDebounced();
+    }
 
     handleRowCountChange() {
         this.host.markAsChanged();

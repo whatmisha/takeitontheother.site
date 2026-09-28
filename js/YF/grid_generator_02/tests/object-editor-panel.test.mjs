@@ -207,7 +207,7 @@ test('graphics editor lifecycle resets transient UI and editing state', () => {
         assert.equal(host.uploadedSvgData, null);
         assert.equal(host.currentEditingGraphicsId, null);
         assert.equal(fileUploadArea.style.display, 'block');
-        assert.equal(placeholder.textContent, 'Click or drag & drop SVG file here');
+        assert.equal(placeholder.textContent, 'Click or drop SVG, PNG, JPEG or WebP here');
         assert.equal(host.dom.graphicsPanelTitle.textContent, 'Add Graphics');
     } finally {
         globalThis.document = previousDocument;

@@ -1,3 +1,4 @@
+import { tubeParameters } from '../packaging/TubeModel.js';
 import { ColorUtils } from '../framework/FrameworkAdapter.js?layout=root-infra-1';
 import { surfaceAdditions } from '../packaging/SurfaceAddition.js';
 import { DOMUtils } from '../utils/DOMUtils.js';
@@ -42,13 +43,28 @@ export class SurfaceNetController {
         if (!layout) return;
         const create = (type, attrs, parent) => DOMUtils.createSVGElement(type, attrs, parent);
         const group = create('g', { 'data-surface-overlay': '', class: 'surface-net-overlay' }, this.svg);
+        const matrix = this.svg.getScreenCTM(), unit = matrix ? 1 / Math.hypot(matrix.a, matrix.b) : 1;
+        const settings = { ...this.surfaceManager.settings.getAll(), ...layout };
+        if (settings.constructionType === 'telescopic-tube') {
+            const { overlap } = tubeParameters(settings);
+            const rect = this.surfaceManager.getPhysicalRect('front', layout);
+            const color = ColorUtils.getContrastColor(settings.boxColor);
+            if (overlap > 0) {
+                const area = create('g', { 'data-tube-overlap-guide': '', 'pointer-events': 'none' }, group);
+                create('rect', { x: rect.x, y: rect.y, width: rect.width, height: overlap, fill: color, opacity: 0.08 }, area);
+                create('line', { x1: rect.x, x2: rect.x + rect.width, y1: rect.y + overlap, y2: rect.y + overlap,
+                    stroke: color, 'stroke-opacity': 0.5, 'stroke-width': 1, 'stroke-dasharray': '4 4', 'vector-effect': 'non-scaling-stroke' }, area);
+                create('title', {}, area).textContent = 'This area is covered by the cap when closed';
+                if (overlap > 22 * unit) create('text', { x: rect.x + 8 * unit, y: rect.y + 16 * unit, fill: color,
+                    opacity: 0.65, 'font-size': 12 * unit, 'font-family': 'var(--ui-font-stack)' }, area).textContent = 'Under cap';
+            }
+        }
         const id = this.getSelected();
         if (id && this.surfaceManager.isVisible(id)) {
             create('rect', { ...this.surfaceManager.getPhysicalRect(id, layout), class: 'surface-net-selection',
                 'data-selected-surface': id, fill: 'none', stroke: ColorUtils.getContrastColor(this.surfaceManager.settings.get('boxColor')), 'stroke-width': 2,
                 'vector-effect': 'non-scaling-stroke', 'pointer-events': 'none' }, group);
         }
-        const matrix = this.svg.getScreenCTM(), unit = matrix ? 1 / Math.hypot(matrix.a, matrix.b) : 1;
         const candidates = surfaceAdditions({ ...this.surfaceManager.settings.getAll(), ...layout }, id => this.surfaceManager.isVisible(id));
         for (const item of candidates) {
             if (item.restore) create('rect', { ...item.rect, class: 'surface-net-placeholder', 'fill-opacity': 0.035,

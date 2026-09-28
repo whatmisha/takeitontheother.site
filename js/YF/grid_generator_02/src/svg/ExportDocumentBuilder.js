@@ -1,3 +1,4 @@
+import { hasGraphicArtwork } from '../elements/RasterAsset.js';
 import { packagingNet } from '../packaging/PackagingModel.js';
 import { SvgAssetTemplateCache } from './SvgAssetTemplateCache.js';
 
@@ -83,7 +84,13 @@ export class ExportDocumentBuilder {
 
         const { x: frontX, y: frontY } = net.panels.front;
         const grid = this.createGroup(svg, 'grid');
-        this.drawFrontGrid(grid, frontX, frontY, frontWidth, frontHeight, scale);
+        const frontFrame = settings.surfaceSettings?.front?.rotation
+            ? host.surfaceRenderer.createLayer(svg, 'front', { ...settings, x: 0, y: 0 }, 'export')
+            : null;
+        if (frontFrame) {
+            frontFrame.layer.appendChild(grid);
+            this.drawFrontGrid(grid, 0, 0, frontFrame.geometry.localWidth, frontFrame.geometry.localHeight, scale);
+        } else this.drawFrontGrid(grid, frontX, frontY, frontWidth, frontHeight, scale);
         host.surfaceRenderer.drawSideLayers(svg, {
             ...settings,
             x: 0,
@@ -105,7 +112,9 @@ export class ExportDocumentBuilder {
                 scale
             );
         }
-        this.drawFrontObjects(svg, frontX, frontY, frontWidth, frontHeight, scale);
+        if (frontFrame) {
+            this.drawFrontObjects(frontFrame.layer, 0, 0, frontFrame.geometry.localWidth, frontFrame.geometry.localHeight, scale);
+        } else this.drawFrontObjects(svg, frontX, frontY, frontWidth, frontHeight, scale);
 
         if (includeReferenceElements) {
             this.addTextStylesSummary(svg, totalWidth, scale);
@@ -153,7 +162,7 @@ export class ExportDocumentBuilder {
                 );
                 return;
             }
-            if (block.svgContent) {
+            if (hasGraphicArtwork(block)) {
                 host.graphicsRenderer?.drawForExport(
                     this.createGroup(svg, block.isBuiltIn ? block.id : `graphics-${block.id}`),
                     block,

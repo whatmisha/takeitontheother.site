@@ -1,3 +1,5 @@
+import { TubeAssembly } from './TubeAssembly.js';
+import { isTube } from '../packaging/TubeModel.js';
 import * as THREE from '../../vendor/three/three.module.js';
 import { OrbitControls } from '../../vendor/three/OrbitControls.js';
 import { createPackagingModel } from '../packaging/PackagingModel.js';
@@ -71,7 +73,7 @@ export class LidPreviewScene {
     setModel(settings) {
         const definition = createPackagingModel(settings);
         const specs = definition.panels;
-        const key = JSON.stringify([specs, settings.visibleSurfaces]);
+        const key = JSON.stringify([specs, definition.parameters, settings.visibleSurfaces]);
         const typeChanged = this.definition?.type !== definition.type;
         this.definition = definition;
         this.settings = settings;
@@ -79,6 +81,21 @@ export class LidPreviewScene {
         const firstModel = !this.modelKey;
         this.modelKey = key;
         this.clearPanels();
+        if (isTube(settings)) {
+            this.model.rotation.x = 0;
+            this.openingPivot.position.set(0, 0, 0);
+            this.openingPivot.rotation.set(0, 0, 0);
+            this.assembly.position.set(0, 0, 0);
+            this.tubeAssembly = new TubeAssembly(definition, settings, this.texture, this.outlineColor);
+            this.assembly.add(this.tubeAssembly.group);
+            this.panels = this.tubeAssembly.panels;
+            this.setFold(this.fold);
+            this.select(this.selected);
+            if (firstModel || typeChanged) this.setView('iso');
+            else this.render();
+            return;
+        }
+        this.model.rotation.x = -Math.PI / 2;
         this.openingPivot.position.y = settings.frontHeight / 2;
         this.assembly.position.y = -settings.frontHeight / 2;
         for (const spec of specs) {
@@ -138,6 +155,11 @@ export class LidPreviewScene {
 
     setFold(value) {
         this.fold = Math.max(0, Math.min(1, value));
+        if (this.tubeAssembly) {
+            this.tubeAssembly.update(this.fold, this.opening);
+            this.render();
+            return;
+        }
         this.definition?.panels.forEach(spec => {
             this.joints.get(spec.id).rotation[spec.axis] = foldAngle(spec, this.fold, this.opening, this.definition.type);
         });
@@ -179,7 +201,10 @@ export class LidPreviewScene {
         if (!this.pointerStart || event.button !== 0 || Math.hypot(event.clientX - this.pointerStart[0], event.clientY - this.pointerStart[1]) > 5) return;
         const rect = this.renderer.domElement.getBoundingClientRect();
         this.raycaster.setFromCamera(new THREE.Vector2((event.clientX - rect.left) / rect.width * 2 - 1, 1 - (event.clientY - rect.top) / rect.height * 2), this.camera);
-        const hit = this.raycaster.intersectObjects(this.panels.flatMap(p => [p.exterior, p.interior]))[0];
+        const hit = this.raycaster.intersectObjects([
+            ...this.panels.flatMap(p => [p.exterior, p.interior]),
+            ...(this.tubeAssembly?.endPieces.filter(end => end.visible) || [])
+        ])[0];
         this.select(hit?.object.userData.surface || null);
         this.onSelect(this.selected);
     }
@@ -207,12 +232,15 @@ export class LidPreviewScene {
     clearPanels() {
         this.panels.forEach(({ hinge, exterior, interior, outline }) => {
             hinge.removeFromParent();
+            if (interior.geometry !== exterior.geometry) interior.geometry.dispose();
             exterior.geometry.dispose();
             exterior.material.dispose();
             interior.material.dispose();
             outline.geometry.dispose();
             outline.material.dispose();
         });
+        this.tubeAssembly?.disposeEnds();
+        this.tubeAssembly = null;
         this.panels = [];
         this.assembly.clear();
         this.joints.clear();

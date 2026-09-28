@@ -18,7 +18,7 @@ test('Pizza Boxer consumes shared capabilities through one explicit adapter', as
     assert.deepEqual(PIZZA_BOXER_FRAMEWORK_ADAPTER, {
         appId: 'pizza-boxer-02',
         mode: 'grid-application-adapter',
-        sharedCapabilities: ['ColorUtils', 'FileIntakeController']
+        sharedCapabilities: ['ColorUtils', 'FileIntakeController', 'ShareCodec']
     });
     assert.equal(Object.isFrozen(PIZZA_BOXER_FRAMEWORK_ADAPTER), true);
     assert.equal(Object.isFrozen(PIZZA_BOXER_FRAMEWORK_ADAPTER.sharedCapabilities), true);
@@ -221,8 +221,8 @@ test('Pizza Boxer layers shared CSS below its production compatibility skin', as
         (workspace.match(/class="value-display(?!-)/gu)?.length || 0)
             + (typography.match(/class="value-display(?!-)/gu)?.length || 0)
             + (editors.match(/class="value-display(?!-)/gu)?.length || 0),
-        39,
-        'Pizza Boxer 02 value-display inventory includes flap depth'
+        45,
+        'Pizza Boxer 02 value-display inventory includes flap depth and six tube parameters'
     );
     assert.equal(
         (workspace.match(/<input\b[^>]*\btype="range"[^>]*>/gu)?.length || 0)

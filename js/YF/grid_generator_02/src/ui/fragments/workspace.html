@@ -15,6 +15,11 @@
                     <!-- Options will be populated by JavaScript -->
                 </ul>
             </div>
+                <button type="button" id="presetToolbarShareBtn" class="preset-toolbar-share-btn" title="Copy share link" aria-label="Copy share link"
+                        data-tooltip="Copy share link">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" width="18" height="18" fill="none" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2" d="M5.7410987,3.4304742l.6124561-.6124561c.7810478-.7810478,2.0473765-.7810478,2.8284243,0l.0000028.0000028c.7810478.7810478.7810478,2.0473765,0,2.8284243l-.6124561.6124561"/><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2" d="M6.2589013,8.5695258l-.6124561.6124561c-.7810478.7810478-2.0473765.7810478-2.8284243,0l-.0000028-.0000028c-.7810478-.7810478-.7810478-2.0473765,0-2.8284243l.6124561-.6124561"/><line x1="7.5184826" y1="4.4815174" x2="4.4815174" y2="7.5184826" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2"/></svg>
+                </button>
+            <span id="presetShareStatus" class="sr-only" role="status"></span>
             <button class="zoom-indicator" id="zoomIndicator" aria-label="Fit canvas to screen">100%</button>
             <button class="canvas-rotate-btn" id="canvasRotateLeftBtn" type="button" aria-label="Rotate canvas left" title="Rotate canvas left">
                 <svg width="20" height="20" viewBox="0 0 18.7106995 20.8883214" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -45,6 +50,7 @@
                         <button type="button" class="text-preset-chip" data-camera-view="bottom">Bottom</button>
                         <button type="button" class="text-preset-chip" data-camera-view="base">Base</button>
                         <button type="button" class="text-preset-chip" data-camera-view="flap">Flap</button>
+                        <button type="button" class="text-preset-chip" data-camera-view="tubeCap" hidden>Cap wrap</button>
                         <button type="button" class="text-preset-chip" data-camera-view="inside">Inside</button>
                     </div>
                     <div class="preview-fold-row control-group">
@@ -126,6 +132,13 @@
                                     <input class="sr-only" type="radio" name="surfaceSettings" value="flap" id="surfaceSettingsFlap" data-surface="flap">
                                     <label class="element-item-text surface-row-label" for="surfaceSettingsFlap"><span data-surface-name>Flap</span><small data-surface-size></small></label>
                                     <span class="element-actions"><button type="button" class="element-action-btn" data-surface-visibility="flap" aria-label="Hide Flap" aria-pressed="true"></button></span>
+                                </div>
+                            </div>
+                            <div class="element-item-wrapper surface-row" data-surface-row="tubeCap">
+                                <div class="element-item">
+                                    <input class="sr-only" type="radio" name="surfaceSettings" value="tubeCap" id="surfaceSettingsTubeCap" data-surface="tubeCap">
+                                    <label class="element-item-text surface-row-label" for="surfaceSettingsTubeCap"><span data-surface-name>Cap wrap</span><small data-surface-size></small></label>
+                                    <span class="element-actions"><button type="button" class="element-action-btn" data-surface-visibility="tubeCap" aria-label="Hide Cap wrap" aria-pressed="true"></button></span>
                                 </div>
                             </div>
                         </div>
@@ -223,7 +236,58 @@
                     </span>
                 </div>
                 <div class="panel-content">
-                    <section class="control-section">
+                    <section class="control-section construction-section" aria-label="Packaging construction">
+                        <div class="control-group">
+                            <label for="constructionTypeSelect">Construction</label>
+                            <select class="style-select" id="constructionTypeSelect" aria-label="Packaging construction">
+                            <option value="lid">Lid · 5 panels</option>
+                            <option value="box">Box with base · 6 panels</option>
+                            <option value="tuck-box">Box with flap · 7 panels</option>
+                            <option value="tube">Rigid tube · 1 wrap</option>
+                            <option value="telescopic-tube">Telescopic tube · 2 wraps</option>
+                            </select>
+                        </div>
+                        <div class="control-group" id="flapDepthControl" hidden>
+                            <label for="flapDepthInput"><span>Flap depth <span class="unit">mm</span></span>
+                                <input type="number" class="value-display" id="flapDepthInput" min="1" max="200" step="0.5" value="20" aria-label="Flap depth in millimeters">
+                            </label>
+                        </div>
+                        <div id="tubeDimensionsControls" hidden>
+                            <div class="control-group">
+                                <label for="tubeDiameterInput"><span>Body diameter <span class="unit">mm</span></span>
+                                    <input type="number" class="value-display" id="tubeDiameterInput" min="10" max="500" step="0.5" aria-label="Body diameter in millimeters">
+                                </label>
+                            </div>
+                            <div class="control-group">
+                                <label for="tubeBodyHeightInput"><span>Body height <span class="unit">mm</span></span>
+                                    <input type="number" class="value-display" id="tubeBodyHeightInput" min="10" max="1000" step="0.5" aria-label="Body height in millimeters">
+                                </label>
+                            </div>
+                            <div class="control-group" data-tube-pair>
+                                <label for="tubeCapHeightInput"><span>Cap height <span class="unit">mm</span></span>
+                                    <input type="number" class="value-display" id="tubeCapHeightInput" min="5" max="1000" step="0.5" aria-label="Cap height in millimeters">
+                                </label>
+                            </div>
+                            <div class="control-group" data-tube-pair>
+                                <label for="tubeOverlapInput"><span>Overlap <span class="unit">mm</span></span>
+                                    <input type="number" class="value-display" id="tubeOverlapInput" min="0" max="1000" step="0.5" aria-label="Overlap in millimeters">
+                                </label>
+                            </div>
+                            <div class="control-group">
+                                <label for="tubeWallInput"><span>Wall thickness <span class="unit">mm</span></span>
+                                    <input type="number" class="value-display" id="tubeWallInput" min="0.1" max="10" step="0.1" aria-label="Wall thickness in millimeters">
+                                </label>
+                            </div>
+                            <div class="control-group" data-tube-pair>
+                                <label for="tubeClearanceInput"><span>Radial clearance <span class="unit">mm</span></span>
+                                    <input type="number" class="value-display" id="tubeClearanceInput" min="0" max="3" step="0.1" aria-label="Radial clearance in millimeters">
+                                </label>
+                            </div>
+                            <p id="tubeDimensionsHint"></p>
+                        </div>
+                        <p>Artwork on unused faces is kept.</p>
+                    </section>
+                    <section class="control-section" id="boxDimensionsControls">
                         <div class="control-group">
                             <label for="frontWidthSlider">
                                 <span>Width</span>
@@ -249,22 +313,7 @@
                         </div>
                     </section>
 
-                    <section class="control-section construction-section" aria-label="Packaging construction">
-                        <div class="control-group">
-                            <label for="constructionTypeSelect">Construction</label>
-                            <select class="style-select" id="constructionTypeSelect" aria-label="Packaging construction">
-                            <option value="lid">Lid · 5 panels</option>
-                            <option value="box">Box with base · 6 panels</option>
-                            <option value="tuck-box">Box with flap · 7 panels</option>
-                            </select>
-                        </div>
-                        <div class="control-group" id="flapDepthControl" hidden>
-                            <label for="flapDepthInput"><span>Flap depth <span class="unit">mm</span></span>
-                                <input type="number" class="value-display" id="flapDepthInput" min="1" max="200" step="0.5" value="20" aria-label="Flap depth in millimeters">
-                            </label>
-                        </div>
-                        <p>Artwork on unused faces is kept.</p>
-                    </section>
+
                     <section class="control-section" aria-labelledby="color-heading">
                         <h3 id="color-heading" class="sr-only">Color Settings</h3>
                         <div class="control-group">

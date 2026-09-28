@@ -1,3 +1,4 @@
+import { normalizeConstructionSettings, TUBE_DEFAULTS } from '../packaging/TubeModel.js';
 import { cloneJson as clone } from '../utils/cloneJson.js';
 const compact = object => Object.fromEntries(
     Object.entries(object).filter(([, value]) => value !== undefined)
@@ -36,6 +37,8 @@ function deserializeGraphic(graphic, index) {
         id: graphic.id ?? `graphic_${index + 1}`,
         name: graphic.name ?? 'Graphic',
         isBuiltIn: false,
+        raster: clone(graphic.raster),
+        missingAsset: graphic.missingAsset,
         svgContent: graphic.svg ?? '',
         heightInModules: graphic.height ?? 3,
         widthInColumns: graphic.widthInColumns ?? null,
@@ -62,6 +65,8 @@ function deserializeBuiltIn(graphic, id) {
         id,
         name: defaults.name,
         isBuiltIn: true,
+        raster: clone(graphic.raster),
+        missingAsset: graphic.missingAsset,
         svgContent: graphic.svg ?? '',
         heightInModules: graphic.height ?? 3,
         widthInColumns: graphic.widthInColumns ?? null,
@@ -91,6 +96,9 @@ export class PresetDocumentDeserializer {
         const caption = typography.caption;
         const display = typography.lunnenDisplay;
         const settings = compact({
+            ...TUBE_DEFAULTS,
+            ...data.construction?.tube,
+            boxDimensions: clone(data.construction?.boxDimensions) ?? null,
             constructionType: data.construction?.type ?? 'lid',
             flapDepth: data.construction?.flapDepth ?? 20,
             frontWidth: data.dimensions?.width,
@@ -132,7 +140,7 @@ export class PresetDocumentDeserializer {
             version: data.version,
             timestamp: data.timestamp,
             presetName: data.presetName,
-            settings,
+            settings: normalizeConstructionSettings(settings),
             textBlocks: (data.texts || []).map(deserializeText),
             graphicsBlocks
         };

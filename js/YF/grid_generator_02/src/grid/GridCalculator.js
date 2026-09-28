@@ -1,3 +1,5 @@
+import { mainGridDimensions } from '../surfaces/MainGridDimensions.js';
+
 const FP_EPSILON = 1e-9;
 
 /**
@@ -12,7 +14,7 @@ export class GridCalculator {
         const module = this.settings.get('gridModule');
         const margins = this.settings.get('margins');
         const rowHeight = this.settings.get('rowHeight');
-        const availableHeight = this.settings.get('frontHeight') - 2 * module * margins;
+        const availableHeight = mainGridDimensions(this.settings).frontHeight - 2 * module * margins;
         const rowWithGutter = module * (rowHeight + 1);
         return Math.max(
             1,
@@ -24,7 +26,7 @@ export class GridCalculator {
         const module = this.settings.get('gridModule');
         const margins = this.settings.get('margins');
         const rowCount = this.settings.get('rowCount');
-        const availableHeight = this.settings.get('frontHeight') - 2 * module * margins;
+        const availableHeight = mainGridDimensions(this.settings).frontHeight - 2 * module * margins;
         const availableModules = availableHeight / module;
         return Math.max(
             1,
@@ -33,7 +35,7 @@ export class GridCalculator {
     }
 
     calculateModule() {
-        const frontHeight = this.settings.get('frontHeight');
+        const frontHeight = mainGridDimensions(this.settings).frontHeight;
         const rowCount = this.settings.get('rowCount');
         const rowHeight = this.settings.get('rowHeight');
         const totalContentModules = rowCount * rowHeight + rowCount - 1;
@@ -53,7 +55,7 @@ export class GridCalculator {
     }
 
     calculateMargins() {
-        const frontHeight = this.settings.get('frontHeight');
+        const frontHeight = mainGridDimensions(this.settings).frontHeight;
         const module = this.settings.get('gridModule');
         const rowCount = this.settings.get('rowCount');
         const rowHeight = this.settings.get('rowHeight');
@@ -66,7 +68,7 @@ export class GridCalculator {
     findPerfectRowCombinations() {
         const module = this.settings.get('gridModule');
         const margins = this.settings.get('margins');
-        const frontHeight = this.settings.get('frontHeight');
+        const frontHeight = mainGridDimensions(this.settings).frontHeight;
         const availableModules = (frontHeight - 2 * module * margins) / module;
         const combinations = [];
 
@@ -95,7 +97,7 @@ export class GridCalculator {
         const module = this.settings.get('gridModule');
         const margins = this.settings.get('margins');
         const columnCount = this.settings.get('columnCount');
-        const frontWidth = this.settings.get('frontWidth');
+        const frontWidth = mainGridDimensions(this.settings).frontWidth;
         return (
             frontWidth
             - module * margins * 2

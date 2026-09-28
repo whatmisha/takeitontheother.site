@@ -81,3 +81,7 @@ body[data-workspace-view="3d"] #zoomIndicator, body[data-workspace-view="3d"] #c
 #flapDepthInput { width: 76px; }
 #flapDepthControl[hidden], #previewOpenRow[hidden] { display: none; }
 /* Keep construction controls reachable on laptop-height windows. */
+
+#boxDimensionsControls[hidden], #tubeDimensionsControls[hidden], [data-tube-pair][hidden], [data-camera-view][hidden] { display: none; }
+#tubeDimensionsControls .value-display { width: 76px; }
+#tubeDimensionsHint { margin-bottom: var(--spacing-lg); }

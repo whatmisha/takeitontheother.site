@@ -1,3 +1,4 @@
+import { hasGraphicArtwork } from './RasterAsset.js';
 import { MathUtils } from '../utils/MathUtils.js';
 
 /**
@@ -101,7 +102,7 @@ export class GraphicsRenderer {
     }
 
     draw(container, block, frontX, frontY, frontWidth, frontHeight, scale, gridContext = null) {
-        if (!block.svgContent) return null;
+        if (!hasGraphicArtwork(block)) return null;
 
         const color = this.getContrastColor();
         const layout = this.calculateLayout(block, frontX, frontY, frontWidth, scale, gridContext);
@@ -126,20 +127,41 @@ export class GraphicsRenderer {
         group.boundsElement = bounds;
 
         const svg = this.createGraphicSvg(group, block, layout, color, true);
-        svg.innerHTML = this.sanitizeSvgContent(block.svgContent);
+        this.populateArtwork(svg, block, color, true);
         this.attachInteractions(group, block);
         return group;
     }
 
-    drawForExport(container, block, frontX, frontY, frontWidth, frontHeight, scale, gridContext = null) {
-        if (!block.svgContent) return null;
+    drawForExport(container, block, frontX, frontY, frontWidth, frontHeight, scale, gridContext = null, { rasterPreviews = false } = {}) {
+        if (!hasGraphicArtwork(block)) return null;
 
         const color = this.getContrastColor();
         const layout = this.calculateLayout(block, frontX, frontY, frontWidth, scale, gridContext);
         const svg = this.createGraphicSvg(container, block, layout, color, false);
-        svg.innerHTML = this.sanitizeSvgContent(block.svgContent);
-        this.applyContrastColor(svg, color);
+        this.populateArtwork(svg, block, color, rasterPreviews);
+        if (!block.raster && !block.missingAsset) this.applyContrastColor(svg, color);
         return svg;
+    }
+
+    populateArtwork(svg, block, color, preview) {
+        if (!block.raster && !block.missingAsset) {
+            svg.innerHTML = this.sanitizeSvgContent(block.svgContent);
+            return;
+        }
+        const width = block.originalWidth, height = block.originalHeight;
+        if (preview && block.raster?.dataUrl) {
+            this.createSvgElement('image', { width, height, href: block.raster.dataUrl,
+                preserveAspectRatio: `xMidYMid ${block.raster.fit === 'contain' ? 'meet' : 'slice'}` }, svg);
+        } else {
+            const frame = this.createSvgElement('rect', { width, height, fill: 'none', stroke: color,
+                'stroke-width': .4, 'vector-effect': 'non-scaling-stroke', 'data-image-frame': block.id }, svg);
+            this.createSvgElement('title', {}, frame).textContent = block.name || 'Image';
+            if (preview && block.missingAsset) {
+                const label = this.createSvgElement('text', { x: width / 2, y: height / 2, fill: color,
+                    'text-anchor': 'middle', 'font-size': Math.min(width / 16, height / 6), 'font-family': 'sans-serif' }, svg);
+                label.textContent = 'Relink image';
+            }
+        }
     }
 
     createGraphicSvg(container, block, layout, color, disablePointerEvents) {

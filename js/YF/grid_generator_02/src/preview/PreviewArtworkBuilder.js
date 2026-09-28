@@ -35,23 +35,17 @@ export class PreviewArtworkBuilder {
     async build() {
         const host = this.host;
         const settings = host.settingsModule.getAll();
-        const { frontWidth, frontHeight, thickness, boxColor } = settings;
-        const { width, height, panels } = packagingNet(settings);
-        const { x: frontX, y: frontY } = panels.front;
+        const { boxColor } = settings;
+        const { width, height } = packagingNet(settings);
         const svg = this.documentBuilder.createElement('svg', {
             xmlns: 'http://www.w3.org/2000/svg', viewBox: `0 0 ${width} ${height}`
         });
         // Full atlas background avoids transparent seams at adjoining UV edges.
         this.documentBuilder.createElement('rect', { width, height, fill: boxColor }, svg);
-        const defs = this.documentBuilder.createElement('defs', {}, svg);
-        const clip = this.documentBuilder.createElement('clipPath', { id: 'preview-front-clip' }, defs);
-        this.documentBuilder.createElement('rect', { x: frontX, y: frontY, width: frontWidth, height: frontHeight }, clip);
-        const front = this.documentBuilder.createElement('g', { 'clip-path': 'url(#preview-front-clip)' }, svg);
-        this.documentBuilder.drawFrontObjects(front, frontX, frontY, frontWidth, frontHeight, 1);
         const layout = { ...settings, x: 0, y: 0 };
-        for (const surface of activePanelIds(settings).filter(id => id !== 'front')) {
+        for (const surface of activePanelIds(settings)) {
             const { layer, geometry } = host.surfaceRenderer.createLayer(svg, surface, layout, 'preview');
-            host.surfaceRenderer.drawObjects(layer, surface, geometry, 1, true);
+            host.surfaceRenderer.drawObjects(layer, surface, geometry, 1, true, { rasterPreviews: true });
         }
         svg.querySelectorAll('[id^="hover-area-"], [id^="bounds-"], [id^="resize-handle-"]').forEach(node => node.remove());
         const style = this.documentBuilder.createElement('style', {}, svg);

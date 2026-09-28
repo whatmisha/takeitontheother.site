@@ -5,6 +5,7 @@ export class SurfacePanelCommands {
         onCommitAction = () => {},
         onMarkChanged = () => {},
         onConstrainObjects = () => {},
+        onMainRotation = () => {},
         onRender = () => {},
         onRenderDebounced = () => {}
     }) {
@@ -13,6 +14,7 @@ export class SurfacePanelCommands {
         this.onCommitAction = onCommitAction;
         this.onMarkChanged = onMarkChanged;
         this.onConstrainObjects = onConstrainObjects;
+        this.onMainRotation = onMainRotation;
         this.onRender = onRender;
         this.onRenderDebounced = onRenderDebounced;
     }
@@ -44,9 +46,11 @@ export class SurfacePanelCommands {
     }
 
     setRotation(surface, rotation) {
-        if (this.surfaceManager.get(surface)?.rotation === rotation) return false;
+        const previous = this.surfaceManager.get(surface)?.rotation;
+        if (previous === rotation || ![0, 90, 180, 270].includes(rotation)) return false;
         return this.commit('rotate surface', () => {
             this.surfaceManager.update(surface, { rotation });
+            if (surface === 'front' && previous % 180 !== rotation % 180) this.onMainRotation();
         }, { constrain: true });
     }
 

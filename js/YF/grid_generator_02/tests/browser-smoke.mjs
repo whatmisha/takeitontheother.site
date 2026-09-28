@@ -1,3 +1,6 @@
+import { checkShareAndRaster } from './share-raster-browser-checks.mjs';
+import { checkRotations } from './rotation-browser-checks.mjs';
+import { checkTubes } from './tube-browser-checks.mjs';
 import { PresetFormatAdapter } from '../src/preset/PresetFormatAdapter.js';
 import { DraftStore } from '../src/persistence/DraftStore.js';
 
@@ -127,6 +130,7 @@ async function run() {
     const appDocument = await loadApplication();
     const appWindow = appFrame.contentWindow;
     const application = appWindow[Symbol.for('lunnen.grid-generator-02.application')];
+    await new Promise(resolve => appWindow.requestAnimationFrame(() => appWindow.requestAnimationFrame(resolve)));
     assert(
         appDocument.documentElement.dataset.applicationShell === 'ready',
         'modular HTML shell assembles before application startup'
@@ -155,7 +159,7 @@ async function run() {
             header.dispatchEvent(new appWindow.MouseEvent('mousedown', { button: 0, clientX: rect.x + 30, clientY: rect.y + 10, bubbles: true }));
             appDocument.dispatchEvent(new appWindow.MouseEvent('mousemove', { clientX: rect.x + 20, clientY: rect.y + 20, bubbles: true }));
             appDocument.dispatchEvent(new appWindow.MouseEvent('mouseup', { bubbles: true }));
-            assert(Math.abs(stack.getBoundingClientRect().x - original.x + 10) < 1, `${id} header moves the whole panel pair`);
+            assert(Math.abs(stack.getBoundingClientRect().x - original.x + 10) < 1, `${id} header moves the whole panel pair (${original.x} -> ${stack.getBoundingClientRect().x}, viewport ${appWindow.innerWidth})`);
             application.panelManager.resetPosition(stackId);
         }
     }
@@ -1097,6 +1101,9 @@ async function run() {
     assert(!application.surfaceManager.isVisible('base') && !application.objectDocument.getGraphicsBlock(addedGraphic.id), 'Undo restores both hidden-side state and object list');
     const cleanExport = await application.exportDocumentBuilder.build(false);
     assert(!cleanExport.querySelector('[data-surface-overlay], [data-net-add], [data-selected-surface]'), 'editor handles and selection outlines never enter the exported artwork');
+    await checkTubes({ application, appDocument, appWindow, assert, waitFor, presetFormat });
+    await checkRotations({ application, appDocument, appWindow, assert, waitFor, presetFormat });
+    await checkShareAndRaster({ application, appDocument, appWindow, assert, waitFor, presetFormat });
     await application.draftRecoveryController.clearDraft();
     application.hasUnsavedChanges = false;
     application.dispose();

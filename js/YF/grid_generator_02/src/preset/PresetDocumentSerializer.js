@@ -1,3 +1,4 @@
+import { normalizedTubeFields } from '../packaging/TubeModel.js';
 import { constructionType } from '../packaging/PackagingModel.js';
 import { cloneJson as clone } from '../utils/cloneJson.js';
 const compact = object => Object.fromEntries(
@@ -55,6 +56,8 @@ function serializeGraphic(block, index) {
         visible: block.visible ?? true,
         lockPosition: block.lockPosition ?? true,
         layer: block.layerIndex,
+        raster: clone(block.raster),
+        missingAsset: block.missingAsset,
         svg: block.svgContent ?? ''
     });
 }
@@ -75,6 +78,8 @@ function serializeBuiltIn(block, id) {
         visible: block.visible ?? true,
         lockPosition: block.lockPosition ?? true,
         layer: block.layerIndex,
+        raster: clone(block.raster),
+        missingAsset: block.missingAsset,
         svg: block.svgContent ?? ''
     });
 }
@@ -91,7 +96,8 @@ export class PresetDocumentSerializer {
         return {
             presetName: presetName ?? data.presetName ?? data.currentPresetName ?? 'Custom',
             version: '2.0',
-            construction: { type: constructionType(settings), flapDepth: settings.flapDepth ?? 20 },
+            construction: { type: constructionType(settings), flapDepth: settings.flapDepth ?? 20,
+                tube: normalizedTubeFields(settings), boxDimensions: clone(settings.boxDimensions) ?? null },
             timestamp: data.timestamp,
             dimensions: {
                 width: settings.frontWidth,

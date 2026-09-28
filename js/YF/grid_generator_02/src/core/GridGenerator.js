@@ -1,3 +1,4 @@
+import { PresetShareController } from '../preset/PresetShareController.js';
 import { SurfaceAdditionCommands } from '../packaging/SurfaceAddition.js';
 import { SurfaceNetController } from '../surfaces/SurfaceNetController.js';
 import { PackagingPreviewController } from '../preview/PackagingPreviewController.js';
@@ -270,6 +271,7 @@ export class GridGenerator {
             changed: () => this.markAsChanged(),
             render: () => {
                 this.surfaceManager.syncMasterVisibility();
+                this.gridSettingsController.recalculateLinkedValues();
                 this.syncApplicationUI();
                 this.updateGrid();
             },
@@ -292,7 +294,7 @@ export class GridGenerator {
             onPresetLoad: (data, name) => this.handlePresetLoad(data, name),
             onPresetSelect: (file, name) => {
                 this.hasUnsavedChanges = false;
-                if (!this.isInitializing) void this.draftRecoveryController?.clearDraft();
+                if (!this.isInitializing && !this.isOpeningShare) void this.draftRecoveryController?.clearDraft();
             },
             onError: error => this.errorPresenter.show(error, { title: 'Preset loading failed' })
         }));
@@ -305,11 +307,17 @@ export class GridGenerator {
             }),
             restoreDraft: draft => this.presetApplicationController.restoreDraft(draft)
         }));
+        this.presetShareController = this.lifecycle.own(new PresetShareController(this));
         this.startupController = new ApplicationStartupController({
             loadPresets: () => this.presetManager.init(),
             loadBuiltInGraphics: () => this.builtInGraphicsController.initialize(),
             finalize: () => this.finalizeInitialization(),
-            recover: () => this.draftRecoveryController.checkForRecovery(),
+            recover: async () => {
+                try {
+                    const shared = await this.presetShareController.openFromLocation();
+                    if (!shared) await this.draftRecoveryController.checkForRecovery();
+                } finally { this.presetShareController.button.disabled = false; }
+            },
             fit: () => this.zoomPanManager?.fitToScreen()
         });
 
@@ -436,6 +444,10 @@ export class GridGenerator {
             onBeginAction: action => this.historyManager.beginAction(action, this.getStateSnapshot()),
             onCommitAction: () => this.historyManager.commitAction(this.getStateSnapshot()),
             onMarkChanged: () => this.markAsChanged(),
+            onMainRotation: () => {
+                this.gridSettingsController.recalculateLinkedValues();
+                this.syncApplicationUI();
+            },
             onConstrainObjects: () => this.constrainAllObjectsToGrid(),
             onRender: () => this.updateGrid(),
             onRenderDebounced: () => this.updateGridDebounced()

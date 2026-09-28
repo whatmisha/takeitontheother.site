@@ -12,6 +12,7 @@ const outputUrl = new URL(`../src/preset/generated/validatePreset${suffix}.js`, 
 const schema = JSON.parse(await readFile(schemaUrl, 'utf8'));
 const ajv = new Ajv2020({
     allErrors: true,
+    unicode: false, // The only length-limited value is an ASCII base64 data URL.
     strict: true,
     code: { esm: true, source: true }
 });

@@ -1,3 +1,4 @@
+import { isTube, constructionDimensionsLabel } from '../packaging/TubeModel.js';
 import { PANEL_NAMES as FACE_NAMES, CONSTRUCTION_NAMES, constructionType, panelNames } from '../packaging/PackagingModel.js';
 
 export class PackagingPreviewController {
@@ -85,12 +86,20 @@ export class PackagingPreviewController {
         const model = this.getModel();
         this.scene.setModel(model);
         if (this.selectedFace && !model.visibleSurfaces.includes(this.selectedFace)) this.selectFace(null);
-        document.getElementById('previewDimensions').textContent = `${model.frontWidth} × ${model.frontHeight} × ${model.thickness} mm`;
+        document.getElementById('previewDimensions').textContent = constructionDimensionsLabel(model);
         document.querySelector('.preview-heading > span').textContent = CONSTRUCTION_NAMES[constructionType(model)];
-        const isLid = constructionType(model) === 'lid';
+        const type = constructionType(model), tube = isTube(model);
+        const isLid = type === 'lid' || type === 'tube';
+        document.querySelector('label[for="previewOpen"]').textContent = tube ? 'Open cap' : 'Open lid';
+        document.getElementById('previewUnfold').textContent = tube ? 'Unroll' : 'Unfold';
+        document.getElementById('previewFoldClosed').textContent = tube ? 'Roll' : 'Fold';
+        this.foldInput.setAttribute('aria-label', tube ? 'Roll tube' : 'Fold packaging');
+        this.openInput.setAttribute('aria-label', tube ? 'Open cap' : 'Open lid');
         document.getElementById('previewOpenRow').hidden = isLid;
         this.section.classList.toggle('has-opening', !isLid);
         document.querySelectorAll('[data-camera-view]').forEach(button => {
+            button.hidden = button.dataset.cameraView === 'tubeCap' ? !tube : tube && !['iso', 'front', 'inside'].includes(button.dataset.cameraView);
+            if (button.dataset.cameraView === 'inside' && type === 'tube') button.hidden = true;
             button.disabled = Boolean(FACE_NAMES[button.dataset.cameraView] && !model.visibleSurfaces.includes(button.dataset.cameraView));
         });
         clearTimeout(this.timer);

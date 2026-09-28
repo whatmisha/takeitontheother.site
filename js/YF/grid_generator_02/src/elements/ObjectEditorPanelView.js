@@ -44,6 +44,8 @@ export class ObjectEditorPanelView {
     }
 
     prepareNewGraphics() {
+        const rasterControls = this.document.getElementById('rasterControls');
+        if (rasterControls) rasterControls.hidden = true;
         const { dom } = this.host;
         Object.entries({
             graphicsXInput: 1,
@@ -54,15 +56,26 @@ export class ObjectEditorPanelView {
         }).forEach(([key, value]) => this.setValue(dom[key], value));
         this.setChecked(dom.graphicsLockPositionToggle, false);
         const placeholder = dom.fileUploadArea?.querySelector('.upload-placeholder p');
-        if (placeholder) placeholder.textContent = 'Click or drag & drop SVG file here';
+        if (placeholder) placeholder.textContent = 'Click or drop SVG, PNG, JPEG or WebP here';
         this.host.syncGraphicsFileIntake?.('empty', {
-            text: 'Click or drag & drop SVG file here'
+            text: 'Click or drop SVG, PNG, JPEG or WebP here'
         });
         this.document.getElementById('graphicsHideBtn')?.style.setProperty('display', 'none');
         this.document.getElementById('graphicsDeleteBtn')?.style.setProperty('display', 'none');
     }
 
     populateGraphics(block) {
+        const rasterControls = this.document.getElementById('rasterControls');
+        if (rasterControls) {
+            rasterControls.hidden = !block.raster;
+            if (block.raster) {
+                const frame = this.document.getElementById('rasterFrameSelect');
+                const ratio = block.originalWidth / block.originalHeight;
+                frame.value = Math.abs(ratio - block.raster.width / block.raster.height) < 1e-6 ? 'original'
+                    : [...frame.options].find(option => Math.abs(Number(option.value) - ratio) < 1e-6)?.value || 'original';
+                this.document.getElementById('rasterFitSelect').value = block.raster.fit || 'cover';
+            }
+        }
         const { dom } = this.host;
         if (dom.graphicsPanelTitle) {
             const name = block.name || 'Graphic';
@@ -87,7 +100,7 @@ export class ObjectEditorPanelView {
         if (dom.fileUploadArea) {
             dom.fileUploadArea.style.display = 'block';
             const placeholder = dom.fileUploadArea.querySelector('.upload-placeholder p');
-            const text = `Current: ${block.name || 'Graphic'} — Upload new SVG to replace`;
+            const text = block.missingAsset ? `Missing: ${block.name || 'Image'} — Click to relink` : `Current: ${block.name || 'Graphic'} — Upload an image or SVG to replace`;
             if (placeholder) placeholder.textContent = text;
             this.host.syncGraphicsFileIntake?.('ready', { text });
         }
@@ -104,7 +117,7 @@ export class ObjectEditorPanelView {
         if (dom.fileUploadArea) {
             dom.fileUploadArea.style.display = 'block';
             const placeholder = dom.fileUploadArea.querySelector('.upload-placeholder p');
-            const text = 'Click or drag & drop SVG file here';
+            const text = 'Click or drop SVG, PNG, JPEG or WebP here';
             if (placeholder) placeholder.textContent = text;
             this.host.syncGraphicsFileIntake?.('empty', { text });
         }
@@ -115,6 +128,7 @@ export class ObjectEditorPanelView {
         if (!panel) return;
         panel.style.display = 'flex';
         panel.classList.add('active');
+        this.host.panelManager?.bringToFront(panel.id);
     }
 
     hide(panel) {

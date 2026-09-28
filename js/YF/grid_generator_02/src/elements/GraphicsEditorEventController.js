@@ -71,6 +71,18 @@ export class GraphicsEditorEventController {
     }
 
     bindFileUpload() {
+        for (const id of ['rasterFrameSelect', 'rasterFitSelect']) {
+            this.listeners.listen(this.document.getElementById(id), 'change', event => {
+                this.mutate('change image frame', block => {
+                    if (!block.raster) return;
+                    if (id === 'rasterFitSelect') block.raster.fit = event.target.value;
+                    else {
+                        const ratio = event.target.value === 'original' ? block.raster.width / block.raster.height : Number(event.target.value);
+                        block.originalWidth = block.originalHeight * ratio;
+                    }
+                });
+            });
+        }
         const { fileUploadArea, svgFileInput, svgFileStatus } = this.host.dom;
         if (!fileUploadArea || !svgFileInput) return;
         this.fileIntake = new FileIntakeController({
@@ -80,15 +92,15 @@ export class GraphicsEditorEventController {
             trigger: fileUploadArea,
             dropzone: fileUploadArea,
             status: svgFileStatus,
-            accept: '.svg,image/svg+xml',
+            accept: '.svg,image/svg+xml,.png,image/png,.jpg,.jpeg,image/jpeg,.webp,image/webp',
             initialState: 'empty',
-            initialStatus: 'Click or drag & drop SVG file here',
-            typeErrorText: 'Choose an SVG file.',
+            initialStatus: 'Click or drop SVG, PNG, JPEG or WebP here',
+            typeErrorText: 'Choose SVG, PNG, JPEG or WebP.',
             loadingText: file => `Loading ${file.name || 'SVG'}…`,
-            errorText: error => error?.message || 'Could not load this SVG file.',
+            errorText: error => error?.message || 'Could not load this image file.',
             onSelect: async file => {
                 const block = await this.host.graphicsAssetController.handleFile(file);
-                if (!block) throw new Error('This file does not contain a valid SVG.');
+                if (!block) throw new Error('This image could not be loaded.');
                 const text = svgFileStatus?.textContent || `✓ ${file.name}`;
                 return { block, statusText: text };
             }

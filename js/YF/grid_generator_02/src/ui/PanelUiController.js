@@ -1,3 +1,4 @@
+import { constructionDimensionsLabel } from '../packaging/TubeModel.js';
 import { ListenerScope } from '../core/ListenerScope.js';
 
 const TEXT_STYLE_SECTIONS = [
@@ -118,7 +119,7 @@ export class PanelUiController {
         );
         this.setText(
             'dimensionsParams',
-            `${Math.round(settings.get('frontWidth'))}\u2009×\u2009${Math.round(settings.get('frontHeight'))}\u2009×\u2009${Math.round(settings.get('thickness'))} mm`
+            constructionDimensionsLabel(settings.getAll())
         );
         this.setText(
             'objectsParams',

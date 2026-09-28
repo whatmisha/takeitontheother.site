@@ -187,12 +187,11 @@ export class ObjectPlacementController {
     }
 
     updateBuiltInPositions() {
-        const settings = this.host.settingsModule;
-        const module = settings.get('gridModule');
-        const contentHeight = settings.get('frontHeight') - settings.get('margins') * 2 * module;
-        const lastModule = Math.floor(contentHeight / module);
-
         this.host.objectDocument.getBuiltInGraphicsBlocks().forEach(block => {
+            const context = this.host.surfaceCoordinates.getGridContext(block.surface || 'front');
+            const module = context.gridModule;
+            const contentHeight = context.frontHeight - context.margins * 2 * module;
+            const lastModule = Math.floor(contentHeight / module);
             const position = this.host.surfaceCoordinates.yToRowBaseline(
                 Math.max(0, lastModule - block.heightInModules),
                 block.surface || 'front'

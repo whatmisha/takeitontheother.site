@@ -1,7 +1,8 @@
+import { hasGraphicArtwork } from '../elements/RasterAsset.js';
 import { SurfaceGridPainter } from './SurfaceGridPainter.js';
 import { SurfaceLayerFactory } from './SurfaceLayerFactory.js';
 
-const DEFAULT_SIDE_SURFACES = Object.freeze(['left', 'right', 'top', 'bottom', 'base', 'flap']);
+const DEFAULT_SIDE_SURFACES = Object.freeze(['left', 'right', 'top', 'bottom', 'base', 'flap', 'tubeCap']);
 /**
  * Renders side-surface grids and objects without owning editor state.
  */
@@ -55,7 +56,7 @@ export class SurfaceRenderer {
         this.gridPainter.draw(container, surface, geometry, scale);
     }
 
-    drawObjects(container, surface, geometry, scale, forExport = false) {
+    drawObjects(container, surface, geometry, scale, forExport = false, options = {}) {
         if (!this.settings.get('showObjects') && !forExport) return;
 
         const context = this.getGridContext(surface);
@@ -74,7 +75,7 @@ export class SurfaceRenderer {
                 );
                 return;
             }
-            if (block.svgContent) {
+            if (hasGraphicArtwork(block)) {
                 const draw = forExport ? this.drawGraphicsBlockForExport : this.drawGraphicsBlock;
                 draw(
                     container,
@@ -84,7 +85,8 @@ export class SurfaceRenderer {
                     geometry.localWidth,
                     geometry.localHeight,
                     scale,
-                    context
+                    context,
+                    options
                 );
             }
         });
