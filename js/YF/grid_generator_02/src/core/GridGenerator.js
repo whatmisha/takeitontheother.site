@@ -31,6 +31,7 @@ import { createSliderConfig } from '../config/SliderConfigFactory.js';
 import { SliderController } from '../ui/SliderController.js';
 import { PanelManager } from '../ui/PanelManager.js';
 import { ZoomPanManager } from '../ui/ZoomPanManager.js';
+import { CustomTextStyleController } from '../ui/CustomTextStyleController.js';
 import { TypographyUnitController } from '../ui/TypographyUnitController.js';
 import { GridSettingsController } from '../ui/GridSettingsController.js';
 import { ColorPanelController } from '../ui/ColorPanelController.js?layout=root-infra-1';
@@ -245,6 +246,8 @@ export class GridGenerator {
         }));
 
         // ============================================
+        this.customTextStyleController = this.lifecycle.own(new CustomTextStyleController(this));
+        this.typographyUnitController.onUnitChange = () => this.customTextStyleController.sync();
         this.textToPath = new TextToPath();
         this.svgExporter = new SVGExporter(this.settingsModule, this.textToPath);
         this.exportDocumentBuilder = new ExportDocumentBuilder(createExportDocumentPort(this));
@@ -506,6 +509,8 @@ export class GridGenerator {
 
     // Получить название стиля для отображения
     getStyleDisplayName(styleRef) {
+        const custom = this.textStyleResolver.getCustomStyle(styleRef);
+        if (custom) return custom.name;
         switch(styleRef) {
             case 'headline':
                 return 'Headline';
@@ -521,6 +526,8 @@ export class GridGenerator {
     }
 
     getStyleFontWeight(styleRef) {
+        const custom = this.textStyleResolver.getCustomStyle(styleRef);
+        if (custom) return `${custom.name} · ${custom.fontWeight === 500 ? 'Medium' : custom.fontWeight === 400 ? 'Regular' : custom.fontWeight}`;
         // Возвращаем начертание (Medium или Regular) вместо стиля
         switch(styleRef) {
             case 'headline':

@@ -180,6 +180,10 @@ export class ExportDocumentBuilder {
         const host = this.host;
         const module = host.settingsModule.get('gridModule');
         const millimetersToPoints = 2.83465;
+        const custom = (host.settingsModule.get('customTextStyles') || []).map(style => ({
+            name: style.name, fontSize: (host.textStyleResolver.calculateFontSize(style.id) * millimetersToPoints).toFixed(1),
+            lineHeight: (style.lineHeight * module * millimetersToPoints).toFixed(1)
+        }));
         return STYLE_REFERENCES.map(reference => {
             const size = host.settingsModule.get(reference.size) ?? reference.fallbackSize;
             const lineHeight = host.settingsModule.get(reference.lineHeight) ??
@@ -192,7 +196,7 @@ export class ExportDocumentBuilder {
                 ).toFixed(1),
                 lineHeight: (lineHeight * module * millimetersToPoints).toFixed(1)
             };
-        });
+        }).concat(custom);
     }
 
     addTextStylesSummary(svg, artboardWidth, scale = 1) {
@@ -237,7 +241,7 @@ export class ExportDocumentBuilder {
                 id: 'design-kit-reference',
                 opacity: '0.7'
             });
-            let currentY = 40;
+            let currentY = Math.max(40, 27.5 + this.getTextStylesInfo().length * 5);
 
             for (const asset of DESIGN_KIT_ASSETS) {
                 const source = await this.loadSvgAsset(asset.file);

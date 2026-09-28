@@ -71,14 +71,14 @@ export class TextLayout {
         return frontY + topMargin + snappedY;
     }
 
-    measureTextWidth(text, fontSize, scale, tracking = 0) {
+    measureTextWidth(text, fontSize, scale, tracking = 0, style = {}) {
         if (!this.measurementContext) {
             this.measurementContext = this.createMeasurementContext();
         }
 
         const scaledFontSize = fontSize * scale;
         this.measurementContext.font = (
-            `500 ${scaledFontSize}px 'TT Commons Classic', `
+            `${style.fontWeight || 500} ${scaledFontSize}px '${style.fontFamily || 'TT Commons Classic'}', `
             + '-apple-system, BlinkMacSystemFont, sans-serif'
         );
         let width = this.measurementContext.measureText(text).width;
@@ -88,7 +88,7 @@ export class TextLayout {
         return width;
     }
 
-    wrapText(text, maxWidth, fontSize, scale, tracking = 0) {
+    wrapText(text, maxWidth, fontSize, scale, tracking = 0, style = {}) {
         const lines = [];
 
         text.split('\n').forEach(forcedLine => {
@@ -99,7 +99,7 @@ export class TextLayout {
                 if (part === ' ') {
                     if (!currentLine) return;
                     const candidate = `${currentLine} `;
-                    if (this.measureTextWidth(candidate, fontSize, scale, tracking) > maxWidth) {
+                    if (this.measureTextWidth(candidate, fontSize, scale, tracking, style) > maxWidth) {
                         lines.push(currentLine);
                         currentLine = '';
                     } else {
@@ -110,7 +110,7 @@ export class TextLayout {
 
                 const candidate = currentLine ? `${currentLine}${part}` : part;
                 if (
-                    this.measureTextWidth(candidate, fontSize, scale, tracking) > maxWidth
+                    this.measureTextWidth(candidate, fontSize, scale, tracking, style) > maxWidth
                     && currentLine
                 ) {
                     lines.push(currentLine);

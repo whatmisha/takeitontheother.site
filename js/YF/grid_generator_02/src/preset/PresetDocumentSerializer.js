@@ -136,7 +136,8 @@ export class PresetDocumentSerializer {
                 headline: this.serializeStyle(settings, 'headline'),
                 text: this.serializeStyle(settings, 'text'),
                 caption: this.serializeStyle(settings, 'caption'),
-                lunnenDisplay: this.serializeStyle(settings, 'lunnenDisplay')
+                lunnenDisplay: this.serializeStyle(settings, 'lunnenDisplay'),
+                ...((settings.customTextStyles || []).length ? { customStyles: clone(settings.customTextStyles) } : {})
             },
             display: {
                 dimensions: settings.showDimensions,

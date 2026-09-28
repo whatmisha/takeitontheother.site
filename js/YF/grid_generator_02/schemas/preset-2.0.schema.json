@@ -229,6 +229,13 @@
         },
         "lunnenDisplay": {
           "$ref": "#/$defs/typographyStyle"
+        },
+        "customStyles": {
+          "type": "array",
+          "maxItems": 64,
+          "items": {
+            "$ref": "#/$defs/customTextStyle"
+          }
         }
       }
     },
@@ -589,11 +596,19 @@
           "type": "string"
         },
         "style": {
-          "enum": [
-            "headline",
-            "text",
-            "caption",
-            "lunnenDisplay"
+          "anyOf": [
+            {
+              "enum": [
+                "headline",
+                "text",
+                "caption",
+                "lunnenDisplay"
+              ]
+            },
+            {
+              "type": "string",
+              "pattern": "^custom-[A-Za-z0-9-]{1,80}$"
+            }
           ]
         },
         "position": {
@@ -884,6 +899,90 @@
         }
       ],
       "unevaluatedProperties": false
+    },
+    "customTextStyle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "size",
+        "lineHeight",
+        "tracking",
+        "useXHeight",
+        "fontWeight",
+        "id",
+        "name",
+        "fontFamily"
+      ],
+      "properties": {
+        "size": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 10000
+        },
+        "lineHeight": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 10000
+        },
+        "tracking": {
+          "type": "number",
+          "minimum": -10,
+          "maximum": 10
+        },
+        "useXHeight": {
+          "type": "boolean"
+        },
+        "fontWeight": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 1000
+        },
+        "id": {
+          "type": "string",
+          "pattern": "^custom-[A-Za-z0-9-]{1,80}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "fontFamily": {
+          "enum": [
+            "TT Commons Classic",
+            "Lunnen Display"
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "fontFamily": {
+                "const": "Lunnen Display"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "fontWeight": {
+                "minimum": 100,
+                "maximum": 400,
+                "type": "number"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "fontWeight": {
+                "enum": [
+                  400,
+                  500
+                ]
+              }
+            }
+          }
+        }
+      ]
     }
   }
 }

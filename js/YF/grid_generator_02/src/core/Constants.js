@@ -21,6 +21,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
     rowCount: 12,
     rowHeight: 7,
     linkMode: 'module',
+    customTextStyles: Object.freeze([]),
     fontSizeUnit: 'mod',
     lineHeightUnit: 'mod',
     lockedModule: false,

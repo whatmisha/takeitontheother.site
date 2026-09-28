@@ -119,6 +119,7 @@ export class PresetDocumentDeserializer {
             showRows: grid.visibility?.rows,
             showBaseline: grid.visibility?.baseline,
             boxColor: data.colors?.background,
+            customTextStyles: clone(typography.customStyles || []).map(style => ({ ...style, name: style.name.trim() })),
             fontSizeUnit: units.size,
             lineHeightUnit: units.lineHeight,
             ...this.deserializeStyle(typography.headline, 'headline'),

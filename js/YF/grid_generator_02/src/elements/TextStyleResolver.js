@@ -55,52 +55,55 @@ export class TextStyleResolver {
         return STYLE_CONFIG[styleRef] || STYLE_CONFIG.text;
     }
 
+    getCustomStyle(styleRef) {
+        return (this.settings.get('customTextStyles') || []).find(style => style.id === styleRef);
+    }
+
+    getDefinition(styleRef = 'text') {
+        const custom = this.getCustomStyle(styleRef);
+        if (custom) return { ...custom };
+        const config = this.getConfig(styleRef);
+        return {
+            size: this.settings.get(config.size),
+            lineHeight: this.settings.get(config.lineHeight),
+            tracking: this.settings.get(config.tracking),
+            useXHeight: styleRef === 'lunnenDisplay' ? false : Boolean(this.settings.get(config.useXHeight)),
+            fontWeight: config.fontWeight ? this.settings.get(config.fontWeight) : 400,
+            fontFamily: config.fontFamily
+        };
+    }
+
     getFontFamily(styleRef = 'text') {
-        return this.getConfig(styleRef).fontFamily;
+        return this.getDefinition(styleRef).fontFamily;
     }
 
     getFontMetrics(styleRef = 'text') {
-        const family = this.getFontFamily(styleRef);
-        return this.fontMetrics[family] || this.fontMetrics['TT Commons Classic'];
+        return this.fontMetrics[this.getFontFamily(styleRef)] || this.fontMetrics['TT Commons Classic'];
     }
 
     calculateFontSize(styleRef = 'text', sizeInModules = null, gridModule = null) {
-        const config = this.getConfig(styleRef);
+        const style = this.getDefinition(styleRef);
         const metrics = this.getFontMetrics(styleRef);
-        const size = sizeInModules ?? this.settings.get(config.size);
-        const targetSize = (gridModule ?? this.settings.get('gridModule')) * size;
-        const metric = this.settings.get(config.useXHeight)
-            ? metrics.xHeight
-            : metrics.capHeight;
-        return targetSize * (metrics.unitsPerEm / metric);
+        const targetSize = (gridModule ?? this.settings.get('gridModule')) * (sizeInModules ?? style.size);
+        return targetSize * metrics.unitsPerEm / (style.useXHeight ? metrics.xHeight : metrics.capHeight);
     }
 
     fontSizeMmToModules(fontSizeMm, styleRef = 'text') {
-        if (!STYLE_CONFIG[styleRef]) {
-            const module = this.settings.get('gridModule');
+        const module = this.settings.get('gridModule');
+        if (!STYLE_CONFIG[styleRef] && !this.getCustomStyle(styleRef)) {
             return module > 0 ? fontSizeMm / module : 0;
         }
-        const config = this.getConfig(styleRef);
+        const style = this.getDefinition(styleRef);
         const metrics = this.getFontMetrics(styleRef);
-        const metric = this.settings.get(config.useXHeight)
-            ? metrics.xHeight
-            : metrics.capHeight;
-        const targetSize = fontSizeMm * (metric / metrics.unitsPerEm);
-        const module = this.settings.get('gridModule');
-        return module > 0 ? targetSize / module : 0;
+        const target = fontSizeMm * (style.useXHeight ? metrics.xHeight : metrics.capHeight) / metrics.unitsPerEm;
+        return module > 0 ? target / module : 0;
     }
 
     getStyleSettings(styleRef = 'text', gridModule = null) {
-        const normalizedStyle = STYLE_CONFIG[styleRef] ? styleRef : 'text';
-        const config = this.getConfig(normalizedStyle);
-        const isDisplay = normalizedStyle === 'lunnenDisplay';
+        const { lineHeight, tracking, useXHeight, fontWeight, fontFamily } = this.getDefinition(styleRef);
         return {
-            fontSize: this.calculateFontSize(normalizedStyle, null, gridModule),
-            lineHeight: this.settings.get(config.lineHeight),
-            tracking: this.settings.get(config.tracking),
-            useXHeight: isDisplay ? false : Boolean(this.settings.get(config.useXHeight)),
-            fontWeight: isDisplay ? 400 : this.settings.get(config.fontWeight),
-            fontFamily: config.fontFamily
+            fontSize: this.calculateFontSize(styleRef, null, gridModule),
+            lineHeight, tracking, useXHeight, fontWeight, fontFamily
         };
     }
 }

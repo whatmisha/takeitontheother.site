@@ -1,3 +1,4 @@
+import { assertTextStyleReferences } from '../elements/CustomTextStyles.js';
 import validatePreset12 from './generated/validatePreset12.js';
 import validatePreset20 from './generated/validatePreset20.js';
 
@@ -33,7 +34,10 @@ function formatError(error) {
 export class PresetSchemaValidator {
     assert(data) {
         const validate = data?.version === '2.0' ? validatePreset20 : validatePreset12;
-        if (validate(data)) return data;
+        if (validate(data)) {
+            assertTextStyleReferences(data);
+            return data;
+        }
         const details = (validate.errors || []).map(formatError).join('; ');
         throw new Error(`Unsupported preset format: ${details || 'preset is invalid'}`);
     }

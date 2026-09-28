@@ -1,16 +1,16 @@
 {
   "version": 1,
-  "fingerprint": "94baa7445cb58b5563481d1f64317fe6a8a56d7ed69f3189d6d87d12e35460e7",
+  "fingerprint": "78f8957f92b851fb5930f2e366e52bbdaecec386e11a71b596aeed1d61c297c8",
   "entry": {
-    "script": "runtime/assets/PublicEntry-DBOJZG-3.js",
-    "style": "runtime/assets/PublicEntry-DlDxj1qW.css"
+    "script": "runtime/assets/PublicEntry-BL7f7Qta.js",
+    "style": "runtime/assets/PublicEntry-BFPg-mt7.css"
   },
   "files": [
-    "LidPreviewScene-CdJzen51.js",
+    "LidPreviewScene-Bto7Ecla.js",
     "LunnenDisplay-VariableVF-5DlFmosS.woff2",
     "LunnenDisplay-VariableVF-nXG1IVZg.ttf",
-    "PublicEntry-DBOJZG-3.js",
-    "PublicEntry-DlDxj1qW.css",
+    "PublicEntry-BFPg-mt7.css",
+    "PublicEntry-BL7f7Qta.js",
     "SharedGraphicsV1-DdYR6Bai.js",
     "TT_Commons_Classic_Medium-C-Nzrc8f.woff2",
     "TT_Commons_Classic_Regular-BUtFdW8L.woff2",
@@ -20,7 +20,7 @@
     "objects-BQmilPPg.html",
     "opentype.min-GVQsE5jZ.js",
     "svg2pdf.umd.min-CUIcJZ9R.js",
-    "typography-Ch_Gwuph.html",
+    "typography-DoTQnMzJ.html",
     "workspace-DoDnxI4E.html"
   ]
 }

@@ -117,6 +117,7 @@ export class TypographyUnitController {
         this.syncButtons();
         this.syncSliders(property);
         this.commitAction();
+        this.onUnitChange?.();
         return true;
     }
 

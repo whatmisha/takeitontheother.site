@@ -243,5 +243,32 @@
                 </div>
                 </div>
             </section>
+            <section class="control-section" id="addTextStyleSection">
+                <div class="control-group"><label for="newStyleSource">Copy from</label><select id="newStyleSource" class="style-select" aria-label="Copy from text style"></select></div>
+                <button type="button" class="btn-add-object" id="addTextStyle">Add style</button>
+            </section>
         </div>
     </aside>
+
+<template id="customTextStyleTemplate">
+    <section class="control-section custom-text-style">
+        <h3 class="collapsible-header" data-field="header">
+            <span><span data-field="title"></span> <span class="font-size-display" data-field="summary"></span></span>
+            <button type="button" class="collapse-toggle" data-field="toggle" aria-expanded="false" aria-label="Toggle style settings"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        </h3>
+        <div class="collapsible-content collapsed" data-field="content">
+            <div class="control-group"><label><span>Name</span><input type="text" class="value-display custom-style-name" data-field="name" maxlength="80" aria-label="Style name"></label></div>
+            <div class="control-group"><select class="style-select" data-field="fontFamily" aria-label="Style font"><option>TT Commons Classic</option><option>Lunnen Display</option></select></div>
+            <div class="control-group"><select class="style-select" data-field="fontWeight" aria-label="Style font weight"><option value="400">Regular</option><option value="500">Medium</option></select></div>
+            <div class="control-group"><label><span>Size <span class="unit-buttons"><button type="button" class="unit-btn" data-field="size-mod">mod</button><button type="button" class="unit-btn" data-field="size-pt">pt</button></span></span><input type="text" class="value-display" data-field="size" aria-label="Style size" value="1"></label><input type="range" data-field="sizeSlider" aria-label="Style size slider" value="1"></div>
+            <div class="control-group"><label><span>Line Height <span class="unit-buttons"><button type="button" class="unit-btn" data-field="lineHeight-mod">mod</button><button type="button" class="unit-btn" data-field="lineHeight-pt">pt</button></span></span><input type="text" class="value-display" data-field="lineHeight" aria-label="Style line height" value="1"></label><input type="range" data-field="lineHeightSlider" aria-label="Style line height slider" value="1"></div>
+            <div class="control-group"><label><span>Tracking <span class="unit">em</span></span><input type="text" class="value-display" data-field="tracking" aria-label="Style tracking" value="1"></label><input type="range" data-field="trackingSlider" aria-label="Style tracking slider" value="1"></div>
+            <div class="control-group"><label class="checkbox-label"><input type="checkbox" data-field="useXHeight"><span>x-height</span></label></div>
+            <div class="button-group"><button type="button" class="btn-add-object" data-field="duplicate">Duplicate</button><button type="button" class="btn-add-object" data-field="delete">Delete style</button></div>
+            <div data-field="deleteOptions" hidden>
+                <div class="control-group"><p class="field-hint" data-field="deleteMessage"></p><select class="style-select" data-field="replacement" aria-label="Replacement text style"></select></div>
+                <div class="button-group"><button type="button" class="btn-add-object" data-field="confirmDelete">Replace &amp; delete</button><button type="button" class="btn-add-object" data-field="cancelDelete">Cancel</button></div>
+            </div>
+        </div>
+    </section>
+</template>

@@ -137,9 +137,7 @@ export class PanelUiController {
     }
 
     getTextStylesCount() {
-        return new Set(
-            this.host.objectDocument.textBlocks.map(block => block.styleRef).filter(Boolean)
-        ).size;
+        return 4 + (this.host.settingsModule.get('customTextStyles') || []).length;
     }
 
     bindCollapsibleSections() {

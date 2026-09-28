@@ -40,7 +40,9 @@ export class TextBlockRenderModel {
         const style = this.getStyleSettings(styleRef, module);
         const width = this.layout.calculateBlockWidth(block, gridContext) * scale;
         const lines = inputLines.flatMap(line => (
-            this.layout.wrapText(line, width, style.fontSize, scale, style.tracking)
+            this.layout.wrapText(line, width, style.fontSize, scale, style.tracking, {
+                ...style, fontWeight: block.styleRef === 'lunnenDisplay' ? (block.fontWeight || style.fontWeight) : style.fontWeight
+            })
         ));
         const left = alignment === 'right'
             ? frontX + position.x - width
@@ -81,7 +83,8 @@ export class TextBlockRenderModel {
     }
 
     getStyleSizeInModules(styleRef = 'text') {
-        return this.settings.get(STYLE_SIZE_SETTINGS[styleRef] || STYLE_SIZE_SETTINGS.text);
+        return this.settings.get('customTextStyles')?.find(style => style.id === styleRef)?.size
+            ?? this.settings.get(STYLE_SIZE_SETTINGS[styleRef] || STYLE_SIZE_SETTINGS.text);
     }
 
     calculateGlyphMetrics(

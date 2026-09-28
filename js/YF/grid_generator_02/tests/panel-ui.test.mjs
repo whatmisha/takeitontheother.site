@@ -56,7 +56,7 @@ test('collapsed panel summaries are derived from current application state', () 
     assert.equal(elements.get('gridParams').textContent, 'Mod 5.13  •  Col 12  •  Row 10');
     assert.equal(elements.get('dimensionsParams').textContent, '500\u2009×\u2009400\u2009×\u200950 mm');
     assert.equal(elements.get('objectsParams').textContent, 'Txt 4  •  Obj 3');
-    assert.equal(elements.get('textStylesParams').textContent, '2 styles');
+    assert.equal(elements.get('textStylesParams').textContent, '4 styles');
 });
 
 test('font-weight controls synchronize all supported text styles', () => {

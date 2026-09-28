@@ -180,6 +180,7 @@ export class PresetApplicationController {
         if (options.defaultMissingUnits && !hasOwn(settings, 'lineHeightUnit')) {
             settings.lineHeightUnit = 'mod';
         }
+        settings.customTextStyles ??= [];
         settings.constructionType ??= 'lid';
         settings.flapDepth ??= 20;
         this.normalizeLocks(settings);

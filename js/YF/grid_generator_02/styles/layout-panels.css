@@ -384,3 +384,12 @@
     margin-bottom: var(--spacing-lg);
     padding-top: 1px; /* Уменьшаем с 6px до 1px для компенсации увеличенной высоты слайдера */
 }
+
+/* Custom styles use the same sections and controls as the four brand styles. */
+.custom-text-style .custom-style-name { width: 170px; max-width: 70%; text-align: left; }
+.custom-text-style .style-select, #newStyleSource { width: 100%; }
+.custom-text-style [data-field="deleteOptions"] { margin-top: var(--spacing-lg); }
+.custom-text-style [hidden] { display: none; }
+.custom-text-style [data-field="title"] { overflow-wrap: anywhere; }
+
+.controls-panel-text { max-height: calc(100vh - 168px); }

@@ -98,6 +98,7 @@ export class CanvasRendererController {
 
         host.objectNavigatorController.bindCanvasHover();
         host.typographyUnitController.updateDisplays();
+        host.customTextStyleController?.sync();
         host.constructionController?.sync();
         host.objectNavigatorController.render();
         host.surfacePanelController?.sync();

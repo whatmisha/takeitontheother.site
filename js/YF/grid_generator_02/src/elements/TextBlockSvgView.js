@@ -59,11 +59,11 @@ export class TextBlockSvgView {
             'fill-opacity': '1',
             'letter-spacing': `${style.tracking}em`
         };
-        if (block.styleRef !== 'lunnenDisplay') return attributes;
+        if (style.fontFamily !== 'Lunnen Display') return attributes;
 
         const inlineStyles = [];
-        if (block.fontWeight) {
-            const weight = `'wght' ${block.fontWeight}`;
+        if (style.fontWeight) {
+            const weight = `'wght' ${attributes['font-weight']}`;
             attributes['font-variation-settings'] = weight;
             inlineStyles.push(`font-variation-settings: ${weight}`);
         }

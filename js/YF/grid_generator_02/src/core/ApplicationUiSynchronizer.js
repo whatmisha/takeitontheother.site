@@ -56,6 +56,7 @@ export class ApplicationUiSynchronizer {
         host.gridSettingsController.generateRowPresets();
         host.surfacePanelController?.sync();
         host.constructionController?.sync();
+        host.customTextStyleController?.sync();
     }
 
     getDisplayValue(settingKey, settings) {
