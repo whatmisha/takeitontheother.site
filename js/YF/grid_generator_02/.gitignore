@@ -6,3 +6,4 @@ tools/node_modules/
 tools/.vite/
 tools/*-output.log
 tools/isolation-baseline.json
+tmp/

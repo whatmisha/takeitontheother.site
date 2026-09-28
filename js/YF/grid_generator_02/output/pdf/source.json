@@ -1,0 +1,259 @@
+{
+  "version": 1,
+  "title": "Pizza Boxer 02 - PDF editability probe",
+  "styles": {
+    "title": {
+      "name": "Probe / Title",
+      "font": "medium",
+      "size": 25,
+      "leading": 30
+    },
+    "note": {
+      "name": "Probe / Note",
+      "font": "regular",
+      "size": 10,
+      "leading": 13
+    },
+    "label": {
+      "name": "Probe / Label",
+      "font": "medium",
+      "size": 9,
+      "leading": 12
+    },
+    "body": {
+      "name": "Brand / Body",
+      "font": "regular",
+      "size": 13,
+      "leading": 17
+    },
+    "medium": {
+      "name": "Brand / Medium",
+      "font": "medium",
+      "size": 13,
+      "leading": 17,
+      "tracking": 0.04
+    },
+    "display": {
+      "name": "Brand / Display 400",
+      "font": "display",
+      "size": 34,
+      "leading": 40
+    },
+    "displayAlt": {
+      "name": "Brand / Display alternates",
+      "font": "display",
+      "size": 34,
+      "leading": 40,
+      "features": {
+        "salt": true,
+        "ss01": true,
+        "tnum": true
+      }
+    }
+  },
+  "pages": [
+    {
+      "width": 210,
+      "height": 297,
+      "frames": [
+        {
+          "id": "title-1",
+          "style": "title",
+          "x": 18,
+          "y": 17,
+          "width": 176,
+          "height": 16,
+          "text": "PDF / проверка текста"
+        },
+        {
+          "id": "intro-1",
+          "style": "note",
+          "x": 18,
+          "y": 33,
+          "width": 176,
+          "height": 17,
+          "text": "Контрольный файл для Illustrator 30.8.1. Создан в браузере.\nЖивой текст и PDF-теги; нативные стили Illustrator пока не подтверждены."
+        },
+        {
+          "id": "label-body",
+          "style": "label",
+          "x": 18,
+          "y": 55,
+          "width": 105,
+          "height": 7,
+          "text": "01 / BODY - 100 mm / TT Commons Regular"
+        },
+        {
+          "id": "body-frame",
+          "style": "body",
+          "x": 18,
+          "y": 65,
+          "width": 100,
+          "height": 85,
+          "text": "Это первый абзац. При изменении ширины рамки его строки должны переверстаться. Кириллица, Latin, Ёё, Йй, 0123456789.\n\nПосле пустого абзаца: масса 250 г, размер 100 мм. Это ручной перенос внутри второго непустого абзаца.",
+          "border": true
+        },
+        {
+          "id": "label-medium",
+          "style": "label",
+          "x": 133,
+          "y": 55,
+          "width": 60,
+          "height": 7,
+          "text": "02 / MEDIUM / RIGHT"
+        },
+        {
+          "id": "medium-frame",
+          "style": "medium",
+          "x": 133,
+          "y": 65,
+          "width": 59,
+          "height": 85,
+          "text": "Упаковка\nPackaging 02\nТрекинг 0.04 em\nЁж / Quick fox",
+          "align": "right",
+          "border": true
+        },
+        {
+          "id": "label-display",
+          "style": "label",
+          "x": 18,
+          "y": 161,
+          "width": 174,
+          "height": 7,
+          "text": "03 / LUNNEN DISPLAY / wght 400"
+        },
+        {
+          "id": "display-frame",
+          "style": "display",
+          "x": 18,
+          "y": 174,
+          "width": 174,
+          "height": 23,
+          "text": "Луннен / Lunnen 0123"
+        },
+        {
+          "id": "label-alt",
+          "style": "label",
+          "x": 18,
+          "y": 209,
+          "width": 174,
+          "height": 7,
+          "text": "04 / LUNNEN / salt + ss01 + tnum"
+        },
+        {
+          "id": "display-alt",
+          "style": "displayAlt",
+          "x": 18,
+          "y": 222,
+          "width": 174,
+          "height": 24,
+          "text": "Луннен / Lunnen 0123"
+        },
+        {
+          "id": "footer-1",
+          "style": "note",
+          "x": 18,
+          "y": 273,
+          "width": 174,
+          "height": 12,
+          "text": "Проверить: единая рамка, переверстка, именованные стили.  /  1 of 2"
+        }
+      ]
+    },
+    {
+      "width": 210,
+      "height": 297,
+      "frames": [
+        {
+          "id": "title-2",
+          "style": "title",
+          "x": 18,
+          "y": 17,
+          "width": 176,
+          "height": 16,
+          "text": "PDF / повороты и вектор"
+        },
+        {
+          "id": "intro-2",
+          "style": "note",
+          "x": 18,
+          "y": 33,
+          "width": 176,
+          "height": 17,
+          "text": "Три текстовых блока повернуты целиком. Рамки - обычные векторы.\nВ документе нет изображений, прозрачностей и обтравочных масок."
+        },
+        {
+          "id": "label-rotation",
+          "style": "label",
+          "x": 18,
+          "y": 55,
+          "width": 176,
+          "height": 7,
+          "text": "05 / FRAME ROTATION / 90 - 180 - 270"
+        },
+        {
+          "id": "rotation-90",
+          "style": "body",
+          "x": 54,
+          "y": 69,
+          "width": 75,
+          "height": 36,
+          "text": "Поворот 90°\nЭто один текстовый блок. Измените ширину рамки.",
+          "rotation": 90,
+          "border": true
+        },
+        {
+          "id": "rotation-270",
+          "style": "body",
+          "x": 147,
+          "y": 144,
+          "width": 75,
+          "height": 36,
+          "text": "Поворот 270°\nЭто один текстовый блок. Измените ширину рамки.",
+          "rotation": 270,
+          "border": true
+        },
+        {
+          "id": "rotation-180",
+          "style": "medium",
+          "x": 160,
+          "y": 201,
+          "width": 110,
+          "height": 36,
+          "text": "Поворот 180° / Rotation\nКириллица и Latin остаются текстом.",
+          "rotation": 180,
+          "align": "center",
+          "border": true
+        },
+        {
+          "id": "label-ruler",
+          "style": "label",
+          "x": 18,
+          "y": 223,
+          "width": 174,
+          "height": 7,
+          "text": "06 / VECTOR / LINE LENGTH = 100 mm"
+        },
+        {
+          "id": "vector-note",
+          "style": "note",
+          "x": 18,
+          "y": 243,
+          "width": 174,
+          "height": 13,
+          "text": "Линия ниже метки имеет длину 100 мм; рядом - прямоугольник 20 × 15 мм."
+        },
+        {
+          "id": "footer-2",
+          "style": "note",
+          "x": 18,
+          "y": 273,
+          "width": 174,
+          "height": 12,
+          "text": "Проверить: углы, физические размеры, отсутствие лишних масок.  /  2 of 2"
+        }
+      ],
+      "ruler": true
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "date": "2026-09-28",
+  "application": "Adobe Illustrator",
+  "applicationVersion": "30.8.1",
+  "evidence": "User report and screenshot Screenshot 2026-09-28 at 13.55.06.png",
+  "requestedArtifact": "pdf-probe-tagged.pdf",
+  "testedVariant": "unconfirmed",
+  "openMethod": "unconfirmed",
+  "artifactHashes": {
+    "pdf-probe-tagged.pdf": {
+      "bytes": 54241,
+      "sha256": "8d325260c1b8db5b57e04b4618f39ff6cf55e11e4216c6010ffea0aba119b4e6"
+    },
+    "pdf-probe-plain.pdf": {
+      "bytes": 42231,
+      "sha256": "c70a7c0b3ce1576df6af66ed5c566fbcbaaa9d09da8f09cec38cf8bd567c5f88"
+    }
+  },
+  "acceptance": "failed",
+  "observations": {
+    "editableText": "failed: user reports all text converted to outlines",
+    "namedStyles": "failed: user reports no named styles",
+    "objectHierarchy": "failed: layer > group > clipping group; screenshot shows compound paths",
+    "physicalDimensions": "passed per user report",
+    "glyphAppearance": "passed per user report; underlying editable encoding not established",
+    "lineBreakAppearance": "looks correct per user; not verified",
+    "paragraphReflow": "not verified; cannot establish editable reflow from outlines"
+  },
+  "cause": "Undetermined. Original PDFs contain live text operators and no clipping paths. Import method pending clarification."
+}

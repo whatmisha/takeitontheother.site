@@ -1,0 +1,10 @@
+{
+  "pdf-probe-tagged.pdf": {
+    "bytes": 54241,
+    "sha256": "8d325260c1b8db5b57e04b4618f39ff6cf55e11e4216c6010ffea0aba119b4e6"
+  },
+  "pdf-probe-plain.pdf": {
+    "bytes": 42231,
+    "sha256": "c70a7c0b3ce1576df6af66ed5c566fbcbaaa9d09da8f09cec38cf8bd567c5f88"
+  }
+}

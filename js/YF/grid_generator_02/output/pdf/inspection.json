@@ -1,0 +1,39 @@
+{
+  "files": [
+    {
+      "file": "pdf-probe-tagged.pdf",
+      "pages": 2,
+      "fonts": [
+        "LunnenDisplayVariable-Thin",
+        "TTCommonsClassic-Medium",
+        "TTCommonsClassic-Regular"
+      ],
+      "framesInStructure": 20,
+      "paragraphsInStructure": 30,
+      "clippingPaths": 0,
+      "images": 0,
+      "textAndGlyphChecks": "passed"
+    },
+    {
+      "file": "pdf-probe-plain.pdf",
+      "pages": 2,
+      "fonts": [
+        "LunnenDisplayVariable-Thin",
+        "TTCommonsClassic-Medium",
+        "TTCommonsClassic-Regular"
+      ],
+      "framesInStructure": 0,
+      "paragraphsInStructure": 0,
+      "clippingPaths": 0,
+      "images": 0,
+      "textAndGlyphChecks": "passed"
+    }
+  ],
+  "identicalRendering": true,
+  "illustrator3081": {
+    "automaticallyTested": false,
+    "userReview": "../../experiments/pdf/illustrator-review.json",
+    "userReportedAcceptance": "failed",
+    "testedVariant": "unconfirmed"
+  }
+}

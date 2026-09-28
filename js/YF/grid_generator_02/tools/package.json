@@ -7,7 +7,7 @@
     "dev": "node node_modules/vite/bin/vite.js --config vite.config.js",
     "build": "npm run source:check && node node_modules/vite/bin/vite.js build --config vite.config.js",
     "preview": "node node_modules/vite/bin/vite.js preview --config vite.config.js",
-    "test": "npm run public:check && node --test ../tests/*.test.mjs",
+    "test": "npm run public:check && npm run pdf:probe:check && node --test ../tests/*.test.mjs",
     "schema": "node generate-preset-validator.js",
     "schema:check": "node generate-preset-validator.js --check",
     "presets": "node generate-presets-manifest.js",
@@ -16,7 +16,10 @@
     "vendor:check": "node sync-runtime-vendors.js --check",
     "source:check": "npm run schema:check && npm run presets:check && npm run vendor:check && node check-static-runtime.js",
     "release": "npm run build && node sync-public-runtime.js",
-    "public:check": "npm run source:check && node check-public-runtime.js"
+    "public:check": "npm run source:check && node check-public-runtime.js",
+    "pdf:probe": "node build-pdf-probe.mjs",
+    "pdf:fixtures": "npm run pdf:probe:check && node generate-pdf-probe.mjs",
+    "pdf:probe:check": "node build-pdf-probe.mjs --check"
   },
   "dependencies": {
     "jspdf": "4.2.1",
@@ -26,6 +29,8 @@
   },
   "devDependencies": {
     "ajv": "8.20.0",
+    "fontkit": "2.0.4",
+    "pdfkit": "0.20.2",
     "vite": "7.3.6"
   }
 }
