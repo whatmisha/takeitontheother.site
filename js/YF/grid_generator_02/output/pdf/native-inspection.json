@@ -1,0 +1,3304 @@
+{
+  "scope": "Read-only research; no native export or Illustrator acceptance implied",
+  "frameTypeNote": "Four-value /F /1 bounds are a candidate area-frame signal only; no local area-text control has verified this.",
+  "files": [
+    {
+      "file": "grid_generator_02/graphics/icons.ai",
+      "sha256": "ee12c7b41b1876584a7ff5341411cee3ee8f9fe235bc7e66224a8580e767a026",
+      "pages": 1,
+      "nativePayloads": [
+        {
+          "onPages": [
+            1
+          ],
+          "streamFamily": "AIPrivateData",
+          "blocks": 1,
+          "containerVersion": 12,
+          "creatorVersion": 30,
+          "compression": "zstandard",
+          "compressedBytes": 49183,
+          "decodedBytes": 208198,
+          "privateSha256": "6d18c512621e6ee7b7a01a3c8b2996ba49a8b27c78bbfecfeffa0bd029e23861",
+          "artworkTextBindings": [
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 0
+            }
+          ],
+          "textDocuments": [
+            {
+              "section": "AI11TextDocument",
+              "sha256": "2a54fa59236965cfd96471b39832754dbc3211a0ede6666e39562e3b8b5f3bf0",
+              "bytes": 90068,
+              "stories": [
+                {
+                  "index": 0,
+                  "utf16CodeUnits": 8,
+                  "carriageReturns": 1,
+                  "containsCyrillic": true,
+                  "runs": {
+                    "paragraph": {
+                      "lengths": [
+                        8
+                      ],
+                      "coversText": true
+                    },
+                    "character": {
+                      "lengths": [
+                        8
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 0,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                }
+              ],
+              "fontNames": [
+                "TTCommons-Medium",
+                "LunnenDisplay251106Variable_200.000wght_0ital",
+                "LunnenDisplay251106Variable_205.000wght_0ital",
+                "LunnenDisplay251106Variable_208.000wght_0ital",
+                "LunnenDisplay251106Variable_210.000wght_0ital",
+                "LunnenDisplay251106Variable_215.000wght_0ital",
+                "LunnenDisplay251106Variable_220.000wght_0ital",
+                "LunnenDisplay251106Variable_250.000wght_0ital",
+                "LunnenDisplay251106Variable-Regular",
+                "MyriadPro-Regular",
+                "AdobeInvisFont",
+                "TimesNewRomanPSMT"
+              ],
+              "characterStyleNames": [
+                "[Normal Character Style]"
+              ],
+              "paragraphStyleNames": [
+                "[Normal Paragraph Style]"
+              ]
+            },
+            {
+              "section": "AI11UndoFreeTextDocument",
+              "sha256": "002ca9093656319ff6e1b5465c1ff456df164e41e2f260aeab7b4202a4c5e1a5",
+              "bytes": 6450,
+              "stories": [],
+              "fontNames": [
+                "MyriadPro-Regular",
+                "AdobeInvisFont"
+              ],
+              "characterStyleNames": [
+                "[Normal Character Style]"
+              ],
+              "paragraphStyleNames": [
+                "[Normal Paragraph Style]"
+              ]
+            }
+          ]
+        }
+      ],
+      "hasIllustratorPrivateData": true
+    },
+    {
+      "file": "label_generator/graphics/Rating lable LUNNEN ML24144WQ01.ai",
+      "sha256": "955e34a8f9c2caa63951266470954b0d8bc64efebd9d331cad9728f896bc2faf",
+      "pages": 2,
+      "nativePayloads": [
+        {
+          "onPages": [
+            1,
+            2
+          ],
+          "streamFamily": "AIPrivateData",
+          "blocks": 5,
+          "containerVersion": 11,
+          "creatorVersion": 30,
+          "compression": "zstandard",
+          "compressedBytes": 322211,
+          "decodedBytes": 1696843,
+          "privateSha256": "dcd55d7259ea7ae31d4e1c74e0150fb696c4dea3b3edf9b768b60c536a2e1483",
+          "artworkTextBindings": [
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 4
+            },
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 3
+            },
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 2
+            },
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 0
+            },
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 1
+            }
+          ],
+          "textDocuments": [
+            {
+              "section": "AI11TextDocument",
+              "sha256": "9bee9e8fac5515cf0e6f0875d0ffd727139b09c66e678ad0b9a594022af9727b",
+              "bytes": 101697,
+              "stories": [
+                {
+                  "index": 0,
+                  "utf16CodeUnits": 59,
+                  "carriageReturns": 3,
+                  "containsCyrillic": true,
+                  "runs": {
+                    "paragraph": {
+                      "lengths": [
+                        26,
+                        17,
+                        16
+                      ],
+                      "coversText": true
+                    },
+                    "character": {
+                      "lengths": [
+                        59
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 0,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 3
+                    }
+                  ]
+                },
+                {
+                  "index": 1,
+                  "utf16CodeUnits": 28,
+                  "carriageReturns": 1,
+                  "containsCyrillic": true,
+                  "runs": {
+                    "paragraph": {
+                      "lengths": [
+                        28
+                      ],
+                      "coversText": true
+                    },
+                    "character": {
+                      "lengths": [
+                        28
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 1,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 2,
+                  "utf16CodeUnits": 22,
+                  "carriageReturns": 1,
+                  "containsCyrillic": true,
+                  "runs": {
+                    "paragraph": {
+                      "lengths": [
+                        22
+                      ],
+                      "coversText": true
+                    },
+                    "character": {
+                      "lengths": [
+                        22
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 2,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 3,
+                  "utf16CodeUnits": 31,
+                  "carriageReturns": 2,
+                  "containsCyrillic": true,
+                  "runs": {
+                    "paragraph": {
+                      "lengths": [
+                        16,
+                        15
+                      ],
+                      "coversText": true
+                    },
+                    "character": {
+                      "lengths": [
+                        31
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 3,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 2
+                    }
+                  ]
+                },
+                {
+                  "index": 4,
+                  "utf16CodeUnits": 52,
+                  "carriageReturns": 2,
+                  "containsCyrillic": true,
+                  "runs": {
+                    "paragraph": {
+                      "lengths": [
+                        28,
+                        24
+                      ],
+                      "coversText": true
+                    },
+                    "character": {
+                      "lengths": [
+                        52
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 4,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 2
+                    }
+                  ]
+                }
+              ],
+              "fontNames": [
+                "TTCommonsClassic-Medium",
+                "TTCommons-Regular",
+                "TTCommons-Medium",
+                "TimesNewRomanPSMT",
+                "MyriadPro-Regular",
+                "AdobeInvisFont"
+              ],
+              "characterStyleNames": [
+                "[Normal Character Style]"
+              ],
+              "paragraphStyleNames": [
+                "[Normal Paragraph Style]"
+              ]
+            },
+            {
+              "section": "AI11UndoFreeTextDocument",
+              "sha256": "c1e19de12581c457dfc49934b5c6641dc74c194a587d9a4b38581769046b49b0",
+              "bytes": 85060,
+              "stories": [],
+              "fontNames": [
+                "TimesNewRomanPSMT",
+                "AdobeInvisFont",
+                "Myriad-Roman"
+              ],
+              "characterStyleNames": [
+                "[Normal Character Style]"
+              ],
+              "paragraphStyleNames": [
+                "[Normal Paragraph Style]"
+              ]
+            }
+          ]
+        }
+      ],
+      "hasIllustratorPrivateData": true
+    },
+    {
+      "file": "label_generator/graphics/dc.ai",
+      "sha256": "89834afd93a34c0bb8cf4a29d6fa7064b0cad7b8678dbcb65b1e5bf90b4ed63e",
+      "pages": 1,
+      "nativePayloads": [
+        {
+          "onPages": [
+            1
+          ],
+          "streamFamily": "AIPrivateData",
+          "blocks": 12,
+          "containerVersion": 11,
+          "creatorVersion": 30,
+          "compression": "zstandard",
+          "compressedBytes": 780003,
+          "decodedBytes": 2415979,
+          "privateSha256": "1aec4ba944d93c923e4a61601e469fff9e4c64cdfb6b1c2382f80683ce1ff8c9",
+          "artworkTextBindings": [
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 12
+            },
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 10
+            },
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 11
+            },
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 0
+            },
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 8
+            },
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 1
+            },
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 4
+            },
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 9
+            },
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 7
+            },
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 3
+            },
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 2
+            },
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 5
+            },
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 6
+            }
+          ],
+          "textDocuments": [
+            {
+              "section": "AI11TextDocument",
+              "sha256": "3bb5bc36daf002894181ee546c8a9ee3075cfcccc290941730d53e1822194963",
+              "bytes": 111817,
+              "stories": [
+                {
+                  "index": 0,
+                  "utf16CodeUnits": 8,
+                  "carriageReturns": 1,
+                  "containsCyrillic": false,
+                  "runs": {
+                    "paragraph": {
+                      "lengths": [
+                        8
+                      ],
+                      "coversText": true
+                    },
+                    "character": {
+                      "lengths": [
+                        1,
+                        1,
+                        1,
+                        5
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 3,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 1,
+                  "utf16CodeUnits": 4,
+                  "carriageReturns": 1,
+                  "containsCyrillic": false,
+                  "runs": {
+                    "paragraph": {
+                      "lengths": [
+                        4
+                      ],
+                      "coversText": true
+                    },
+                    "character": {
+                      "lengths": [
+                        4
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 5,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 2,
+                  "utf16CodeUnits": 4,
+                  "carriageReturns": 1,
+                  "containsCyrillic": false,
+                  "runs": {
+                    "paragraph": {
+                      "lengths": [
+                        4
+                      ],
+                      "coversText": true
+                    },
+                    "character": {
+                      "lengths": [
+                        4
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 10,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 3,
+                  "utf16CodeUnits": 4,
+                  "carriageReturns": 1,
+                  "containsCyrillic": false,
+                  "runs": {
+                    "paragraph": {
+                      "lengths": [
+                        4
+                      ],
+                      "coversText": true
+                    },
+                    "character": {
+                      "lengths": [
+                        4
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 9,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 4,
+                  "utf16CodeUnits": 4,
+                  "carriageReturns": 1,
+                  "containsCyrillic": false,
+                  "runs": {
+                    "paragraph": {
+                      "lengths": [
+                        4
+                      ],
+                      "coversText": true
+                    },
+                    "character": {
+                      "lengths": [
+                        4
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 6,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 5,
+                  "utf16CodeUnits": 3,
+                  "carriageReturns": 1,
+                  "containsCyrillic": false,
+                  "runs": {
+                    "paragraph": {
+                      "lengths": [
+                        3
+                      ],
+                      "coversText": true
+                    },
+                    "character": {
+                      "lengths": [
+                        3
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 11,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 6,
+                  "utf16CodeUnits": 4,
+                  "carriageReturns": 1,
+                  "containsCyrillic": false,
+                  "runs": {
+                    "paragraph": {
+                      "lengths": [
+                        4
+                      ],
+                      "coversText": true
+                    },
+                    "character": {
+                      "lengths": [
+                        4
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 12,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 7,
+                  "utf16CodeUnits": 4,
+                  "carriageReturns": 1,
+                  "containsCyrillic": false,
+                  "runs": {
+                    "paragraph": {
+                      "lengths": [
+                        4
+                      ],
+                      "coversText": true
+                    },
+                    "character": {
+                      "lengths": [
+                        4
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 8,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 8,
+                  "utf16CodeUnits": 14,
+                  "carriageReturns": 1,
+                  "containsCyrillic": false,
+                  "runs": {
+                    "paragraph": {
+                      "lengths": [
+                        14
+                      ],
+                      "coversText": true
+                    },
+                    "character": {
+                      "lengths": [
+                        14
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 4,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 9,
+                  "utf16CodeUnits": 3,
+                  "carriageReturns": 1,
+                  "containsCyrillic": false,
+                  "runs": {
+                    "paragraph": {
+                      "lengths": [
+                        3
+                      ],
+                      "coversText": true
+                    },
+                    "character": {
+                      "lengths": [
+                        3
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 7,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 10,
+                  "utf16CodeUnits": 19,
+                  "carriageReturns": 1,
+                  "containsCyrillic": true,
+                  "runs": {
+                    "paragraph": {
+                      "lengths": [
+                        19
+                      ],
+                      "coversText": true
+                    },
+                    "character": {
+                      "lengths": [
+                        19
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 1,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 11,
+                  "utf16CodeUnits": 2,
+                  "carriageReturns": 1,
+                  "containsCyrillic": false,
+                  "runs": {
+                    "paragraph": {
+                      "lengths": [
+                        2
+                      ],
+                      "coversText": true
+                    },
+                    "character": {
+                      "lengths": [
+                        2
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 2,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 12,
+                  "utf16CodeUnits": 38,
+                  "carriageReturns": 1,
+                  "containsCyrillic": false,
+                  "runs": {
+                    "paragraph": {
+                      "lengths": [
+                        38
+                      ],
+                      "coversText": true
+                    },
+                    "character": {
+                      "lengths": [
+                        1,
+                        8,
+                        1,
+                        4,
+                        1,
+                        23
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 0,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                }
+              ],
+              "fontNames": [
+                "TTCommons-Medium",
+                "MyriadPro-Regular",
+                "TimesNewRomanPSMT",
+                "MyriadPro-Regular",
+                "AdobeInvisFont"
+              ],
+              "characterStyleNames": [
+                "[Normal Character Style]"
+              ],
+              "paragraphStyleNames": [
+                "[Normal Paragraph Style]"
+              ]
+            },
+            {
+              "section": "AI11UndoFreeTextDocument",
+              "sha256": "097bc86b6a8bebfc41e3a449fc539eaea77ecddea73c5765469eabba229314b3",
+              "bytes": 84964,
+              "stories": [],
+              "fontNames": [
+                "TimesNewRomanPSMT",
+                "AdobeInvisFont",
+                "Myriad-Roman"
+              ],
+              "characterStyleNames": [
+                "[Normal Character Style]"
+              ],
+              "paragraphStyleNames": [
+                "[Normal Paragraph Style]"
+              ]
+            }
+          ]
+        }
+      ],
+      "hasIllustratorPrivateData": true
+    },
+    {
+      "file": "label_generator/graphics/icons.ai",
+      "sha256": "ee12c7b41b1876584a7ff5341411cee3ee8f9fe235bc7e66224a8580e767a026",
+      "pages": 1,
+      "nativePayloads": [
+        {
+          "onPages": [
+            1
+          ],
+          "streamFamily": "AIPrivateData",
+          "blocks": 1,
+          "containerVersion": 12,
+          "creatorVersion": 30,
+          "compression": "zstandard",
+          "compressedBytes": 49183,
+          "decodedBytes": 208198,
+          "privateSha256": "6d18c512621e6ee7b7a01a3c8b2996ba49a8b27c78bbfecfeffa0bd029e23861",
+          "artworkTextBindings": [
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 0
+            }
+          ],
+          "textDocuments": [
+            {
+              "section": "AI11TextDocument",
+              "sha256": "2a54fa59236965cfd96471b39832754dbc3211a0ede6666e39562e3b8b5f3bf0",
+              "bytes": 90068,
+              "stories": [
+                {
+                  "index": 0,
+                  "utf16CodeUnits": 8,
+                  "carriageReturns": 1,
+                  "containsCyrillic": true,
+                  "runs": {
+                    "paragraph": {
+                      "lengths": [
+                        8
+                      ],
+                      "coversText": true
+                    },
+                    "character": {
+                      "lengths": [
+                        8
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 0,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                }
+              ],
+              "fontNames": [
+                "TTCommons-Medium",
+                "LunnenDisplay251106Variable_200.000wght_0ital",
+                "LunnenDisplay251106Variable_205.000wght_0ital",
+                "LunnenDisplay251106Variable_208.000wght_0ital",
+                "LunnenDisplay251106Variable_210.000wght_0ital",
+                "LunnenDisplay251106Variable_215.000wght_0ital",
+                "LunnenDisplay251106Variable_220.000wght_0ital",
+                "LunnenDisplay251106Variable_250.000wght_0ital",
+                "LunnenDisplay251106Variable-Regular",
+                "MyriadPro-Regular",
+                "AdobeInvisFont",
+                "TimesNewRomanPSMT"
+              ],
+              "characterStyleNames": [
+                "[Normal Character Style]"
+              ],
+              "paragraphStyleNames": [
+                "[Normal Paragraph Style]"
+              ]
+            },
+            {
+              "section": "AI11UndoFreeTextDocument",
+              "sha256": "002ca9093656319ff6e1b5465c1ff456df164e41e2f260aeab7b4202a4c5e1a5",
+              "bytes": 6450,
+              "stories": [],
+              "fontNames": [
+                "MyriadPro-Regular",
+                "AdobeInvisFont"
+              ],
+              "characterStyleNames": [
+                "[Normal Character Style]"
+              ],
+              "paragraphStyleNames": [
+                "[Normal Paragraph Style]"
+              ]
+            }
+          ]
+        }
+      ],
+      "hasIllustratorPrivateData": true
+    },
+    {
+      "file": "label_generator/graphics/outer_16_laser_engraving_250829.ai",
+      "sha256": "b0d3a66c253b52904adc9020ba511059131a909f8446a7c22fa403ad7bd4e4a5",
+      "pages": 5,
+      "nativePayloads": [
+        {
+          "onPages": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ],
+          "streamFamily": "AIPrivateData",
+          "blocks": 2,
+          "containerVersion": 12,
+          "creatorVersion": 29,
+          "compression": "zstandard",
+          "compressedBytes": 76640,
+          "decodedBytes": 422040,
+          "privateSha256": "9fadc44f71215cdc57c10eb3f1be5a007b5b80d6b299fe8ae07de4a92b9a3e40",
+          "artworkTextBindings": [
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 0
+            },
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 1
+            },
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 2
+            },
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 5
+            },
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 6
+            },
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 7
+            },
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 10
+            },
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 11
+            },
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 12
+            },
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 3
+            },
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 4
+            },
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 8
+            },
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 14
+            },
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 13
+            },
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 9
+            },
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 16
+            },
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 15
+            },
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 18
+            },
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 17
+            },
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 20
+            },
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 19
+            },
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 22
+            },
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 21
+            },
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 24
+            },
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 23
+            }
+          ],
+          "textDocuments": [
+            {
+              "section": "AI11TextDocument",
+              "sha256": "55e0cdea14b3381021e09e4c39f5dd5babbbe6c7bcc43fb0eb4f49d3feea6469",
+              "bytes": 147354,
+              "stories": [
+                {
+                  "index": 0,
+                  "utf16CodeUnits": 39,
+                  "carriageReturns": 1,
+                  "containsCyrillic": false,
+                  "runs": {
+                    "character": {
+                      "lengths": [
+                        1,
+                        8,
+                        1,
+                        4,
+                        1,
+                        24
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 0,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 1,
+                  "utf16CodeUnits": 19,
+                  "carriageReturns": 1,
+                  "containsCyrillic": true,
+                  "runs": {
+                    "character": {
+                      "lengths": [
+                        19
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 1,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 2,
+                  "utf16CodeUnits": 2,
+                  "carriageReturns": 1,
+                  "containsCyrillic": false,
+                  "runs": {
+                    "character": {
+                      "lengths": [
+                        2
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 2,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 3,
+                  "utf16CodeUnits": 39,
+                  "carriageReturns": 1,
+                  "containsCyrillic": false,
+                  "runs": {
+                    "character": {
+                      "lengths": [
+                        1,
+                        8,
+                        1,
+                        4,
+                        1,
+                        24
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 11,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 4,
+                  "utf16CodeUnits": 19,
+                  "carriageReturns": 1,
+                  "containsCyrillic": true,
+                  "runs": {
+                    "character": {
+                      "lengths": [
+                        19
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 10,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 5,
+                  "utf16CodeUnits": 42,
+                  "carriageReturns": 1,
+                  "containsCyrillic": false,
+                  "runs": {
+                    "character": {
+                      "lengths": [
+                        1,
+                        8,
+                        1,
+                        4,
+                        1,
+                        27
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 5,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 6,
+                  "utf16CodeUnits": 19,
+                  "carriageReturns": 1,
+                  "containsCyrillic": true,
+                  "runs": {
+                    "character": {
+                      "lengths": [
+                        19
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 4,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 7,
+                  "utf16CodeUnits": 2,
+                  "carriageReturns": 1,
+                  "containsCyrillic": false,
+                  "runs": {
+                    "character": {
+                      "lengths": [
+                        2
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 3,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 8,
+                  "utf16CodeUnits": 2,
+                  "carriageReturns": 1,
+                  "containsCyrillic": false,
+                  "runs": {
+                    "character": {
+                      "lengths": [
+                        2
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 9,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 9,
+                  "utf16CodeUnits": 2,
+                  "carriageReturns": 1,
+                  "containsCyrillic": false,
+                  "runs": {
+                    "character": {
+                      "lengths": [
+                        2
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 12,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 10,
+                  "utf16CodeUnits": 38,
+                  "carriageReturns": 1,
+                  "containsCyrillic": false,
+                  "runs": {
+                    "character": {
+                      "lengths": [
+                        1,
+                        8,
+                        1,
+                        4,
+                        1,
+                        23
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 8,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 11,
+                  "utf16CodeUnits": 19,
+                  "carriageReturns": 1,
+                  "containsCyrillic": true,
+                  "runs": {
+                    "character": {
+                      "lengths": [
+                        19
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 7,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 12,
+                  "utf16CodeUnits": 2,
+                  "carriageReturns": 1,
+                  "containsCyrillic": false,
+                  "runs": {
+                    "character": {
+                      "lengths": [
+                        2
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 6,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 13,
+                  "utf16CodeUnits": 19,
+                  "carriageReturns": 1,
+                  "containsCyrillic": true,
+                  "runs": {
+                    "character": {
+                      "lengths": [
+                        19
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 13,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 14,
+                  "utf16CodeUnits": 42,
+                  "carriageReturns": 1,
+                  "containsCyrillic": false,
+                  "runs": {
+                    "character": {
+                      "lengths": [
+                        1,
+                        8,
+                        1,
+                        4,
+                        1,
+                        27
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 14,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 15,
+                  "utf16CodeUnits": 14,
+                  "carriageReturns": 1,
+                  "containsCyrillic": false,
+                  "runs": {
+                    "character": {
+                      "lengths": [
+                        14
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 15,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 16,
+                  "utf16CodeUnits": 8,
+                  "carriageReturns": 1,
+                  "containsCyrillic": false,
+                  "runs": {
+                    "paragraph": {
+                      "lengths": [
+                        8
+                      ],
+                      "coversText": true
+                    },
+                    "character": {
+                      "lengths": [
+                        1,
+                        1,
+                        1,
+                        5
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 16,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 17,
+                  "utf16CodeUnits": 14,
+                  "carriageReturns": 1,
+                  "containsCyrillic": false,
+                  "runs": {
+                    "character": {
+                      "lengths": [
+                        14
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 17,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 18,
+                  "utf16CodeUnits": 8,
+                  "carriageReturns": 1,
+                  "containsCyrillic": false,
+                  "runs": {
+                    "paragraph": {
+                      "lengths": [
+                        8
+                      ],
+                      "coversText": true
+                    },
+                    "character": {
+                      "lengths": [
+                        1,
+                        1,
+                        1,
+                        5
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 18,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 19,
+                  "utf16CodeUnits": 14,
+                  "carriageReturns": 1,
+                  "containsCyrillic": false,
+                  "runs": {
+                    "character": {
+                      "lengths": [
+                        14
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 19,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 20,
+                  "utf16CodeUnits": 8,
+                  "carriageReturns": 1,
+                  "containsCyrillic": false,
+                  "runs": {
+                    "paragraph": {
+                      "lengths": [
+                        8
+                      ],
+                      "coversText": true
+                    },
+                    "character": {
+                      "lengths": [
+                        1,
+                        1,
+                        1,
+                        5
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 20,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 21,
+                  "utf16CodeUnits": 14,
+                  "carriageReturns": 1,
+                  "containsCyrillic": false,
+                  "runs": {
+                    "character": {
+                      "lengths": [
+                        14
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 21,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 22,
+                  "utf16CodeUnits": 8,
+                  "carriageReturns": 1,
+                  "containsCyrillic": false,
+                  "runs": {
+                    "paragraph": {
+                      "lengths": [
+                        8
+                      ],
+                      "coversText": true
+                    },
+                    "character": {
+                      "lengths": [
+                        1,
+                        1,
+                        1,
+                        5
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 22,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 23,
+                  "utf16CodeUnits": 14,
+                  "carriageReturns": 1,
+                  "containsCyrillic": false,
+                  "runs": {
+                    "character": {
+                      "lengths": [
+                        14
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 23,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 24,
+                  "utf16CodeUnits": 8,
+                  "carriageReturns": 1,
+                  "containsCyrillic": false,
+                  "runs": {
+                    "paragraph": {
+                      "lengths": [
+                        8
+                      ],
+                      "coversText": true
+                    },
+                    "character": {
+                      "lengths": [
+                        1,
+                        1,
+                        1,
+                        5
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 24,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                }
+              ],
+              "fontNames": [
+                "TTCommons-Medium",
+                "MyriadPro-Regular",
+                "AdobeInvisFont",
+                "TimesNewRomanPSMT"
+              ],
+              "characterStyleNames": [
+                "[Normal Character Style]"
+              ],
+              "paragraphStyleNames": [
+                "[Normal Paragraph Style]"
+              ]
+            },
+            {
+              "section": "AI11UndoFreeTextDocument",
+              "sha256": "6d7dbc51d7cc1a8d786c7191038b6960502057e57a8b3b390aa11231d7a3de4e",
+              "bytes": 84948,
+              "stories": [],
+              "fontNames": [
+                "TimesNewRomanPSMT",
+                "MyriadPro-Regular",
+                "AdobeInvisFont"
+              ],
+              "characterStyleNames": [
+                "[Normal Character Style]"
+              ],
+              "paragraphStyleNames": [
+                "[Normal Paragraph Style]"
+              ]
+            }
+          ]
+        }
+      ],
+      "hasIllustratorPrivateData": true
+    },
+    {
+      "file": "label_generator/graphics/prepress/prepress_frame_laptop_box_label_cz.ai",
+      "sha256": "766fbaa943ba7a9e69f000ab787b9bcbe44cb01879399c93388ae7571874c2f9",
+      "pages": 1,
+      "nativePayloads": [
+        {
+          "onPages": [
+            1
+          ],
+          "streamFamily": "AIPrivateData",
+          "blocks": 1,
+          "containerVersion": 12,
+          "creatorVersion": 30,
+          "compression": "zstandard",
+          "compressedBytes": 48674,
+          "decodedBytes": 260892,
+          "privateSha256": "46c19e5966c5fce07270fb9dff98e8bb3c676635d017d1d4a349f4cdbe5c6a0c",
+          "artworkTextBindings": [
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 0
+            },
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 1
+            },
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 4
+            },
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 3
+            },
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 2
+            }
+          ],
+          "textDocuments": [
+            {
+              "section": "AI11TextDocument",
+              "sha256": "9a2a90e8e0d24c1973a360775ed667c8a89380e6008a9b3d86e7e454d7ccfd73",
+              "bytes": 94253,
+              "stories": [
+                {
+                  "index": 0,
+                  "utf16CodeUnits": 19,
+                  "carriageReturns": 1,
+                  "containsCyrillic": false,
+                  "runs": {
+                    "character": {
+                      "lengths": [
+                        19
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 0,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 1,
+                  "utf16CodeUnits": 13,
+                  "carriageReturns": 1,
+                  "containsCyrillic": false,
+                  "runs": {
+                    "character": {
+                      "lengths": [
+                        13
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 1,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 2,
+                  "utf16CodeUnits": 10,
+                  "carriageReturns": 1,
+                  "containsCyrillic": false,
+                  "runs": {
+                    "character": {
+                      "lengths": [
+                        10
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 4,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 3,
+                  "utf16CodeUnits": 15,
+                  "carriageReturns": 1,
+                  "containsCyrillic": false,
+                  "runs": {
+                    "character": {
+                      "lengths": [
+                        15
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 3,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 4,
+                  "utf16CodeUnits": 22,
+                  "carriageReturns": 1,
+                  "containsCyrillic": false,
+                  "runs": {
+                    "character": {
+                      "lengths": [
+                        22
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 2,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                }
+              ],
+              "fontNames": [
+                "TTCommons-Medium",
+                "MyriadPro-Regular",
+                "AdobeInvisFont",
+                "TimesNewRomanPSMT"
+              ],
+              "characterStyleNames": [
+                "[Normal Character Style]"
+              ],
+              "paragraphStyleNames": [
+                "[Normal Paragraph Style]"
+              ]
+            },
+            {
+              "section": "AI11UndoFreeTextDocument",
+              "sha256": "1205aaa191ca482c2a7df062b390c7c917024e9eae14d7fbc61177d1a2aed44f",
+              "bytes": 85094,
+              "stories": [],
+              "fontNames": [
+                "TimesNewRomanPSMT",
+                "MyriadPro-Regular",
+                "AdobeInvisFont"
+              ],
+              "characterStyleNames": [
+                "[Normal Character Style]"
+              ],
+              "paragraphStyleNames": [
+                "[Normal Paragraph Style]"
+              ]
+            }
+          ]
+        }
+      ],
+      "hasIllustratorPrivateData": true
+    },
+    {
+      "file": "label_generator/graphics/prepress/prepress_frame_tablet_box_label_cz.ai",
+      "sha256": "75ae799059babb57660dd9d643bb4496a3da2a8335ccc57aaf35a79bf6501089",
+      "pages": 1,
+      "nativePayloads": [
+        {
+          "onPages": [
+            1
+          ],
+          "streamFamily": "AIPrivateData",
+          "blocks": 1,
+          "containerVersion": 12,
+          "creatorVersion": 30,
+          "compression": "zstandard",
+          "compressedBytes": 51873,
+          "decodedBytes": 274253,
+          "privateSha256": "71331aaec81d6d6147ac5c27c4cfaead10b3644e76436b6745a727905249802d",
+          "artworkTextBindings": [
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 5
+            },
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 2
+            },
+            {
+              "FreeUndo": 1,
+              "FrameIndex": 0,
+              "StoryIndex": 3
+            },
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 4
+            },
+            {
+              "FreeUndo": 1,
+              "FrameIndex": 0,
+              "StoryIndex": 2
+            },
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 3
+            },
+            {
+              "FreeUndo": 1,
+              "FrameIndex": 0,
+              "StoryIndex": 0
+            },
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 0
+            },
+            {
+              "FreeUndo": 1,
+              "FrameIndex": 0,
+              "StoryIndex": 1
+            },
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 1
+            }
+          ],
+          "textDocuments": [
+            {
+              "section": "AI11TextDocument",
+              "sha256": "308689f887e6597b7a72496cc7bca97d4e64fbd1cfba991a0b884e385b6b54b3",
+              "bytes": 96451,
+              "stories": [
+                {
+                  "index": 0,
+                  "utf16CodeUnits": 22,
+                  "carriageReturns": 1,
+                  "containsCyrillic": false,
+                  "runs": {
+                    "character": {
+                      "lengths": [
+                        22
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 0,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 1,
+                  "utf16CodeUnits": 13,
+                  "carriageReturns": 1,
+                  "containsCyrillic": false,
+                  "runs": {
+                    "character": {
+                      "lengths": [
+                        13
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 1,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 2,
+                  "utf16CodeUnits": 10,
+                  "carriageReturns": 1,
+                  "containsCyrillic": false,
+                  "runs": {
+                    "character": {
+                      "lengths": [
+                        10
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 2,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 3,
+                  "utf16CodeUnits": 13,
+                  "carriageReturns": 1,
+                  "containsCyrillic": false,
+                  "runs": {
+                    "character": {
+                      "lengths": [
+                        13
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 3,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 4,
+                  "utf16CodeUnits": 19,
+                  "carriageReturns": 1,
+                  "containsCyrillic": false,
+                  "runs": {
+                    "character": {
+                      "lengths": [
+                        19
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 4,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 5,
+                  "utf16CodeUnits": 15,
+                  "carriageReturns": 1,
+                  "containsCyrillic": false,
+                  "runs": {
+                    "character": {
+                      "lengths": [
+                        15
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 5,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                }
+              ],
+              "fontNames": [
+                "TTCommons-Medium",
+                "MyriadPro-Regular",
+                "TTCommons-Medium",
+                "MyriadPro-Regular",
+                "AdobeInvisFont",
+                "TimesNewRomanPSMT"
+              ],
+              "characterStyleNames": [
+                "[Normal Character Style]"
+              ],
+              "paragraphStyleNames": [
+                "[Normal Paragraph Style]"
+              ]
+            },
+            {
+              "section": "AI11UndoFreeTextDocument",
+              "sha256": "9fd2b48bbb84876814e0c5346b5572b8da4becf07e09511626dba854de78321b",
+              "bytes": 91911,
+              "stories": [
+                {
+                  "index": 0,
+                  "utf16CodeUnits": 22,
+                  "carriageReturns": 1,
+                  "containsCyrillic": false,
+                  "runs": {
+                    "character": {
+                      "lengths": [
+                        22
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 0,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 1,
+                  "utf16CodeUnits": 13,
+                  "carriageReturns": 1,
+                  "containsCyrillic": false,
+                  "runs": {
+                    "character": {
+                      "lengths": [
+                        13
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 1,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 2,
+                  "utf16CodeUnits": 13,
+                  "carriageReturns": 1,
+                  "containsCyrillic": false,
+                  "runs": {
+                    "character": {
+                      "lengths": [
+                        13
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 2,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 3,
+                  "utf16CodeUnits": 19,
+                  "carriageReturns": 1,
+                  "containsCyrillic": false,
+                  "runs": {
+                    "character": {
+                      "lengths": [
+                        19
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 3,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                }
+              ],
+              "fontNames": [
+                "TimesNewRomanPSMT",
+                "TTCommons-Medium",
+                "MyriadPro-Regular",
+                "AdobeInvisFont"
+              ],
+              "characterStyleNames": [
+                "[Normal Character Style]"
+              ],
+              "paragraphStyleNames": [
+                "[Normal Paragraph Style]"
+              ]
+            }
+          ]
+        }
+      ],
+      "hasIllustratorPrivateData": true
+    },
+    {
+      "file": "label_generator/graphics/prepress/old/prepress_frame_laptop_box_label_cz.ai",
+      "sha256": "7411298638e55d2b99a1f509a9082625fba3ff994248a00debc0d00a7bdd2cb6",
+      "pages": 1,
+      "nativePayloads": [
+        {
+          "onPages": [
+            1
+          ],
+          "streamFamily": "AIPrivateData",
+          "blocks": 1,
+          "containerVersion": 12,
+          "creatorVersion": 30,
+          "compression": "zstandard",
+          "compressedBytes": 48707,
+          "decodedBytes": 260779,
+          "privateSha256": "df4997afab7a5a28a9cc02b15b390beac4a306fba2e958610db33897e6058fd1",
+          "artworkTextBindings": [
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 0
+            },
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 1
+            },
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 2
+            },
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 3
+            },
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 4
+            }
+          ],
+          "textDocuments": [
+            {
+              "section": "AI11TextDocument",
+              "sha256": "05468e01cb95981f8bca7a6a8e00b5b098bfaf3492b21726150ef4a3bfbe769a",
+              "bytes": 94267,
+              "stories": [
+                {
+                  "index": 0,
+                  "utf16CodeUnits": 19,
+                  "carriageReturns": 1,
+                  "containsCyrillic": false,
+                  "runs": {
+                    "character": {
+                      "lengths": [
+                        19
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 0,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 1,
+                  "utf16CodeUnits": 13,
+                  "carriageReturns": 1,
+                  "containsCyrillic": false,
+                  "runs": {
+                    "character": {
+                      "lengths": [
+                        13
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 1,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 2,
+                  "utf16CodeUnits": 22,
+                  "carriageReturns": 1,
+                  "containsCyrillic": true,
+                  "runs": {
+                    "character": {
+                      "lengths": [
+                        22
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 2,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 3,
+                  "utf16CodeUnits": 15,
+                  "carriageReturns": 1,
+                  "containsCyrillic": false,
+                  "runs": {
+                    "character": {
+                      "lengths": [
+                        15
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 3,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 4,
+                  "utf16CodeUnits": 10,
+                  "carriageReturns": 1,
+                  "containsCyrillic": false,
+                  "runs": {
+                    "character": {
+                      "lengths": [
+                        10
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 4,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                }
+              ],
+              "fontNames": [
+                "TTCommons-Medium",
+                "MyriadPro-Regular",
+                "AdobeInvisFont",
+                "TimesNewRomanPSMT"
+              ],
+              "characterStyleNames": [
+                "[Normal Character Style]"
+              ],
+              "paragraphStyleNames": [
+                "[Normal Paragraph Style]"
+              ]
+            },
+            {
+              "section": "AI11UndoFreeTextDocument",
+              "sha256": "1205aaa191ca482c2a7df062b390c7c917024e9eae14d7fbc61177d1a2aed44f",
+              "bytes": 85094,
+              "stories": [],
+              "fontNames": [
+                "TimesNewRomanPSMT",
+                "MyriadPro-Regular",
+                "AdobeInvisFont"
+              ],
+              "characterStyleNames": [
+                "[Normal Character Style]"
+              ],
+              "paragraphStyleNames": [
+                "[Normal Paragraph Style]"
+              ]
+            }
+          ]
+        }
+      ],
+      "hasIllustratorPrivateData": true
+    },
+    {
+      "file": "label_generator/graphics/prepress/old/prepress_frame_tablet_box_label_cz.ai",
+      "sha256": "30d74b79666fa4310171e64735665ccdf340aad77c53ee08edaa09ba4d666f9d",
+      "pages": 1,
+      "nativePayloads": [
+        {
+          "onPages": [
+            1
+          ],
+          "streamFamily": "AIPrivateData",
+          "blocks": 1,
+          "containerVersion": 12,
+          "creatorVersion": 30,
+          "compression": "zstandard",
+          "compressedBytes": 42330,
+          "decodedBytes": 182804,
+          "privateSha256": "47d6f6404f7701383d63a91f3ab851d4f9bee02e15b6ba3424a7c9bd16413572",
+          "artworkTextBindings": [
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 3
+            },
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 2
+            },
+            {
+              "FreeUndo": 1,
+              "FrameIndex": 0,
+              "StoryIndex": 2
+            },
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 1
+            },
+            {
+              "FreeUndo": 1,
+              "FrameIndex": 0,
+              "StoryIndex": 0
+            },
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 6
+            },
+            {
+              "FreeUndo": 1,
+              "FrameIndex": 0,
+              "StoryIndex": 3
+            },
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 5
+            },
+            {
+              "FreeUndo": 1,
+              "FrameIndex": 0,
+              "StoryIndex": 1
+            },
+            {
+              "FreeUndo": 0,
+              "FrameIndex": 0,
+              "StoryIndex": 4
+            }
+          ],
+          "textDocuments": [
+            {
+              "section": "AI11TextDocument",
+              "sha256": "49771066d350b2127a20f8ba03afaca97f89097e0e1e6a76a173522cd2ba7636",
+              "bytes": 98421,
+              "stories": [
+                {
+                  "index": 0,
+                  "utf16CodeUnits": 19,
+                  "carriageReturns": 1,
+                  "containsCyrillic": false,
+                  "runs": {
+                    "character": {
+                      "lengths": [
+                        19
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 0,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 1,
+                  "utf16CodeUnits": 19,
+                  "carriageReturns": 1,
+                  "containsCyrillic": false,
+                  "runs": {
+                    "character": {
+                      "lengths": [
+                        19
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 6,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 2,
+                  "utf16CodeUnits": 10,
+                  "carriageReturns": 1,
+                  "containsCyrillic": false,
+                  "runs": {
+                    "character": {
+                      "lengths": [
+                        10
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 2,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 3,
+                  "utf16CodeUnits": 15,
+                  "carriageReturns": 1,
+                  "containsCyrillic": false,
+                  "runs": {
+                    "character": {
+                      "lengths": [
+                        15
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 1,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 4,
+                  "utf16CodeUnits": 13,
+                  "carriageReturns": 1,
+                  "containsCyrillic": false,
+                  "runs": {
+                    "character": {
+                      "lengths": [
+                        13
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 3,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 5,
+                  "utf16CodeUnits": 22,
+                  "carriageReturns": 1,
+                  "containsCyrillic": true,
+                  "runs": {
+                    "character": {
+                      "lengths": [
+                        22
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 4,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 6,
+                  "utf16CodeUnits": 13,
+                  "carriageReturns": 1,
+                  "containsCyrillic": false,
+                  "runs": {
+                    "character": {
+                      "lengths": [
+                        13
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 5,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                }
+              ],
+              "fontNames": [
+                "TTCommons-Medium",
+                "MyriadPro-Regular",
+                "TTCommons-Medium",
+                "MyriadPro-Regular",
+                "AdobeInvisFont",
+                "TimesNewRomanPSMT"
+              ],
+              "characterStyleNames": [
+                "[Normal Character Style]"
+              ],
+              "paragraphStyleNames": [
+                "[Normal Paragraph Style]"
+              ]
+            },
+            {
+              "section": "AI11UndoFreeTextDocument",
+              "sha256": "1af0fbe47a323a3d91cb90fecf7c7bce33bfa2014b40324dfcb70afee7e887e3",
+              "bytes": 13418,
+              "stories": [
+                {
+                  "index": 0,
+                  "utf16CodeUnits": 13,
+                  "carriageReturns": 1,
+                  "containsCyrillic": false,
+                  "runs": {
+                    "character": {
+                      "lengths": [
+                        13
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 1,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 1,
+                  "utf16CodeUnits": 13,
+                  "carriageReturns": 1,
+                  "containsCyrillic": false,
+                  "runs": {
+                    "character": {
+                      "lengths": [
+                        13
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 2,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 2,
+                  "utf16CodeUnits": 19,
+                  "carriageReturns": 1,
+                  "containsCyrillic": false,
+                  "runs": {
+                    "character": {
+                      "lengths": [
+                        19
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 0,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                },
+                {
+                  "index": 3,
+                  "utf16CodeUnits": 22,
+                  "carriageReturns": 1,
+                  "containsCyrillic": true,
+                  "runs": {
+                    "character": {
+                      "lengths": [
+                        22
+                      ],
+                      "coversText": true
+                    }
+                  },
+                  "frames": [
+                    {
+                      "id": 3,
+                      "keys": [
+                        "/0",
+                        "/10",
+                        "/5",
+                        "/6",
+                        "/99"
+                      ],
+                      "fourValueBoundsPresent": false,
+                      "glyphCacheRecords": 1
+                    }
+                  ]
+                }
+              ],
+              "fontNames": [
+                "TTCommons-Medium",
+                "TTCommons-Medium",
+                "MyriadPro-Regular",
+                "AdobeInvisFont"
+              ],
+              "characterStyleNames": [
+                "[Normal Character Style]"
+              ],
+              "paragraphStyleNames": [
+                "[Normal Paragraph Style]"
+              ]
+            }
+          ]
+        }
+      ],
+      "hasIllustratorPrivateData": true
+    },
+    {
+      "file": "grid_generator_02/output/pdf/pdf-probe-plain.pdf",
+      "sha256": "c70a7c0b3ce1576df6af66ed5c566fbcbaaa9d09da8f09cec38cf8bd567c5f88",
+      "pages": 2,
+      "nativePayloads": [],
+      "hasIllustratorPrivateData": false
+    },
+    {
+      "file": "grid_generator_02/output/pdf/pdf-probe-tagged.pdf",
+      "sha256": "8d325260c1b8db5b57e04b4618f39ff6cf55e11e4216c6010ffea0aba119b4e6",
+      "pages": 2,
+      "nativePayloads": [],
+      "hasIllustratorPrivateData": false
+    }
+  ]
+}
