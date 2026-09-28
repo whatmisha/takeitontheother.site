@@ -57,6 +57,7 @@ export class ApplicationUiSynchronizer {
         host.surfacePanelController?.sync();
         host.constructionController?.sync();
         host.customTextStyleController?.sync();
+        host.markingCatalogController?.close({ restoreFocus: false });
     }
 
     getDisplayValue(settingKey, settings) {

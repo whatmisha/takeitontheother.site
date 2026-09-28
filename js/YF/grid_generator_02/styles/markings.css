@@ -1,0 +1,13 @@
+/* Catalog layout; typography, colors, buttons, selects and checkboxes come from existing controls. */
+.markings-panel { max-height: calc(100vh - 160px); }
+.markings-panel .style-select { width: 100%; }
+.markings-preview { display: block; width: 100%; height: 56px; color: var(--color-text); margin: var(--spacing-lg) 0; }
+.marking-row { display: flex; align-items: center; }
+.marking-row .element-item { min-width: 0; flex: 1; gap: var(--spacing-md); }
+.marking-row .element-item > svg { width: 28px; height: 28px; flex-shrink: 0; }
+.marking-row .element-actions { padding-right: var(--spacing-sm); opacity: 1; }
+.marking-off .element-item-text, .marking-off .element-item > svg { opacity: 0.45; }
+.markings-actions { padding: var(--spacing-lg) var(--spacing-3xl); flex-shrink: 0; }
+#addMarkingsBtn, #editMarkingsBtn { width: 100%; }
+#editMarkingsBtn { margin-bottom: var(--spacing-lg); }
+#editMarkingsBtn[hidden], .markings-panel [hidden] { display: none; }

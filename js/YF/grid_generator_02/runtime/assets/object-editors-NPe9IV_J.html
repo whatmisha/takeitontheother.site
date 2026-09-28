@@ -228,6 +228,7 @@
                         </div>
                     </div>
                 </div>
+                <button type="button" class="btn-add-object" id="editMarkingsBtn" hidden>Edit markings</button>
                 <div id="rasterControls" hidden>
                     <div class="control-group">
                         <label for="rasterFrameSelect">Image frame</label>
@@ -316,4 +317,26 @@
                 </div>
             </section>
         </div>
+    </aside>
+
+    <aside class="controls-panel markings-panel" id="markingsPanel" style="display: none;" role="dialog" aria-labelledby="markingsPanelTitle">
+        <div class="panel-header" id="markingsPanelHeader">
+            <span id="markingsPanelTitle" data-marking-field="title">Markings</span>
+            <button type="button" class="panel-action-btn" data-marking-field="close" aria-label="Close markings">×</button>
+        </div>
+        <div class="panel-content">
+            <section class="control-section">
+                <div class="control-group"><label for="markingSetSelect">Starting set</label><select class="style-select" id="markingSetSelect" data-marking-field="set"><option value="" disabled>Custom selection</option></select></div>
+                <svg data-marking-field="preview" class="markings-preview" role="img" aria-label="Selected markings preview"></svg>
+                <p class="surface-help" data-marking-field="count" role="status"></p>
+                <div class="elements-list" data-marking-field="list" aria-label="Marking catalog"></div>
+            </section>
+            <section class="control-section">
+                <div class="control-group"><label for="markingDirectionSelect">Arrangement</label><select class="style-select" id="markingDirectionSelect" data-marking-field="direction"><option value="row">Horizontal</option><option value="column">Vertical</option></select></div>
+                <div class="control-group" data-marking-field="alignGroup" hidden><label for="markingAlignSelect">Column alignment</label><select class="style-select" id="markingAlignSelect" data-marking-field="align"><option value="start">Left</option><option value="center">Center</option><option value="end">Right</option></select></div>
+                <div class="control-group"><label for="markingHeightSlider"><span>Icon height <span class="unit">mod</span></span><input type="text" class="value-display" id="markingHeightValue" value="1.50" aria-label="Marking icon height"></label><input type="range" id="markingHeightSlider" value="1.5" aria-label="Marking icon height slider"></div>
+                <div class="control-group"><label for="markingGapSlider"><span>Gap <span class="unit">× height</span></span><input type="text" class="value-display" id="markingGapValue" value="0.35" aria-label="Marking gap"></label><input type="range" id="markingGapSlider" value="0.35" aria-label="Marking gap slider"></div>
+            </section>
+        </div>
+        <div class="button-group markings-actions"><button type="button" class="btn-add-object" data-marking-field="cancel">Cancel</button><button type="button" class="btn-add-object" data-marking-field="apply">Add markings</button></div>
     </aside>

@@ -864,6 +864,9 @@
               ]
             }
           }
+        },
+        "markings": {
+          "$ref": "#/$defs/markingGroup"
         }
       }
     },
@@ -983,6 +986,69 @@
           }
         }
       ]
+    },
+    "markingGroup": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "items",
+        "direction",
+        "gap",
+        "align"
+      ],
+      "properties": {
+        "version": {
+          "const": 1
+        },
+        "items": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 7,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "enabled"
+            ],
+            "properties": {
+              "id": {
+                "enum": [
+                  "eac-v1",
+                  "manual-v1",
+                  "fragile-v1",
+                  "keep-dry-v1",
+                  "pap21-v1",
+                  "pap20-v1",
+                  "weee-v1"
+                ]
+              },
+              "enabled": {
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        "direction": {
+          "enum": [
+            "row",
+            "column"
+          ]
+        },
+        "gap": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 3
+        },
+        "align": {
+          "enum": [
+            "start",
+            "center",
+            "end"
+          ]
+        }
+      }
     }
   }
 }

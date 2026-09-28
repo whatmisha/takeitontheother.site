@@ -30,6 +30,9 @@ export class BuiltInGraphicsController {
 
     async loadAndApply(definition) {
         try {
+            if (this.objectDocument.getGraphicsBlock(definition.id)?.markings) {
+                return { id: definition.id, loaded: false, skipped: true };
+            }
             const asset = await this.assetController.load(definition.path);
             if (!asset?.content) {
                 this.logger.error(`${definition.label} SVG could not be loaded from ${definition.path}`);

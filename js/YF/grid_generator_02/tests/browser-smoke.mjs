@@ -1,3 +1,4 @@
+import { checkMarkings } from './markings-browser-checks.mjs';
 import { checkCustomTextStyles } from './custom-text-styles-browser-checks.mjs';
 import { checkShareAndRaster } from './share-raster-browser-checks.mjs';
 import { checkRotations } from './rotation-browser-checks.mjs';
@@ -1106,6 +1107,7 @@ async function run() {
     await checkRotations({ application, appDocument, appWindow, assert, waitFor, presetFormat });
     await checkShareAndRaster({ application, appDocument, appWindow, assert, waitFor, presetFormat });
     await checkCustomTextStyles({ application, appDocument, appWindow, assert, waitFor, presetFormat });
+    await checkMarkings({ application, appDocument, appWindow, assert, waitFor, presetFormat });
     await application.draftRecoveryController.clearDraft();
     application.hasUnsavedChanges = false;
     application.dispose();

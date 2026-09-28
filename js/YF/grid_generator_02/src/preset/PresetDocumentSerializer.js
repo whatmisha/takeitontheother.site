@@ -56,6 +56,7 @@ function serializeGraphic(block, index) {
         visible: block.visible ?? true,
         lockPosition: block.lockPosition ?? true,
         layer: block.layerIndex,
+        markings: clone(block.markings),
         raster: clone(block.raster),
         missingAsset: block.missingAsset,
         svg: block.svgContent ?? ''
@@ -78,6 +79,7 @@ function serializeBuiltIn(block, id) {
         visible: block.visible ?? true,
         lockPosition: block.lockPosition ?? true,
         layer: block.layerIndex,
+        markings: clone(block.markings),
         raster: clone(block.raster),
         missingAsset: block.missingAsset,
         svg: block.svgContent ?? ''

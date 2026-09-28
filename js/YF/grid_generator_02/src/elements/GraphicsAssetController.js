@@ -42,6 +42,7 @@ export class GraphicsAssetController {
                 fields.originalHeight = block.originalHeight;
                 if (raster) fields.raster.fit = block.raster.fit || 'cover';
             }
+            delete block.markings;
             Object.assign(block, fields);
             this.syncEditedBlock(block, placeholder);
             history.commitAction(this.host.getStateSnapshot());

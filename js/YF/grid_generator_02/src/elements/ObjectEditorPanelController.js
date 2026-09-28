@@ -12,6 +12,7 @@ export class ObjectEditorPanelController {
         this.outsideClickBound = false;
         this.handleOutsideClick = event => {
             const target = event.target;
+            if (target.closest('#markingsPanel')) return;
             const { paragraphPanel, graphicsPanel } = this.host.dom;
             if (
                 paragraphPanel?.classList.contains('active')

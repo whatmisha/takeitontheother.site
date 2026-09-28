@@ -1,4 +1,5 @@
 import { assertTextStyleReferences } from '../elements/CustomTextStyles.js';
+import { assertMarkingRecipe } from '../markings/MarkingGroup.js';
 import validatePreset12 from './generated/validatePreset12.js';
 import validatePreset20 from './generated/validatePreset20.js';
 
@@ -36,6 +37,11 @@ export class PresetSchemaValidator {
         const validate = data?.version === '2.0' ? validatePreset20 : validatePreset12;
         if (validate(data)) {
             assertTextStyleReferences(data);
+            const graphics = [...(data.graphics?.blocks || []), ...['icons', 'claim', 'claim2026'].map(id => data.graphics?.[id]).filter(Boolean)];
+            for (const graphic of graphics) if (graphic.markings) {
+                assertMarkingRecipe(graphic.markings);
+                if (graphic.raster || graphic.missingAsset) throw new Error('Markings cannot also be an image or missing asset.');
+            }
             return data;
         }
         const details = (validate.errors || []).map(formatError).join('; ');

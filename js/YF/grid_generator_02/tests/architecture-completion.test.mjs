@@ -176,7 +176,7 @@ test('root shell stays minimal while HTML and CSS modules retain unique element 
         1, `one mount slot for ${name}, either in the root or a parent fragment`
     ));
     assert.ok(index.split('\n').length < 50);
-    assert.equal((style.match(/^@import /gm) || []).length, 9);
+    assert.equal((style.match(/^@import /gm) || []).length, 10);
 
     const ids = fragments.flatMap(fragment => (
         [...fragment.matchAll(/\sid="([^"]+)"/g)].map(match => match[1])

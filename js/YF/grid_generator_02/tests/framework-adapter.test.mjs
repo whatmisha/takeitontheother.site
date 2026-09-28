@@ -221,15 +221,15 @@ test('Pizza Boxer layers shared CSS below its production compatibility skin', as
         (workspace.match(/class="value-display(?!-)/gu)?.length || 0)
             + (typography.match(/class="value-display(?!-)/gu)?.length || 0)
             + (editors.match(/class="value-display(?!-)/gu)?.length || 0),
-        49,
-        'Pizza Boxer 02 value-display inventory includes construction and custom style controls'
+        51,
+        'Pizza Boxer 02 value-display inventory includes construction, style and marking controls'
     );
     assert.equal(
         (workspace.match(/<input\b[^>]*\btype="range"[^>]*>/gu)?.length || 0)
             + (typography.match(/<input\b[^>]*\btype="range"[^>]*>/gu)?.length || 0)
             + (editors.match(/<input\b[^>]*\btype="range"[^>]*>/gu)?.length || 0),
-        34,
-        'Pizza Boxer 02 range inventory includes construction and custom style controls'
+        36,
+        'Pizza Boxer 02 range inventory includes construction, style and marking controls'
     );
     assert.match(
         controlsWithoutComments,

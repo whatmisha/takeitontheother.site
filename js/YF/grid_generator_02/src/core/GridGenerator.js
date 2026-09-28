@@ -1,3 +1,4 @@
+import { MarkingCatalogController } from '../markings/MarkingCatalogController.js';
 import { PresetShareController } from '../preset/PresetShareController.js';
 import { SurfaceAdditionCommands } from '../packaging/SurfaceAddition.js';
 import { SurfaceNetController } from '../surfaces/SurfaceNetController.js';
@@ -352,6 +353,7 @@ export class GridGenerator {
 
         // PanelManager - регистрация всех панелей
         this.initPanels();
+        this.markingCatalogController = this.lifecycle.own(new MarkingCatalogController(this));
 
         // Initial history is created when the awaited default preset is applied.
         this.panelUiController.bindCollapsibleSections();
@@ -674,7 +676,8 @@ export class GridGenerator {
             { id: 'rightSettingsStack', headerId: 'surfacePanelHeader', draggable: true },
             { id: 'textPanel', headerId: 'textPanelHeader', draggable: true },
             { id: 'paragraphPanel', headerId: 'paragraphPanelHeader', draggable: true },
-            { id: 'graphicsPanel', headerId: 'graphicsPanelHeader', draggable: true }
+            { id: 'graphicsPanel', headerId: 'graphicsPanelHeader', draggable: true },
+            { id: 'markingsPanel', headerId: 'markingsPanelHeader', draggable: true }
         ];
 
         panels.forEach(panel => {

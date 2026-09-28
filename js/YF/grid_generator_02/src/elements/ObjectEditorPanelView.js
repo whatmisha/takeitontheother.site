@@ -44,6 +44,11 @@ export class ObjectEditorPanelView {
     }
 
     prepareNewGraphics() {
+        this.host.currentEditingGraphicsId = null;
+        this.host.uploadedSvgData = null;
+        if (this.host.dom.fileUploadArea) this.host.dom.fileUploadArea.style.display = 'block';
+        const markingButton = this.document.getElementById('editMarkingsBtn');
+        if (markingButton) markingButton.hidden = true;
         const rasterControls = this.document.getElementById('rasterControls');
         if (rasterControls) rasterControls.hidden = true;
         const { dom } = this.host;
@@ -65,6 +70,11 @@ export class ObjectEditorPanelView {
     }
 
     populateGraphics(block) {
+        const markingButton = this.document.getElementById('editMarkingsBtn');
+        if (markingButton) {
+            markingButton.hidden = !block.markings && block.id !== 'icons';
+            markingButton.textContent = block.markings ? 'Edit markings' : 'Choose markings';
+        }
         const rasterControls = this.document.getElementById('rasterControls');
         if (rasterControls) {
             rasterControls.hidden = !block.raster;
@@ -98,7 +108,7 @@ export class ObjectEditorPanelView {
         this.setChecked(dom.graphicsLockPositionToggle, block.lockPosition === true);
         this.setChecked(dom.graphicsAlignRightToggle, block.alignment === 'right');
         if (dom.fileUploadArea) {
-            dom.fileUploadArea.style.display = 'block';
+            dom.fileUploadArea.style.display = block.markings ? 'none' : 'block';
             const placeholder = dom.fileUploadArea.querySelector('.upload-placeholder p');
             const text = block.missingAsset ? `Missing: ${block.name || 'Image'} — Click to relink` : `Current: ${block.name || 'Graphic'} — Upload an image or SVG to replace`;
             if (placeholder) placeholder.textContent = text;

@@ -1,3 +1,4 @@
+import { buildMarkingGroup } from '../markings/MarkingGroup.js';
 import { normalizeConstructionSettings, TUBE_DEFAULTS } from '../packaging/TubeModel.js';
 import { cloneJson as clone } from '../utils/cloneJson.js';
 const compact = object => Object.fromEntries(
@@ -37,6 +38,7 @@ function deserializeGraphic(graphic, index) {
         id: graphic.id ?? `graphic_${index + 1}`,
         name: graphic.name ?? 'Graphic',
         isBuiltIn: false,
+        markings: clone(graphic.markings),
         raster: clone(graphic.raster),
         missingAsset: graphic.missingAsset,
         svgContent: graphic.svg ?? '',
@@ -54,7 +56,8 @@ function deserializeGraphic(graphic, index) {
         lockPosition: graphic.lockPosition,
         layerIndex: graphic.layer,
         originalWidth: graphic.originalWidth ?? 100,
-        originalHeight: graphic.originalHeight ?? 100
+        originalHeight: graphic.originalHeight ?? 100,
+        ...(graphic.markings ? buildMarkingGroup(graphic.markings) : {})
     });
 }
 
@@ -65,6 +68,7 @@ function deserializeBuiltIn(graphic, id) {
         id,
         name: defaults.name,
         isBuiltIn: true,
+        markings: clone(graphic.markings),
         raster: clone(graphic.raster),
         missingAsset: graphic.missingAsset,
         svgContent: graphic.svg ?? '',
@@ -82,7 +86,8 @@ function deserializeBuiltIn(graphic, id) {
         lockPosition: graphic.lockPosition,
         layerIndex: graphic.layer,
         originalWidth: graphic.originalWidth ?? defaults.originalWidth,
-        originalHeight: graphic.originalHeight ?? defaults.originalHeight
+        originalHeight: graphic.originalHeight ?? defaults.originalHeight,
+        ...(graphic.markings ? buildMarkingGroup(graphic.markings) : {})
     });
 }
 
