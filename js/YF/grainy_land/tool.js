@@ -1,6 +1,6 @@
 import { defineTool, ToolUiController, FileIntakeController, PresetMenuKeyboardController } from '../infra/framework/src/index.js';
 import { defaults, ranges, palettes, normalizeSettings, makeDocument, readDocument, exportDimensions } from './document.js';
-import { LandscapeRenderer } from './render.js';
+import { LandscapeRenderer } from './render.js?v=landforms-2';
 
 let renderer, ui, intake, presetKeyboard, listeners, unsubscribe, resizeObserver;
 let renderFailed = false, lastSize = '';

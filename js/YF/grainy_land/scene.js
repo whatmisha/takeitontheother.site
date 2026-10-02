@@ -5,11 +5,25 @@ import { normalizeSettings } from './document.js';
 // Coordinates are normalized; this is the extension point for future painted fields.
 export function createScene(settings) {
     const s = normalizeSettings(settings);
-    const random = new SeededRandom(s.seed).fork('landforms-v1');
+    const random = new SeededRandom(s.seed).fork('landforms-v2');
+    const between = (a, b) => random.float(a, b);
+    // Each surface has its own center, width, elevation and lift. Side banks
+    // extend outside the frame; the basin and foreground can occlude them.
+    const layers = [
+        [between(.24,.78), between(.13,.32), between(.04,.09), between(.23,.37)],
+        [between(-.08,.08), between(.29,.44), between(-.06,.03), between(.48,.64)],
+        [between(.22,.53), between(.18,.34), between(.24,.34), between(.14,.25)],
+        [between(.92,1.08), between(.28,.46), between(-.06,.04), between(.47,.63)],
+        [between(.43,.78), between(.12,.27), between(.32,.42), between(.12,.24)],
+        [between(.49,.87), between(.13,.29), between(.44,.56), between(.16,.28)]
+    ];
     return {
-        version: 1,
-        phases: Array.from({ length: 4 }, () => random.float(0, Math.PI * 2)),
-        fields: Array.from({ length: 5 }, () => [random.float(-.1,1.1), random.float(.35,1.2), random.float(.12,.28), random.float(-1.1,1.1)]),
+        version: 2,
+        phases: Array.from({ length: 4 }, () => between(0, Math.PI * 2)),
+        layers,
+        // Slope, local phase, edge diffusion, and illumination position.
+        layerStyles: layers.map(() => [between(-.13,.13), between(0,6.28), between(.55,1.5), between(-.07,.07)]),
+        fields: Array.from({ length: 6 }, () => [between(-.1,1.1), between(.1,1.2), between(.12,.36), between(-1.1,1.1)]),
         mode: s.mode === 'abstract' ? 1 : 0,
         scale: 100 / s.scale, complexity: s.complexity,
         flow: s.flow / 100, horizon: s.horizon / 100, relief: s.relief / 100
@@ -54,4 +68,19 @@ export function paletteLUT(settings) {
         data.set([...fromLab(a.map((v,k) => v + (b[k]-v)*t)), 255], i*4);
     }
     return data;
+}
+
+// Derive warm crests and cool reflected light from the user's anchors. No
+// reference-specific RGB colors are baked into the material or the geometry.
+export function materialColors(settings) {
+    const s = normalizeSettings(settings);
+    const terrain = toLab(hexRGB(s.terrain)), light = toLab(hexRGB(s.light));
+    const sky = toLab(hexRGB(s.sky)), depth = toLab(hexRGB(s.depth));
+    const chroma = Math.hypot(terrain[1], terrain[2]);
+    const angle = Math.atan2(terrain[2], terrain[1]) + .62;
+    const warm = [Math.min(.94,terrain[0]+.075), chroma*Math.cos(angle), chroma*Math.sin(angle)];
+    const cool = light.map((v,i) => (v*.90 + sky[i]*.10) * (i === 0 ? .98 : 1.35));
+    const earth = depth.map((v,i) => v*.82 + terrain[i]*.18);
+    return [hexRGB(s.terrain), hexRGB(s.depth), hexRGB(s.light),
+        ...[warm,cool,earth].map(lab => fromLab(lab).map(v => v/255))];
 }

@@ -2,13 +2,22 @@ from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
 from functools import partial
 import re
+import argparse
 
 ROOT = Path(__file__).resolve().parents[2]
-OUTPUT = ROOT / 'grainy_land/tests/reviews/pigment-20'
+parser = argparse.ArgumentParser()
+parser.add_argument('--review', choices=['pigment-20','pigment-v2'], default='pigment-20')
+parser.add_argument('--port', type=int, default=8020)
+args = parser.parse_args()
+OUTPUT = ROOT / 'grainy_land/tests/reviews' / args.review
+PREFIX = '/__grainy_v2_save/' if args.review == 'pigment-v2' else '/__grainy_save/'
 class Handler(SimpleHTTPRequestHandler):
+    def end_headers(self):
+        self.send_header('Cache-Control', 'no-store')
+        super().end_headers()
     def do_POST(self):
-        name = self.path.removeprefix('/__grainy_save/')
-        if not self.path.startswith('/__grainy_save/') or not re.fullmatch(r'(?:0[1-9]|1[0-9]|20|contact-sheet|detail-sheet)\.png|metrics\.json', name):
+        name = self.path.removeprefix(PREFIX)
+        if not self.path.startswith(PREFIX) or not re.fullmatch(r'(?:0[1-9]|1[0-9]|20|contact-sheet|detail-sheet|before-after|materials|default|ember|abstract)\.png|metrics\.json', name):
             self.send_error(404); return
         size = int(self.headers.get('Content-Length', '0'))
         if size <= 0 or size > 25000000:
@@ -21,5 +30,5 @@ class Handler(SimpleHTTPRequestHandler):
     def log_message(self, format, *args):
         if str(args[1]) not in ('200','304'): super().log_message(format,*args)
 
-print('Grainy review server: http://127.0.0.1:8020',flush=True)
-ThreadingHTTPServer(('127.0.0.1',8020),partial(Handler,directory=str(ROOT))).serve_forever()
+print(f'Grainy review server: http://127.0.0.1:{args.port}',flush=True)
+ThreadingHTTPServer(('127.0.0.1',args.port),partial(Handler,directory=str(ROOT))).serve_forever()

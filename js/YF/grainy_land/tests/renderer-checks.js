@@ -1,4 +1,4 @@
-import { LandscapeRenderer } from '../render.js';
+import { LandscapeRenderer } from '../render.js?v=landforms-2';
 import { defaults, palettes } from '../document.js';
 const renderer = new LandscapeRenderer(), results = [], urls = [];
 const check = (name, condition) => { results.push((condition ? 'PASS ' : 'FAIL ') + name); if (!condition) throw new Error(name); };
@@ -39,6 +39,24 @@ try {
     check('Background remains editable in abstract mode',!equal(capture({...defaults,mode:'abstract'}).pixels,capture({...defaults,mode:'abstract',sky:'#123456'}).pixels));
     check('Grain zero removes texture', !equal(initial,capture({...defaults,grain:0}).pixels));
     check('Softness changes transitions', !equal(capture({...defaults,softness:0}).pixels,capture({...defaults,softness:100}).pixels));
+    check('Abstract ignores disabled horizon and relief controls',equal(
+        capture({...defaults,mode:'abstract',horizon:15,relief:0}).pixels,
+        capture({...defaults,mode:'abstract',horizon:80,relief:100}).pixels));
+    const custom=capture({...defaults,terrain:'#14765A',depth:'#083540',light:'#E8F7A1'}).pixels;
+    check('Custom material anchors affect the rendered terrain',!equal(initial,custom));
+    check('Contrast changes material independently of glow',!equal(
+        capture({...defaults,glow:0,contrast:70}).pixels,capture({...defaults,glow:0,contrast:140}).pixels));
+    check('Grain size changes the pigment structure',!equal(
+        capture({...defaults,grainSize:.5}).pixels,capture({...defaults,grainSize:3}).pixels));
+    for (const [name,settings] of Object.entries({
+        minimal:{scale:220,complexity:1,flow:0,relief:0,softness:0,grain:0},
+        maximal:{scale:40,complexity:6,flow:100,relief:100,softness:100,grain:100},
+        portrait:{width:1200,height:1600}, square:{width:1600,height:1600}
+    })) {
+        const pixels=capture({...defaults,...settings}).pixels;
+        check(name+' remains opaque and nonuniform',pixels.filter((_,i)=>i%4===3).every(v=>v===255)
+            && pixels.some((v,i)=>i%4!==3 && v!==pixels[i%4]));
+    }
     const png1=await artifact('pigment-1920',defaults,1920,1080);
     check('Repeated 1920 render is unchanged after PNG encoding',equal(png1,capture(defaults,1920,1080).pixels));
     await artifact('ember-3840',ember,3840,2160);

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { defaults, palettes, normalizeSettings, makeDocument, readDocument, exportDimensions } from '../document.js';
-import { createScene, paletteLUT } from '../scene.js';
+import { createScene, paletteLUT, materialColors } from '../scene.js';
 
 test('reference palettes start with the required editable blue', () => {
     assert.equal(defaults.sky, '#2353DB');
@@ -32,7 +32,11 @@ test('geometry survives palette, grain, glow and export resolution changes', () 
 test('generated fields and automatic half-tones remain finite across seeds', () => {
     for (let seed=0;seed<32;seed++) {
         const scene = createScene({...defaults,seed});
-        assert.equal(scene.fields.length,5);
+        assert.equal(scene.fields.length,6);
+        assert.equal(scene.layers.length,6);
+        assert.equal(scene.layerStyles.length,6);
+        assert.ok(scene.layers.flat().every(Number.isFinite));
+        assert.ok(scene.layerStyles.flat().every(Number.isFinite));
         assert.ok(scene.fields.flat().every(Number.isFinite));
         assert.ok(scene.phases.every(Number.isFinite));
     }
@@ -48,4 +52,15 @@ test('PNG dimensions are independent of viewport and oversized exports are rejec
     assert.deepEqual(exportDimensions({...defaults,exportScale:3}),{width:5760,height:3240});
     assert.throws(() => exportDimensions({...defaults,width:4096,height:4096,exportScale:3}),/too large/);
     assert.throws(() => exportDimensions({...defaults,width:4096,height:4096,exportScale:2}),/too large/);
+});
+
+test('derived material colors follow custom anchors and remain displayable', () => {
+    const original = materialColors(defaults);
+    assert.equal(original.length,6);
+    for (const anchors of [palettes.pigment,palettes.ember,{terrain:'#000000',depth:'#FFFFFF',sky:'#FFFFFF',light:'#000000'}]) {
+        const colors=materialColors({...defaults,...anchors});
+        assert.ok(colors.flat().every(v => Number.isFinite(v) && v>=0 && v<=1));
+    }
+    assert.notDeepEqual(original,materialColors({...defaults,terrain:'#14A966',light:'#E8EEAA'}));
+    assert.deepEqual(original,materialColors({...defaults,seed:1,glow:90,grain:0}));
 });

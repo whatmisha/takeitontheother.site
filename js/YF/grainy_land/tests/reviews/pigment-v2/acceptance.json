@@ -1,0 +1,50 @@
+{
+  "date": "2026-10-02",
+  "toolId": "grainy_land",
+  "sceneVersion": 2,
+  "status": "passed",
+  "unit": {
+    "command": "node --test grainy_land/tests/*.test.mjs infra/catalog/tests/public-routes.test.mjs infra/catalog/tests/registry.test.mjs",
+    "passed": 24
+  },
+  "catalog": {
+    "command": "node infra/scripts/sync-tool-catalog.mjs --check",
+    "tools": 17,
+    "grainyLandLink": "verified in the hub and opened in browser"
+  },
+  "renderer": {
+    "fixture": "grainy_land/tests/renderer.html",
+    "passed": 26,
+    "browser": "Codex In-app Browser",
+    "checks": [
+      "deterministic seed and exact editable sky",
+      "independent grain size, softness, contrast, glow and palette",
+      "abstract ignores disabled horizon and relief",
+      "opaque nonuniform renders at control extremes",
+      "PNG encoding/decoded dimensions: Pigment 1920x1080, Ember 3840x2160, Abstract 1920x1080"
+    ]
+  },
+  "visual": {
+    "images": 20,
+    "dimensions": [
+      1920,
+      1080
+    ],
+    "sameSeedsAs": "../pigment-20/manifest.json",
+    "sheets": [
+      "contact-sheet.png",
+      "detail-sheet.png",
+      "before-after.png",
+      "materials.png"
+    ]
+  },
+  "browser": [
+    "Generate changes seed",
+    "Cmd+Z restores the original seed",
+    "new default, Ember and Abstract inspected"
+  ],
+  "limitations": [
+    "Existing settings import into the new scene version; old seeds do not reproduce scene-v1 geometry.",
+    "Cross-GPU, touch-device and print-profile acceptance remain outside this revision."
+  ]
+}
