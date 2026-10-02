@@ -37,7 +37,7 @@ export function validateCatalog(catalog) {
         if (tool.entry !== `${toolDirectory(tool.id)}/index.html`) fail(`${tool.id}: entry must stay in its own YF root directory`);
         if (typeof tool.name !== 'string' || !tool.name.trim() || !groups.has(tool.group)) fail(`${tool.id}: missing name/group`);
         if (!['planned', 'migrating', 'accepted'].includes(tool.state)) fail(`${tool.id}: invalid state`);
-        if (!['original', 'migration'].includes(tool.cohort)) fail(`${tool.id}: invalid cohort`);
+        if (!['original', 'migration', 'native'].includes(tool.cohort)) fail(`${tool.id}: invalid cohort`);
         if (tool.cohort === 'original' && tool.state !== 'accepted') fail(`${tool.id}: original tool cannot be unpublished`);
         if (!/^([a-zA-Z0-9_-]+\/)*[a-zA-Z0-9_-]+\.json#[a-z][a-z0-9_-]*$/.test(tool.capabilityContract)) fail(`${tool.id}: invalid local contract reference`);
         const viewport = tool.referenceViewport;

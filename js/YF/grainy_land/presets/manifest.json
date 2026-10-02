@@ -1,0 +1,20 @@
+{
+  "presets": [
+    {
+      "name": "Pigment",
+      "file": "pigment.json"
+    },
+    {
+      "name": "Ember",
+      "file": "ember.json"
+    },
+    {
+      "name": "Drift",
+      "file": "drift.json"
+    },
+    {
+      "name": "Quiet dunes",
+      "file": "quiet-dunes.json"
+    }
+  ]
+}

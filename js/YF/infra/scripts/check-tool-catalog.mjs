@@ -39,6 +39,25 @@ for (const tool of catalog.tools) {
     assert.ok(rootDirectories.has(tool.id), `${tool.id}: tool must live at upgrade root`);
     assert.equal(tool.entry, `${tool.id}/index.html`);
     assert.equal(tool.group, tool.id === 'calendar-randomizer' || tool.id === 'chladni-sound-pattern' ? 'muted' : 'lunnen');
+    if (tool.cohort === 'native') {
+        assert.equal(tool.capabilityContract, `${tool.id}/capabilities.json#${tool.id}`);
+        const native = JSON.parse(await readUpgrade(`${tool.id}/capabilities.json`));
+        assert.equal(native.schemaVersion, 1);
+        assert.equal(native.toolId, tool.id);
+        assert.ok(native.modes.length > 0 && native.exports.length > 0);
+        assert.equal(native.framework, 'infra/framework/src/index.js');
+        if (tool.state === 'accepted') {
+            assert.equal(native.acceptance.status, 'passed');
+            for (const kind of ['unit', 'artifact', 'browser']) {
+                assert.ok(native.acceptance[kind].length > 0, `${tool.id}: missing ${kind} evidence`);
+                for (const file of native.acceptance[kind]) {
+                    assert.ok(file.startsWith(`${tool.id}/`) && !file.split('/').includes('..'));
+                    await access(new URL(file, upgradeRoot));
+                }
+            }
+        }
+        continue;
+    }
     if (tool.cohort === 'original') {
         assert.equal(tool.capabilityContract, `infra/APPLICATION_CAPABILITIES.json#${tool.id}`);
         assert.equal(tool.entry, legacy.applications.find(app => app.id === tool.id).entry);
@@ -76,4 +95,4 @@ for (const tool of catalog.tools) {
     }
 }
 for (const tool of runtimeTools(catalog)) await access(new URL(tool.entry, upgradeRoot));
-console.log(`Catalog passed: 8 protected original tools + 8 approved migrations; ${runtimeTools(catalog).length} runtime entries at upgrade root. Historical acceptance manifests are unchanged.`);
+console.log(`Catalog passed: 8 protected original tools + 8 approved migrations + ${catalog.tools.filter(tool => tool.cohort === 'native').length} native tools; ${runtimeTools(catalog).length} runtime entries at upgrade root. Historical acceptance manifests are unchanged.`);

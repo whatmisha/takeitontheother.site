@@ -1,0 +1,51 @@
+{
+  "date": "2026-10-02",
+  "toolId": "grainy_land",
+  "status": "passed",
+  "scope": "Grainy Land v1; not a claim of a full historical YF release gate",
+  "unit": {
+    "command": "node --test grainy_land/tests/*.test.mjs infra/catalog/tests/registry.test.mjs infra/catalog/tests/public-routes.test.mjs infra/framework/tests/tool-ui.test.mjs infra/framework/tests/public-api.test.mjs",
+    "passed": 43
+  },
+  "artifact": {
+    "fixture": "grainy_land/tests/renderer.html",
+    "checks": 18,
+    "results": [
+      "Exact #2353DB sky and editable #123456 sky",
+      "Different seeds differ; returning to seed reproduces every pixel",
+      "Independent glow, palette, softness and grain",
+      "Background remains editable in abstract mode",
+      "PNG encoding and decoded dimensions: Pigment 1920x1080, Ember 3840x2160, Abstract 1920x1080",
+      "Re-render after PNG encoding preserves pixels"
+    ]
+  },
+  "browser": {
+    "browser": "Codex In-app Browser",
+    "viewports": [
+      {
+        "width": 1440,
+        "height": 900
+      },
+      {
+        "width": 390,
+        "height": 844
+      }
+    ],
+    "checked": [
+      "Initial load and four presets",
+      "Landscape/Abstract selection; horizon and relief disabled in Abstract",
+      "Generate changes seed; undo and redo restore it",
+      "Palette selector and typed Glow value",
+      "Square format updates width and height; 2x reports 3200x3200",
+      "Changed settings share URL restored on reload",
+      "PNG action reaches PNG exported feedback",
+      "No horizontal overflow at 390px; compact action dock",
+      "No console errors or warnings in checked session"
+    ]
+  },
+  "limitations": [
+    "OS-level download path is unavailable through this embedded browser; actual PNG encoding and decoding were checked in the GPU fixture.",
+    "Full catalog/layout checks are blocked by existing unregistered grid_generator_02; dedicated registry/routes checks pass.",
+    "Real touch-device, cross-GPU and print-profile acceptance deferred."
+  ]
+}

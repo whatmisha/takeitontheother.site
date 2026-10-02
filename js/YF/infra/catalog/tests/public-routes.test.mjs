@@ -11,7 +11,7 @@ test('every published catalogue link opens its canonical tool directly', async (
     const hub = await read('index.html');
     const tools = publishedTools(catalog);
     const links = [...hub.matchAll(/<li><a href="([^"]+)">/gu)].map(match => match[1]);
-    assert.equal(tools.length, 16);
+    assert.equal(tools.filter(tool => tool.cohort !== 'native').length, 16);
     assert.equal(new Set(links).size, tools.length);
     assert.deepEqual([...links].sort(), tools.map(toolHref).sort());
     for (const tool of tools) {

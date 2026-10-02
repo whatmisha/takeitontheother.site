@@ -219,6 +219,19 @@
         "height": 900
       },
       "capabilityContract": "infra/qa/migrations/CONTRACTS.json#chladni-sound-pattern"
+    },
+    {
+      "id": "grainy_land",
+      "name": "Grainy Land",
+      "group": "lunnen",
+      "entry": "grainy_land/index.html",
+      "state": "accepted",
+      "cohort": "native",
+      "referenceViewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "capabilityContract": "grainy_land/capabilities.json#grainy_land"
     }
   ]
 }

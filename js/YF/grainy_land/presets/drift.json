@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "width": 1920,
+  "height": 1080,
+  "seed": 925731,
+  "mode": "abstract",
+  "scale": 125,
+  "complexity": 3,
+  "flow": 85,
+  "horizon": 53,
+  "relief": 62,
+  "softness": 52,
+  "glow": 34,
+  "halo": 40,
+  "contrast": 100,
+  "grain": 46,
+  "grainSize": 1,
+  "exportScale": 1,
+  "sky": "#2353DB",
+  "terrain": "#FC796E",
+  "depth": "#713004",
+  "light": "#FFC2EE"
+}

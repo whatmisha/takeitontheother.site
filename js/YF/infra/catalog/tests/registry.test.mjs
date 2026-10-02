@@ -9,7 +9,8 @@ const ray = data => data.tools.find(tool => tool.id === 'rays_pattern_generator'
 
 test('all eight original tools use clean URLs alongside eight approved migrations', () => {
     assert.equal(validateCatalog(catalog), catalog);
-    assert.equal(catalog.tools.length, 16);
+    assert.equal(catalog.tools.filter(tool => tool.cohort !== 'native').length, 16);
+    assert.ok(catalog.tools.some(tool => tool.id === 'grainy_land' && tool.cohort === 'native'));
     assert.deepEqual(catalog.tools.filter(tool => tool.cohort === 'original').map(tool => tool.entry), [
         'sparky/index.html', 'grid_generator/index.html', 'label_generator/index.html', 'keyboarder/index.html',
         'wordplayer/index.html', 'dither/index.html', 'wander_bender/index.html', 'pulsar_coder/index.html'

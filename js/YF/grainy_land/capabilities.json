@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "toolId": "grainy_land",
+  "renderer": "canvas-webgl",
+  "framework": "infra/framework/src/index.js",
+  "modes": [
+    "landscape",
+    "abstract"
+  ],
+  "exports": [
+    "png",
+    "json"
+  ],
+  "presets": true,
+  "history": true,
+  "share": true,
+  "storageKey": "upgrade:grainy_land:presets:v1",
+  "acceptance": {
+    "status": "passed",
+    "unit": [
+      "grainy_land/tests/document.test.mjs"
+    ],
+    "artifact": [
+      "grainy_land/tests/renderer.html",
+      "grainy_land/tests/renderer-checks.js",
+      "grainy_land/tests/acceptance.json"
+    ],
+    "browser": [
+      "grainy_land/tests/acceptance.json"
+    ]
+  }
+}
