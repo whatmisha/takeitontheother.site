@@ -1,0 +1,39 @@
+{
+  "renderer": "spray-1",
+  "renderSha256": "4355b07c18c0ba5b6336d9622900600be6ccba2e6780bf03a4915defcb86bbb6",
+  "documentTests": {
+    "passed": 13,
+    "failed": 0
+  },
+  "browserTests": {
+    "passed": 47,
+    "failed": 0,
+    "fixture": "../../renderer.html"
+  },
+  "visualReview": {
+    "cases": 10,
+    "baseline": "../forms-v3/even-numbered PNGs",
+    "sameSettingsAndSeeds": true,
+    "detailSheet": "detail-sheet.png",
+    "palettes": [
+      "Ember",
+      "Pigment"
+    ],
+    "includes": [
+      "glow",
+      "abstract"
+    ]
+  },
+  "grain100At1920": {
+    "interiorResidualRgbRms": 2.31,
+    "interior16pxBlockResidualRgbRms": 0.23,
+    "edgeResidualGreaterThanInteriorTimes": 1.5,
+    "previewVsDownsampledPngRgbMae": 0.93
+  },
+  "notes": [
+    "Grain 0 disables grain size.",
+    "Distant sky remains exactly #2353DB.",
+    "Seed determinism and 1920/3840 PNG export passed.",
+    "Dense paint is deliberately quieter than the reference; transitions carry most visible spray."
+  ]
+}

@@ -9,7 +9,7 @@ void main() { uv = position * .5 + .5; gl_Position = vec4(position, 0., 1.); }
 const fragmentSource = `
 precision highp float;
 varying vec2 uv;
-uniform vec2 artboard;
+uniform vec2 artboard, rasterSize;
 uniform vec4 phases, fields[6], layers[6], layerStyles[6], foldFields[6];
 uniform vec3 sky, colors[6], adjacent[6];
 uniform float toneAmount, toneScale, toneBleed, toneCharacter;
@@ -29,6 +29,29 @@ float noise(vec2 p) {
 }
 float fbm(vec2 p) {
     return noise(p)*.57 + noise(p*2.03+12.7)*.28 + noise(p*4.07+31.1)*.15;
+}
+// Independent, jittered droplets. Filtering accounts for the pixel footprint so
+// the same artwork coordinates stay fine in previews and round in larger PNGs.
+vec2 spray(vec2 point, float coverage, float footprint) {
+    vec2 cell=floor(point), local=fract(point);
+    float paint=0., texture=0., total=0.;
+    float filterWidth=min(footprint,1.5);
+    for (int y=-1; y<=1; y++) for (int x=-1; x<=1; x++) {
+        vec2 neighbor=vec2(float(x),float(y));
+        vec2 key=cell+neighbor;
+        vec2 center=vec2(hash(key+17.1),hash(key+83.7));
+        vec2 delta=neighbor+center-local;
+        float radius=mix(.24,.38,hash(key+41.3));
+        float variance=radius*radius+filterWidth*filterWidth/12.;
+        float weight=exp(-dot(delta,delta)/(2.*variance))/variance;
+        // Several thin passes leave translucent flecks instead of opaque dots.
+        float passes=step(hash(key+127.9),coverage)+step(hash(key+319.7),coverage)
+            +step(hash(key+451.3),coverage);
+        paint+=weight*passes/3.;
+        texture+=weight*hash(key+231.4);
+        total+=weight;
+    }
+    return vec2(paint,texture)/max(total,.0001);
 }
 float bell(float v) { return exp(-v*v); }
 float smoothUnion(float a, float b, float k) {
@@ -53,16 +76,11 @@ void main() {
     if (phases.w > 3.141593) q.x = 1.-q.x;
     q.x += sin(q.y*5.+phases.z)*flow*.035;
 
-    // The same pigment coordinates are sampled at every export resolution.
-    vec2 gp = p*1920.*vec2(1.,artboard.y/artboard.x)/grainSize;
-    float fine = hash(floor(gp*1.8)+vec2(seed,seed*.37))-.5;
-    float particle = hash(floor(gp*.73)+vec2(seed*.17,seed))-.5;
-    float clusters = fbm(gp*.085+offset);
-    float dust = fine*.46+particle*.54;
-    float density = .25+1.7*smoothstep(.2,.8,clusters);
-    float mottling = fbm(q*32.+offset);
-    vec3 color = sky;
-    float coverage = 0.;
+    // Grain size is relative to the artwork, independent of export resolution.
+    vec2 gp=p*2688.*vec2(1.,artboard.y/artboard.x)/grainSize;
+    float footprint=max(2688./rasterSize.x,2688.*artboard.y/artboard.x/rasterSize.y)/grainSize;
+    float resolve=min(1.,1.5/footprint);
+    vec3 color=sky, underpaint=sky;
 
     for (int i=0; i<6; i++) {
         vec4 f = layers[i], style = layerStyles[i];
@@ -102,12 +120,16 @@ void main() {
         float edgeField=fbm(surface*vec2(5.,8.)+id*11.+offset);
         float localSoft=mix(1.,mix(.20,2.1,smoothstep(.25,.75,edgeField)),edgeVariation);
         float edge=(.002+softness*.045)*style.z*localSoft;
-        float scatter=fbm(surface*18.+id*21.+offset);
-        float disturbance=grain*(dust*.025*density+(scatter-.5)*.014);
-        float mask=smoothstep(-edge,edge,d+disturbance);
-        // Fine grains sit inside a broader cloud; avoid a uniform crunchy outline.
-        float cloud=bell(d/(edge*2.+.004))*grain*edgeVariation;
-        mask=clamp(mask+(clusters-.5)*cloud*.19,0.,1.);
+        float smoothMask=smoothstep(-edge,edge,d);
+        vec2 droplets=vec2(smoothMask,.5);
+        if (grain>0. && smoothMask>0.) {
+            // Rotate and offset each coat: adjacent paints never share a stencil.
+            float angle=id*2.399963;
+            vec2 point=mat2(cos(angle),-sin(angle),sin(angle),cos(angle))*gp;
+            point+=vec2(seed*.17,seed*.37)+id*vec2(107.,191.);
+            droplets=spray(point,smoothMask,footprint);
+        }
+        float mask=mix(smoothMask,droplets.x,grain*resolve);
 
         vec3 base = colors[0];
         if (i==1 || i==3 || i==4) base = colors[1];
@@ -163,7 +185,7 @@ void main() {
         if (i==1 || i==3 || i==4) pigment=mix(pigment,colors[0],crease*warmth*toneAmount*.45);
         // Neighbor reflection extends inside a mass; softness still owns opacity.
         float bleed = toneAmount*toneBleed*bell((d-.024)/(.023+softness*.07))*(.3+.7*body);
-        pigment = mix(pigment,color,bleed*.52);
+        pigment = mix(pigment,underpaint,bleed*.52);
         // Tonal relief belongs to each mass; it is not a sequence of stripes.
         pigment += (body-.5)*.05;
         pigment = (pigment-.5)*contrast+.5;
@@ -176,20 +198,19 @@ void main() {
         vec3 haloTint = mix(tint,adjacent[2],toneAmount*.75);
         pigment = mix(pigment,tint,glow*core*.93*illumination);
         pigment += glow*aura*illumination*tint*.15;
-        // Colored aggregates and finer particles mix pigments at the edges.
-        float fleck=(dust*density*.23+(clusters-.5)*.085)*grain;
-        pigment+=fleck*(.7+.6*body);
-        vec3 deposit = i==2 || i==5 ? colors[0] : colors[1];
-        pigment = mix(pigment,deposit,grain*smoothstep(.12,.48,particle)*(.06+.20*clusters)*(.4+.6*scatter));
-        float outsideHalo = aura*(1.-mask)*glow*.25*illumination;
-        color = mix(color,haloTint,outsideHalo);
-        float reflection = bell(d/(edge*2.5+.015))*(1.-mask)*toneAmount*toneBleed*.13;
-        color = mix(color,haloTint,reflection);
-        color = mix(color,clamp(pigment,0.,1.),mask);
-        coverage = max(coverage,mask);
+        // Lighting samples untextured paint, never the grain in lower coats.
+        float outsideHalo=aura*(1.-smoothMask)*glow*.25*illumination;
+        float reflection=bell(d/(edge*2.5+.015))*(1.-smoothMask)*toneAmount*toneBleed*.13;
+        underpaint=mix(underpaint,haloTint,outsideHalo);
+        underpaint=mix(underpaint,haloTint,reflection);
+        underpaint=mix(underpaint,clamp(pigment,0.,1.),smoothMask);
+        // A dense coat retains only a very faint variation in its own pigment.
+        // No gray noise, foreign-color deposits or mid-scale clumps are added.
+        pigment*=1.+grain*.16*(.5-droplets.y)*resolve;
+        color=mix(color,haloTint,outsideHalo);
+        color=mix(color,haloTint,reflection);
+        color=mix(color,clamp(pigment,0.,1.),mask);
     }
-    // Atmospheric pigment near the terrain leaves the open sky exact.
-    color += (mottling-.5)*grain*.012*coverage;
     gl_FragColor = vec4(clamp(color,0.,1.),1.);
 }
 `;
@@ -244,6 +265,7 @@ export class LandscapeRenderer {
             gl.uniform1f(this.location(name), values[name]);
         }
         gl.uniform2f(this.location('artboard'),s.width,s.height);
+        gl.uniform2f(this.location('rasterSize'),width,height);
         gl.uniform4fv(this.location('phases'),scene.phases);
         gl.uniform4fv(this.location('fields[0]'),scene.fields.flat());
         gl.uniform3fv(this.location('sky'),hexRGB(s.sky));

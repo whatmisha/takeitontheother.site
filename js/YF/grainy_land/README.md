@@ -28,8 +28,10 @@ The default preset is **Ember**, retaining the original parameters from `grainy-
 - **Glow** controls luminous contours; **Glow coverage** sets how much of each
   edge receives light, from isolated accents to broad illumination. **Halo width**
   controls the surrounding aura. Glow 0 disables both the luminous core and aura. **Contrast** changes tonal separation independently.
-- **Grain / Grain size:** pigment intensity and particle scale. Grain is anchored
-  in normalized artwork coordinates, independent of viewport zoom or export size.
+- **Grain / Grain size:** spray intensity and droplet scale. Dense paint has a
+  subtle fine texture; partially covered edges reveal translucent colored droplets.
+  Grain is anchored in normalized artwork coordinates and filtered for the current
+  pixel size. Grain 0 disables all texture, including changes to Grain size.
 - **Canvas:** four aspect ratios, custom dimensions and PNG 1× / 2× / 3×.
   The maximum is 8192 px per side and 32 megapixels, also bounded by GPU limits.
 
@@ -48,7 +50,7 @@ a basin, a foreground fold and a near light plane. Each has separate elevation,
 slope, diffusion and local illumination. Seeded two-dimensional deformations
 let surfaces curl around one another; a smooth union creates the foreground pocket
 and its open tail. Color fields follow those deformations, with localized highlights,
-reflected neighboring colors and clustered pigment. Abstract mode uses independent rotated
+reflected neighboring colors and fine spray. Abstract mode uses independent rotated
 fields and ignores the disabled horizon and relief settings. These normalized
 fields provide a place to introduce user-painted shapes later.
 `materialColors` derives warm crests, cool reflected light and earth half-tones in
@@ -59,8 +61,13 @@ Color changes never reroll geometry. Manual
 intermediate colors can be added without changing the scene model.
 
 `render.js` composites the surfaces with local tonal relief, variable edge
-diffusion, contour light and grain at multiple scales. Pigment includes colored
-deposits and clustered density rather than only additive white noise.
+diffusion, contour light and fine aerosol texture. Each coat has its own jittered
+round droplets, accumulated in three thin passes. Coverage fluctuates mainly in
+transitions; solid paint retains a faint variation in its own pigment. Broad
+cluster noise and foreign-color deposits are removed. Untextured underpaint is
+kept separately for reflected light, preventing grain in one coat from becoming
+a shared stencil in the next. Pixel-footprint filtering reduces subpixel aliasing
+in the preview while keeping droplet locations stable in larger exports.
 The shared CanvasTarget owns viewport zoom/pan. PNG is rendered afresh at the
 requested resolution, without capturing UI or enlarging the preview bitmap.
 
@@ -76,23 +83,27 @@ original 20-image review is preserved in `tests/reviews/pigment-20`.
 
 `npm run test:grainy` checks reference colors, round trips, sanitization,
 geometry independence, deterministic seeds, automatic half-tones and export limits.
-Open `tests/renderer.html` on the same local server for 42 real GPU/PNG checks
+Open `tests/renderer.html` on the same local server for 47 real GPU/PNG checks
 and generated images. This fixture is separate from the tool's user interface.
 
 Initial acceptance is in `tests/acceptance.json`; scene-v2 evidence and its
 archived 20-image review are in `tests/reviews/pigment-v2`. Adjacent-tone evidence
 is in `tests/reviews/tones-v1/acceptance.json`. That review compares disabled tones
 with all three characters on both palettes using identical geometry in each row.
-The color review is archived. To regenerate the current forms/material comparison, run:
+The color and forms reviews are archived. The current spray review uses the ten
+scene-v3 renders as its unchanged baseline. To regenerate the spray comparison:
 
 ```sh
-python3 grainy_land/tests/review-server.py --review forms-v3 --port 8023
+python3 grainy_land/tests/review-server.py --review spray-v1 --port 8024
 ```
 
-Open `/grainy_land/tests/reviews/forms-v3/` and use its after-generation button.
-Ten original images are preserved alongside ten new renders using the same seeds
-and original settings. New controls use their defaults (65 / 70 / 35). The review
-server binds to localhost and saves only named review artifacts.
+Open `/grainy_land/tests/reviews/spray-v1/` and use its save-comparison button.
+Ten new PNGs use the same settings and seeds as the even-numbered files in
+`tests/reviews/forms-v3`. The review includes both palettes, glow, abstract mode,
+and matching detail crops alongside the two references. Its `acceptance.json`
+records the checks, including fine interior texture, absence of coarse patches,
+stronger texture at boundaries, and preview/export agreement. The review server
+binds to localhost and saves only named review artifacts.
 
 New settings retain JSON schema v1 compatibility. Missing fields get safe defaults;
 the preset migration fills missing tone fields in known shipped presets marked

@@ -1,4 +1,4 @@
-import { LandscapeRenderer } from '../render.js?v=forms-3';
+import { LandscapeRenderer } from '../render.js?v=spray-1';
 import { defaults, palettes } from '../document.js?v=forms-3';
 const renderer = new LandscapeRenderer(), results = [], urls = [];
 const check = (name, condition) => { results.push((condition ? 'PASS ' : 'FAIL ') + name); if (!condition) throw new Error(name); };
@@ -38,6 +38,8 @@ try {
     check('Abstract creates an independent all-over composition',!equal(initial,capture({...defaults,mode:'abstract'}).pixels));
     check('Background remains editable in abstract mode',!equal(capture({...defaults,mode:'abstract'}).pixels,capture({...defaults,mode:'abstract',sky:'#123456'}).pixels));
     check('Grain zero removes texture', !equal(initial,capture({...defaults,grain:0}).pixels));
+    check('Grain zero also disables grain size',equal(
+        capture({...defaults,grain:0,grainSize:.5}).pixels,capture({...defaults,grain:0,grainSize:4}).pixels));
     check('Softness changes transitions', !equal(capture({...defaults,softness:0}).pixels,capture({...defaults,softness:100}).pixels));
     check('Abstract ignores disabled horizon and relief controls',equal(
         capture({...defaults,mode:'abstract',horizon:15,relief:0}).pixels,
@@ -81,6 +83,36 @@ try {
         const lo=key==='toneScale'?20:0, hi=key==='toneScale'?200:100;
         check(key+' affects rendered color',!equal(capture({...defaults,[key]:lo}).pixels,capture({...defaults,[key]:hi}).pixels));
     }
+    // A fixed seed makes this a reproducible material regression: an interior
+    // region of the central hill must retain detail without growing a coarse crust.
+    const smooth=capture({...defaults,grain:0},1920,1080);
+    const sprayed=capture({...defaults,grain:100},1920,1080);
+    const residual=(a,b,x,y,w,h,block=1)=>{
+        let sum=0,count=0;
+        for(let by=y;by<y+h;by+=block) for(let bx=x;bx<x+w;bx+=block) for(let c=0;c<3;c++){
+            let delta=0;
+            for(let dy=0;dy<block;dy++)for(let dx=0;dx<block;dx++){
+                const index=((by+dy)*1920+bx+dx)*4+c;delta+=a[index]-b[index];
+            }
+            sum+=(delta/(block*block))**2;count++;
+        }
+        return Math.sqrt(sum/count);
+    };
+    const interior=residual(sprayed.pixels,smooth.pixels,880,560,160,80);
+    const clumps=residual(sprayed.pixels,smooth.pixels,880,560,160,80,16);
+    const edge=residual(sprayed.pixels,smooth.pixels,820,395,160,80);
+    check('Dense paint retains subtle fine texture ('+interior.toFixed(2)+' RGB RMS)',interior>.2 && interior<5);
+    check('Grain does not form coarse interior patches ('+clumps.toFixed(2)+' RGB RMS)',clumps<1.5);
+    check('Spray is stronger in transitions than inside paint',edge>interior*1.5);
+    const reduced=document.createElement('canvas');reduced.width=960;reduced.height=540;
+    const reducedCtx=reduced.getContext('2d',{willReadFrequently:true});
+    reducedCtx.drawImage(sprayed.canvas,0,0,960,540);
+    const reducedPixels=reducedCtx.getImageData(0,0,960,540).data;
+    const preview=capture({...defaults,grain:100},960,540).pixels;
+    let previewError=0;
+    for(let i=0;i<preview.length;i++)if(i%4!==3)previewError+=Math.abs(preview[i]-reducedPixels[i]);
+    previewError/=960*540*3;
+    check('Preview stays close to downsampled export ('+previewError.toFixed(2)+' RGB MAE)',previewError<2);
     const png1=await artifact('ember-default-1920',defaults,1920,1080);
     check('Repeated 1920 render is unchanged after PNG encoding',equal(png1,capture(defaults,1920,1080).pixels));
     await artifact('ember-3840',ember,3840,2160);
