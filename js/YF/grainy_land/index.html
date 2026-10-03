@@ -7,7 +7,7 @@
     <link rel="icon" href="data:,">
     <link rel="stylesheet" href="../infra/framework/css/othersite-styles.css">
     <link rel="stylesheet" href="../infra/framework/css/ui-contract.css?v=uiq-5">
-    <link rel="stylesheet" href="./app.css?v=tones-1">
+    <link rel="stylesheet" href="./app.css?v=forms-3">
 </head>
 <body>
 <div class="container grainy-land">
@@ -39,6 +39,7 @@
                     <div class="control-group" data-control="scale"><label for="scaleSlider"><span>Scale</span><input id="scaleValue" class="value-display" value="100" aria-label="Scale value" inputmode="decimal"></label><input id="scaleSlider" type="range" min="40" max="220" step="1" value="100"></div>
 <div class="control-group" data-control="complexity"><label for="complexitySlider"><span>Complexity</span><input id="complexityValue" class="value-display" value="2" aria-label="Complexity value" inputmode="decimal"></label><input id="complexitySlider" type="range" min="1" max="6" step="1" value="2"></div>
 <div class="control-group" data-control="flow"><label for="flowSlider"><span>Flow</span><input id="flowValue" class="value-display" value="48" aria-label="Flow value" inputmode="decimal"></label><input id="flowSlider" type="range" min="0" max="100" step="1" value="48"></div>
+<div class="control-group" data-control="folds"><label for="foldsSlider"><span>Folds</span><input id="foldsValue" class="value-display" value="65" aria-label="Folds value" inputmode="decimal"></label><input id="foldsSlider" type="range" min="0" max="100" step="1" value="65"></div>
 <div class="control-group" data-control="horizon"><label for="horizonSlider"><span>Horizon</span><input id="horizonValue" class="value-display" value="53" aria-label="Horizon value" inputmode="decimal"></label><input id="horizonSlider" type="range" min="15" max="80" step="1" value="53"></div>
 <div class="control-group" data-control="relief"><label for="reliefSlider"><span>Relief</span><input id="reliefValue" class="value-display" value="62" aria-label="Relief value" inputmode="decimal"></label><input id="reliefSlider" type="range" min="0" max="100" step="1" value="62"></div>
                     <div class="seed-row"><label for="seedInput">Seed</label><input id="seedInput" type="number" min="0" max="4294967295" value="1565559100" aria-label="Seed"></div>
@@ -77,7 +78,9 @@
                     <div class="control-group" data-control="toneBleed"><label for="toneBleedSlider"><span>Color bleed</span><input id="toneBleedValue" class="value-display" value="50" aria-label="Color bleed value" inputmode="decimal"></label><input id="toneBleedSlider" type="range" min="0" max="100" step="1" value="50"></div>
                 </section>
                 <section class="control-section"><h2 class="control-field-heading">Light & texture</h2><div class="control-group" data-control="softness"><label for="softnessSlider"><span>Softness</span><input id="softnessValue" class="value-display" value="38" aria-label="Softness value" inputmode="decimal"></label><input id="softnessSlider" type="range" min="0" max="100" step="1" value="38"></div>
+<div class="control-group" data-control="edgeVariation"><label for="edgeVariationSlider"><span>Edge variation</span><input id="edgeVariationValue" class="value-display" value="70" aria-label="Edge variation value" inputmode="decimal"></label><input id="edgeVariationSlider" type="range" min="0" max="100" step="1" value="70"></div>
 <div class="control-group" data-control="glow"><label for="glowSlider"><span>Glow</span><input id="glowValue" class="value-display" value="0" aria-label="Glow value" inputmode="decimal"></label><input id="glowSlider" type="range" min="0" max="100" step="1" value="0"></div>
+<div class="control-group" data-control="glowCoverage"><label for="glowCoverageSlider"><span>Glow coverage</span><input id="glowCoverageValue" class="value-display" value="35" aria-label="Glow coverage value" inputmode="decimal"></label><input id="glowCoverageSlider" type="range" min="0" max="100" step="1" value="35"></div>
 <div class="control-group" data-control="halo"><label for="haloSlider"><span>Halo width</span><input id="haloValue" class="value-display" value="65" aria-label="Halo width value" inputmode="decimal"></label><input id="haloSlider" type="range" min="0" max="100" step="1" value="65"></div>
 <div class="control-group" data-control="contrast"><label for="contrastSlider"><span>Contrast</span><input id="contrastValue" class="value-display" value="118" aria-label="Contrast value" inputmode="decimal"></label><input id="contrastSlider" type="range" min="50" max="180" step="1" value="118"></div>
 <div class="control-group" data-control="grain"><label for="grainSlider"><span>Grain</span><input id="grainValue" class="value-display" value="55" aria-label="Grain value" inputmode="decimal"></label><input id="grainSlider" type="range" min="0" max="100" step="1" value="55"></div>
@@ -98,6 +101,6 @@
     <input id="jsonFileInput" type="file" accept=".json,application/json" hidden><button id="jsonPickerTrigger" type="button" hidden>Choose JSON</button>
     <dialog id="dialog" class="modal" aria-labelledby="dialogTitle"><div class="modal-content"><h2 id="dialogTitle" class="modal-title"></h2><div id="dialogText" class="modal-text"></div><input id="dialogInput" class="modal-input" type="text" style="display:none"><div id="dialogButtons" class="modal-buttons"></div></div></dialog>
 </div>
-<script type="module" src="./tool.js?v=ember-default-1"></script>
+<script type="module" src="./tool.js?v=forms-3"></script>
 </body>
 </html>

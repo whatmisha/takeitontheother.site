@@ -4,13 +4,14 @@ Static landscape and abstract field generator using the shared YF framework.
 Open `grainy_land/` through the YF development server. No build step or remote
 runtime dependencies are needed. Rendering requires WebGL.
 
-The default preset is **Ember**, matching `grainy-land-1565559100.json`: seed
+The default preset is **Ember**, retaining the original parameters from `grainy-land-1565559100.json`: seed
 1565559100, Glow 0, Grain 55, Radiant tones at 100, and depth color #D43C00.
 
 ## Controls
 
 - **Composition:** Landscape / Abstract, scale, complexity, flow, horizon,
-  relief and seed. Generate (R) changes only the seed.
+  relief, folds and seed. **Folds** adds local curls, pockets and pinched passages;
+  0 gives simpler layered forms. Generate (R) changes only the seed.
 - **Color & light:** Pigment / Ember palettes and four editable base colors.
   Both reference palettes start with background **#2353DB**.
 - **Adjacent tones:** four base color pickers remain unchanged. **Amount** sets
@@ -22,9 +23,11 @@ The default preset is **Ember**, matching `grainy-land-1565559100.json`: seed
   broad flowing color shifts; Radiant concentrates brighter tones near folds and
   edges. Glow and contrast remain independently adjustable. Three read-only
   gradient strips preview the derived terrain, depth and light colors.
-- **Softness** adjusts the color transitions and silhouette.
-- **Glow** controls luminous contours; **Halo width** controls their surrounding
-  aura. **Contrast** changes tonal separation independently.
+- **Softness** adjusts the color transitions and silhouette. **Edge variation**
+  varies diffusion along each boundary, from compact edges to scattered pigment.
+- **Glow** controls luminous contours; **Glow coverage** sets how much of each
+  edge receives light, from isolated accents to broad illumination. **Halo width**
+  controls the surrounding aura. Glow 0 disables both the luminous core and aura. **Contrast** changes tonal separation independently.
 - **Grain / Grain size:** pigment intensity and particle scale. Grain is anchored
   in normalized artwork coordinates, independent of viewport zoom or export size.
 - **Canvas:** four aspect ratios, custom dimensions and PNG 1× / 2× / 3×.
@@ -40,9 +43,12 @@ UI language follows the existing English YF interface.
 
 `document.js` owns normalization, limits and the versioned JSON format.
 `scene.js` generates normalized geometry independently of color and resolution.
-Scene version 2 uses six independent surfaces: distant terrain, two side banks,
+Scene version 3 uses six independent surfaces: distant terrain, two side banks,
 a basin, a foreground fold and a near light plane. Each has separate elevation,
-slope, diffusion and local illumination. Abstract mode uses independent rotated
+slope, diffusion and local illumination. Seeded two-dimensional deformations
+let surfaces curl around one another; a smooth union creates the foreground pocket
+and its open tail. Color fields follow those deformations, with localized highlights,
+reflected neighboring colors and clustered pigment. Abstract mode uses independent rotated
 fields and ignores the disabled horizon and relief settings. These normalized
 fields provide a place to introduce user-painted shapes later.
 `materialColors` derives warm crests, cool reflected light and earth half-tones in
@@ -61,28 +67,31 @@ requested resolution, without capturing UI or enlarging the preview bitmap.
 Painting, direct shape editing, manual intermediate colors, animation and
 print color management are deferred. Current output is RGB PNG; future print
 support can retain normalized scenes and introduce physical dimensions, output
-profiles and tiled rendering. Current seeds are tied to scene version 2. Existing v1 settings JSON still loads,
-but renders with the new geometry; it does not reproduce the old v1 image. The
+profiles and tiled rendering. Current seeds are tied to scene version 3. Existing v1 settings JSON still loads,
+but renders with the new geometry and material; it does not reproduce images
+from previous scene versions. The
 original 20-image review is preserved in `tests/reviews/pigment-20`.
 
 ## Verification
 
 `npm run test:grainy` checks reference colors, round trips, sanitization,
 geometry independence, deterministic seeds, automatic half-tones and export limits.
-Open `tests/renderer.html` on the same local server for 37 real GPU/PNG checks
+Open `tests/renderer.html` on the same local server for 42 real GPU/PNG checks
 and generated images. This fixture is separate from the tool's user interface.
 
 Initial acceptance is in `tests/acceptance.json`; scene-v2 evidence and its
 archived 20-image review are in `tests/reviews/pigment-v2`. Adjacent-tone evidence
 is in `tests/reviews/tones-v1/acceptance.json`. That review compares disabled tones
 with all three characters on both palettes using identical geometry in each row.
-To regenerate the current color review, run:
+The color review is archived. To regenerate the current forms/material comparison, run:
 
 ```sh
-python3 grainy_land/tests/review-server.py --review tones-v1 --port 8022
+python3 grainy_land/tests/review-server.py --review forms-v3 --port 8023
 ```
 
-Open `/grainy_land/tests/reviews/tones-v1/` and use its comparison button. The review
+Open `/grainy_land/tests/reviews/forms-v3/` and use its after-generation button.
+Ten original images are preserved alongside ten new renders using the same seeds
+and original settings. New controls use their defaults (65 / 70 / 35). The review
 server binds to localhost and saves only named review artifacts.
 
 New settings retain JSON schema v1 compatibility. Missing fields get safe defaults;

@@ -1,0 +1,49 @@
+{
+  "date": "2026-10-03",
+  "toolId": "grainy_land",
+  "sceneVersion": 3,
+  "materialRevision": "forms-3",
+  "status": "passed",
+  "unit": {
+    "command": "node --test grainy_land/tests/*.test.mjs",
+    "passed": 13
+  },
+  "renderer": {
+    "fixture": "grainy_land/tests/renderer.html",
+    "passed": 42,
+    "browser": "Codex In-app Browser"
+  },
+  "visual": {
+    "pairs": 10,
+    "size": [
+      1920,
+      1080
+    ],
+    "beforeSceneVersion": 2,
+    "settings": "metrics.json",
+    "sheet": "contact-sheet.png",
+    "summary": "before-after.png",
+    "cases": "Four identical seeds in Ember and Pigment; Ember Glow 82; Abstract. Original parameters retained; new controls use defaults 65/70/35."
+  },
+  "browser": [
+    "Default Ember remains seed 1565559100 and Glow 0",
+    "Folds numeric editing updates slider; Cmd+Z restores 65",
+    "Edge variation and Glow coverage update through shared controls",
+    "Default state restored after UI checks",
+    "No console errors in tool or GPU fixture"
+  ],
+  "compatibility": [
+    "Four editable base colors retained; distant blue exactly #2353DB",
+    "Schema v1 imports receive missing new-control defaults",
+    "New controls participate in JSON, preset settings and undo",
+    "Stored personal presets remain untouched",
+    "Geometry and material updated: earlier seeds do not reproduce previous scene-version images"
+  ],
+  "files": {
+    "document.js": "8987c7cacbda8b78c529e1884a4c785882e702b6e52c2a0e0ed9021f02e637d6",
+    "scene.js": "df77900192be7f49e7c78f66ae1cc2cc1331215a19974d1bc7cc0901a16357db",
+    "render.js": "38d0ab6cf6aec94ae2d45477fdae52655282d98991b2e2272262d54b97a29629",
+    "tool.js": "e12bcb4bbc80d199ebace0e6167061b6b61a34848440c7f81cc1e1e287ca2aaa",
+    "index.html": "a94b8083c6e206b12a494f015f59d2810014ee0548fb1674aea8ea7bbd329841"
+  }
+}

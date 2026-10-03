@@ -24,7 +24,7 @@ test('imported values cannot allocate unbounded surfaces or inject extra state',
 });
 test('geometry survives palette, grain, glow and export resolution changes', () => {
     const a = createScene(defaults);
-    const b = createScene({...defaults,...palettes.ember,glow:100,grain:80,exportScale:3,width:3840,height:2160});
+    const b = createScene({...defaults,...palettes.ember,glow:100,grain:80,edgeVariation:0,glowCoverage:100,exportScale:3,width:3840,height:2160});
     assert.deepEqual(a,b);
     assert.deepEqual(createScene(defaults),a);
     assert.notDeepEqual(createScene({...defaults,seed:80424}),a);
@@ -36,6 +36,8 @@ test('generated fields and automatic half-tones remain finite across seeds', () 
         assert.equal(scene.fields.length,6);
         assert.equal(scene.layers.length,6);
         assert.equal(scene.layerStyles.length,6);
+        assert.equal(scene.foldFields.length,6);
+        assert.ok(scene.foldFields.flat().every(Number.isFinite));
         assert.ok(scene.layers.flat().every(Number.isFinite));
         assert.ok(scene.layerStyles.flat().every(Number.isFinite));
         assert.ok(scene.fields.flat().every(Number.isFinite));
@@ -123,4 +125,15 @@ test('default settings match the shipped Ember and cached built-ins update witho
     migratePresets(store);
     assert.deepEqual(all.Ember, personal);
     assert.equal(writes, 1);
+});
+
+test('fold and edge controls round-trip, and old documents receive safe defaults', () => {
+    const custom=normalizeSettings({...defaults,folds:91,edgeVariation:17,glowCoverage:82});
+    assert.deepEqual(readDocument(makeDocument(custom)),custom);
+    const old={...defaults};
+    for(const key of ['folds','edgeVariation','glowCoverage']) delete old[key];
+    const upgraded=readDocument({toolId:'grainy_land',schemaVersion:1,settings:old});
+    for(const key of ['folds','edgeVariation','glowCoverage']) assert.equal(upgraded[key],defaults[key]);
+    const bounded=normalizeSettings({folds:-30,edgeVariation:700,glowCoverage:Infinity});
+    assert.equal(bounded.folds,0);assert.equal(bounded.edgeVariation,100);assert.equal(bounded.glowCoverage,defaults.glowCoverage);
 });

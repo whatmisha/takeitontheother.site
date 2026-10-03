@@ -6,17 +6,17 @@ export const palettes = {
 };
 export const toneCharacters = { pigment: 'Pigment', pearlescent: 'Pearlescent', radiant: 'Radiant' };
 export const ranges = {
-    scale: [40, 220, 1], complexity: [1, 6, 1], flow: [0, 100, 1],
+    scale: [40, 220, 1], complexity: [1, 6, 1], flow: [0, 100, 1], folds: [0, 100, 1],
     horizon: [15, 80, 1], relief: [0, 100, 1], softness: [0, 100, 1],
-    glow: [0, 100, 1], halo: [0, 100, 1], contrast: [50, 180, 1],
+    edgeVariation: [0, 100, 1], glowCoverage: [0, 100, 1], glow: [0, 100, 1], halo: [0, 100, 1], contrast: [50, 180, 1],
     grain: [0, 100, 1], grainSize: [0.5, 4, 0.1],
     toneAmount: [0, 100, 1], toneSpread: [0, 100, 1],
     toneScale: [20, 200, 1], toneBleed: [0, 100, 1]
 };
 export const defaults = {
     schemaVersion: VERSION, width: 1920, height: 1080, seed: 1565559100, mode: 'landscape',
-    scale: 100, complexity: 2, flow: 48, horizon: 53, relief: 62,
-    softness: 38, glow: 0, halo: 65, contrast: 118, grain: 55, grainSize: 1,
+    scale: 100, complexity: 2, flow: 48, folds: 65, horizon: 53, relief: 62,
+    softness: 38, edgeVariation: 70, glowCoverage: 35, glow: 0, halo: 65, contrast: 118, grain: 55, grainSize: 1,
     toneCharacter: 'radiant', toneAmount: 100, toneSpread: 65, toneScale: 110, toneBleed: 50,
     exportScale: 1, ...palettes.ember
 };

@@ -1,5 +1,5 @@
-import { LandscapeRenderer } from '../render.js?v=tones-1';
-import { defaults, palettes } from '../document.js?v=tones-1';
+import { LandscapeRenderer } from '../render.js?v=forms-3';
+import { defaults, palettes } from '../document.js?v=forms-3';
 const renderer = new LandscapeRenderer(), results = [], urls = [];
 const check = (name, condition) => { results.push((condition ? 'PASS ' : 'FAIL ') + name); if (!condition) throw new Error(name); };
 const capture = (settings,width=480,height=270) => {
@@ -58,6 +58,16 @@ try {
         check(name+' remains opaque and nonuniform',pixels.filter((_,i)=>i%4===3).every(v=>v===255)
             && pixels.some((v,i)=>i%4!==3 && v!==pixels[i%4]));
     }
+    check('Folds change the silhouette without grain or adjacent tones',!equal(
+        capture({...defaults,grain:0,toneAmount:0,folds:0}).pixels,capture({...defaults,grain:0,toneAmount:0,folds:100}).pixels));
+    check('Edge variation changes diffusion independently of grain',!equal(
+        capture({...defaults,grain:0,edgeVariation:0}).pixels,capture({...defaults,grain:0,edgeVariation:100}).pixels));
+    check('Glow coverage controls localized lighting',!equal(
+        capture({...defaults,glow:100,glowCoverage:0}).pixels,capture({...defaults,glow:100,glowCoverage:100}).pixels));
+    check('Glow zero disables all glow coverage changes',equal(
+        capture({...defaults,glow:0,glowCoverage:0}).pixels,capture({...defaults,glow:0,glowCoverage:100}).pixels));
+    check('New material controls leave distant sky exact',equal(
+        capture({...defaults,folds:100,edgeVariation:100,glow:100,glowCoverage:100}).pixels.slice(0,4),new Uint8Array([35,83,219,255])));
     const plain=capture({...defaults,toneAmount:0}).pixels;
     check('Zero tone amount disables every adjacent-tone control',equal(plain,capture({...defaults,toneAmount:0,toneSpread:100,toneScale:20,toneBleed:100,toneCharacter:'radiant'}).pixels));
     for(const toneCharacter of ['pigment','pearlescent','radiant']) {
@@ -71,7 +81,7 @@ try {
         const lo=key==='toneScale'?20:0, hi=key==='toneScale'?200:100;
         check(key+' affects rendered color',!equal(capture({...defaults,[key]:lo}).pixels,capture({...defaults,[key]:hi}).pixels));
     }
-    const png1=await artifact('pigment-1920',defaults,1920,1080);
+    const png1=await artifact('ember-default-1920',defaults,1920,1080);
     check('Repeated 1920 render is unchanged after PNG encoding',equal(png1,capture(defaults,1920,1080).pixels));
     await artifact('ember-3840',ember,3840,2160);
     await artifact('abstract-1920',{...defaults,mode:'abstract',seed:925731,scale:125,flow:85,complexity:3,glow:34},1920,1080);

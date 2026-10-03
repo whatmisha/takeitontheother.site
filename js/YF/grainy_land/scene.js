@@ -1,5 +1,5 @@
 import { SeededRandom } from '../infra/framework/src/index.js';
-import { normalizeSettings } from './document.js?v=ember-default-1';
+import { normalizeSettings } from './document.js?v=forms-3';
 
 // Geometry is independent of the palette, texture and raster resolution.
 // Coordinates are normalized; this is the extension point for future painted fields.
@@ -17,8 +17,12 @@ export function createScene(settings) {
         [between(.43,.78), between(.12,.27), between(.32,.42), between(.12,.24)],
         [between(.49,.87), between(.13,.29), between(.44,.56), between(.16,.28)]
     ];
+    const foldRandom = new SeededRandom(s.seed).fork('folds-v3');
+    const foldFields = layers.map(() => [foldRandom.float(.2,.85), foldRandom.float(.16,.43),
+        foldRandom.float(.16,.31), foldRandom.float(-2.6,2.6)]);
     return {
-        version: 2,
+        version: 3,
+        foldFields, folds: s.folds/100,
         phases: Array.from({ length: 4 }, () => between(0, Math.PI * 2)),
         layers,
         // Slope, local phase, edge diffusion, and illumination position.

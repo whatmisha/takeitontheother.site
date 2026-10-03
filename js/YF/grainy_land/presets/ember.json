@@ -24,5 +24,8 @@
   "sky": "#2353DB",
   "terrain": "#FF9306",
   "depth": "#D43C00",
-  "light": "#FFF0D8"
+  "light": "#FFF0D8",
+  "folds": 65,
+  "edgeVariation": 70,
+  "glowCoverage": 35
 }
