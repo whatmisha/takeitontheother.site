@@ -1,7 +1,8 @@
 import test from 'node:test';
+import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
-import { defaults, palettes, normalizeSettings, makeDocument, readDocument, exportDimensions } from '../document.js';
-import { createScene, paletteLUT, materialColors } from '../scene.js';
+import { defaults, palettes, presetTones, migrateTonePresets, migratePresets, normalizeSettings, makeDocument, readDocument, exportDimensions } from '../document.js';
+import { createScene, paletteLUT, materialColors, adjacentColors } from '../scene.js';
 
 test('reference palettes start with the required editable blue', () => {
     assert.equal(defaults.sky, '#2353DB');
@@ -63,4 +64,63 @@ test('derived material colors follow custom anchors and remain displayable', () 
     }
     assert.notDeepEqual(original,materialColors({...defaults,terrain:'#14A966',light:'#E8EEAA'}));
     assert.deepEqual(original,materialColors({...defaults,seed:1,glow:90,grain:0}));
+});
+
+test('tone settings round-trip and legacy files gain bounded defaults', () => {
+    const s=normalizeSettings({...defaults,toneCharacter:'pearlescent',toneAmount:89,toneSpread:76,toneScale:141,toneBleed:65});
+    assert.deepEqual(readDocument(JSON.parse(JSON.stringify(makeDocument(s)))),s);
+    const legacy=readDocument({toolId:'grainy_land',schemaVersion:1,settings:{seed:17,sky:'#234567'}});
+    assert.equal(legacy.seed,17);assert.equal(legacy.sky,'#234567');assert.equal(legacy.toneAmount,defaults.toneAmount);
+    const unsafe=normalizeSettings({toneCharacter:'__proto__',toneAmount:900,toneScale:-50,toneSpread:NaN,toneBleed:Infinity});
+    assert.equal(unsafe.toneCharacter,defaults.toneCharacter);assert.equal(unsafe.toneAmount,100);assert.equal(unsafe.toneScale,20);
+    assert.equal(unsafe.toneSpread,defaults.toneSpread);assert.equal(unsafe.toneBleed,defaults.toneBleed);
+});
+test('all tone controls are independent of the seeded geometry', () => {
+    const scene=createScene(defaults);
+    assert.deepEqual(scene,createScene({...defaults,toneCharacter:'radiant',toneAmount:100,toneSpread:100,toneScale:20,toneBleed:100}));
+});
+test('adjacent colors remain finite, follow anchors, and keep neutral palettes neutral', () => {
+    for(const toneCharacter of ['pigment','pearlescent','radiant']) for(const toneSpread of [0,50,100]) {
+        for(const palette of [palettes.pigment,palettes.ember,{sky:'#FFFFFF',terrain:'#000000',depth:'#FFFFFF',light:'#000000'}]) {
+            const colors=adjacentColors({...defaults,...palette,toneCharacter,toneSpread});
+            assert.equal(colors.length,6);
+            assert.ok(colors.flat().every(v => Number.isFinite(v) && v>=0 && v<=1));
+        }
+        const gray=adjacentColors({...defaults,sky:'#777777',terrain:'#AAAAAA',depth:'#222222',light:'#EEEEEE',toneCharacter,toneSpread});
+        assert.ok(gray.every(rgb => Math.max(...rgb)-Math.min(...rgb)<=1/255));
+    }
+    assert.notDeepEqual(adjacentColors(defaults),adjacentColors({...defaults,terrain:'#128833',light:'#9988AA',sky:'#DEAD00'}));
+    assert.notDeepEqual(adjacentColors({...defaults,toneSpread:0}),adjacentColors({...defaults,toneSpread:100}));
+});
+test('stored preset migration backfills new fields without changing user choices', () => {
+    const old={seeded:true,seed:80423,terrain:'#123456',toneAmount:27};
+    let all={Ember:structuredClone(old),Personal:{seed:18},Pigment:{seed:20,toneCharacter:'pearlescent'}};
+    let writes=0;const store={loadAll:()=>all,saveAll:next=>{all=next;writes++;}};
+    migrateTonePresets(store);
+    assert.equal(all.Ember.toneCharacter,'radiant');assert.equal(all.Ember.toneAmount,27);
+    assert.equal(all.Ember.terrain,'#123456');assert.equal(all.Ember.seed,80423);
+    assert.deepEqual(all.Personal,{seed:18});assert.deepEqual(all.Pigment,{seed:20,toneCharacter:'pearlescent'});
+    migrateTonePresets(store);assert.equal(writes,1);
+});
+
+test('default settings match the shipped Ember and cached built-ins update without touching saved presets', () => {
+    const ember = JSON.parse(readFileSync(new URL('../presets/ember.json', import.meta.url), 'utf8'));
+    assert.deepEqual(defaults, ember);
+    assert.deepEqual(normalizeSettings(ember), ember);
+    const pigment = { seeded: true, seed: 80423, ...presetTones.Pigment };
+    const personal = { seed: 9, glow: 33 };
+    let all = { Ember: { seeded: true, createdAt: 123, seed: 80423, glow: 82, ...presetTones.Ember }, Pigment: pigment, Personal: personal };
+    let writes = 0;
+    const store = { loadAll: () => all, saveAll: next => { all = next; writes++; } };
+    migratePresets(store);
+    assert.deepEqual(normalizeSettings(all.Ember), ember);
+    assert.equal(all.Ember.createdAt, 123);
+    assert.deepEqual(all.Pigment, pigment);
+    assert.deepEqual(all.Personal, personal);
+    migratePresets(store);
+    assert.equal(writes, 1);
+    all.Ember = { ...personal };
+    migratePresets(store);
+    assert.deepEqual(all.Ember, personal);
+    assert.equal(writes, 1);
 });

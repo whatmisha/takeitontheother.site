@@ -67,6 +67,33 @@ test('commands named generate/export never acquire export feedback', async () =>
     h.ui.destroy();
 });
 
+test('utility command stays visible in the dock while J toggles JSON, with one click/shortcut owner', async () => {
+    const h = harness(); h.ui.destroy();
+    h.options.actions[2].group = 'utility';
+    h.options.actions[2].shortcut = 'r';
+    assert.throws(() => h.make().init(), /must be in ActionDock/u);
+    const generate = h.buttons.get('generateExport');
+    generate.closest = selector => selector === '.action-dock' ? h.buttons.get('png').closest(selector) : null;
+    const ui = h.make().init();
+    assert.equal(generate.hidden, false);
+    assert.equal(h.buttons.get('json').hidden, true);
+    await generate.click();
+    ui.handleKeydown(h.key('r', { code: 'KeyR' }));
+    await Promise.all(ui.bindings.map(binding => binding.pending));
+    assert.deepEqual(h.calls, ['generate', 'generate']);
+    assert.equal(generate.dataset.exportFeedbackState, undefined);
+    for (const expanded of [true, false]) {
+        ui.handleKeydown(h.key('j', { code: 'KeyJ' }));
+        assert.equal(h.buttons.get('json').hidden, !expanded);
+        assert.equal(generate.hidden, false);
+    }
+    ui.destroy();
+    assert.equal(generate.click(), undefined);
+    for (const kind of ['import', 'export']) {
+        assert.throws(() => new ToolUiController({ ...h.options, actions: [{ ...h.options.actions[2], kind }] }), /must be commands/u);
+    }
+});
+
 test('only the primary export prints its shortcut; all commands remain in help', () => {
     const h = harness();
     assert.equal(h.buttons.get('png').textContent, 'PNG ⌘E');

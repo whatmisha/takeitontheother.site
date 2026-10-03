@@ -53,3 +53,8 @@
 }
 
 .grainy-land .action-dock__slot--options:empty { display: none; }
+
+.grainy-land #toneCharacterNote { line-height: 1.45; margin-bottom: 16px; }
+.grainy-land .tone-previews { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px; margin-bottom: 20px; }
+.grainy-land .tone-previews span { display: block; font-size: 11px; color: var(--color-text-muted); margin-bottom: 6px; }
+.grainy-land .tone-previews [role="img"] { height: 12px; border-radius: 3px; }

@@ -1,5 +1,5 @@
-import { LandscapeRenderer } from '../render.js?v=landforms-2';
-import { defaults, palettes } from '../document.js';
+import { LandscapeRenderer } from '../render.js?v=tones-1';
+import { defaults, palettes } from '../document.js?v=tones-1';
 const renderer = new LandscapeRenderer(), results = [], urls = [];
 const check = (name, condition) => { results.push((condition ? 'PASS ' : 'FAIL ') + name); if (!condition) throw new Error(name); };
 const capture = (settings,width=480,height=270) => {
@@ -53,9 +53,23 @@ try {
         maximal:{scale:40,complexity:6,flow:100,relief:100,softness:100,grain:100},
         portrait:{width:1200,height:1600}, square:{width:1600,height:1600}
     })) {
-        const pixels=capture({...defaults,...settings}).pixels;
+        const dimensions={...defaults,...settings};
+        const pixels=capture(dimensions,Math.round(270*dimensions.width/dimensions.height),270).pixels;
         check(name+' remains opaque and nonuniform',pixels.filter((_,i)=>i%4===3).every(v=>v===255)
             && pixels.some((v,i)=>i%4!==3 && v!==pixels[i%4]));
+    }
+    const plain=capture({...defaults,toneAmount:0}).pixels;
+    check('Zero tone amount disables every adjacent-tone control',equal(plain,capture({...defaults,toneAmount:0,toneSpread:100,toneScale:20,toneBleed:100,toneCharacter:'radiant'}).pixels));
+    for(const toneCharacter of ['pigment','pearlescent','radiant']) {
+        const settings={...defaults,toneCharacter,toneAmount:90,toneSpread:70};
+        const colored=capture(settings).pixels;
+        check(toneCharacter+' adds tones without needing glow',!equal(capture({...settings,glow:0,toneAmount:0}).pixels,capture({...settings,glow:0}).pixels));
+        check(toneCharacter+' preserves exact distant sky',equal(colored.slice(0,4),new Uint8Array([35,83,219,255])));
+    }
+    check('Tone characters produce different color patterns',!equal(capture({...defaults,toneCharacter:'pearlescent'}).pixels,capture({...defaults,toneCharacter:'radiant'}).pixels));
+    for(const key of ['toneSpread','toneScale','toneBleed']) {
+        const lo=key==='toneScale'?20:0, hi=key==='toneScale'?200:100;
+        check(key+' affects rendered color',!equal(capture({...defaults,[key]:lo}).pixels,capture({...defaults,[key]:hi}).pixels));
     }
     const png1=await artifact('pigment-1920',defaults,1920,1080);
     check('Repeated 1920 render is unchanged after PNG encoding',equal(png1,capture(defaults,1920,1080).pixels));

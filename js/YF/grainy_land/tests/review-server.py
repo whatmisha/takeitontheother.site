@@ -6,11 +6,11 @@ import argparse
 
 ROOT = Path(__file__).resolve().parents[2]
 parser = argparse.ArgumentParser()
-parser.add_argument('--review', choices=['pigment-20','pigment-v2'], default='pigment-20')
+parser.add_argument('--review', choices=['pigment-20','pigment-v2','tones-v1'], default='pigment-20')
 parser.add_argument('--port', type=int, default=8020)
 args = parser.parse_args()
 OUTPUT = ROOT / 'grainy_land/tests/reviews' / args.review
-PREFIX = '/__grainy_v2_save/' if args.review == 'pigment-v2' else '/__grainy_save/'
+PREFIX = {'pigment-20':'/__grainy_save/','pigment-v2':'/__grainy_v2_save/','tones-v1':'/__grainy_tones_save/'}[args.review]
 class Handler(SimpleHTTPRequestHandler):
     def end_headers(self):
         self.send_header('Cache-Control', 'no-store')

@@ -4,12 +4,24 @@ Static landscape and abstract field generator using the shared YF framework.
 Open `grainy_land/` through the YF development server. No build step or remote
 runtime dependencies are needed. Rendering requires WebGL.
 
+The default preset is **Ember**, matching `grainy-land-1565559100.json`: seed
+1565559100, Glow 0, Grain 55, Radiant tones at 100, and depth color #D43C00.
+
 ## Controls
 
 - **Composition:** Landscape / Abstract, scale, complexity, flow, horizon,
   relief and seed. Generate (R) changes only the seed.
 - **Color & light:** Pigment / Ember palettes and four editable base colors.
   Both reference palettes start with background **#2353DB**.
+- **Adjacent tones:** four base color pickers remain unchanged. **Amount** sets
+  the strength of added neighboring tones (0 keeps the original automatic shading),
+  **Hue range** sets hue separation, **Patch size** sets the size of color variations
+  without changing landforms, and **Color bleed** controls reflected neighbor colors
+  inside a boundary. These settings do not change the seed or geometry.
+- **Character:** Pigment gives soft, uneven warm/cool shading; Pearlescent creates
+  broad flowing color shifts; Radiant concentrates brighter tones near folds and
+  edges. Glow and contrast remain independently adjustable. Three read-only
+  gradient strips preview the derived terrain, depth and light colors.
 - **Softness** adjusts the color transitions and silhouette.
 - **Glow** controls luminous contours; **Halo width** controls their surrounding
   aura. **Contrast** changes tonal separation independently.
@@ -34,7 +46,10 @@ slope, diffusion and local illumination. Abstract mode uses independent rotated
 fields and ignores the disabled horizon and relief settings. These normalized
 fields provide a place to introduce user-painted shapes later.
 `materialColors` derives warm crests, cool reflected light and earth half-tones in
-OKLab from the editable anchors. Color changes never reroll geometry. Manual
+OKLab from the editable anchors. `adjacentColors` adds neighboring endpoints in
+OKLCH, reducing chroma to fit RGB without shifting hue through channel clipping.
+Independent low-frequency color fields distribute those tones within the surfaces.
+Color changes never reroll geometry. Manual
 intermediate colors can be added without changing the scene model.
 
 `render.js` composites the surfaces with local tonal relief, variable edge
@@ -54,20 +69,28 @@ original 20-image review is preserved in `tests/reviews/pigment-20`.
 
 `npm run test:grainy` checks reference colors, round trips, sanitization,
 geometry independence, deterministic seeds, automatic half-tones and export limits.
-Open `tests/renderer.html` on the same local server for 26 real GPU/PNG checks
+Open `tests/renderer.html` on the same local server for 37 real GPU/PNG checks
 and generated images. This fixture is separate from the tool's user interface.
 
-Initial acceptance is in `tests/acceptance.json`; scene-v2 evidence is in
-`tests/reviews/pigment-v2/acceptance.json`. The latter folder contains the same
-20 seeds, full PNGs, reference details, a before/after sheet and material samples.
-To regenerate that review, run:
+Initial acceptance is in `tests/acceptance.json`; scene-v2 evidence and its
+archived 20-image review are in `tests/reviews/pigment-v2`. Adjacent-tone evidence
+is in `tests/reviews/tones-v1/acceptance.json`. That review compares disabled tones
+with all three characters on both palettes using identical geometry in each row.
+To regenerate the current color review, run:
 
 ```sh
-python3 grainy_land/tests/review-server.py --review pigment-v2 --port 8021
+python3 grainy_land/tests/review-server.py --review tones-v1 --port 8022
 ```
 
-Then open `/grainy_land/tests/reviews/pigment-v2/` and use its generate button.
-The review server binds to localhost and saves only named review artifacts.
+Open `/grainy_land/tests/reviews/tones-v1/` and use its comparison button. The review
+server binds to localhost and saves only named review artifacts.
+
+New settings retain JSON schema v1 compatibility. Missing fields get safe defaults;
+the preset migration fills missing tone fields in known shipped presets marked
+`seeded` and updates the cached built-in Ember to the current default settings.
+Saved user presets are preserved. New parameters are
+included in preset saving, undo/redo, share links and JSON round trips.
+
 The repository-wide directory-coverage check currently stops at the unrelated,
 existing, unregistered `grid_generator_02` directory. No exception was added
 to hide it and no historical migration evidence was rewritten.

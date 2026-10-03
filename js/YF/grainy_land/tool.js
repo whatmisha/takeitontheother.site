@@ -1,6 +1,7 @@
-import { defineTool, ToolUiController, FileIntakeController, PresetMenuKeyboardController } from '../infra/framework/src/index.js';
-import { defaults, ranges, palettes, normalizeSettings, makeDocument, readDocument, exportDimensions } from './document.js';
-import { LandscapeRenderer } from './render.js?v=landforms-2';
+import { defineTool, ToolUiController, FileIntakeController, PresetMenuKeyboardController } from '../infra/framework/src/index.js?v=tool-ui-3';
+import { defaults, ranges, palettes, toneCharacters, migratePresets, normalizeSettings, makeDocument, readDocument, exportDimensions } from './document.js?v=ember-default-1';
+import { adjacentColors, hexRGB } from './scene.js?v=ember-default-1';
+import { LandscapeRenderer } from './render.js?v=ember-default-1';
 
 let renderer, ui, intake, presetKeyboard, listeners, unsubscribe, resizeObserver;
 let renderFailed = false, lastSize = '';
@@ -35,6 +36,19 @@ function sync(tool) {
     for (const key of ['horizon','relief']) {
         byId(key+'Slider').disabled = s.mode === 'abstract'; byId(key+'Value').disabled = s.mode === 'abstract';
     }
+    byId('toneCharacterSelect').value = s.toneCharacter;
+    const neighbors=adjacentColors(s), strength=s.toneAmount/100;
+    ['terrain','depth','light'].forEach((key,i) => {
+        const base=hexRGB(s[key]);
+        const css=rgb => 'rgb('+rgb.map(v => Math.round(v*255)).join(' ')+')';
+        const blend=other => base.map((v,k) => v+(other[k]-v)*strength);
+        byId(key+'TonePreview').style.background = 'linear-gradient(90deg,'+css(blend(neighbors[i]))+','+s[key]+','+css(blend(neighbors[i+3]))+')';
+    });
+    byId('toneCharacterNote').textContent = {
+        pigment:'Uneven warm and cool pigment within each form.',
+        pearlescent:'Soft color shifts that flow across the surface.',
+        radiant:'Brighter neighboring tones along folds and edges.'
+    }[s.toneCharacter];
     byId('seedInput').value = s.seed;
     byId('widthInput').value = s.width; byId('heightInput').value = s.height;
     const size = s.width + 'x' + s.height;
@@ -60,6 +74,7 @@ function bind(tool) {
     on(byId('paletteSelect'),'change',e => {
         const palette = palettes[e.target.value]; if (palette) change(tool,palette,'Palette');
     });
+    on(byId('toneCharacterSelect'),'change',e => change(tool,{toneCharacter:e.target.value},'Tone character'));
     const fit = () => { tool.renderNow(); tool.target.fitToScreen(); };
     byId('canvasContainer').addEventListener('wheel', event => {
         if (matchMedia('(max-width: 1000px)').matches && !event.ctrlKey && !event.metaKey) event.stopImmediatePropagation();
@@ -86,10 +101,10 @@ function bind(tool) {
         id: 'grainy_land', title: 'Grainy Land',
         summaries: {
             compositionPanel: () => tool.settings.mode + ' · ' + tool.settings.seed,
-            materialPanel: () => 'Glow ' + tool.settings.glow + ' · Grain ' + tool.settings.grain
+            materialPanel: () => toneCharacters[tool.settings.toneCharacter] + ' · Tones ' + tool.settings.toneAmount
         },
         actions: [
-            { id:'generate', button:'generateBtn', label:'Generate', kind:'command', group:'panel', shortcut:'r',
+            { id:'generate', button:'generateBtn', label:'Generate', kind:'command', group:'utility', shortcut:'r',
                 run: () => { change(tool,{seed:crypto.getRandomValues(new Uint32Array(1))[0]},'Generate'); status(''); } },
             { id:'png', button:'exportPngBtn', label:'Export PNG', kind:'export', group:'primary', shortcut:'mod+e',
                 run: async () => {
@@ -121,7 +136,7 @@ const app = defineTool({
     colorPickers: { containerId:'unifiedColorPickerContainer',swatches:['sky','terrain','depth','light'].map(setting => ({
         type:setting,setting,itemId:setting+'ColorItem',dotId:setting+'ColorPreview',hexId:setting+'ColorHex',hsbSlotId:setting+'ColorHsbSlot'
     })) },
-    presets: { storageKey:'upgrade:grainy_land:presets:v1',basePath:'./presets',defaultName:'Pigment',
+    presets: { migrate:migratePresets, storageKey:'upgrade:grainy_land:presets:v1',basePath:'./presets',defaultName:'Ember',
         colorDots: s => [s.sky,s.terrain,s.depth,s.light].map(value => ({kind:'solid',value})),
         suggestSaveName: tool => 'Landscape '+tool.settings.seed },
     history: { maxSize:60,debounceMs:150 },

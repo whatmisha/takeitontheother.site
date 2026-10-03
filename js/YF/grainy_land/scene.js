@@ -1,5 +1,5 @@
 import { SeededRandom } from '../infra/framework/src/index.js';
-import { normalizeSettings } from './document.js';
+import { normalizeSettings } from './document.js?v=ember-default-1';
 
 // Geometry is independent of the palette, texture and raster resolution.
 // Coordinates are normalized; this is the extension point for future painted fields.
@@ -44,13 +44,16 @@ function toLab(rgb) {
         1.9779984951*l - 2.428592205*m + .4505937099*s,
         .0259040371*l + .7827717662*m - .808675766*s];
 }
-function fromLab([L,a,b]) {
+function linearRGB([L,a,b]) {
     const l = (L + .3963377774*a + .2158037573*b) ** 3;
     const m = (L - .1055613458*a - .0638541728*b) ** 3;
     const s = (L - .0894841775*a - 1.291485548*b) ** 3;
     return [4.0767416621*l - 3.3077115913*m + .2309699292*s,
         -1.2684380046*l + 2.6097574011*m - .3413193965*s,
-        -.0041960863*l - .7034186147*m + 1.707614701*s].map(v => {
+        -.0041960863*l - .7034186147*m + 1.707614701*s];
+}
+function fromLab(lab) {
+    return linearRGB(lab).map(v => {
             const c = v <= .0031308 ? v * 12.92 : 1.055 * Math.max(0, v) ** (1/2.4) - .055;
             return Math.round(Math.max(0, Math.min(1, c)) * 255);
         });
@@ -83,4 +86,53 @@ export function materialColors(settings) {
     const earth = depth.map((v,i) => v*.82 + terrain[i]*.18);
     return [hexRGB(s.terrain), hexRGB(s.depth), hexRGB(s.light),
         ...[warm,cool,earth].map(lab => fromLab(lab).map(v => v/255))];
+}
+
+// Low/high neighbors for terrain, depth and light, in that order. All endpoints
+// come from the four anchors in OKLCH; changing tone settings leaves geometry alone.
+export function adjacentColors(settings) {
+    const s = normalizeSettings(settings), spread = s.toneSpread/100;
+    const labs = [s.terrain,s.depth,s.light,s.sky].map(hex => toLab(hexRGB(hex)));
+    const polar = labs.map(([L,a,b]) => [L,Math.hypot(a,b),Math.atan2(b,a)]);
+    const profile = {
+        pigment: { hue: .8, light: .09, chroma: 1.1 },
+        pearlescent: { hue: 1.3, light: .12, chroma: 1.3 },
+        radiant: { hue: 1.05, light: .18, chroma: 1.15 }
+    }[s.toneCharacter];
+    const delta = (a,b) => Math.atan2(Math.sin(b-a),Math.cos(b-a));
+    const encode = (L,C,h) => {
+        L=Math.max(.06,Math.min(.99,L));
+        const lab=c=>[L,c*Math.cos(h),c*Math.sin(h)];
+        const fits=c=>linearRGB(lab(c)).every(v=>v>=0 && v<=1);
+        // Reduce chroma before conversion instead of clipping RGB channels and
+        // unintentionally changing the hue of bright neighboring colors.
+        if(!fits(C)) {
+            let lo=0,hi=C;
+            for(let step=0;step<12;step++) { const mid=(lo+hi)/2;if(fits(mid))lo=mid;else hi=mid; }
+            C=lo;
+        }
+        return fromLab(lab(C)).map(v=>v/255);
+    };
+    const low=[],high=[];
+    for (let i=0;i<3;i++) {
+        const [L,C,h]=polar[i];
+        let lowHue=h-spread*profile.hue*.95, highHue=h+spread*profile.hue*.6;
+        let lowC=C*(1+spread*.18), highC=C*(1+spread*(profile.chroma-1));
+        let lowL=L-profile.light*.65, highL=L+profile.light*.65;
+        if(i===1) {
+            highHue=h+delta(h,polar[0][2])*spread*.55;
+            highL=L+profile.light;
+        }
+        if(i===2) {
+            lowHue=h+delta(h,polar[3][2])*spread*profile.hue;
+            lowC=C+(Math.max(C,polar[0][1]*.65)-C)*spread;
+            lowL=L-profile.light*.6;
+            highHue=h+delta(h,polar[0][2])*spread*.35;
+            highC=C*(1-spread*.35);
+            highL=L+profile.light*.6;
+        }
+        low.push(encode(lowL,lowC,lowHue));
+        high.push(encode(highL,highC,highHue));
+    }
+    return [...low,...high];
 }

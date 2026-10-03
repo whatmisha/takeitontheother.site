@@ -19,5 +19,10 @@
   "sky": "#2353DB",
   "terrain": "#FC796E",
   "depth": "#713004",
-  "light": "#FFC2EE"
+  "light": "#FFC2EE",
+  "toneCharacter": "pigment",
+  "toneAmount": 60,
+  "toneSpread": 50,
+  "toneScale": 100,
+  "toneBleed": 35
 }

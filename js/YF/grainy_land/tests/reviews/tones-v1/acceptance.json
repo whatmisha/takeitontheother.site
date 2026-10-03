@@ -1,0 +1,43 @@
+{
+  "date": "2026-10-03",
+  "toolId": "grainy_land",
+  "sceneVersion": 2,
+  "materialRevision": "tones-1",
+  "status": "passed",
+  "unit": {
+    "command": "node --test grainy_land/tests/*.test.mjs",
+    "passed": 11
+  },
+  "renderer": {
+    "fixture": "grainy_land/tests/renderer.html",
+    "passed": 37,
+    "browser": "Codex In-app Browser"
+  },
+  "browser": [
+    "Four base color inputs retained",
+    "Character and numeric amount update rendered artwork and derived previews",
+    "Cmd+Z restores tone amount",
+    "Previously seeded Ember migrates to Radiant / Amount 80 / Hue range 65 / Patch size 110 / Color bleed 50"
+  ],
+  "visual": {
+    "images": 8,
+    "size": [
+      1920,
+      1080
+    ],
+    "settings": "metrics.json",
+    "sheet": "contact-sheet.png",
+    "comparison": "One seed; same geometry and base palette within each row; only adjacent-tone settings change"
+  },
+  "compatibility": [
+    "Existing settings schema v1 is accepted",
+    "Existing user preset fields are never overwritten",
+    "Amount zero disables added tone controls while preserving base shading",
+    "Open sky stays exactly #2353DB and remains editable"
+  ],
+  "files": {
+    "document.js": "e848b8268da3c4ac4416cf487fc1131f2c55f9f18e8d691d7d54f87e434bed17",
+    "scene.js": "52f97b37cd96c072ebd09192647b3ec4fe267aa406515aeb8aa4a45c0ad1b310",
+    "render.js": "42680b9a0d19c31245bc0741cbdc2f03cb0672dc6c46ae286ed34da8c4864824"
+  }
+}

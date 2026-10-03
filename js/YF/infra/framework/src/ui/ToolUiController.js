@@ -19,8 +19,9 @@ export class ToolUiController {
             if (!action.id || ids.has(action.id) || (!keyboardOnly && (!action.button || buttons.has(action.button))) || !action.label || typeof action.run !== 'function') throw new TypeError('Each action requires a unique id/button, label and run callback.');
             if (keyboardOnly && (action.button || action.kind !== 'command' || !action.shortcut)) throw new TypeError('Keyboard-only actions require a command and shortcut, without a button.');
             if (!['command', 'import', 'export'].includes(action.kind)) throw new TypeError(`${action.id}: explicit kind is required.`);
-            if (!['panel', 'primary', 'extra', 'keyboard'].includes(action.group)) throw new TypeError(`${action.id}: explicit group is required.`);
+            if (!['panel', 'utility', 'primary', 'extra', 'keyboard'].includes(action.group)) throw new TypeError(`${action.id}: explicit group is required.`);
             if (action.enabled != null && typeof action.enabled !== 'function') throw new TypeError(`${action.id}: enabled must be a callback.`);
+            if (action.group === 'utility' && action.kind !== 'command') throw new TypeError('Utility dock actions must be commands.');
             if (action.group === 'primary' && action.kind !== 'export') throw new TypeError('Primary dock actions must be exports.');
             const spec = action.shortcut ? parseCommandShortcut(action.shortcut) : null;
             if (spec) {
@@ -56,8 +57,8 @@ export class ToolUiController {
             if (action.group === 'keyboard') return { action, button: null };
             const button = typeof action.button === 'string' ? this.document.getElementById(action.button) : action.button;
             if (!button) throw new Error(`${action.id}: action button not found.`);
-            if (action.group !== 'panel' && !button.closest('.action-dock')) throw new Error(`${action.id}: export/extra must be in ActionDock.`);
-            if (action.group === 'panel' && button.closest('.action-dock')) throw new Error(`${action.id}: source/generation actions belong in panels.`);
+            if (action.group !== 'panel' && !button.closest('.action-dock')) throw new Error(`${action.id}: dock actions must be in ActionDock.`);
+            if (action.group === 'panel' && button.closest('.action-dock')) throw new Error(`${action.id}: panel actions must be outside ActionDock.`);
             return { action, button };
         });
         const physicalButtons = resolved.map(item => item.button).filter(Boolean);

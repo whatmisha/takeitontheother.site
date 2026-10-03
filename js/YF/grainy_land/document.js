@@ -2,19 +2,23 @@ export const TOOL_ID = 'grainy_land';
 export const VERSION = 1;
 export const palettes = {
     pigment: { sky: '#2353DB', terrain: '#FC796E', depth: '#713004', light: '#FFC2EE' },
-    ember: { sky: '#2353DB', terrain: '#FF9306', depth: '#F64B08', light: '#FFF0D8' }
+    ember: { sky: '#2353DB', terrain: '#FF9306', depth: '#D43C00', light: '#FFF0D8' }
 };
+export const toneCharacters = { pigment: 'Pigment', pearlescent: 'Pearlescent', radiant: 'Radiant' };
 export const ranges = {
     scale: [40, 220, 1], complexity: [1, 6, 1], flow: [0, 100, 1],
     horizon: [15, 80, 1], relief: [0, 100, 1], softness: [0, 100, 1],
     glow: [0, 100, 1], halo: [0, 100, 1], contrast: [50, 180, 1],
-    grain: [0, 100, 1], grainSize: [0.5, 4, 0.1]
+    grain: [0, 100, 1], grainSize: [0.5, 4, 0.1],
+    toneAmount: [0, 100, 1], toneSpread: [0, 100, 1],
+    toneScale: [20, 200, 1], toneBleed: [0, 100, 1]
 };
 export const defaults = {
-    schemaVersion: VERSION, width: 1920, height: 1080, seed: 80423, mode: 'landscape',
+    schemaVersion: VERSION, width: 1920, height: 1080, seed: 1565559100, mode: 'landscape',
     scale: 100, complexity: 2, flow: 48, horizon: 53, relief: 62,
-    softness: 52, glow: 12, halo: 40, contrast: 100, grain: 46, grainSize: 1,
-    exportScale: 1, ...palettes.pigment
+    softness: 38, glow: 0, halo: 65, contrast: 118, grain: 55, grainSize: 1,
+    toneCharacter: 'radiant', toneAmount: 100, toneSpread: 65, toneScale: 110, toneBleed: 50,
+    exportScale: 1, ...palettes.ember
 };
 const clamp = (n, a, b) => Math.min(b, Math.max(a, n));
 export function normalizeSettings(value = {}) {
@@ -32,6 +36,7 @@ export function normalizeSettings(value = {}) {
         if (Number.isFinite(Number(value[key])) && value[key] != null) out[key] = Math.round(clamp(Number(value[key]), 256, 4096));
     }
     if (Number.isFinite(Number(value.seed)) && value.seed != null) out.seed = Number(value.seed) >>> 0;
+    if (Object.hasOwn(toneCharacters, value.toneCharacter)) out.toneCharacter = value.toneCharacter;
     if (['landscape', 'abstract'].includes(value.mode)) out.mode = value.mode;
     if ([1, 2, 3].includes(Number(value.exportScale))) out.exportScale = Number(value.exportScale);
     return out;
@@ -50,4 +55,38 @@ export function exportDimensions(settings) {
         throw new Error('Export is too large. Reduce the canvas size or export scale (maximum 8192 px / 32 megapixels).');
     }
     return { width, height };
+}
+
+// Backfill only the new fields of shipped presets already in local storage.
+// User presets and every explicitly saved value remain intact; this is idempotent.
+export const presetTones = {
+    Pigment: {toneCharacter:'pigment',toneAmount:60,toneSpread:50,toneScale:100,toneBleed:35},
+    Ember: {toneCharacter:'radiant',toneAmount:100,toneSpread:65,toneScale:110,toneBleed:50},
+    Drift: {toneCharacter:'pearlescent',toneAmount:75,toneSpread:75,toneScale:90,toneBleed:55},
+    'Quiet dunes': {toneCharacter:'pigment',toneAmount:30,toneSpread:30,toneScale:150,toneBleed:20}
+};
+export function migrateTonePresets(store) {
+    const all=store.loadAll();
+    if(!all || typeof all!=='object' || Array.isArray(all)) return;
+    let changed=false;
+    for(const [name,tones] of Object.entries(presetTones)) {
+        const blob=all[name];
+        if(!blob || blob.seeded!==true) continue;
+        for(const [key,value] of Object.entries(tones)) {
+            if(Object.hasOwn(blob,key)) continue;
+            blob[key]=value;changed=true;
+        }
+    }
+    if(changed) store.saveAll(all);
+}
+
+// Refresh the shipped Ember already cached by returning users. Saving a personal
+// preset removes the seeded marker, so saved custom presets remain untouched.
+export function migratePresets(store) {
+    migrateTonePresets(store);
+    const all = store.loadAll(), ember = all?.Ember;
+    if (!ember || ember.seeded !== true) return;
+    if (Object.entries(defaults).every(([key, value]) => ember[key] === value)) return;
+    all.Ember = { ...ember, ...defaults };
+    store.saveAll(all);
 }

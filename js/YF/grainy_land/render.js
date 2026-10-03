@@ -1,5 +1,5 @@
-import { createScene, materialColors, hexRGB } from './scene.js?v=landforms-2';
-import { normalizeSettings } from './document.js';
+import { createScene, materialColors, adjacentColors, hexRGB } from './scene.js?v=ember-default-1';
+import { normalizeSettings } from './document.js?v=ember-default-1';
 
 const vertexSource = `
 attribute vec2 position;
@@ -11,7 +11,8 @@ precision highp float;
 varying vec2 uv;
 uniform vec2 artboard;
 uniform vec4 phases, fields[6], layers[6], layerStyles[6];
-uniform vec3 sky, colors[6];
+uniform vec3 sky, colors[6], adjacent[6];
+uniform float toneAmount, toneScale, toneBleed, toneCharacter;
 uniform float mode, scale, complexity, flow, horizon, relief;
 uniform float softness, glow, halo, contrast, grain, grainSize, seed;
 
@@ -101,13 +102,39 @@ void main() {
             pigment *= .86+.17*body+.1*smoothstep(.02,.20,d);
             pigment = mix(pigment,colors[0],bell(d/.022)*.14);
         }
+        // Separate color fields keep hue variation independent of shape and grain.
+        float frequency = mix(17.,2.,(toneScale-20.)/180.);
+        float field = noise(q*frequency*.45+offset+id*8.3)*.8
+            + noise(q*frequency+offset+id*8.3)*.2;
+        float positive = pow(clamp((field-.18)/.72,0.,1.),1.7)*(.4+.6*bell(d/.22));
+        float negative = pow(clamp((.80-field)/.75,0.,1.),1.8)*(.35+.5*smoothstep(.01,.18,d));
+        positive = max(positive,warmth*.85);
+        if (toneCharacter>.5 && toneCharacter<1.5) {
+            float pearl = .5+.5*sin((q.x+q.y*.65)*frequency*.45+field*2.+style.y);
+            positive = pow(pearl,1.5)*.85;
+            negative = pow(1.-pearl,1.5)*.75;
+        } else if (toneCharacter>1.5) {
+            float rim = bell(d/(.055+.13*field));
+            float heat = clamp(.3+field*.5+rim*.32,0.,1.);
+            positive = smoothstep(.3,.99,heat)*.9;
+            negative = (1.-field)*(.6-.35*rim)*.85;
+        }
+        vec3 low = adjacent[0], high = adjacent[3];
+        if (i==1 || i==3 || i==4) { low=adjacent[1]; high=adjacent[4]; }
+        if (i==2 || i==5) { low=adjacent[2]; high=adjacent[5]; }
+        pigment = mix(pigment,low,negative*toneAmount*.92);
+        pigment = mix(pigment,high,positive*toneAmount*.94);
+        // Neighbor reflection extends inside a mass; softness still owns opacity.
+        float bleed = toneAmount*toneBleed*bell((d-.024)/(.023+softness*.07))*(.3+.7*body);
+        pigment = mix(pigment,color,bleed*.52);
         // Tonal relief belongs to each mass; it is not a sequence of stripes.
         pigment += (body-.5)*.05;
         pigment = (pigment-.5)*contrast+.5;
         float core = bell(d/(.004+softness*.01));
         float aura = bell(d/(.012+halo*.09));
         float illumination = .3+.7*fbm(q*5.+id*19.+offset);
-        vec3 tint = mix(colors[2],colors[3],.4);
+        vec3 tint = mix(mix(colors[2],colors[3],.4),adjacent[5],toneAmount*.6);
+        vec3 haloTint = mix(tint,adjacent[2],toneAmount*.75);
         pigment = mix(pigment,tint,glow*core*.78*illumination);
         pigment += glow*aura*illumination*vec3(.18,.12,.065);
         // Colored aggregates and finer particles mix pigments at the edges.
@@ -116,7 +143,9 @@ void main() {
         vec3 deposit = i==2 || i==5 ? colors[0] : colors[1];
         pigment = mix(pigment,deposit,grain*smoothstep(.24,.48,particle)*(.08+.16*clusters));
         float outsideHalo = aura*(1.-mask)*glow*.25*illumination;
-        color = mix(color,tint,outsideHalo);
+        color = mix(color,haloTint,outsideHalo);
+        float reflection = bell(d/(edge*2.5+.015))*(1.-mask)*toneAmount*toneBleed*.13;
+        color = mix(color,haloTint,reflection);
         color = mix(color,clamp(pigment,0.,1.),mask);
         coverage = max(coverage,mask);
     }
@@ -168,8 +197,10 @@ export class LandscapeRenderer {
         gl.viewport(0,0,width,height); gl.useProgram(this.program);
         const scene = createScene(s);
         const values = { ...scene, softness: s.softness/100, glow: s.glow/100, halo: s.halo/100,
-            contrast: s.contrast/100, grain: s.grain/100, grainSize: s.grainSize, seed: s.seed % 16381 };
-        for (const name of ['mode','scale','complexity','flow','horizon','relief','softness','glow','halo','contrast','grain','grainSize','seed']) {
+            contrast: s.contrast/100, grain: s.grain/100, grainSize: s.grainSize, seed: s.seed % 16381,
+            toneAmount:s.toneAmount/100, toneScale:s.toneScale, toneBleed:s.toneBleed/100,
+            toneCharacter:['pigment','pearlescent','radiant'].indexOf(s.toneCharacter) };
+        for (const name of ['mode','scale','complexity','flow','horizon','relief','softness','glow','halo','contrast','grain','grainSize','seed','toneAmount','toneScale','toneBleed','toneCharacter']) {
             gl.uniform1f(this.location(name), values[name]);
         }
         gl.uniform2f(this.location('artboard'),s.width,s.height);
@@ -179,6 +210,7 @@ export class LandscapeRenderer {
         gl.uniform4fv(this.location('layers[0]'),scene.layers.flat());
         gl.uniform4fv(this.location('layerStyles[0]'),scene.layerStyles.flat());
         gl.uniform3fv(this.location('colors[0]'),materialColors(s).flat());
+        gl.uniform3fv(this.location('adjacent[0]'),adjacentColors(s).flat());
         gl.drawArrays(gl.TRIANGLES,0,6);
         const error = gl.getError();
         if (error !== gl.NO_ERROR) throw new Error('Graphics allocation failed. Reduce export size.');
