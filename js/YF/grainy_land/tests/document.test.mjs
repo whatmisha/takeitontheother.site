@@ -109,7 +109,7 @@ test('default settings match the shipped Ember and cached built-ins update witho
     const ember = JSON.parse(readFileSync(new URL('../presets/ember.json', import.meta.url), 'utf8'));
     assert.deepEqual(defaults, ember);
     assert.deepEqual(normalizeSettings(ember), ember);
-    const pigment = { seeded: true, seed: 80423, ...presetTones.Pigment };
+    const pigment = { seeded: true, seed: 80423, depth: '#713004', ...presetTones.Pigment };
     const personal = { seed: 9, glow: 33 };
     let all = { Ember: { seeded: true, createdAt: 123, seed: 80423, glow: 82, ...presetTones.Ember }, Pigment: pigment, Personal: personal };
     let writes = 0;
@@ -117,7 +117,7 @@ test('default settings match the shipped Ember and cached built-ins update witho
     migratePresets(store);
     assert.deepEqual(normalizeSettings(all.Ember), ember);
     assert.equal(all.Ember.createdAt, 123);
-    assert.deepEqual(all.Pigment, pigment);
+    assert.deepEqual(all.Pigment, {...pigment,depth:'#FF5900'});
     assert.deepEqual(all.Personal, personal);
     migratePresets(store);
     assert.equal(writes, 1);
@@ -136,4 +136,23 @@ test('fold and edge controls round-trip, and old documents receive safe defaults
     for(const key of ['folds','edgeVariation','glowCoverage']) assert.equal(upgraded[key],defaults[key]);
     const bounded=normalizeSettings({folds:-30,edgeVariation:700,glowCoverage:Infinity});
     assert.equal(bounded.folds,0);assert.equal(bounded.edgeVariation,100);assert.equal(bounded.glowCoverage,defaults.glowCoverage);
+});
+
+
+test('all shipped depths migrate once while personal colors and other settings survive', () => {
+    const manifest=JSON.parse(readFileSync(new URL('../presets/manifest.json',import.meta.url),'utf8'));
+    let all={Personal:{depth:'#713004'}};
+    for(const {name,file} of manifest.presets) {
+        const preset=JSON.parse(readFileSync(new URL('../presets/'+file,import.meta.url),'utf8'));
+        assert.equal(preset.depth,'#FF5900');
+        all[name]={...preset,seeded:true,depth:'#713004'};
+    }
+    const old=structuredClone(all);let writes=0;
+    const store={loadAll:()=>all,saveAll:value=>{all=value;writes++;}};
+    migratePresets(store);
+    for(const {name} of manifest.presets) assert.deepEqual(all[name],{...old[name],depth:'#FF5900'});
+    assert.deepEqual(all.Personal,old.Personal);
+    migratePresets(store);assert.equal(writes,1);
+    all.Pigment={...old.Pigment,seeded:false};migratePresets(store);
+    assert.equal(all.Pigment.depth,'#713004');assert.equal(writes,1);
 });

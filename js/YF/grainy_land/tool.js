@@ -1,7 +1,7 @@
 import { defineTool, ToolUiController, FileIntakeController, PresetMenuKeyboardController } from '../infra/framework/src/index.js?v=tool-ui-3';
-import { defaults, ranges, palettes, toneCharacters, migratePresets, normalizeSettings, makeDocument, readDocument, exportDimensions } from './document.js?v=forms-3';
-import { adjacentColors, hexRGB } from './scene.js?v=forms-3';
-import { LandscapeRenderer } from './render.js?v=spray-1';
+import { defaults, ranges, palettes, toneCharacters, migratePresets, normalizeSettings, makeDocument, readDocument, exportDimensions } from './document.js?v=depth-3';
+import { adjacentColors, hexRGB } from './scene.js?v=depth-3';
+import { LandscapeRenderer } from './render.js?v=depth-3';
 
 let renderer, ui, intake, presetKeyboard, listeners, unsubscribe, resizeObserver;
 let renderFailed = false, lastSize = '';

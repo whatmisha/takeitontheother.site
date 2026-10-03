@@ -1,5 +1,5 @@
 import { SeededRandom } from '../infra/framework/src/index.js';
-import { normalizeSettings } from './document.js?v=forms-3';
+import { normalizeSettings } from './document.js?v=depth-3';
 
 // Geometry is independent of the palette, texture and raster resolution.
 // Coordinates are normalized; this is the extension point for future painted fields.

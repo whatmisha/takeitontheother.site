@@ -4,8 +4,8 @@ Static landscape and abstract field generator using the shared YF framework.
 Open `grainy_land/` through the YF development server. No build step or remote
 runtime dependencies are needed. Rendering requires WebGL.
 
-The default preset is **Ember**, retaining the original parameters from `grainy-land-1565559100.json`: seed
-1565559100, Glow 0, Grain 55, Radiant tones at 100, and depth color #D43C00.
+The default preset is **Ember**, based on `grainy-land-1565559100.json`: seed
+1565559100, Glow 0, Grain 55 and Radiant tones at 100. All four shipped presets use Depth #FF5900.
 
 ## Controls
 
@@ -13,7 +13,7 @@ The default preset is **Ember**, retaining the original parameters from `grainy-
   relief, folds and seed. **Folds** adds local curls, pockets and pinched passages;
   0 gives simpler layered forms. Generate (R) changes only the seed.
 - **Color & light:** Pigment / Ember palettes and four editable base colors.
-  Both reference palettes start with background **#2353DB**.
+  Both palettes start with background **#2353DB** and Depth **#FF5900**.
 - **Adjacent tones:** four base color pickers remain unchanged. **Amount** sets
   the strength of added neighboring tones (0 keeps the original automatic shading),
   **Hue range** sets hue separation, **Patch size** sets the size of color variations
@@ -107,7 +107,8 @@ binds to localhost and saves only named review artifacts.
 
 New settings retain JSON schema v1 compatibility. Missing fields get safe defaults;
 the preset migration fills missing tone fields in known shipped presets marked
-`seeded` and updates the cached built-in Ember to the current default settings.
+`seeded`, updates cached built-in Ember to the current default settings, and sets
+Depth #FF5900 in all other cached built-ins.
 Saved user presets are preserved. New parameters are
 included in preset saving, undo/redo, share links and JSON round trips.
 

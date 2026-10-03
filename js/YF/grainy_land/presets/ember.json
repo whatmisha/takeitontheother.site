@@ -23,7 +23,7 @@
   "exportScale": 1,
   "sky": "#2353DB",
   "terrain": "#FF9306",
-  "depth": "#D43C00",
+  "depth": "#FF5900",
   "light": "#FFF0D8",
   "folds": 65,
   "edgeVariation": 70,

@@ -1,5 +1,5 @@
-import { createScene, materialColors, adjacentColors, hexRGB } from './scene.js?v=forms-3';
-import { normalizeSettings } from './document.js?v=forms-3';
+import { createScene, materialColors, adjacentColors, hexRGB } from './scene.js?v=depth-3';
+import { normalizeSettings } from './document.js?v=depth-3';
 
 const vertexSource = `
 attribute vec2 position;

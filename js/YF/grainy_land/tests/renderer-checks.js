@@ -1,5 +1,5 @@
-import { LandscapeRenderer } from '../render.js?v=spray-1';
-import { defaults, palettes } from '../document.js?v=forms-3';
+import { LandscapeRenderer } from '../render.js?v=depth-3';
+import { defaults, palettes } from '../document.js?v=depth-3';
 const renderer = new LandscapeRenderer(), results = [], urls = [];
 const check = (name, condition) => { results.push((condition ? 'PASS ' : 'FAIL ') + name); if (!condition) throw new Error(name); };
 const capture = (settings,width=480,height=270) => {

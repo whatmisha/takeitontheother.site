@@ -1,8 +1,8 @@
 export const TOOL_ID = 'grainy_land';
 export const VERSION = 1;
 export const palettes = {
-    pigment: { sky: '#2353DB', terrain: '#FC796E', depth: '#713004', light: '#FFC2EE' },
-    ember: { sky: '#2353DB', terrain: '#FF9306', depth: '#D43C00', light: '#FFF0D8' }
+    pigment: { sky: '#2353DB', terrain: '#FC796E', depth: '#FF5900', light: '#FFC2EE' },
+    ember: { sky: '#2353DB', terrain: '#FF9306', depth: '#FF5900', light: '#FFF0D8' }
 };
 export const toneCharacters = { pigment: 'Pigment', pearlescent: 'Pearlescent', radiant: 'Radiant' };
 export const ranges = {
@@ -80,13 +80,19 @@ export function migrateTonePresets(store) {
     if(changed) store.saveAll(all);
 }
 
-// Refresh the shipped Ember already cached by returning users. Saving a personal
-// preset removes the seeded marker, so saved custom presets remain untouched.
+// Refresh shipped presets cached by returning users. Saving a personal preset
+// removes the seeded marker, so personal colors and imported JSON stay intact.
 export function migratePresets(store) {
     migrateTonePresets(store);
-    const all = store.loadAll(), ember = all?.Ember;
-    if (!ember || ember.seeded !== true) return;
-    if (Object.entries(defaults).every(([key, value]) => ember[key] === value)) return;
-    all.Ember = { ...ember, ...defaults };
-    store.saveAll(all);
+    const all=store.loadAll();
+    if(!all || typeof all!=='object' || Array.isArray(all)) return;
+    let changed=false;
+    for(const name of Object.keys(presetTones)) {
+        const preset=all[name];
+        if(!preset || preset.seeded!==true) continue;
+        const updates=name==='Ember' ? defaults : {depth:'#FF5900'};
+        if(Object.entries(updates).every(([key,value])=>preset[key]===value)) continue;
+        all[name]={...preset,...updates};changed=true;
+    }
+    if(changed) store.saveAll(all);
 }
