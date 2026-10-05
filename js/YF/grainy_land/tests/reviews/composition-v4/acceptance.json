@@ -1,0 +1,48 @@
+{
+  "sceneVersion": 4,
+  "baselineCommit": "45b9c16",
+  "depth": "#FF5900",
+  "seeds": 20,
+  "palettes": [
+    "Ember",
+    "Pigment"
+  ],
+  "beforeImages": 40,
+  "afterImages": 40,
+  "layoutDistribution": {
+    "Basin": 4,
+    "Ridge": 4,
+    "Valley": 5,
+    "Fold": 7
+  },
+  "checks": {
+    "document": 15,
+    "gpuAndPng": 54,
+    "failures": 0,
+    "ui": [
+      "all four built-in presets have Depth #FF5900",
+      "Layout changes composition",
+      "Undo returns to Auto",
+      "Redo restores Ridge",
+      "Abstract disables Layout",
+      "No browser errors"
+    ]
+  },
+  "sourceSha256": {
+    "scene.js": "276215745a48f3e18f9e8a61b6a61723d9f0e69bd3b5f9d2285eaee01217306e",
+    "render.js": "bf166bb38735a0cbfe97c1d9e82e923f32e1e846db69930306c2512525e304f1"
+  },
+  "findings": [
+    "Published series repeats a central or offset hill, side banks and a light foreground band.",
+    "Ridge introduces long diagonal masses; Valley introduces unequal shoulders and a broad passage; Fold introduces an independent taller foreground mass.",
+    "The default Ember seed uses Basin and retains its previous composition.",
+    "Grain, adjacent-tone controls and glow remain independent of layout.",
+    "Reference 1 uses darker depth colors than the requested #FF5900 palette; this review preserves the requested anchors."
+  ],
+  "remainingRoadmap": [
+    "manual adjacent-tone correction",
+    "editing and locking large forms",
+    "painting large masks",
+    "print dimensions, large exports and color profiles"
+  ]
+}

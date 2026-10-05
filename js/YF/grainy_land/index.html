@@ -7,7 +7,7 @@
     <link rel="icon" href="data:,">
     <link rel="stylesheet" href="../infra/framework/css/othersite-styles.css">
     <link rel="stylesheet" href="../infra/framework/css/ui-contract.css?v=uiq-5">
-    <link rel="stylesheet" href="./app.css?v=forms-3">
+    <link rel="stylesheet" href="./app.css?v=form-edit-1">
 </head>
 <body>
 <div class="container grainy-land">
@@ -25,9 +25,19 @@
     </header>
     <main class="main-content">
         <h1 class="sr-only">Grainy Land</h1>
-        <section class="canvas-container" id="canvasContainer" aria-label="Artwork viewport">
+        <section class="canvas-container" id="canvasContainer" aria-label="Artwork viewport" tabindex="0">
             <canvas id="mainCanvas" role="img" aria-label="Generated grainy landscape"></canvas>
+            <canvas id="formOverlay" aria-hidden="true" hidden></canvas>
         </section>
+        <aside class="controls-panel panel-collapsed" id="canvasPanel">
+            <div class="panel-header" id="canvasPanelHeader"><span>Canvas</span><button class="collapse-icon" type="button" aria-label="Expand canvas"><svg width="10" height="6" viewBox="0 0 12 8" fill="none" aria-hidden="true"><path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
+            <div class="panel-content">
+                <section class="control-section">
+                    <div class="dimensions-row"><label for="widthInput">Width<input id="widthInput" type="number" min="256" max="4096" value="1920"></label><span>×</span><label for="heightInput">Height<input id="heightInput" type="number" min="256" max="4096" value="1080"></label></div>
+                    <label class="stacked-select-label" for="exportScaleSelect">Export resolution<select class="style-select" id="exportScaleSelect"><option value="1">1×</option><option value="2">2×</option><option value="3">3×</option></select></label>
+                </section>
+            </div>
+        </aside>
         <aside class="controls-panel" id="compositionPanel">
             <div class="panel-header" id="compositionPanelHeader"><span>Composition</span><button class="collapse-icon" type="button" aria-label="Collapse composition"><svg width="10" height="6" viewBox="0 0 12 8" fill="none" aria-hidden="true"><path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
             <div class="panel-content">
@@ -35,6 +45,24 @@
                     <div class="segmented-control" role="radiogroup" aria-label="Composition mode">
                         <input type="radio" id="modeLandscape" name="mode" value="landscape" checked><label for="modeLandscape">Landscape</label>
                         <input type="radio" id="modeAbstract" name="mode" value="abstract"><label for="modeAbstract">Abstract</label>
+                    </div>
+                    <button id="editFormsBtn" class="panel-action form-edit-toggle" type="button" aria-pressed="false">Edit forms</button>
+                    <div id="formControls" hidden>
+                        <p class="field-note form-help">Select a form on the image. Drag to move; drag the square to resize. Space + drag pans. Esc exits.</p>
+                        <div class="form-list" role="group" aria-label="Forms">
+                            <button type="button" data-form-index="0" aria-pressed="false">Terrain</button>
+                            <button type="button" data-form-index="1" aria-pressed="false">Bank 1</button>
+                            <button type="button" data-form-index="2" aria-pressed="false">Basin</button>
+                            <button type="button" data-form-index="3" aria-pressed="false">Bank 2</button>
+                            <button type="button" data-form-index="4" aria-pressed="false">Fold</button>
+                            <button type="button" data-form-index="5" aria-pressed="false">Foreground</button>
+                        </div>
+                        <div id="selectedFormControls" hidden>
+                            <div class="dimensions-row"><label for="formX">X, %<input id="formX" type="number" min="-100" max="100" step="0.1" value="0"></label><label for="formY">Y, %<input id="formY" type="number" min="-100" max="100" step="0.1" value="0"></label></div>
+                            <div class="dimensions-row"><label for="formWidth">Width, %<input id="formWidth" type="number" min="25" max="300" step="1" value="100"></label><label for="formHeight">Height, %<input id="formHeight" type="number" min="25" max="300" step="1" value="100"></label></div>
+                            <div class="form-actions"><button id="formLock" class="panel-action" type="button" aria-pressed="false">Lock</button><button id="formReset" class="panel-action" type="button" disabled>Reset form</button></div>
+                            <p id="formSelectionNote" class="field-note form-help"></p>
+                        </div>
                     </div>
                     <div class="control-group" data-control="scale"><label for="scaleSlider"><span>Scale</span><input id="scaleValue" class="value-display" value="100" aria-label="Scale value" inputmode="decimal"></label><input id="scaleSlider" type="range" min="40" max="220" step="1" value="100"></div>
 <div class="control-group" data-control="complexity"><label for="complexitySlider"><span>Complexity</span><input id="complexityValue" class="value-display" value="2" aria-label="Complexity value" inputmode="decimal"></label><input id="complexitySlider" type="range" min="1" max="6" step="1" value="2"></div>
@@ -44,27 +72,19 @@
 <div class="control-group" data-control="relief"><label for="reliefSlider"><span>Relief</span><input id="reliefValue" class="value-display" value="62" aria-label="Relief value" inputmode="decimal"></label><input id="reliefSlider" type="range" min="0" max="100" step="1" value="62"></div>
                     <div class="seed-row"><label for="seedInput">Seed</label><input id="seedInput" type="number" min="0" max="4294967295" value="1565559100" aria-label="Seed"></div>
                 </section>
-                <section class="control-section">
-                    <h2 class="control-field-heading">Canvas</h2>
-                    <label class="stacked-select-label" for="formatSelect">Format<select class="style-select" id="formatSelect"><option value="1920x1080">Landscape · 16:9</option><option value="2048x1024">Panorama · 2:1</option><option value="1600x1600">Square · 1:1</option><option value="1200x1600">Portrait · 3:4</option><option value="custom">Custom</option></select></label>
-                    <div class="dimensions-row"><label for="widthInput">Width<input id="widthInput" type="number" min="256" max="4096" value="1920"></label><span>×</span><label for="heightInput">Height<input id="heightInput" type="number" min="256" max="4096" value="1080"></label></div>
-                    <label class="stacked-select-label" for="exportScaleSelect">PNG resolution<select class="style-select" id="exportScaleSelect"><option value="1">1×</option><option value="2">2×</option><option value="3">3×</option></select></label>
-                    <p id="exportSize" class="field-note">1920 × 1080 px</p>
-                </section>
             </div>
         </aside>
         <aside class="controls-panel" id="materialPanel">
-            <div class="panel-header" id="materialPanelHeader"><span>Color & light</span><button class="collapse-icon" type="button" aria-label="Collapse color and light"><svg width="10" height="6" viewBox="0 0 12 8" fill="none" aria-hidden="true"><path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
+            <div class="panel-header" id="materialPanelHeader"><span>Color</span><button class="collapse-icon" type="button" aria-label="Collapse color"><svg width="10" height="6" viewBox="0 0 12 8" fill="none" aria-hidden="true"><path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
             <div class="panel-content">
                 <section class="control-section">
-                    <label class="stacked-select-label" for="paletteSelect">Palette<select class="style-select" id="paletteSelect"><option value="pigment">Pigment</option><option value="ember" selected>Ember</option><option value="custom">Custom</option></select></label>
                     <div class="color-swatches-compact"><div class="color-swatch-row"><div class="color-swatch-compact" id="skyColorItem" data-color-type="sky"><button class="color-dot color-dot--expandable" id="skyColorPreview" type="button" aria-label="Open background color"></button><span class="color-label">Background</span><input class="color-swatch-hex" id="skyColorHex" value="#2353DB" aria-label="Background color hex"></div><div class="color-hsb-slot" id="skyColorHsbSlot"><div id="unifiedColorPickerContainer"></div></div></div>
 <div class="color-swatch-row"><div class="color-swatch-compact" id="terrainColorItem" data-color-type="terrain"><button class="color-dot color-dot--expandable" id="terrainColorPreview" type="button" aria-label="Open terrain color"></button><span class="color-label">Terrain</span><input class="color-swatch-hex" id="terrainColorHex" value="#FF9306" aria-label="Terrain color hex"></div><div class="color-hsb-slot" id="terrainColorHsbSlot"></div></div>
 <div class="color-swatch-row"><div class="color-swatch-compact" id="depthColorItem" data-color-type="depth"><button class="color-dot color-dot--expandable" id="depthColorPreview" type="button" aria-label="Open depth color"></button><span class="color-label">Depth</span><input class="color-swatch-hex" id="depthColorHex" value="#FF5900" aria-label="Depth color hex"></div><div class="color-hsb-slot" id="depthColorHsbSlot"></div></div>
 <div class="color-swatch-row"><div class="color-swatch-compact" id="lightColorItem" data-color-type="light"><button class="color-dot color-dot--expandable" id="lightColorPreview" type="button" aria-label="Open light color"></button><span class="color-label">Light</span><input class="color-swatch-hex" id="lightColorHex" value="#FFF0D8" aria-label="Light color hex"></div><div class="color-hsb-slot" id="lightColorHsbSlot"></div></div></div>
                 </section>
                 <section class="control-section" aria-labelledby="tonesHeading">
-                    <h2 class="control-field-heading" id="tonesHeading">Adjacent tones</h2>
+                    <h2 class="control-field-heading" id="tonesHeading">Advanced tones</h2>
                     <label class="stacked-select-label" for="toneCharacterSelect">Character<select class="style-select" id="toneCharacterSelect"><option value="pigment">Pigment</option><option value="pearlescent">Pearlescent</option><option value="radiant" selected>Radiant</option></select></label>
                     <p id="toneCharacterNote" class="field-note">Brighter neighboring tones along folds and edges.</p>
                     <div class="tone-previews" aria-label="Derived neighboring tones">
@@ -72,6 +92,58 @@
                         <div><span>Depth</span><div id="depthTonePreview" role="img" aria-label="Depth neighboring tones"></div></div>
                         <div><span>Light</span><div id="lightTonePreview" role="img" aria-label="Light neighboring tones"></div></div>
                     </div>
+                    <details class="tone-editor" id="toneEditor">
+                        <summary>Edit tones <span id="customToneCount"></span></summary>
+                        <p class="field-note tone-editor-note">Edit a color to keep it fixed. Auto follows your base colors.</p>
+                        <div class="tone-editor-group" role="group" aria-label="Terrain tones"><p class="tone-editor-heading">Terrain</p>
+                            <div class="color-swatch-row">
+                                <div class="tone-editor-row">
+                                    <div class="color-swatch-compact" id="terrainLowColorItem"><button class="color-dot color-dot--expandable" id="terrainLowColorPreview" type="button" aria-label="Open terrain low tone"></button><span class="color-label">Low</span><input class="color-swatch-hex" id="terrainLowColorHex" aria-label="terrain low tone hex" spellcheck="false"></div>
+                                    <button class="tone-auto" id="terrainLowAuto" type="button" aria-label="Reset terrain low tone to automatic" disabled>Auto</button>
+                                </div>
+                                <div class="color-hsb-slot" id="terrainLowColorHsbSlot"><div id="toneColorPickerContainer"></div></div>
+                            </div>
+                            <div class="color-swatch-row">
+                                <div class="tone-editor-row">
+                                    <div class="color-swatch-compact" id="terrainHighColorItem"><button class="color-dot color-dot--expandable" id="terrainHighColorPreview" type="button" aria-label="Open terrain high tone"></button><span class="color-label">High</span><input class="color-swatch-hex" id="terrainHighColorHex" aria-label="terrain high tone hex" spellcheck="false"></div>
+                                    <button class="tone-auto" id="terrainHighAuto" type="button" aria-label="Reset terrain high tone to automatic" disabled>Auto</button>
+                                </div>
+                                <div class="color-hsb-slot" id="terrainHighColorHsbSlot"></div>
+                            </div>
+                        </div>
+                        <div class="tone-editor-group" role="group" aria-label="Depth tones"><p class="tone-editor-heading">Depth</p>
+                            <div class="color-swatch-row">
+                                <div class="tone-editor-row">
+                                    <div class="color-swatch-compact" id="depthLowColorItem"><button class="color-dot color-dot--expandable" id="depthLowColorPreview" type="button" aria-label="Open depth low tone"></button><span class="color-label">Low</span><input class="color-swatch-hex" id="depthLowColorHex" aria-label="depth low tone hex" spellcheck="false"></div>
+                                    <button class="tone-auto" id="depthLowAuto" type="button" aria-label="Reset depth low tone to automatic" disabled>Auto</button>
+                                </div>
+                                <div class="color-hsb-slot" id="depthLowColorHsbSlot"></div>
+                            </div>
+                            <div class="color-swatch-row">
+                                <div class="tone-editor-row">
+                                    <div class="color-swatch-compact" id="depthHighColorItem"><button class="color-dot color-dot--expandable" id="depthHighColorPreview" type="button" aria-label="Open depth high tone"></button><span class="color-label">High</span><input class="color-swatch-hex" id="depthHighColorHex" aria-label="depth high tone hex" spellcheck="false"></div>
+                                    <button class="tone-auto" id="depthHighAuto" type="button" aria-label="Reset depth high tone to automatic" disabled>Auto</button>
+                                </div>
+                                <div class="color-hsb-slot" id="depthHighColorHsbSlot"></div>
+                            </div>
+                        </div>
+                        <div class="tone-editor-group" role="group" aria-label="Light tones"><p class="tone-editor-heading">Light</p>
+                            <div class="color-swatch-row">
+                                <div class="tone-editor-row">
+                                    <div class="color-swatch-compact" id="lightLowColorItem"><button class="color-dot color-dot--expandable" id="lightLowColorPreview" type="button" aria-label="Open light low tone"></button><span class="color-label">Low</span><input class="color-swatch-hex" id="lightLowColorHex" aria-label="light low tone hex" spellcheck="false"></div>
+                                    <button class="tone-auto" id="lightLowAuto" type="button" aria-label="Reset light low tone to automatic" disabled>Auto</button>
+                                </div>
+                                <div class="color-hsb-slot" id="lightLowColorHsbSlot"></div>
+                            </div>
+                            <div class="color-swatch-row">
+                                <div class="tone-editor-row">
+                                    <div class="color-swatch-compact" id="lightHighColorItem"><button class="color-dot color-dot--expandable" id="lightHighColorPreview" type="button" aria-label="Open light high tone"></button><span class="color-label">High</span><input class="color-swatch-hex" id="lightHighColorHex" aria-label="light high tone hex" spellcheck="false"></div>
+                                    <button class="tone-auto" id="lightHighAuto" type="button" aria-label="Reset light high tone to automatic" disabled>Auto</button>
+                                </div>
+                                <div class="color-hsb-slot" id="lightHighColorHsbSlot"></div>
+                            </div>
+                        </div>
+                    </details>
                     <div class="control-group" data-control="toneAmount"><label for="toneAmountSlider"><span>Amount</span><input id="toneAmountValue" class="value-display" value="100" aria-label="Amount value" inputmode="decimal"></label><input id="toneAmountSlider" type="range" min="0" max="100" step="1" value="100"></div>
                     <div class="control-group" data-control="toneSpread"><label for="toneSpreadSlider"><span>Hue range</span><input id="toneSpreadValue" class="value-display" value="65" aria-label="Hue range value" inputmode="decimal"></label><input id="toneSpreadSlider" type="range" min="0" max="100" step="1" value="65"></div>
                     <div class="control-group" data-control="toneScale"><label for="toneScaleSlider"><span>Patch size</span><input id="toneScaleValue" class="value-display" value="110" aria-label="Patch size value" inputmode="decimal"></label><input id="toneScaleSlider" type="range" min="20" max="200" step="1" value="110"></div>
@@ -101,6 +173,6 @@
     <input id="jsonFileInput" type="file" accept=".json,application/json" hidden><button id="jsonPickerTrigger" type="button" hidden>Choose JSON</button>
     <dialog id="dialog" class="modal" aria-labelledby="dialogTitle"><div class="modal-content"><h2 id="dialogTitle" class="modal-title"></h2><div id="dialogText" class="modal-text"></div><input id="dialogInput" class="modal-input" type="text" style="display:none"><div id="dialogButtons" class="modal-buttons"></div></div></dialog>
 </div>
-<script type="module" src="./tool.js?v=depth-3"></script>
+<script type="module" src="./tool.js?v=form-edit-1"></script>
 </body>
 </html>

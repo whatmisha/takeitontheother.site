@@ -1,12 +1,16 @@
-import { defineTool, ToolUiController, FileIntakeController, PresetMenuKeyboardController } from '../infra/framework/src/index.js?v=tool-ui-3';
-import { defaults, ranges, palettes, toneCharacters, migratePresets, normalizeSettings, makeDocument, readDocument, exportDimensions } from './document.js?v=depth-3';
-import { adjacentColors, hexRGB } from './scene.js?v=depth-3';
-import { LandscapeRenderer } from './render.js?v=depth-3';
+import { defineTool, UnifiedColorPicker, ToolUiController, FileIntakeController, PresetMenuKeyboardController } from '../infra/framework/src/index.js?v=tool-ui-3';
+import { defaults, ranges, regenerate, toneKeys, toneCharacters, migratePresets, normalizeSettings, makeDocument, readDocument, exportDimensions } from './document.js?v=form-edit-1';
+import { adjacentColors, hexRGB } from './scene.js?v=form-edit-1';
+import { LandscapeRenderer } from './render.js?v=form-edit-1';
 
-let renderer, ui, intake, presetKeyboard, listeners, unsubscribe, resizeObserver;
+import { FormEditor } from './form-editor.js?v=form-edit-1';
+
+let formEditor;
+let renderer, ui, intake, presetKeyboard, listeners, unsubscribe, resizeObserver, panelObserver, tonePicker;
 let renderFailed = false, lastSize = '';
 const byId = id => document.getElementById(id);
 const status = text => { byId('operationStatus').textContent = text; };
+const toneHex = rgb => '#' + rgb.map(v => Math.round(v * 255).toString(16).padStart(2, '0')).join('').toUpperCase();
 function draw({ ctx2d, settings, width, height }, exporting = false) {
     try {
         renderer ||= new LandscapeRenderer();
@@ -17,6 +21,7 @@ function draw({ ctx2d, settings, width, height }, exporting = false) {
         ctx2d.drawImage(surface, 0, 0, width, height);
         if (renderFailed) status('');
         renderFailed = false;
+        if (!exporting) formEditor?.draw();
     } catch (error) {
         renderFailed = true; status(error.message);
         if (exporting) throw error;
@@ -44,6 +49,10 @@ function sync(tool) {
         const blend=other => base.map((v,k) => v+(other[k]-v)*strength);
         byId(key+'TonePreview').style.background = 'linear-gradient(90deg,'+css(blend(neighbors[i]))+','+s[key]+','+css(blend(neighbors[i+3]))+')';
     });
+    tonePicker?.sync();
+    const customCount = toneKeys.filter(key => s[key] != null).length;
+    byId('customToneCount').textContent = customCount ? customCount + ' custom' : '';
+    for (const key of toneKeys) byId(key+'Auto').disabled = s[key] == null;
     byId('toneCharacterNote').textContent = {
         pigment:'Uneven warm and cool pigment within each form.',
         pearlescent:'Soft color shifts that flow across the surface.',
@@ -58,31 +67,40 @@ function sync(tool) {
             if (!listeners?.signal.aborted) { tool.renderNow(); tool.target.fitToScreen(); }
         });
     }
-    byId('formatSelect').value = [...byId('formatSelect').options].some(o => o.value === size) ? size : 'custom';
     byId('exportScaleSelect').value = s.exportScale;
-    byId('exportSize').textContent = (s.width*s.exportScale) + ' × ' + (s.height*s.exportScale) + ' px';
-    byId('paletteSelect').value = Object.keys(palettes).find(name => Object.entries(palettes[name]).every(([k,v]) => s[k].toUpperCase() === v.toUpperCase())) || 'custom';
     byId('mainCanvas').setAttribute('aria-label', s.mode === 'abstract' ? 'Generated grainy abstract artwork' : 'Generated grainy landscape');
+    formEditor?.sync();
     ui?.refresh();
 }
 function bind(tool) {
     listeners = new AbortController();
     const lifecycleSignal = listeners.signal;
     const on = (element, type, callback) => element.addEventListener(type, callback, { signal: listeners.signal });
-    for (const radio of document.querySelectorAll('input[name="mode"]')) on(radio, 'change', () => change(tool,{ mode: radio.value },'Mode'));
-    on(byId('seedInput'),'change',e => change(tool,{ seed: Number(e.target.value) },'Seed'));
-    on(byId('paletteSelect'),'change',e => {
-        const palette = palettes[e.target.value]; if (palette) change(tool,palette,'Palette');
+    // The shared picker sees resolved colors; the document stores only explicit edits.
+    tonePicker = new UnifiedColorPicker({
+        containerId: 'toneColorPickerContainer',
+        settings: {
+            get: key => toneHex(adjacentColors(tool.settings)[toneKeys.indexOf(key)]),
+            set: (key, hex) => {
+                const value = hex.toUpperCase();
+                const current = toneHex(adjacentColors(tool.settings)[toneKeys.indexOf(key)]);
+                if (value !== current) tool.settingsStore.set(key, value);
+            }
+        },
+        swatches: toneKeys.map(setting => ({
+            type:setting, setting, itemId:setting+'ColorItem', dotId:setting+'ColorPreview',
+            hexId:setting+'ColorHex', hsbSlotId:setting+'ColorHsbSlot'
+        }))
     });
+    tonePicker.init();
+    for (const key of toneKeys) on(byId(key+'Auto'), 'click', () => change(tool, {[key]:null}, 'Automatic tone'));
+    for (const radio of document.querySelectorAll('input[name="mode"]')) on(radio, 'change', () => change(tool,{ mode: radio.value },'Mode'));
+    on(byId('seedInput'),'change',e => change(tool,regenerate(tool.settings,Number(e.target.value)),'Seed'));
     on(byId('toneCharacterSelect'),'change',e => change(tool,{toneCharacter:e.target.value},'Tone character'));
     const fit = () => { tool.renderNow(); tool.target.fitToScreen(); };
     byId('canvasContainer').addEventListener('wheel', event => {
         if (matchMedia('(max-width: 1000px)').matches && !event.ctrlKey && !event.metaKey) event.stopImmediatePropagation();
     }, { capture: true, passive: true, signal: listeners.signal });
-    on(byId('formatSelect'),'change',e => {
-        if(e.target.value === 'custom') return;
-        const [width,height] = e.target.value.split('x').map(Number); change(tool,{width,height},'Canvas'); fit();
-    });
     for (const key of ['width','height']) on(byId(key+'Input'),'change',e => { change(tool,{ [key]: Number(e.target.value) },'Canvas'); fit(); });
     on(byId('exportScaleSelect'),'change',e => change(tool,{exportScale: Number(e.target.value)},'Resolution'));
     unsubscribe = tool.settingsStore.subscribe('*', () => sync(tool));
@@ -96,6 +114,8 @@ function bind(tool) {
         }, onError: error => status(error.message || 'Could not import settings.'),
         onReject: result => status(result.message)
     }).init();
+    formEditor = new FormEditor(tool,change).init();
+    on(byId('editFormsBtn'),'click',() => formEditor.toggle());
     presetKeyboard = new PresetMenuKeyboardController().init();
     ui = new ToolUiController({
         id: 'grainy_land', title: 'Grainy Land',
@@ -104,8 +124,9 @@ function bind(tool) {
             materialPanel: () => toneCharacters[tool.settings.toneCharacter] + ' · Tones ' + tool.settings.toneAmount
         },
         actions: [
+            { id:'edit-forms', label:'Edit forms', kind:'command', group:'keyboard', shortcut:'e', run: () => formEditor.toggle() },
             { id:'generate', button:'generateBtn', label:'Generate', kind:'command', group:'utility', shortcut:'r',
-                run: () => { change(tool,{seed:crypto.getRandomValues(new Uint32Array(1))[0]},'Generate'); status(''); } },
+                run: () => { change(tool,regenerate(tool.settings,crypto.getRandomValues(new Uint32Array(1))[0]),'Generate'); status(''); } },
             { id:'png', button:'exportPngBtn', label:'Export PNG', kind:'export', group:'primary', shortcut:'mod+e',
                 run: async () => {
                     exportDimensions(tool.settings); status('Rendering PNG…');
@@ -120,6 +141,12 @@ function bind(tool) {
         ], onError: error => status(error.message || 'Operation failed.')
     }).init();
     resizeObserver = new ResizeObserver(() => fit()); resizeObserver.observe(byId('canvasContainer'));
+    // CSS owns the default stack; inline positions from dragging take precedence.
+    panelObserver = new ResizeObserver(([entry]) => {
+        const height = entry.target.getBoundingClientRect().height;
+        document.querySelector('.grainy-land').style.setProperty('--canvas-panel-height', height + 'px');
+    });
+    panelObserver.observe(byId('canvasPanel'));
     sync(tool);
     document.documentElement.dataset.ready = 'true';
 }
@@ -132,7 +159,7 @@ const app = defineTool({
     controls: { sliders: Object.entries(ranges).map(([setting,[min,max,step]]) => ({
         id:setting+'Slider', valueId:setting+'Value',setting,min,max,decimals:step<1?1:0,baseStep:step,shiftStep:step*10
     })), toggles:false },
-    panels: ['composition','material'].map(name => ({id:name+'Panel',headerId:name+'PanelHeader',persistent:true})),
+    panels: ['canvas','composition','material'].map(name => ({id:name+'Panel',headerId:name+'PanelHeader',persistent:true})),
     colorPickers: { containerId:'unifiedColorPickerContainer',swatches:['sky','terrain','depth','light'].map(setting => ({
         type:setting,setting,itemId:setting+'ColorItem',dotId:setting+'ColorPreview',hexId:setting+'ColorHex',hsbSlotId:setting+'ColorHsbSlot'
     })) },
@@ -150,8 +177,9 @@ const app = defineTool({
     renderTo: context => draw(context,true),
     onReady: bind,
     onDestroy: () => {
-        listeners?.abort(); unsubscribe?.(); resizeObserver?.disconnect(); intake?.destroy();
-        presetKeyboard?.destroy(); ui?.destroy(); renderer?.destroy(); renderer=null; ui=null;
+        formEditor?.destroy(); formEditor=null;
+        listeners?.abort(); unsubscribe?.(); resizeObserver?.disconnect(); panelObserver?.disconnect(); intake?.destroy();
+        presetKeyboard?.destroy(); ui?.destroy(); renderer?.destroy(); renderer=null; ui=null; tonePicker=null;
         delete document.documentElement.dataset.ready;
     }
 });

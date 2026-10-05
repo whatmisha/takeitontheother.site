@@ -27,5 +27,14 @@
   "light": "#FFF0D8",
   "folds": 65,
   "edgeVariation": 70,
-  "glowCoverage": 35
+  "glowCoverage": 35,
+  "layout": "auto",
+  "terrainLow": null,
+  "depthLow": null,
+  "lightLow": null,
+  "terrainHigh": null,
+  "depthHigh": null,
+  "lightHigh": null,
+  "landscapeForms": null,
+  "abstractForms": null
 }

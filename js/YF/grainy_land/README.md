@@ -10,11 +10,11 @@ The default preset is **Ember**, based on `grainy-land-1565559100.json`: seed
 ## Controls
 
 - **Composition:** Landscape / Abstract, scale, complexity, flow, horizon,
-  relief, folds and seed. **Folds** adds local curls, pockets and pinched passages;
+  relief, folds and seed. Landscape layouts vary reproducibly with the seed. **Folds** adds local curls, pockets and pinched passages;
   0 gives simpler layered forms. Generate (R) changes only the seed.
-- **Color & light:** Pigment / Ember palettes and four editable base colors.
+- **Color:** four editable base colors.
   Both palettes start with background **#2353DB** and Depth **#FF5900**.
-- **Adjacent tones:** four base color pickers remain unchanged. **Amount** sets
+- **Advanced tones:** four base color pickers remain unchanged. **Amount** sets
   the strength of added neighboring tones (0 keeps the original automatic shading),
   **Hue range** sets hue separation, **Patch size** sets the size of color variations
   without changing landforms, and **Color bleed** controls reflected neighbor colors
@@ -22,7 +22,14 @@ The default preset is **Ember**, based on `grainy-land-1565559100.json`: seed
 - **Character:** Pigment gives soft, uneven warm/cool shading; Pearlescent creates
   broad flowing color shifts; Radiant concentrates brighter tones near folds and
   edges. Glow and contrast remain independently adjustable. Three read-only
-  gradient strips preview the derived terrain, depth and light colors.
+  gradient strips preview the terrain, depth and light colors.
+- **Edit tones:** collapsed by default inside Advanced tones. Low and High endpoints
+  for Terrain, Depth and Light use the shared HSB picker and editable hex fields.
+  Editing an endpoint fixes that color; **Auto** returns that endpoint to automatic
+  calculation from the current base colors, character and hue range. Unedited
+  endpoints keep following those controls. Amount still controls the overall effect;
+  at 0, custom tones have no effect. The custom count stays visible when folded.
+  Overrides survive Generate, presets, JSON, share links and undo/redo.
 - **Softness** adjusts the color transitions and silhouette. **Edge variation**
   varies diffusion along each boundary, from compact edges to scattered pigment.
 - **Glow** controls luminous contours; **Glow coverage** sets how much of each
@@ -32,7 +39,8 @@ The default preset is **Ember**, based on `grainy-land-1565559100.json`: seed
   subtle fine texture; partially covered edges reveal translucent colored droplets.
   Grain is anchored in normalized artwork coordinates and filtered for the current
   pixel size. Grain 0 disables all texture, including changes to Grain size.
-- **Canvas:** four aspect ratios, custom dimensions and PNG 1× / 2× / 3×.
+- **Canvas:** separate panel, collapsed by default; custom width and height and
+  Export resolution 1× / 2× / 3× for PNG.
   The maximum is 8192 px per side and 32 megapixels, also bounded by GPU limits.
 
 Presets, share links, color pickers, slider editing, panel collapse, history,
@@ -45,11 +53,14 @@ UI language follows the existing English YF interface.
 
 `document.js` owns normalization, limits and the versioned JSON format.
 `scene.js` generates normalized geometry independently of color and resolution.
-Scene version 3 uses six independent surfaces: distant terrain, two side banks,
+Scene version 4 uses four seeded landscape layouts and six independent surfaces: distant terrain, two side banks,
 a basin, a foreground fold and a near light plane. Each has separate elevation,
 slope, diffusion and local illumination. Seeded two-dimensional deformations
 let surfaces curl around one another; a smooth union creates the foreground pocket
-and its open tail. Color fields follow those deformations, with localized highlights,
+and its open tail. Basin preserves the earlier composition. Ridge opens a diagonal
+foreground, Valley uses two unequal shoulders, and Fold raises a tall foreground
+mass with a compact edge. A separate random stream selects the layout, leaving
+existing Basin seeds and Abstract scenes stable. Color fields follow those deformations, with localized highlights,
 reflected neighboring colors and fine spray. Abstract mode uses independent rotated
 fields and ignores the disabled horizon and relief settings. These normalized
 fields provide a place to introduce user-painted shapes later.
@@ -57,8 +68,9 @@ fields provide a place to introduce user-painted shapes later.
 OKLab from the editable anchors. `adjacentColors` adds neighboring endpoints in
 OKLCH, reducing chroma to fit RGB without shifting hue through channel clipping.
 Independent low-frequency color fields distribute those tones within the surfaces.
-Color changes never reroll geometry. Manual
-intermediate colors can be added without changing the scene model.
+Color changes never reroll geometry. Six optional hex endpoints override the
+computed colors; null means automatic. They are additive v1 document fields,
+so earlier JSON files keep their automatic appearance.
 
 `render.js` composites the surfaces with local tonal relief, variable edge
 diffusion, contour light and fine aerosol texture. Each coat has its own jittered
@@ -71,10 +83,10 @@ in the preview while keeping droplet locations stable in larger exports.
 The shared CanvasTarget owns viewport zoom/pan. PNG is rendered afresh at the
 requested resolution, without capturing UI or enlarging the preview bitmap.
 
-Painting, direct shape editing, manual intermediate colors, animation and
+Painting, direct shape editing, animation and
 print color management are deferred. Current output is RGB PNG; future print
 support can retain normalized scenes and introduce physical dimensions, output
-profiles and tiled rendering. Current seeds are tied to scene version 3. Existing v1 settings JSON still loads,
+profiles and tiled rendering. Current seeds are tied to scene version 4. Existing v1 settings JSON still loads,
 but renders with the new geometry and material; it does not reproduce images
 from previous scene versions. The
 original 20-image review is preserved in `tests/reviews/pigment-20`.
@@ -83,7 +95,7 @@ original 20-image review is preserved in `tests/reviews/pigment-20`.
 
 `npm run test:grainy` checks reference colors, round trips, sanitization,
 geometry independence, deterministic seeds, automatic half-tones and export limits.
-Open `tests/renderer.html` on the same local server for 47 real GPU/PNG checks
+Open `tests/renderer.html` on the same local server for real GPU/PNG checks
 and generated images. This fixture is separate from the tool's user interface.
 
 Initial acceptance is in `tests/acceptance.json`; scene-v2 evidence and its
@@ -104,6 +116,18 @@ and matching detail crops alongside the two references. Its `acceptance.json`
 records the checks, including fine interior texture, absence of coarse patches,
 stronger texture at boundaries, and preview/export agreement. The review server
 binds to localhost and saves only named review artifacts.
+
+The composition review in `tests/reviews/composition-v4` compares 20 seed values
+in both current palettes (40 before and 40 after images). Run the review server
+with `--review composition-v4 --port 8025`, then open that folder's page. The
+baseline captures published commit `45b9c16`; it is fixed. Both sides use Depth
+#FF5900. Compressed 960×540 WebP images focus this review on composition; the GPU
+fixture separately checks full-resolution PNG and fine spray.
+
+The completed first roadmap stage adds composition diversity. Remaining stages:
+manual adjacent-tone correction; direct editing and locking of large forms;
+painting large masks on the canvas; physical print dimensions and color-managed
+high-resolution export. Animation remains a later option.
 
 New settings retain JSON schema v1 compatibility. Missing fields get safe defaults;
 the preset migration fills missing tone fields in known shipped presets marked

@@ -6,24 +6,28 @@ import argparse
 
 ROOT = Path(__file__).resolve().parents[2]
 parser = argparse.ArgumentParser()
-parser.add_argument('--review', choices=['pigment-20','pigment-v2','tones-v1','forms-v3','spray-v1'], default='pigment-20')
+parser.add_argument('--review', choices=['pigment-20','pigment-v2','tones-v1','forms-v3','spray-v1','composition-v4'], default='pigment-20')
 parser.add_argument('--port', type=int, default=8020)
 args = parser.parse_args()
 OUTPUT = ROOT / 'grainy_land/tests/reviews' / args.review
-PREFIX = {'pigment-20':'/__grainy_save/','pigment-v2':'/__grainy_v2_save/','tones-v1':'/__grainy_tones_save/','forms-v3':'/__grainy_forms_save/','spray-v1':'/__grainy_spray_save/'}[args.review]
+PREFIX = {'pigment-20':'/__grainy_save/','pigment-v2':'/__grainy_v2_save/','tones-v1':'/__grainy_tones_save/','forms-v3':'/__grainy_forms_save/','spray-v1':'/__grainy_spray_save/','composition-v4':'/__grainy_composition_save/'}[args.review]
 class Handler(SimpleHTTPRequestHandler):
     def end_headers(self):
         self.send_header('Cache-Control', 'no-store')
         super().end_headers()
     def do_POST(self):
         name = self.path.removeprefix(PREFIX)
-        if not self.path.startswith(PREFIX) or not re.fullmatch(r'(?:0[1-9]|1[0-9]|20|contact-sheet|detail-sheet|before-after|materials|default|ember|abstract)\.png|metrics\.json', name):
+        pattern=r'(?:0[1-9]|1[0-9]|20|contact-sheet|detail-sheet|before-after|materials|default|ember|abstract)\.png|metrics\.json'
+        if args.review=='composition-v4': pattern=r'(?:before|after)-[0-3][0-9]\.webp|(?:before|after)-sheet-[0-3]\.png|before-after\.png|metrics\.json'
+        if not self.path.startswith(PREFIX) or not re.fullmatch(pattern, name):
             self.send_error(404); return
         size = int(self.headers.get('Content-Length', '0'))
         if size <= 0 or size > 25000000:
             self.send_error(413); return
         data = self.rfile.read(size)
         if name.endswith('.png') and not data.startswith(bytes([137,80,78,71,13,10,26,10])):
+            self.send_error(400); return
+        if name.endswith('.webp') and not (data[:4]==b'RIFF' and data[8:12]==b'WEBP'):
             self.send_error(400); return
         (OUTPUT/name).write_bytes(data)
         self.send_response(200); self.end_headers(); self.wfile.write(b'OK')

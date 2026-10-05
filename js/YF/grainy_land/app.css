@@ -1,8 +1,11 @@
 .grainy-land .canvas-container { position: fixed !important; inset: 74px 320px 88px; width: auto; height: auto; }
 .grainy-land #mainCanvas { image-rendering: auto; }
-.grainy-land .controls-panel { top: 80px; width: 280px; max-height: calc(100dvh - 168px); }
-.grainy-land #compositionPanel { left: 20px; right: auto; }
-.grainy-land #materialPanel { right: 20px; left: auto; }
+.grainy-land { --canvas-panel-height: var(--ui-panel-collapsed-height); --composition-top: calc(var(--spacing-3xl) + var(--canvas-panel-height) + var(--spacing-sm)); }
+.grainy-land .controls-panel { top: var(--spacing-3xl); width: 280px; max-height: calc(100dvh - 2 * var(--spacing-3xl)); }
+.grainy-land #canvasPanel, .grainy-land #compositionPanel { left: var(--spacing-3xl); right: auto; }
+.grainy-land #compositionPanel { top: var(--composition-top); max-height: calc(100dvh - var(--composition-top) - var(--spacing-3xl)); }
+.grainy-land #compositionPanel[style*="top:"] { max-height: calc(100dvh - 2 * var(--spacing-3xl)); }
+.grainy-land #materialPanel { right: var(--spacing-3xl); left: auto; }
 .grainy-land .collapse-icon { appearance: none; border: 0; padding: 0; background: transparent; color: inherit; cursor: pointer; }
 .grainy-land .preset-toolbar-cluster { display: flex; align-items: center; gap: 8px; }
 .grainy-land .segmented-control { margin: 0 0 20px; }
@@ -30,12 +33,17 @@
     .grainy-land .main-content { display: grid; grid-template-columns: 1fr 1fr; align-items: start; gap: 16px; }
     .grainy-land .canvas-container { position: relative !important; inset: auto; width: 100%; height: 54dvh; min-height: 260px; grid-column: 1 / -1; }
     .grainy-land .controls-panel { position: relative; inset: auto !important; width: 100%; max-height: none; }
+    .grainy-land #compositionPanel { max-height: none; }
+    .grainy-land #canvasPanel { grid-column: 1; grid-row: 2; }
+    .grainy-land #compositionPanel { grid-column: 1; grid-row: 3; }
+    .grainy-land #materialPanel { grid-column: 2; grid-row: 2 / 4; }
     .grainy-land .controls-panel > .panel-content { max-height: none; }
     .grainy-land .action-dock { max-width: calc(100vw - 24px); }
     .grainy-land .operation-status { bottom: 66px; }
 }
 @media (max-width: 620px) {
     .grainy-land .main-content { grid-template-columns: 1fr; }
+    .grainy-land #materialPanel { grid-column: 1; grid-row: 4; }
     .grainy-land .canvas-container { height: 36dvh; min-height: 200px; }
 }
 
@@ -58,3 +66,28 @@
 .grainy-land .tone-previews { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px; margin-bottom: 20px; }
 .grainy-land .tone-previews span { display: block; font-size: 11px; color: var(--color-text-muted); margin-bottom: 6px; }
 .grainy-land .tone-previews [role="img"] { height: 12px; border-radius: 3px; }
+
+.grainy-land .tone-editor { margin: 0 0 20px; }
+.grainy-land .tone-editor summary { cursor: pointer; font-size: .9rem; padding: 0 0 12px; }
+.grainy-land #customToneCount { float: right; color: var(--color-text-muted); font-size: 12px; }
+.grainy-land .tone-editor .tone-editor-note { margin: 0 0 12px; line-height: 1.45; }
+.grainy-land .tone-editor-heading { margin: 12px 0 4px; font-size: 12px; color: var(--color-text-muted); }
+.grainy-land .tone-editor-row { display: flex; align-items: center; gap: 8px; }
+.grainy-land .tone-editor-row .color-swatch-compact { flex: 1; min-width: 0; }
+.grainy-land .tone-editor-row .color-label { min-width: 0; }
+.grainy-land .tone-auto { padding: 4px 0; border: 0; background: none; color: var(--color-text); font: inherit; font-size: 11px; cursor: pointer; }
+.grainy-land .tone-auto:disabled { color: var(--color-text-muted); cursor: default; }
+.grainy-land .tone-auto:enabled:hover { text-decoration: underline; }
+.grainy-land .tone-auto:focus-visible, .grainy-land .tone-editor summary:focus-visible { outline: 1px solid var(--color-text); outline-offset: 3px; }
+
+.grainy-land #formOverlay { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.grainy-land .canvas-container.is-editing-forms { touch-action: none; }
+.grainy-land .canvas-container:focus { outline: none; }
+.grainy-land .form-edit-toggle { width: 100%; margin-bottom: 20px; }
+.grainy-land .form-edit-toggle[aria-pressed="true"], .grainy-land #formLock[aria-pressed="true"] { box-shadow: inset 0 0 0 1px var(--color-text-muted); }
+.grainy-land .form-help { margin: 0 0 16px; line-height: 1.45; }
+.grainy-land .form-list { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 4px; margin-bottom: 16px; }
+.grainy-land .form-list button { background: #111; color: var(--color-text); border: 1px solid transparent; border-radius: 5px; padding: 8px 4px; font: inherit; font-size: 12px; cursor: pointer; }
+.grainy-land .form-list button[aria-pressed="true"] { border-color: var(--color-text); }
+.grainy-land .form-list button:focus-visible { outline: 2px solid var(--color-text); }
+.grainy-land .form-actions { display: flex; gap: 8px; margin-bottom: 12px; }

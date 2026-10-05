@@ -1,9 +1,9 @@
 import { SeededRandom } from '../infra/framework/src/index.js';
-import { normalizeSettings } from './document.js?v=depth-3';
+import { normalizeSettings, layouts, toneKeys, formSettingsKey } from './document.js?v=form-edit-1';
 
 // Geometry is independent of the palette, texture and raster resolution.
 // Coordinates are normalized; this is the extension point for future painted fields.
-export function createScene(settings) {
+function generatedScene(settings) {
     const s = normalizeSettings(settings);
     const random = new SeededRandom(s.seed).fork('landforms-v2');
     const between = (a, b) => random.float(a, b);
@@ -20,18 +20,76 @@ export function createScene(settings) {
     const foldRandom = new SeededRandom(s.seed).fork('folds-v3');
     const foldFields = layers.map(() => [foldRandom.float(.2,.85), foldRandom.float(.16,.43),
         foldRandom.float(.16,.31), foldRandom.float(-2.6,2.6)]);
+    const phases=Array.from({length:4},()=>between(0,Math.PI*2));
+    const layerStyles=layers.map(()=>[between(-.13,.13),between(0,6.28),between(.55,1.5),between(-.07,.07)]);
+    const fields=Array.from({length:6},()=>[between(-.1,1.1),between(.1,1.2),between(.12,.36),between(-1.1,1.1)]);
+    // A separate random stream changes the layout without disturbing existing
+    // basin seeds, material variation, or independent abstract compositions.
+    const composition=new SeededRandom(s.seed).fork('composition-v4');
+    const next=(a,b)=>composition.float(a,b);
+    const auto=Math.floor(next(0,4));
+    const family=s.mode==='abstract' ? 0 : (s.layout==='auto' ? auto : Object.keys(layouts).indexOf(s.layout)-1);
+    let secondCrest=[fields[0][0],fields[0][2],(.04+.025*s.complexity)*Math.abs(fields[0][3])];
+    let pocketStyle=[.14+layers[4][1]*.5,.065+s.relief/100*.065,0,.43];
+    if(family===1) {
+        // A long off-centre ridge and an open diagonal foreground.
+        layers[0]=[next(.04,.25),next(.40,.62),next(.08,.13),next(.32,.44)];
+        layerStyles[0][0]=next(.10,.18);
+        layers[2]=[next(.56,.85),next(.30,.45),next(.27,.36),next(.10,.17)];
+        layers[4][0]=next(.64,.92);layers[4][2]=next(.37,.47);
+        layerStyles[2][0]=next(-.22,-.12);layerStyles[5][0]=next(.10,.20);
+        layers[5][2]=next(.58,.69);secondCrest[2]*=.4;
+    } else if(family===2) {
+        // Two unequal shoulders around a valley, with a broad light passage.
+        layers[0]=[next(.08,.24),next(.17,.26),next(.06,.10),next(.28,.42)];
+        secondCrest=[next(.73,.94),next(.19,.32),next(.21,.36)];
+        layers[2]=[next(.35,.62),next(.27,.40),next(.22,.29),next(.19,.30)];
+        layers[4][0]=next(.12,.36);layers[4][2]=next(.39,.48);
+        layers[5][2]=next(.56,.65);layerStyles[5][0]=next(-.20,-.10);
+    } else if(family===3) {
+        // One tall folded mass becomes the focus, rather than another low band.
+        layers[0]=[next(.13,.35),next(.25,.40),next(.09,.14),next(.15,.26)];
+        layers[4][0]=next(.58,.84);layers[4][2]=next(.10,.18);layers[4][3]=next(.25,.33);
+        layers[2][2]=next(.27,.36);layers[5][2]=next(.61,.70);
+        layerStyles[4][2]=next(.22,.45);
+        pocketStyle=[next(.11,.17),next(.21,.27),next(-.35,.35),next(.49,.56)];
+        foldFields[4]=[layers[4][0],layers[4][2]-.035,next(.20,.28),next(-2.1,2.1)];
+        secondCrest[2]*=.35;
+    }
     return {
-        version: 3,
-        foldFields, folds: s.folds/100,
-        phases: Array.from({ length: 4 }, () => between(0, Math.PI * 2)),
-        layers,
-        // Slope, local phase, edge diffusion, and illumination position.
-        layerStyles: layers.map(() => [between(-.13,.13), between(0,6.28), between(.55,1.5), between(-.07,.07)]),
-        fields: Array.from({ length: 6 }, () => [between(-.1,1.1), between(.1,1.2), between(.12,.36), between(-1.1,1.1)]),
+        version:4, layoutFamily:family,
+        foldFields, folds:s.folds/100, phases, layers, layerStyles, fields,
+        secondCrest,pocketStyle,
         mode: s.mode === 'abstract' ? 1 : 0,
         scale: 100 / s.scale, complexity: s.complexity,
         flow: s.flow / 100, horizon: s.horizon / 100, relief: s.relief / 100
     };
+}
+
+export function createScene(settings) {
+    const s = normalizeSettings(settings), scene = generatedScene(s);
+    const edits = s[formSettingsKey(s.mode)];
+    const sources = new Map([[s.seed + ':' + s.layout, scene]]);
+    scene.formPhases = [];
+    scene.formTransforms = [];
+    scene.formSeeds = [];
+    for (let i=0;i<6;i++) {
+        const edit = edits?.[i];
+        let source = scene;
+        if (edit) {
+            const key = edit.seed + ':' + edit.layout;
+            if (!sources.has(key)) sources.set(key, generatedScene({...s,seed:edit.seed,layout:edit.layout}));
+            source = sources.get(key);
+        }
+        // Build arrays first: the source scene may be the default scene itself.
+        scene.formPhases.push([...source.phases]);
+        scene.formTransforms.push(edit ? [edit.x,edit.y,edit.scaleX,edit.scaleY] : [0,0,1,1]);
+        scene.formSeeds.push((edit?.seed ?? s.seed) % 16381);
+        for (const key of ['layers','layerStyles','foldFields','fields']) scene[key][i] = [...source[key][i]];
+        if (i===0) scene.secondCrest = [...source.secondCrest];
+        if (i===4) scene.pocketStyle = [...source.pocketStyle];
+    }
+    return scene;
 }
 
 export function hexRGB(hex) {
@@ -93,7 +151,8 @@ export function materialColors(settings) {
 }
 
 // Low/high neighbors for terrain, depth and light, in that order. All endpoints
-// come from the four anchors in OKLCH; changing tone settings leaves geometry alone.
+// are derived from the four anchors in OKLCH unless explicitly overridden.
+// Null overrides keep following the anchors; neither mode changes geometry.
 export function adjacentColors(settings) {
     const s = normalizeSettings(settings), spread = s.toneSpread/100;
     const labs = [s.terrain,s.depth,s.light,s.sky].map(hex => toLab(hexRGB(hex)));
@@ -138,5 +197,5 @@ export function adjacentColors(settings) {
         low.push(encode(lowL,lowC,lowHue));
         high.push(encode(highL,highC,highHue));
     }
-    return [...low,...high];
+    return [...low,...high].map((automatic, i) => s[toneKeys[i]] ? hexRGB(s[toneKeys[i]]) : automatic);
 }

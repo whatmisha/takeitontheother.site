@@ -4,7 +4,11 @@ export const palettes = {
     pigment: { sky: '#2353DB', terrain: '#FC796E', depth: '#FF5900', light: '#FFC2EE' },
     ember: { sky: '#2353DB', terrain: '#FF9306', depth: '#FF5900', light: '#FFF0D8' }
 };
+export const layouts = {auto:'Auto',basin:'Basin',ridge:'Ridge',valley:'Valley',fold:'Fold'};
 export const toneCharacters = { pigment: 'Pigment', pearlescent: 'Pearlescent', radiant: 'Radiant' };
+// Array order matches the renderer: three low endpoints, then three high endpoints.
+export const toneKeys = ['terrainLow', 'depthLow', 'lightLow', 'terrainHigh', 'depthHigh', 'lightHigh'];
+export const automaticTones = Object.fromEntries(toneKeys.map(key => [key, null]));
 export const ranges = {
     scale: [40, 220, 1], complexity: [1, 6, 1], flow: [0, 100, 1], folds: [0, 100, 1],
     horizon: [15, 80, 1], relief: [0, 100, 1], softness: [0, 100, 1],
@@ -14,13 +18,29 @@ export const ranges = {
     toneScale: [20, 200, 1], toneBleed: [0, 100, 1]
 };
 export const defaults = {
-    schemaVersion: VERSION, width: 1920, height: 1080, seed: 1565559100, mode: 'landscape',
+    schemaVersion: VERSION, width: 1920, height: 1080, seed: 1565559100, mode: 'landscape', layout:'auto',
     scale: 100, complexity: 2, flow: 48, folds: 65, horizon: 53, relief: 62,
     softness: 38, edgeVariation: 70, glowCoverage: 35, glow: 0, halo: 65, contrast: 118, grain: 55, grainSize: 1,
     toneCharacter: 'radiant', toneAmount: 100, toneSpread: 65, toneScale: 110, toneBleed: 50,
-    exportScale: 1, ...palettes.ember
+    exportScale: 1, ...palettes.ember, ...automaticTones, landscapeForms: null, abstractForms: null
 };
 const clamp = (n, a, b) => Math.min(b, Math.max(a, n));
+const formNumber = (value, fallback, min, max) => typeof value === 'number' && Number.isFinite(value)
+    ? Math.round(clamp(value, min, max) * 10000) / 10000 : fallback;
+export function normalizeForms(value) {
+    if (!Array.isArray(value)) return null;
+    const forms = Array.from({length:6}, (_, i) => {
+        const item = value[i];
+        if (!item || typeof item !== 'object' || Array.isArray(item)
+            || typeof item.seed !== 'number' || !Number.isFinite(item.seed)) return null;
+        return { seed:item.seed >>> 0, layout:Object.hasOwn(layouts,item.layout) ? item.layout : 'auto',
+            x:formNumber(item.x,0,-1,1), y:formNumber(item.y,0,-1,1),
+            scaleX:formNumber(item.scaleX,1,.25,3), scaleY:formNumber(item.scaleY,1,.25,3),
+            locked:item.locked === true };
+    });
+    return forms.some(Boolean) ? forms : null;
+}
+export const formSettingsKey = mode => mode === 'abstract' ? 'abstractForms' : 'landscapeForms';
 export function normalizeSettings(value = {}) {
     if (!value || typeof value !== 'object' || Array.isArray(value)) throw new TypeError('Invalid settings.');
     if (value.schemaVersion != null && value.schemaVersion !== VERSION) throw new Error('Unsupported document version.');
@@ -32,13 +52,19 @@ export function normalizeSettings(value = {}) {
     for (const key of ['sky', 'terrain', 'depth', 'light']) {
         if (/^#[0-9a-f]{6}$/i.test(value[key] ?? '')) out[key] = value[key].toUpperCase();
     }
+    for (const key of toneKeys) {
+        if (typeof value[key] === 'string' && /^#[0-9a-f]{6}$/i.test(value[key])) out[key] = value[key].toUpperCase();
+    }
     for (const key of ['width', 'height']) {
         if (Number.isFinite(Number(value[key])) && value[key] != null) out[key] = Math.round(clamp(Number(value[key]), 256, 4096));
     }
     if (Number.isFinite(Number(value.seed)) && value.seed != null) out.seed = Number(value.seed) >>> 0;
     if (Object.hasOwn(toneCharacters, value.toneCharacter)) out.toneCharacter = value.toneCharacter;
+    if (Object.hasOwn(layouts,value.layout)) out.layout=value.layout;
     if (['landscape', 'abstract'].includes(value.mode)) out.mode = value.mode;
     if ([1, 2, 3].includes(Number(value.exportScale))) out.exportScale = Number(value.exportScale);
+    out.landscapeForms = normalizeForms(value.landscapeForms);
+    out.abstractForms = normalizeForms(value.abstractForms);
     return out;
 }
 export function makeDocument(settings) {
@@ -95,4 +121,23 @@ export function migratePresets(store) {
         all[name]={...preset,...updates};changed=true;
     }
     if(changed) store.saveAll(all);
+}
+
+// A form retains its source seed and layout while edited. Generate releases only
+// unlocked forms; global composition and material controls remain live.
+export function formEdit(settings, index) {
+    const s = normalizeSettings(settings);
+    return s[formSettingsKey(s.mode)]?.[index] || {seed:s.seed, layout:s.layout, x:0, y:0, scaleX:1, scaleY:1, locked:false};
+}
+export function editForm(settings, index, patch) {
+    if (!Number.isInteger(index) || index < 0 || index > 5) throw new RangeError('Invalid form.');
+    const s = normalizeSettings(settings), key = formSettingsKey(s.mode);
+    const forms = s[key] ? [...s[key]] : Array(6).fill(null);
+    forms[index] = patch === null ? null : {...formEdit(s,index), ...patch};
+    return {...s, [key]:normalizeForms(forms)};
+}
+export function regenerate(settings, seed) {
+    const s = normalizeSettings({...settings,seed});
+    for (const key of ['landscapeForms','abstractForms']) s[key] = normalizeForms(s[key]?.map(form => form?.locked ? form : null));
+    return s;
 }

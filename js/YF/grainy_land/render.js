@@ -1,5 +1,5 @@
-import { createScene, materialColors, adjacentColors, hexRGB } from './scene.js?v=depth-3';
-import { normalizeSettings } from './document.js?v=depth-3';
+import { createScene, materialColors, adjacentColors, hexRGB } from './scene.js?v=form-edit-1';
+import { normalizeSettings } from './document.js?v=form-edit-1';
 
 const vertexSource = `
 attribute vec2 position;
@@ -10,7 +10,10 @@ const fragmentSource = `
 precision highp float;
 varying vec2 uv;
 uniform vec2 artboard, rasterSize;
-uniform vec4 phases, fields[6], layers[6], layerStyles[6], foldFields[6];
+uniform vec3 secondCrest;
+uniform vec4 pocketStyle;
+uniform vec4 formPhases[6], formTransforms[6], fields[6], layers[6], layerStyles[6], foldFields[6];
+uniform float formSeeds[6], editorPass;
 uniform vec3 sky, colors[6], adjacent[6];
 uniform float toneAmount, toneScale, toneBleed, toneCharacter;
 uniform float mode, scale, complexity, flow, horizon, relief, folds;
@@ -68,13 +71,6 @@ vec2 foldPoint(vec2 p, vec4 f, float strength) {
 
 void main() {
     vec2 p = vec2(uv.x, 1.-uv.y);
-    vec2 anchor = vec2(.5,mode>.5 ? .5 : horizon);
-    vec2 q = (p-anchor)*scale+anchor;
-    vec2 offset = phases.xy*2.;
-    vec2 warp = vec2(fbm(q*3.+offset), fbm(q*3.+offset+20.))-.5;
-    q += warp*flow*.27;
-    if (phases.w > 3.141593) q.x = 1.-q.x;
-    q.x += sin(q.y*5.+phases.z)*flow*.035;
 
     // Grain size is relative to the artwork, independent of export resolution.
     vec2 gp=p*2688.*vec2(1.,artboard.y/artboard.x)/grainSize;
@@ -82,7 +78,20 @@ void main() {
     float resolve=min(1.,1.5/footprint);
     vec3 color=sky, underpaint=sky;
 
+    float picked = 0.;
     for (int i=0; i<6; i++) {
+        vec4 phases = formPhases[i], transform = formTransforms[i];
+        vec2 point = p;
+        if (transform != vec4(0.,0.,1.,1.)) point = (p-.5-transform.xy)/transform.zw+.5;
+    vec2 anchor = vec2(.5,mode>.5 ? .5 : horizon);
+    vec2 q = (point-anchor)*scale+anchor;
+    vec2 offset = phases.xy*2.;
+    vec2 warp = vec2(fbm(q*3.+offset), fbm(q*3.+offset+20.))-.5;
+    q += warp*flow*.27;
+    if (phases.w > 3.141593) q.x = 1.-q.x;
+    q.x += sin(q.y*5.+phases.z)*flow*.035;
+
+
         vec4 f = layers[i], style = layerStyles[i];
         float id = float(i);
         // Local two-dimensional deformation lets one surface curl around another.
@@ -94,7 +103,7 @@ void main() {
         float y = horizon+f.z-relief*f.w*crest+style.x*(x-.5);
         if (i==1) y = horizon+.15+relief*(f.z-.15+f.w*smoothstep(f.x-.12,f.x+f.y*1.7,x));
         if (i==3) y = horizon+.15+relief*(f.z-.15+f.w*(1.-smoothstep(f.x-f.y*1.7,f.x+.12,x)));
-        if (i==0) y -= relief*(.04+.025*complexity)*abs(fields[0].w)*bell((x-fields[0].x)/fields[0].z);
+        if (i==0) y -= relief*secondCrest.z*bell((x-secondCrest.x)/secondCrest.y);
         if (i==2) y += .21*bell((x+.06)/.26);
         // A foreground fold rises into the basin, then opens out of frame.
         if (i==4) y += .20*bell((x+.08)/.35);
@@ -105,8 +114,9 @@ void main() {
             // A rounded pocket with an open tail, independent of the horizon graph.
             vec2 v=surface-vec2(f.x,horizon+f.z-.065);
             v.y-=sin(v.x*6.+style.y)*.035;
-            float pocket=(1.-length(v/vec2(.14+f.y*.5,.065+relief*.065)))*.09;
-            float tail=surface.y-(horizon+.43+.08*sin(x*4.+style.y));
+            v=mat2(cos(pocketStyle.z),-sin(pocketStyle.z),sin(pocketStyle.z),cos(pocketStyle.z))*v;
+            float pocket=(1.-length(v/pocketStyle.xy))*.09;
+            float tail=surface.y-(horizon+pocketStyle.w+.08*sin(x*4.+style.y));
             d=mix(d,smoothUnion(pocket,tail,.055),folds);
         }
         if (mode>.5) {
@@ -121,12 +131,16 @@ void main() {
         float localSoft=mix(1.,mix(.20,2.1,smoothstep(.25,.75,edgeField)),edgeVariation);
         float edge=(.002+softness*.045)*style.z*localSoft;
         float smoothMask=smoothstep(-edge,edge,d);
+        if (editorPass > .5) {
+            if (smoothMask >= .5) picked = float(i+1);
+            continue;
+        }
         vec2 droplets=vec2(smoothMask,.5);
         if (grain>0. && smoothMask>0.) {
             // Rotate and offset each coat: adjacent paints never share a stencil.
             float angle=id*2.399963;
             vec2 point=mat2(cos(angle),-sin(angle),sin(angle),cos(angle))*gp;
-            point+=vec2(seed*.17,seed*.37)+id*vec2(107.,191.);
+            point+=vec2(formSeeds[i]*.17,formSeeds[i]*.37)+id*vec2(107.,191.);
             droplets=spray(point,smoothMask,footprint);
         }
         float mask=mix(smoothMask,droplets.x,grain*resolve);
@@ -211,7 +225,7 @@ void main() {
         color=mix(color,haloTint,reflection);
         color=mix(color,clamp(pigment,0.,1.),mask);
     }
-    gl_FragColor = vec4(clamp(color,0.,1.),1.);
+    gl_FragColor = editorPass > .5 ? vec4(picked/255.,0.,0.,1.) : vec4(clamp(color,0.,1.),1.);
 }
 `;
 
@@ -246,12 +260,12 @@ export class LandscapeRenderer {
         if (!this.locations.has(name)) this.locations.set(name, this.gl.getUniformLocation(this.program, name));
         return this.locations.get(name);
     }
-    render(raw, width, height) {
+    render(raw, width, height, editorPass = 0) {
         const s = normalizeSettings(raw), gl = this.gl;
         if (gl.isContextLost()) throw new Error('Graphics context lost. Reload to restore the renderer.');
         const max = Math.min(gl.getParameter(gl.MAX_TEXTURE_SIZE), gl.getParameter(gl.MAX_RENDERBUFFER_SIZE));
         if (width > max || height > max) throw new Error('This GPU cannot render that size. Reduce export scale.');
-        const key = JSON.stringify([s,width,height]);
+        const key = JSON.stringify([s,width,height,editorPass]);
         if (key === this.cacheKey) return this.canvas;
         this.canvas.width = width; this.canvas.height = height;
         gl.viewport(0,0,width,height); gl.useProgram(this.program);
@@ -266,7 +280,12 @@ export class LandscapeRenderer {
         }
         gl.uniform2f(this.location('artboard'),s.width,s.height);
         gl.uniform2f(this.location('rasterSize'),width,height);
-        gl.uniform4fv(this.location('phases'),scene.phases);
+        gl.uniform1f(this.location('editorPass'),editorPass);
+        gl.uniform4fv(this.location('formPhases[0]'),scene.formPhases.flat());
+        gl.uniform4fv(this.location('formTransforms[0]'),scene.formTransforms.flat());
+        gl.uniform1fv(this.location('formSeeds[0]'),scene.formSeeds);
+        gl.uniform3fv(this.location('secondCrest'),scene.secondCrest);
+        gl.uniform4fv(this.location('pocketStyle'),scene.pocketStyle);
         gl.uniform4fv(this.location('fields[0]'),scene.fields.flat());
         gl.uniform3fv(this.location('sky'),hexRGB(s.sky));
         gl.uniform4fv(this.location('layers[0]'),scene.layers.flat());
@@ -279,6 +298,13 @@ export class LandscapeRenderer {
         if (error !== gl.NO_ERROR) throw new Error('Graphics allocation failed. Reduce export size.');
         this.cacheKey = key;
         return this.canvas;
+    }
+    formMap(settings, width, height) {
+        this.render(settings,width,height,1);
+        const pixels = new Uint8Array(width*height*4), ids = new Uint8Array(width*height);
+        this.gl.readPixels(0,0,width,height,this.gl.RGBA,this.gl.UNSIGNED_BYTE,pixels);
+        for (let y=0;y<height;y++) for (let x=0;x<width;x++) ids[y*width+x]=pixels[((height-1-y)*width+x)*4];
+        return {width,height,ids};
     }
     destroy() {
         const gl = this.gl;

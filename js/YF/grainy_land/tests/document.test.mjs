@@ -1,8 +1,8 @@
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
-import { defaults, palettes, presetTones, migrateTonePresets, migratePresets, normalizeSettings, makeDocument, readDocument, exportDimensions } from '../document.js';
-import { createScene, paletteLUT, materialColors, adjacentColors } from '../scene.js';
+import { defaults, palettes, toneKeys, presetTones, migrateTonePresets, migratePresets, normalizeSettings, makeDocument, readDocument, exportDimensions } from '../document.js';
+import { createScene, paletteLUT, materialColors, adjacentColors, hexRGB } from '../scene.js';
 
 test('reference palettes start with the required editable blue', () => {
     assert.equal(defaults.sky, '#2353DB');
@@ -155,4 +155,49 @@ test('all shipped depths migrate once while personal colors and other settings s
     migratePresets(store);assert.equal(writes,1);
     all.Pigment={...old.Pigment,seeded:false};migratePresets(store);
     assert.equal(all.Pigment.depth,'#713004');assert.equal(writes,1);
+});
+
+
+test('layout choices round-trip and Auto yields all four reproducible families', () => {
+    const families=new Set();
+    for(let seed=0;seed<64;seed++) families.add(createScene({...defaults,seed}).layoutFamily);
+    assert.equal(families.size,4);
+    for(const [family,layout] of ['basin','ridge','valley','fold'].entries()) {
+        const settings={...defaults,layout};
+        assert.equal(readDocument(makeDocument(settings)).layout,layout);
+        assert.equal(createScene(settings).layoutFamily,family);
+        assert.deepEqual(createScene(settings),createScene(settings));
+        assert.ok(createScene(settings).secondCrest.every(Number.isFinite));
+        assert.ok(createScene(settings).pocketStyle.every(Number.isFinite));
+    }
+    assert.equal(normalizeSettings({layout:'__proto__'}).layout,'auto');
+    assert.equal(normalizeSettings({}).layout,'auto');
+    assert.deepEqual(createScene({...defaults,mode:'abstract',layout:'fold'}),createScene({...defaults,mode:'abstract',layout:'ridge'}));
+});
+
+
+test('manual endpoints round-trip, sanitize independently, and legacy documents remain automatic', () => {
+    const overrides = Object.fromEntries(toneKeys.map((key, i) => [key, ['#aabbcc','#234567','#ffffff','#000000','#123456','#fedcba'][i]]));
+    const settings = normalizeSettings({...defaults, ...overrides});
+    assert.deepEqual(readDocument(JSON.parse(JSON.stringify(makeDocument(settings)))), settings);
+    toneKeys.forEach(key => assert.equal(settings[key], overrides[key].toUpperCase()));
+    const legacy = {...defaults};
+    toneKeys.forEach(key => delete legacy[key]);
+    const restored = readDocument({toolId:'grainy_land',schemaVersion:1,settings:legacy});
+    assert.deepEqual(adjacentColors(restored), adjacentColors(defaults));
+    const invalid = normalizeSettings({terrainLow:'url(x)',depthLow:[],lightLow:123,terrainHigh:'#FFF',depthHigh:'#GGGGGG',lightHigh:null});
+    toneKeys.forEach(key => assert.equal(invalid[key], null));
+});
+
+test('fixed tones survive palette and character changes while untouched endpoints keep following anchors', () => {
+    const settings = {...defaults,terrainLow:'#128833',lightHigh:'#DEAD00'};
+    const changed = {...settings,...palettes.pigment,toneCharacter:'pearlescent',toneSpread:100};
+    const original = adjacentColors(settings), next = adjacentColors(changed);
+    assert.deepEqual(next[0], hexRGB('#128833'));
+    assert.deepEqual(next[5], hexRGB('#DEAD00'));
+    assert.notDeepEqual(original[3], next[3]);
+    assert.deepEqual(createScene(settings), createScene(defaults));
+    const reset = adjacentColors({...changed,terrainLow:null,lightHigh:null});
+    assert.deepEqual(reset, adjacentColors({...defaults,...palettes.pigment,toneCharacter:'pearlescent',toneSpread:100}));
+    assert.deepEqual(adjacentColors({...settings,seed:123}), original);
 });

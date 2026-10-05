@@ -1,5 +1,6 @@
-import { LandscapeRenderer } from '../render.js?v=depth-3';
-import { defaults, palettes } from '../document.js?v=depth-3';
+import { LandscapeRenderer } from '../render.js?v=form-edit-1';
+import { defaults, palettes, toneKeys, makeDocument, readDocument, editForm, regenerate } from '../document.js?v=form-edit-1';
+import { adjacentColors } from '../scene.js?v=form-edit-1';
 const renderer = new LandscapeRenderer(), results = [], urls = [];
 const check = (name, condition) => { results.push((condition ? 'PASS ' : 'FAIL ') + name); if (!condition) throw new Error(name); };
 const capture = (settings,width=480,height=270) => {
@@ -44,6 +45,15 @@ try {
     check('Abstract ignores disabled horizon and relief controls',equal(
         capture({...defaults,mode:'abstract',horizon:15,relief:0}).pixels,
         capture({...defaults,mode:'abstract',horizon:80,relief:100}).pixels));
+    const basin=capture({...defaults,layout:'basin'}).pixels;
+    for(const layout of ['ridge','valley','fold']) {
+        const settings={...defaults,layout};
+        const pixels=capture(settings).pixels;
+        check(layout+' changes composition at the same seed',!equal(basin,pixels));
+        check(layout+' preserves distant sky',equal(pixels.slice(0,4),new Uint8Array([35,83,219,255])));
+    }
+    check('Abstract ignores stored landscape layout',equal(
+        capture({...defaults,mode:'abstract',layout:'fold'}).pixels,capture({...defaults,mode:'abstract',layout:'ridge'}).pixels));
     const custom=capture({...defaults,terrain:'#14765A',depth:'#083540',light:'#E8F7A1'}).pixels;
     check('Custom material anchors affect the rendered terrain',!equal(initial,custom));
     check('Contrast changes material independently of glow',!equal(
@@ -83,6 +93,36 @@ try {
         const lo=key==='toneScale'?20:0, hi=key==='toneScale'?200:100;
         check(key+' affects rendered color',!equal(capture({...defaults,[key]:lo}).pixels,capture({...defaults,[key]:hi}).pixels));
     }
+    const automatic = adjacentColors(defaults);
+    const exactOverrides = Object.fromEntries(toneKeys.map((key,i) => [key, '#' + automatic[i].map(v=>Math.round(v*255).toString(16).padStart(2,'0')).join('')]));
+    check('Fixing automatic endpoints preserves every default pixel', equal(initial,capture({...defaults,...exactOverrides}).pixels));
+    for (const key of toneKeys) {
+        check(key+' changes rendered material', !equal(initial,capture({...defaults,[key]:'#169DAB'}).pixels));
+    }
+    const manual = {...defaults,terrainLow:'#169DAB',depthHigh:'#CB39BC',lightLow:'#624DB2'};
+    const manualPixels = capture(manual).pixels;
+    check('Manual tones leave distant sky exact', equal(manualPixels.slice(0,4),initial.slice(0,4)));
+    check('Manual tones survive JSON with identical rendering', equal(manualPixels,capture(readDocument(JSON.parse(JSON.stringify(makeDocument(manual))))).pixels));
+    check('Zero tone amount disables manual colors', equal(plain,capture({...manual,toneAmount:0}).pixels));
+    check('Resetting overrides restores the default render', equal(initial,capture({...manual,...Object.fromEntries(toneKeys.map(key=>[key,null]))}).pixels));
+    await artifact('manual-tones-1920',manual,1920,1080);
+    const pick=renderer.formMap(defaults,320,180);
+    check('Form picking distinguishes six paints and the background',new Set(pick.ids).size===7 && Math.max(...pick.ids)===6);
+    check('Form picking leaves the exported image unchanged',equal(initial,capture(defaults).pixels));
+    for (const mode of ['landscape','abstract']) {
+        const baseline={...defaults,mode};
+        let locked=baseline;
+        for(let i=0;i<6;i++)locked=editForm(locked,i,{locked:true});
+        check(mode+' locking forms preserves every pixel',equal(capture(baseline).pixels,capture(locked).pixels));
+        check(mode+' fully locked composition survives Generate',equal(capture(locked).pixels,capture(regenerate(locked,444)).pixels));
+        const moved=editForm(baseline,0,{x:.16,y:-.10,locked:true});
+        check(mode+' moving a form changes pixels',!equal(capture(baseline).pixels,capture(moved).pixels));
+        const scaled=editForm(moved,0,{scaleX:.7,scaleY:1.5});
+        check(mode+' resizing a form changes pixels',!equal(capture(moved).pixels,capture(scaled).pixels));
+        check(mode+' edited forms round-trip with identical rendering',equal(capture(scaled).pixels,capture(readDocument(JSON.parse(JSON.stringify(makeDocument(scaled))))).pixels));
+        check(mode+' reset restores the generated form',equal(capture(baseline).pixels,capture(editForm(scaled,0,null)).pixels));
+    }
+    await artifact('edited-forms-1920',editForm(defaults,0,{x:.1,y:-.07,scaleX:1.1,locked:true}),1920,1080);
     // A fixed seed makes this a reproducible material regression: an interior
     // region of the central hill must retain detail without growing a coarse crust.
     const smooth=capture({...defaults,grain:0},1920,1080);
