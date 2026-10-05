@@ -1,5 +1,5 @@
 import { SeededRandom } from '../infra/framework/src/index.js';
-import { normalizeSettings, layouts, toneKeys, formSettingsKey } from './document.js?v=form-edit-1';
+import { normalizeSettings, layouts, toneKeys, formSettingsKey } from './document.js?v=form-edit-2';
 
 // Geometry is independent of the palette, texture and raster resolution.
 // Coordinates are normalized; this is the extension point for future painted fields.

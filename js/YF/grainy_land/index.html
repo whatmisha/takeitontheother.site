@@ -7,7 +7,7 @@
     <link rel="icon" href="data:,">
     <link rel="stylesheet" href="../infra/framework/css/othersite-styles.css">
     <link rel="stylesheet" href="../infra/framework/css/ui-contract.css?v=uiq-5">
-    <link rel="stylesheet" href="./app.css?v=form-edit-1">
+    <link rel="stylesheet" href="./app.css?v=form-edit-2">
 </head>
 <body>
 <div class="container grainy-land">
@@ -58,6 +58,7 @@
                             <button type="button" data-form-index="5" aria-pressed="false">Foreground</button>
                         </div>
                         <div id="selectedFormControls" hidden>
+                            <p id="formVisibilityNote" class="field-note form-help" hidden>This form is covered or outside the canvas. Use X and Y to bring it into view.</p>
                             <div class="dimensions-row"><label for="formX">X, %<input id="formX" type="number" min="-100" max="100" step="0.1" value="0"></label><label for="formY">Y, %<input id="formY" type="number" min="-100" max="100" step="0.1" value="0"></label></div>
                             <div class="dimensions-row"><label for="formWidth">Width, %<input id="formWidth" type="number" min="25" max="300" step="1" value="100"></label><label for="formHeight">Height, %<input id="formHeight" type="number" min="25" max="300" step="1" value="100"></label></div>
                             <div class="form-actions"><button id="formLock" class="panel-action" type="button" aria-pressed="false">Lock</button><button id="formReset" class="panel-action" type="button" disabled>Reset form</button></div>
@@ -173,6 +174,6 @@
     <input id="jsonFileInput" type="file" accept=".json,application/json" hidden><button id="jsonPickerTrigger" type="button" hidden>Choose JSON</button>
     <dialog id="dialog" class="modal" aria-labelledby="dialogTitle"><div class="modal-content"><h2 id="dialogTitle" class="modal-title"></h2><div id="dialogText" class="modal-text"></div><input id="dialogInput" class="modal-input" type="text" style="display:none"><div id="dialogButtons" class="modal-buttons"></div></div></dialog>
 </div>
-<script type="module" src="./tool.js?v=form-edit-1"></script>
+<script type="module" src="./tool.js?v=form-edit-2"></script>
 </body>
 </html>

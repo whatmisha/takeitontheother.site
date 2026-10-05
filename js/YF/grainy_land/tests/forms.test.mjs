@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {defaults, normalizeSettings, makeDocument, readDocument, editForm, formEdit, regenerate} from '../document.js';
 import {createScene} from '../scene.js';
-import {visibleBounds} from '../form-editor.js';
+import {visibleBounds, resizedForm, FormEditor} from '../form-editor.js';
 
 const geometry = (scene,i) => Object.fromEntries(['layers','layerStyles','foldFields','fields','formPhases','formTransforms','formSeeds'].map(key=>[key,scene[key][i]]));
 test('editing one form leaves every other generated surface untouched',()=>{
@@ -59,4 +59,24 @@ test('bounds follow visible pixels and distinguish background from covered forms
     assert.deepEqual(visibleBounds(map,0),{left:.25,top:0,right:.75,bottom:2/3});
     assert.deepEqual(visibleBounds(map,2),{left:0,top:2/3,right:1,bottom:1});
     assert.equal(visibleBounds(map,5),null);
+});
+
+test('resizing preserves the chosen center while bounding scale',()=>{
+    const edit={x:.12,y:-.08,scaleX:1.4,scaleY:.8},center=[.7,.6];
+    const next=resizedForm(edit,.5,50,center);
+    assert.equal(next.scaleX,.5);assert.equal(next.scaleY,3);
+    for(const [axis,scale,i] of [['x','scaleX',0],['y','scaleY',1]]) {
+        const original=(center[i]-.5-edit[axis])/edit[scale];
+        const resized=(center[i]-.5-next[axis])/next[scale];
+        assert.ok(Math.abs(original-resized)<1e-12);
+    }
+});
+test('cancelling a drag restores its starting snapshot and releases capture',()=>{
+    const editor=Object.create(FormEditor.prototype),calls=[],snapshot={seed:42};
+    editor.gesture={started:true,pointerId:7,snapshot};
+    editor.container={hasPointerCapture:id=>id===7,releasePointerCapture:id=>calls.push(['release',id])};
+    editor.tool={applySnapshot:value=>calls.push(['restore',value]),history:{endTransaction:()=>calls.push(['end'])}};
+    editor.cancel();editor.cancel();
+    assert.equal(editor.gesture,null);
+    assert.deepEqual(calls,[['restore',snapshot],['end'],['release',7]]);
 });

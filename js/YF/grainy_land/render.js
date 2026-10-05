@@ -1,5 +1,5 @@
-import { createScene, materialColors, adjacentColors, hexRGB } from './scene.js?v=form-edit-1';
-import { normalizeSettings } from './document.js?v=form-edit-1';
+import { createScene, materialColors, adjacentColors, hexRGB } from './scene.js?v=form-edit-2';
+import { normalizeSettings } from './document.js?v=form-edit-2';
 
 const vertexSource = `
 attribute vec2 position;
@@ -83,14 +83,13 @@ void main() {
         vec4 phases = formPhases[i], transform = formTransforms[i];
         vec2 point = p;
         if (transform != vec4(0.,0.,1.,1.)) point = (p-.5-transform.xy)/transform.zw+.5;
-    vec2 anchor = vec2(.5,mode>.5 ? .5 : horizon);
-    vec2 q = (point-anchor)*scale+anchor;
-    vec2 offset = phases.xy*2.;
-    vec2 warp = vec2(fbm(q*3.+offset), fbm(q*3.+offset+20.))-.5;
-    q += warp*flow*.27;
-    if (phases.w > 3.141593) q.x = 1.-q.x;
-    q.x += sin(q.y*5.+phases.z)*flow*.035;
-
+        vec2 anchor = vec2(.5,mode>.5 ? .5 : horizon);
+        vec2 q = (point-anchor)*scale+anchor;
+        vec2 offset = phases.xy*2.;
+        vec2 warp = vec2(fbm(q*3.+offset), fbm(q*3.+offset+20.))-.5;
+        q += warp*flow*.27;
+        if (phases.w > 3.141593) q.x = 1.-q.x;
+        q.x += sin(q.y*5.+phases.z)*flow*.035;
 
         vec4 f = layers[i], style = layerStyles[i];
         float id = float(i);

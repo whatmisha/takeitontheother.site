@@ -1,9 +1,9 @@
 import { defineTool, UnifiedColorPicker, ToolUiController, FileIntakeController, PresetMenuKeyboardController } from '../infra/framework/src/index.js?v=tool-ui-3';
-import { defaults, ranges, regenerate, toneKeys, toneCharacters, migratePresets, normalizeSettings, makeDocument, readDocument, exportDimensions } from './document.js?v=form-edit-1';
-import { adjacentColors, hexRGB } from './scene.js?v=form-edit-1';
-import { LandscapeRenderer } from './render.js?v=form-edit-1';
+import { defaults, ranges, regenerate, toneKeys, toneCharacters, migratePresets, normalizeSettings, makeDocument, readDocument, exportDimensions } from './document.js?v=form-edit-2';
+import { adjacentColors, hexRGB } from './scene.js?v=form-edit-2';
+import { LandscapeRenderer } from './render.js?v=form-edit-2';
 
-import { FormEditor } from './form-editor.js?v=form-edit-1';
+import { FormEditor } from './form-editor.js?v=form-edit-2';
 
 let formEditor;
 let renderer, ui, intake, presetKeyboard, listeners, unsubscribe, resizeObserver, panelObserver, tonePicker;

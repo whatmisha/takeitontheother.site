@@ -1,6 +1,6 @@
-import { formSettingsKey, formEdit, editForm } from './document.js?v=form-edit-1';
-import { createScene } from './scene.js?v=form-edit-1';
-import { LandscapeRenderer } from './render.js?v=form-edit-1';
+import { formSettingsKey, formEdit, editForm } from './document.js?v=form-edit-2';
+import { createScene } from './scene.js?v=form-edit-2';
+import { LandscapeRenderer } from './render.js?v=form-edit-2';
 
 export function visibleBounds(map, selected) {
     let left=map.width, top=map.height, right=-1, bottom=-1;
@@ -13,6 +13,13 @@ export function visibleBounds(map, selected) {
 const names = ['Terrain','Bank 1','Basin','Bank 2','Fold','Foreground'];
 const fields = {x:'formX',y:'formY',scaleX:'formWidth',scaleY:'formHeight'};
 const clamp = (n, lo, hi) => Math.max(lo,Math.min(hi,n));
+
+export function resizedForm(edit, width, height, center) {
+    const scaleX=clamp(width,.25,3),scaleY=clamp(height,.25,3);
+    return {scaleX,scaleY,
+        x:center[0]-.5-(center[0]-.5-edit.x)*scaleX/edit.scaleX,
+        y:center[1]-.5-(center[1]-.5-edit.y)*scaleY/edit.scaleY,locked:true};
+}
 
 export class FormEditor {
     constructor(tool, change) {
@@ -28,11 +35,24 @@ export class FormEditor {
     init() {
         const on=(target,event,handler,opts={})=>target.addEventListener(event,handler,{...opts,signal:this.abort.signal});
         document.querySelectorAll('[data-form-index]').forEach(button=>on(button,'click',()=>this.select(Number(button.dataset.formIndex))));
-        for (const [field,id] of Object.entries(fields)) on(document.getElementById(id),'change',event=>{
-            const value=Number(event.target.value)/100;
-            if (this.selected<0 || !Number.isFinite(value) || event.target.value.trim()==='') { this.sync();return; }
-            this.change(this.tool,editForm(this.tool.settings,this.selected,{[field]:value,locked:true}),'Transform form');
-        });
+        for (const [field,id] of Object.entries(fields)) {
+            const input=document.getElementById(id);
+            const apply=event=>{
+                const value=Number(event.target.value)/100;
+                if (this.selected<0 || !Number.isFinite(value) || event.target.value.trim()==='') { this.sync();return; }
+                if(value===formEdit(this.tool.settings,this.selected)[field]) {this.sync();return;}
+                let patch={[field]:value,locked:true};
+                if(field==='scaleX'||field==='scaleY') {
+                    this.refreshMap();
+                    const edit=formEdit(this.tool.settings,this.selected),bounds=visibleBounds(this.map,this.selected);
+                    const center=bounds?[(bounds.left+bounds.right)/2,(bounds.top+bounds.bottom)/2]:[.5+edit.x,.5+edit.y];
+                    patch=resizedForm(edit,field==='scaleX'?value:edit.scaleX,field==='scaleY'?value:edit.scaleY,center);
+                }
+                this.change(this.tool,editForm(this.tool.settings,this.selected,patch),'Transform form');
+            };
+            on(input,'change',apply);
+            on(input,'keydown',event=>{if(event.key==='Enter'){event.preventDefault();apply(event);}});
+        }
         on(document.getElementById('formLock'),'click',()=>{
             if (this.selected<0) return;
             const edit=formEdit(this.tool.settings,this.selected);
@@ -77,6 +97,7 @@ export class FormEditor {
     }
     select(index) {
         this.selected=index;this.sync();this.tool.render();
+        this.container.focus({preventScroll:true});
     }
     sync() {
         const s=this.tool.settings;
@@ -137,10 +158,9 @@ export class FormEditor {
         if(!g.started) {this.tool.history.flush();this.tool.history.beginTransaction(g.resize?'Resize form':'Move form');g.started=true;}
         let patch={x:g.edit.x+dx,y:g.edit.y+dy,locked:true};
         if(g.resize) {
-            const sx=clamp(g.edit.scaleX*(point[0]-g.center[0])/Math.max(.02,g.point[0]-g.center[0]),.25,3);
-            const sy=clamp(g.edit.scaleY*(point[1]-g.center[1])/Math.max(.02,g.point[1]-g.center[1]),.25,3);
-            patch={scaleX:sx,scaleY:sy,x:g.center[0]-.5-(g.center[0]-.5-g.edit.x)*sx/g.edit.scaleX,
-                y:g.center[1]-.5-(g.center[1]-.5-g.edit.y)*sy/g.edit.scaleY,locked:true};
+            const sx=g.edit.scaleX*(1+dx/Math.max(.02,g.point[0]-g.center[0]));
+            const sy=g.edit.scaleY*(1+dy/Math.max(.02,g.point[1]-g.center[1]));
+            patch=resizedForm(g.edit,sx,sy,g.center);
         }
         const next=editForm(g.snapshot,g.index,patch),key=formSettingsKey(this.tool.settings.mode);
         this.tool.settingsStore.set(key,next[key]);
@@ -164,7 +184,9 @@ export class FormEditor {
         this.overlay.width=Math.round(rect.width*dpr);this.overlay.height=Math.round(rect.height*dpr);
         const ctx=this.overlay.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);this.handle=null;
         if(this.selected<0)return;
-        const map=this.map,bounds=visibleBounds(map,this.selected);if(!bounds)return;
+        const map=this.map,bounds=visibleBounds(map,this.selected);
+        document.getElementById('formVisibilityNote').hidden=!!bounds;
+        if(!bounds)return;
         this.mask.width=map.width;this.mask.height=map.height;
         const maskCtx=this.mask.getContext('2d'),data=maskCtx.createImageData(map.width,map.height),id=this.selected+1;
         for(let y=0;y<map.height;y++)for(let x=0;x<map.width;x++){

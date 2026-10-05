@@ -1,6 +1,6 @@
-import { LandscapeRenderer } from '../render.js?v=form-edit-1';
-import { defaults, palettes, toneKeys, makeDocument, readDocument, editForm, regenerate } from '../document.js?v=form-edit-1';
-import { adjacentColors } from '../scene.js?v=form-edit-1';
+import { LandscapeRenderer } from '../render.js?v=form-edit-2';
+import { defaults, palettes, toneKeys, makeDocument, readDocument, editForm, regenerate } from '../document.js?v=form-edit-2';
+import { adjacentColors } from '../scene.js?v=form-edit-2';
 const renderer = new LandscapeRenderer(), results = [], urls = [];
 const check = (name, condition) => { results.push((condition ? 'PASS ' : 'FAIL ') + name); if (!condition) throw new Error(name); };
 const capture = (settings,width=480,height=270) => {

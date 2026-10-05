@@ -11,7 +11,18 @@ The default preset is **Ember**, based on `grainy-land-1565559100.json`: seed
 
 - **Composition:** Landscape / Abstract, scale, complexity, flow, horizon,
   relief, folds and seed. Landscape layouts vary reproducibly with the seed. **Folds** adds local curls, pockets and pinched passages;
-  0 gives simpler layered forms. Generate (R) changes only the seed.
+  0 gives simpler layered forms. Generate (R) changes the seed and replaces unlocked
+  forms, preserving locked forms and all color and texture settings.
+- **Edit forms (E):** off by default. Select the visible paint on the image or a
+  named form in the panel. Drag to move, or use the square handle to resize around
+  the visible center. X/Y are offsets as percentages of the canvas; Width/Height
+  are percentages of the original form. Arrow keys move by 0.1% (Shift: 1%).
+  Editing locks the form automatically; **Lock / Unlock** controls whether Generate
+  keeps it. Unlock leaves it in place until Generate; **Reset form** restores that
+  form from the current seed. Global composition controls still affect locked forms.
+  Landscape and Abstract retain separate edits. Each drag is one undo step; Escape
+  cancels an active drag or exits editing. Space + drag and zoom remain available.
+  Edits persist in presets, share links and JSON. Selection outlines are preview-only.
 - **Color:** four editable base colors.
   Both palettes start with background **#2353DB** and Depth **#FF5900**.
 - **Advanced tones:** four base color pickers remain unchanged. **Amount** sets
@@ -83,7 +94,14 @@ in the preview while keeping droplet locations stable in larger exports.
 The shared CanvasTarget owns viewport zoom/pan. PNG is rendered afresh at the
 requested resolution, without capturing UI or enlarging the preview bitmap.
 
-Painting, direct shape editing, animation and
+`form-editor.js` uses the same GPU geometry pass for visible-form picking. Each
+edited form stores a bounded normalized transform and its source seed/layout;
+its phases, local geometry and spray seed survive Generate. Unedited files retain
+identity transforms. Editor selection and handles use a separate canvas and never
+enter the PNG renderer. The optional v1 `landscapeForms` and `abstractForms` arrays
+contain at most six entries; null keeps fully automatic generation.
+
+Painting, animation and
 print color management are deferred. Current output is RGB PNG; future print
 support can retain normalized scenes and introduce physical dimensions, output
 profiles and tiled rendering. Current seeds are tied to scene version 4. Existing v1 settings JSON still loads,
