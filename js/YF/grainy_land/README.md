@@ -23,6 +23,17 @@ The default preset is **Ember**, based on `grainy-land-1565559100.json`: seed
   Landscape and Abstract retain separate edits. Each drag is one undo step; Escape
   cancels an active drag or exits editing. Space + drag and zoom remain available.
   Edits persist in presets, share links and JSON. Selection outlines are preview-only.
+- **Brush / Erase:** inside Edit forms. Choose the target form and draw directly
+  on the canvas; the brush adds to its silhouette and the eraser cuts it away.
+  Later forms can cover earlier forms. Brush size is a percentage of the shorter
+  canvas side and stays consistent while zooming. New paint uses the form's tones,
+  diffusion, spray and glow. Each stroke is one undo step; Escape cancels an active
+  stroke. Painting automatically locks the form. Move and resize carry its strokes
+  with it. **Clear strokes** removes just the painting; **Reset form** also removes
+  transforms and locks. Both can be undone. Strokes survive presets, JSON and share
+  links. Very detailed drawings produce longer links; JSON is useful for exchanging
+  those drawings. Limits: 64 strokes / 1024 sampled points per form, 192 points per
+  stroke. The editor reports reaching a limit without dropping existing work.
 - **Color:** four editable base colors.
   Both palettes start with background **#2353DB** and Depth **#FF5900**.
 - **Advanced tones:** four base color pickers remain unchanged. **Amount** sets
@@ -73,8 +84,7 @@ foreground, Valley uses two unequal shoulders, and Fold raises a tall foreground
 mass with a compact edge. A separate random stream selects the layout, leaving
 existing Basin seeds and Abstract scenes stable. Color fields follow those deformations, with localized highlights,
 reflected neighboring colors and fine spray. Abstract mode uses independent rotated
-fields and ignores the disabled horizon and relief settings. These normalized
-fields provide a place to introduce user-painted shapes later.
+fields and ignores the disabled horizon and relief settings. Painted masks extend or cut these normalized fields.
 `materialColors` derives warm crests, cool reflected light and earth half-tones in
 OKLab from the editable anchors. `adjacentColors` adds neighboring endpoints in
 OKLCH, reducing chroma to fit RGB without shifting hue through channel clipping.
@@ -101,8 +111,15 @@ identity transforms. Editor selection and handles use a separate canvas and neve
 enter the PNG renderer. The optional v1 `landscapeForms` and `abstractForms` arrays
 contain at most six entries; null keeps fully automatic generation.
 
-Painting, animation and
-print color management are deferred. Current output is RGB PNG; future print
+`paint.js` stores bounded polylines and radii in local form coordinates. Ordered
+union/subtraction is baked into two 16-bit distance bounds, sampled in WebGL before
+material shading and picking. Continuous capsule segments prevent gaps between
+pointer samples. An incremental cache reuses earlier segments while drawing;
+preview and PNG use the same distance field. Strokes are additive optional v1
+form fields; old documents retain their exact unpainted appearance. Brush tool
+and cursor size are transient editor choices, separate from the artwork.
+
+Animation and print color management are deferred. Current output is RGB PNG; future print
 support can retain normalized scenes and introduce physical dimensions, output
 profiles and tiled rendering. Current seeds are tied to scene version 4. Existing v1 settings JSON still loads,
 but renders with the new geometry and material; it does not reproduce images
@@ -142,10 +159,10 @@ baseline captures published commit `45b9c16`; it is fixed. Both sides use Depth
 #FF5900. Compressed 960×540 WebP images focus this review on composition; the GPU
 fixture separately checks full-resolution PNG and fine spray.
 
-The completed first roadmap stage adds composition diversity. Remaining stages:
-manual adjacent-tone correction; direct editing and locking of large forms;
-painting large masks on the canvas; physical print dimensions and color-managed
-high-resolution export. Animation remains a later option.
+Completed roadmap stages: composition diversity, manual adjacent-tone correction,
+direct editing and locking of large forms, and painting masks with brush/eraser.
+Next: physical print dimensions and color-managed high-resolution export.
+Animation remains a later option.
 
 New settings retain JSON schema v1 compatibility. Missing fields get safe defaults;
 the preset migration fills missing tone fields in known shipped presets marked

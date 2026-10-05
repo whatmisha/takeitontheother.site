@@ -91,3 +91,13 @@
 .grainy-land .form-list button[aria-pressed="true"] { border-color: var(--color-text); }
 .grainy-land .form-list button:focus-visible { outline: 2px solid var(--color-text); }
 .grainy-land .form-actions { display: flex; gap: 8px; margin-bottom: 12px; }
+
+.grainy-land .form-tools { display: flex; gap: 4px; margin-bottom: 16px; }
+.grainy-land .form-tools button { flex: 1; border: 1px solid transparent; border-radius: 5px; padding: 8px 4px; background: #111; color: var(--color-text-muted); font: inherit; font-size: 12px; cursor: pointer; }
+.grainy-land .form-tools button[aria-pressed="true"] { border-color: var(--color-text); color: var(--color-text); }
+.grainy-land .form-tools button:focus-visible { outline: 2px solid var(--color-text); }
+.grainy-land #brushSizeValue { color: var(--color-text-muted); font-size: 12px; }
+.grainy-land #strokeCount { align-self: center; margin: 0; }
+.grainy-land #paintStatus:empty { display: none; }
+.grainy-land #brushCursor { position: absolute; z-index: 2; pointer-events: none; border: 1px solid #fff; box-shadow: 0 0 0 1px #1118; border-radius: 50%; transform: translate(-50%,-50%); box-sizing: border-box; }
+.grainy-land #brushCursor.is-eraser { border-style: dashed; }

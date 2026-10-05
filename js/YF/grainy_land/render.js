@@ -1,5 +1,6 @@
-import { createScene, materialColors, adjacentColors, hexRGB } from './scene.js?v=form-edit-2';
-import { normalizeSettings } from './document.js?v=form-edit-2';
+import { createScene, materialColors, adjacentColors, hexRGB } from './scene.js?v=paint-1';
+import { bakePaint } from './paint.js?v=paint-1';
+import { normalizeSettings, formSettingsKey } from './document.js?v=paint-1';
 
 const vertexSource = `
 attribute vec2 position;
@@ -14,6 +15,18 @@ uniform vec3 secondCrest;
 uniform vec4 pocketStyle;
 uniform vec4 formPhases[6], formTransforms[6], fields[6], layers[6], layerStyles[6], foldFields[6];
 uniform float formSeeds[6], editorPass;
+uniform sampler2D paint0, paint1, paint2, paint3, paint4, paint5;
+uniform vec4 paintBounds[6];
+uniform vec2 paintSize[6];
+uniform float hasPaint[6];
+vec4 paintSample(int i, vec2 p) {
+    if(i==0)return texture2D(paint0,p);
+    if(i==1)return texture2D(paint1,p);
+    if(i==2)return texture2D(paint2,p);
+    if(i==3)return texture2D(paint3,p);
+    if(i==4)return texture2D(paint4,p);
+    return texture2D(paint5,p);
+}
 uniform vec3 sky, colors[6], adjacent[6];
 uniform float toneAmount, toneScale, toneBleed, toneCharacter;
 uniform float mode, scale, complexity, flow, horizon, relief, folds;
@@ -125,6 +138,17 @@ void main() {
             v = mat2(cos(angle),-sin(angle),sin(angle),cos(angle))*v;
             d = .21+fields[i].z*.5-length(v/vec2(1.35,.72));
             d += flow*(fbm(q*(3.+complexity)+id*7.+offset)-.5)*.45;
+        }
+        if (hasPaint[i] > .5) {
+            vec4 bounds=paintBounds[i];
+            vec2 at=(point-bounds.xy)/bounds.zw;
+            if(at.x>=0. && at.x<=1. && at.y>=0. && at.y<=1.) {
+                at=(at*(paintSize[i]-1.)+.5)/paintSize[i];
+                vec4 encoded=paintSample(i,at);
+                vec2 limits=vec2(dot(encoded.rg,vec2(65280.,255.)),dot(encoded.ba,vec2(65280.,255.)))/65535.*2.-1.;
+                if(limits.y<.9999)d=min(d,limits.y);
+                if(limits.x>-.9999)d=max(d,limits.x);
+            }
         }
         float edgeField=fbm(surface*vec2(5.,8.)+id*11.+offset);
         float localSoft=mix(1.,mix(.20,2.1,smoothstep(.25,.75,edgeField)),edgeVariation);
@@ -253,6 +277,7 @@ export class LandscapeRenderer {
         const position = gl.getAttribLocation(this.program, 'position');
         gl.enableVertexAttribArray(position); gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
         this.locations = new Map(); this.cacheKey = '';
+        this.paintTextures=Array.from({length:6},()=>({texture:gl.createTexture(),key:null}));
         this.canvas.addEventListener('webglcontextlost', event => { event.preventDefault(); this.cacheKey = ''; });
     }
     location(name) {
@@ -269,6 +294,7 @@ export class LandscapeRenderer {
         this.canvas.width = width; this.canvas.height = height;
         gl.viewport(0,0,width,height); gl.useProgram(this.program);
         const scene = createScene(s);
+        this.uploadPaint(s[formSettingsKey(s.mode)]);
         const values = { ...scene, softness: s.softness/100, glow: s.glow/100, halo: s.halo/100,
             contrast: s.contrast/100, grain: s.grain/100, grainSize: s.grainSize, seed: s.seed % 16381,
             toneAmount:s.toneAmount/100, toneScale:s.toneScale, toneBleed:s.toneBleed/100,
@@ -298,6 +324,23 @@ export class LandscapeRenderer {
         this.cacheKey = key;
         return this.canvas;
     }
+    uploadPaint(forms) {
+        const gl=this.gl,bounds=[],sizes=[],active=[];
+        for(let i=0;i<6;i++) {
+            const strokes=forms?.[i]?.strokes,field=strokes?.length?bakePaint(strokes):null;
+            const slot=this.paintTextures[i];
+            gl.activeTexture(gl.TEXTURE0+i);gl.bindTexture(gl.TEXTURE_2D,slot.texture);
+            if(slot.key!==(field?.key??'')) {
+                gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,field?.width??1,field?.height??1,0,gl.RGBA,gl.UNSIGNED_BYTE,field?.pixels??new Uint8Array([0,0,255,255]));
+                gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+                gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+                slot.key=field?.key??'';
+            }
+            gl.uniform1i(this.location('paint'+i),i);
+            bounds.push(...(field?.bounds??[0,0,1,1]));sizes.push(field?.width??1,field?.height??1);active.push(field?1:0);
+        }
+        gl.uniform4fv(this.location('paintBounds[0]'),bounds);gl.uniform2fv(this.location('paintSize[0]'),sizes);gl.uniform1fv(this.location('hasPaint[0]'),active);
+    }
     formMap(settings, width, height) {
         this.render(settings,width,height,1);
         const pixels = new Uint8Array(width*height*4), ids = new Uint8Array(width*height);
@@ -307,6 +350,7 @@ export class LandscapeRenderer {
     }
     destroy() {
         const gl = this.gl;
+        for(const slot of this.paintTextures)gl.deleteTexture(slot.texture);
         gl.deleteBuffer(this.buffer); gl.deleteProgram(this.program);
         gl.getExtension('WEBGL_lose_context')?.loseContext();
         this.canvas.width = this.canvas.height = 1;

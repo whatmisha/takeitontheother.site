@@ -7,7 +7,7 @@
     <link rel="icon" href="data:,">
     <link rel="stylesheet" href="../infra/framework/css/othersite-styles.css">
     <link rel="stylesheet" href="../infra/framework/css/ui-contract.css?v=uiq-5">
-    <link rel="stylesheet" href="./app.css?v=form-edit-2">
+    <link rel="stylesheet" href="./app.css?v=paint-1">
 </head>
 <body>
 <div class="container grainy-land">
@@ -27,7 +27,7 @@
         <h1 class="sr-only">Grainy Land</h1>
         <section class="canvas-container" id="canvasContainer" aria-label="Artwork viewport" tabindex="0">
             <canvas id="mainCanvas" role="img" aria-label="Generated grainy landscape"></canvas>
-            <canvas id="formOverlay" aria-hidden="true" hidden></canvas>
+            <div id="brushCursor" hidden aria-hidden="true"></div><canvas id="formOverlay" aria-hidden="true" hidden></canvas>
         </section>
         <aside class="controls-panel panel-collapsed" id="canvasPanel">
             <div class="panel-header" id="canvasPanelHeader"><span>Canvas</span><button class="collapse-icon" type="button" aria-label="Expand canvas"><svg width="10" height="6" viewBox="0 0 12 8" fill="none" aria-hidden="true"><path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
@@ -48,7 +48,17 @@
                     </div>
                     <button id="editFormsBtn" class="panel-action form-edit-toggle" type="button" aria-pressed="false">Edit forms</button>
                     <div id="formControls" hidden>
-                        <p class="field-note form-help">Select a form on the image. Drag to move; drag the square to resize. Space + drag pans. Esc exits.</p>
+                        <p id="formHelp" class="field-note form-help">Select a form on the image. Drag to move; drag the square to resize. Space + drag pans. Esc exits.</p>
+                        <div class="form-tools" role="group" aria-label="Form tool">
+                            <button type="button" data-form-tool="move" aria-pressed="true">Move</button>
+                            <button type="button" data-form-tool="paint" aria-pressed="false">Brush</button>
+                            <button type="button" data-form-tool="erase" aria-pressed="false">Erase</button>
+                        </div>
+                        <div id="brushControls" hidden>
+                            <div class="control-group"><label for="brushSize"><span>Brush size</span><output id="brushSizeValue" for="brushSize">18%</output></label><input id="brushSize" type="range" min="3" max="60" step="1" value="18"></div>
+                            <div class="form-actions"><button id="clearPaint" class="panel-action" type="button" disabled>Clear strokes</button><span id="strokeCount" class="field-note" aria-live="polite"></span></div>
+                            <p id="paintStatus" class="field-note form-help" role="status"></p>
+                        </div>
                         <div class="form-list" role="group" aria-label="Forms">
                             <button type="button" data-form-index="0" aria-pressed="false">Terrain</button>
                             <button type="button" data-form-index="1" aria-pressed="false">Bank 1</button>
@@ -59,8 +69,8 @@
                         </div>
                         <div id="selectedFormControls" hidden>
                             <p id="formVisibilityNote" class="field-note form-help" hidden>This form is covered or outside the canvas. Use X and Y to bring it into view.</p>
-                            <div class="dimensions-row"><label for="formX">X, %<input id="formX" type="number" min="-100" max="100" step="0.1" value="0"></label><label for="formY">Y, %<input id="formY" type="number" min="-100" max="100" step="0.1" value="0"></label></div>
-                            <div class="dimensions-row"><label for="formWidth">Width, %<input id="formWidth" type="number" min="25" max="300" step="1" value="100"></label><label for="formHeight">Height, %<input id="formHeight" type="number" min="25" max="300" step="1" value="100"></label></div>
+                            <div id="formTransformControls"><div class="dimensions-row"><label for="formX">X, %<input id="formX" type="number" min="-100" max="100" step="0.1" value="0"></label><label for="formY">Y, %<input id="formY" type="number" min="-100" max="100" step="0.1" value="0"></label></div>
+                            <div class="dimensions-row"><label for="formWidth">Width, %<input id="formWidth" type="number" min="25" max="300" step="1" value="100"></label><label for="formHeight">Height, %<input id="formHeight" type="number" min="25" max="300" step="1" value="100"></label></div></div>
                             <div class="form-actions"><button id="formLock" class="panel-action" type="button" aria-pressed="false">Lock</button><button id="formReset" class="panel-action" type="button" disabled>Reset form</button></div>
                             <p id="formSelectionNote" class="field-note form-help"></p>
                         </div>
@@ -174,6 +184,6 @@
     <input id="jsonFileInput" type="file" accept=".json,application/json" hidden><button id="jsonPickerTrigger" type="button" hidden>Choose JSON</button>
     <dialog id="dialog" class="modal" aria-labelledby="dialogTitle"><div class="modal-content"><h2 id="dialogTitle" class="modal-title"></h2><div id="dialogText" class="modal-text"></div><input id="dialogInput" class="modal-input" type="text" style="display:none"><div id="dialogButtons" class="modal-buttons"></div></div></dialog>
 </div>
-<script type="module" src="./tool.js?v=form-edit-2"></script>
+<script type="module" src="./tool.js?v=paint-1"></script>
 </body>
 </html>

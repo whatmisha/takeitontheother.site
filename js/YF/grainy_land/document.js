@@ -1,3 +1,4 @@
+import { normalizeStrokes } from './paint.js?v=paint-1';
 export const TOOL_ID = 'grainy_land';
 export const VERSION = 1;
 export const palettes = {
@@ -33,7 +34,8 @@ export function normalizeForms(value) {
         const item = value[i];
         if (!item || typeof item !== 'object' || Array.isArray(item)
             || typeof item.seed !== 'number' || !Number.isFinite(item.seed)) return null;
-        return { seed:item.seed >>> 0, layout:Object.hasOwn(layouts,item.layout) ? item.layout : 'auto',
+        const strokes=normalizeStrokes(item.strokes);
+        return { ...(strokes.length ? {strokes} : {}), seed:item.seed >>> 0, layout:Object.hasOwn(layouts,item.layout) ? item.layout : 'auto',
             x:formNumber(item.x,0,-1,1), y:formNumber(item.y,0,-1,1),
             scaleX:formNumber(item.scaleX,1,.25,3), scaleY:formNumber(item.scaleY,1,.25,3),
             locked:item.locked === true };

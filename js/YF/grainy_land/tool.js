@@ -1,9 +1,9 @@
 import { defineTool, UnifiedColorPicker, ToolUiController, FileIntakeController, PresetMenuKeyboardController } from '../infra/framework/src/index.js?v=tool-ui-3';
-import { defaults, ranges, regenerate, toneKeys, toneCharacters, migratePresets, normalizeSettings, makeDocument, readDocument, exportDimensions } from './document.js?v=form-edit-2';
-import { adjacentColors, hexRGB } from './scene.js?v=form-edit-2';
-import { LandscapeRenderer } from './render.js?v=form-edit-2';
+import { defaults, ranges, regenerate, toneKeys, toneCharacters, migratePresets, normalizeSettings, makeDocument, readDocument, exportDimensions } from './document.js?v=paint-1';
+import { adjacentColors, hexRGB } from './scene.js?v=paint-1';
+import { LandscapeRenderer } from './render.js?v=paint-1';
 
-import { FormEditor } from './form-editor.js?v=form-edit-2';
+import { FormEditor } from './form-editor.js?v=paint-1';
 
 let formEditor;
 let renderer, ui, intake, presetKeyboard, listeners, unsubscribe, resizeObserver, panelObserver, tonePicker;
@@ -105,7 +105,7 @@ function bind(tool) {
     on(byId('exportScaleSelect'),'change',e => change(tool,{exportScale: Number(e.target.value)},'Resolution'));
     unsubscribe = tool.settingsStore.subscribe('*', () => sync(tool));
     intake = new FileIntakeController({
-        input: 'jsonFileInput', trigger: 'jsonPickerTrigger', accept: '.json,application/json', maxBytes: 1024*1024,
+        input: 'jsonFileInput', trigger: 'jsonPickerTrigger', accept: '.json,application/json', maxBytes: 2*1024*1024,
         errorText: error => error.message || 'Could not read settings.',
         onSelect: async file => {
             const settings = readDocument(JSON.parse(await file.text()));
