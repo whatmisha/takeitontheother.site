@@ -1,4 +1,4 @@
-import { normalizeSettings, exportDimensions } from './document.js?v=alpha-1';
+import { normalizeSettings, exportDimensions } from './document.js?v=layers-zip-1';
 const signature=[137,80,78,71,13,10,26,10];
 const crcTable=Uint32Array.from({length:256},(_,n)=>{for(let k=0;k<8;k++)n=(n&1)?0xedb88320^(n>>>1):n>>>1;return n>>>0;});
 function crc32(bytes){let crc=0xffffffff;for(const b of bytes)crc=crcTable[(crc^b)&255]^(crc>>>8);return (crc^0xffffffff)>>>0;}
@@ -26,9 +26,9 @@ export async function withPngDpi(blob,dpi) {
     if(!header||!end)throw new Error('Incomplete PNG image.');
     return new Blob(parts,{type:'image/png'});
 }
-export async function renderPNG(renderer,settings) {
+export async function renderPNG(renderer,settings,{layerIndex=-1}={}) {
     const s=normalizeSettings(settings),{width,height}=exportDimensions(s);
-    const surface=renderer.render(s,width,height,0,s.transparentBackground),canvas=document.createElement('canvas');
+    const surface=renderer.render(s,width,height,0,layerIndex>=0||s.transparentBackground,layerIndex),canvas=document.createElement('canvas');
     canvas.width=width;canvas.height=height;
     try {
         const ctx=canvas.getContext('2d');if(!ctx)throw new Error('Could not allocate the export canvas.');

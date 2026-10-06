@@ -1,13 +1,14 @@
-import { editCanvas } from './canvas-size.js?v=alpha-1';
-import { renderPNG } from './png-export.js?v=alpha-1';
+import { editCanvas } from './canvas-size.js?v=layers-zip-1';
+import { renderPNG } from './png-export.js?v=layers-zip-1';
+import { renderLayersZIP } from './layers-export.js?v=layers-zip-2';
 import { downloadBlob } from '../infra/framework/src/ui/GeneratorHost.js?v=7';
 import { defineTool, UnifiedColorPicker, ToolUiController, FileIntakeController, PresetMenuKeyboardController } from '../infra/framework/src/index.js?v=tool-ui-4';
-import { defaults, ranges, regenerate, toneKeys, migratePresets, normalizeSettings, makeDocument, readDocument, exportDimensions } from './document.js?v=alpha-1';
-import { adjacentColors, hexRGB } from './scene.js?v=alpha-1';
-import { LandscapeRenderer } from './render.js?v=alpha-1';
+import { defaults, ranges, regenerate, toneKeys, migratePresets, normalizeSettings, makeDocument, readDocument, exportDimensions } from './document.js?v=layers-zip-1';
+import { adjacentColors, hexRGB } from './scene.js?v=layers-zip-1';
+import { LandscapeRenderer } from './render.js?v=layers-zip-1';
 
-import { getLayers } from './layer-data.js?v=alpha-1';
-import { FormEditor } from './form-editor.js?v=ui-4';
+import { getLayers } from './layer-data.js?v=layers-zip-1';
+import { FormEditor } from './form-editor.js?v=layers-zip-1';
 
 let formEditor;
 let renderer, ui, intake, presetKeyboard, listeners, unsubscribe, resizeObserver, panelObserver, panelPositionObserver, tonePicker;
@@ -89,7 +90,10 @@ function sync(tool) {
         });
     }
     byId('exportScaleSelect').value = s.exportScale;
+    byId('exportLayers').checked=s.exportLayers;
     byId('transparentBackground').checked=s.transparentBackground;
+    const exportAction=ui?.actions.find(action=>action.id==='png');
+    if(exportAction)exportAction.label=s.exportLayers?'Export ZIP':'Export PNG';
     byId('mainCanvas').setAttribute('aria-label', s.mode === 'abstract' ? 'Generated grainy abstract artwork' : 'Generated grainy landscape');
     formEditor?.sync();
     ui?.refresh();
@@ -143,6 +147,7 @@ function bind(tool) {
     }
     on(byId('exportScaleSelect'),'change',e=>applyCanvas({exportScale:Number(e.target.value)}));
     on(byId('transparentBackground'),'change',e=>change(tool,{transparentBackground:e.target.checked},'Transparent PNG'));
+    on(byId('exportLayers'),'change',e=>change(tool,{exportLayers:e.target.checked},'Export layers'));
     unsubscribe = tool.settingsStore.subscribe('*', () => sync(tool));
     intake = new FileIntakeController({
         input: 'jsonFileInput', trigger: 'jsonPickerTrigger', accept: '.json,application/json', maxBytes: 4*1024*1024,
@@ -178,10 +183,22 @@ function bind(tool) {
             { id:'generate', button:'generateBtn', label:'Generate', kind:'command', group:'utility', shortcut:'r',
                 run: () => { change(tool,regenerate(tool.settings,crypto.getRandomValues(new Uint32Array(1))[0]),'Generate'); status(''); } },
             { id:'png', button:'exportPngBtn', label:'Export PNG', kind:'export', group:'primary', shortcut:'mod+e',
-                run: async () => {
-                    exportDimensions(tool.settings); status('Rendering PNG…');
+                run: async ({signal}) => {
+                    exportDimensions(tool.settings); status('Preparing export…');
                     try {
                         const snapshot=tool.getSnapshot(),filename='grainy-land-'+snapshot.seed+'.png';
+                        if(snapshot.exportLayers) {
+                            // A dedicated renderer and snapshot let editing continue without restoring over new changes.
+                            const exportRenderer=new LandscapeRenderer();
+                            try {
+                                const {blob,count}=await renderLayersZIP(exportRenderer,snapshot,{signal,
+                                    onProgress:({current,total})=>status('Rendering layer '+current+' / '+total+'…')});
+                                signal.throwIfAborted();
+                                downloadBlob(blob,'grainy-land-'+snapshot.seed+'-layers.zip');
+                                status(count+' layers exported as ZIP.');
+                            } finally {exportRenderer.destroy();}
+                            return;
+                        }
                         if(snapshot.canvasUnit==='mm'||snapshot.transparentBackground)await tool.runExport('png',async()=>{
                             const {blob}=await renderPNG(renderer ||= new LandscapeRenderer(),snapshot);downloadBlob(blob,filename);
                         });

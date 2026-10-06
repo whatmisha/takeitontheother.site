@@ -187,3 +187,5 @@
     .grainy-land .tool-palette-body { gap: 8px; flex: 1; flex-wrap: wrap; }
     .grainy-land #toolsPanel #brushControls { flex: 1; min-width: 110px; }
 }
+
+.grainy-land .action-dock__slot--options { flex-wrap: wrap; gap: var(--spacing-xl); }

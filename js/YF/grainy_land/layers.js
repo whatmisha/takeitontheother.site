@@ -1,6 +1,6 @@
-import { normalizeSettings, formSettingsKey } from './document.js?v=alpha-1';
-import { MAX_LAYERS, getLayers, layerSettingsKey, normalizeLayerStack, geometrySnapshot, sourceGroup } from './layer-data.js?v=alpha-1';
-export { MAX_LAYERS, getLayers, layerSettingsKey } from './layer-data.js?v=alpha-1';
+import { normalizeSettings, formSettingsKey } from './document.js?v=layers-zip-1';
+import { MAX_LAYERS, getLayers, layerSettingsKey, normalizeLayerStack, geometrySnapshot, sourceGroup } from './layer-data.js?v=layers-zip-1';
+export { MAX_LAYERS, getLayers, layerSettingsKey } from './layer-data.js?v=layers-zip-1';
 
 export function withLayers(settings,layers) {
     const s=normalizeSettings(settings);

@@ -43,5 +43,6 @@
   "dpi": 300,
   "printWidthMM": null,
   "printHeightMM": null,
-  "transparentBackground": false
+  "transparentBackground": false,
+  "exportLayers": false
 }

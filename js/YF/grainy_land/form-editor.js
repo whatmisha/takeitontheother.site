@@ -1,7 +1,7 @@
-import { brushStroke, localPaintPoint, strokePointCount, MAX_STROKES, MAX_STROKE_POINTS, MAX_FORM_POINTS } from './paint.js?v=alpha-1';
-import { getLayers, layerSettingsKey, MAX_LAYERS, editLayer, addLayer, duplicateLayer, removeLayer, reorderLayer, convertLayer } from './layers.js?v=alpha-1';
-import { createLayerScene } from './scene.js?v=alpha-1';
-import { LandscapeRenderer } from './render.js?v=alpha-1';
+import { brushStroke, localPaintPoint, strokePointCount, MAX_STROKES, MAX_STROKE_POINTS, MAX_FORM_POINTS } from './paint.js?v=layers-zip-1';
+import { getLayers, layerSettingsKey, MAX_LAYERS, editLayer, addLayer, duplicateLayer, removeLayer, reorderLayer, convertLayer } from './layers.js?v=layers-zip-1';
+import { createLayerScene } from './scene.js?v=layers-zip-1';
+import { LandscapeRenderer } from './render.js?v=layers-zip-1';
 
 export function visibleBounds(map, selected) {
     let left=map.width,top=map.height,right=-1,bottom=-1;

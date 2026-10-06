@@ -1,6 +1,6 @@
-import { getLayers } from './layer-data.js?v=alpha-1';
+import { getLayers } from './layer-data.js?v=layers-zip-1';
 import { SeededRandom } from '../infra/framework/src/index.js';
-import { normalizeSettings, layouts, toneKeys, formSettingsKey } from './document.js?v=alpha-1';
+import { normalizeSettings, layouts, toneKeys, formSettingsKey } from './document.js?v=layers-zip-1';
 
 // Geometry is independent of the palette, texture and raster resolution.
 // Coordinates are normalized; this is the extension point for future painted fields.

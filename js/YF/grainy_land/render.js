@@ -1,7 +1,7 @@
-import { createLayerScene, materialColors, adjacentColors, hexRGB } from './scene.js?v=alpha-1';
-import { bakePaint } from './paint.js?v=alpha-1';
-import { MAX_LAYERS } from './layer-data.js?v=alpha-1';
-import { normalizeSettings } from './document.js?v=alpha-1';
+import { createLayerScene, materialColors, adjacentColors, hexRGB } from './scene.js?v=layers-zip-1';
+import { bakePaint } from './paint.js?v=layers-zip-1';
+import { MAX_LAYERS } from './layer-data.js?v=layers-zip-1';
+import { normalizeSettings } from './document.js?v=layers-zip-1';
 
 const vertexSource = `
 attribute vec2 position;
@@ -16,7 +16,7 @@ uniform vec3 crests[${MAX_LAYERS}];
 uniform vec4 pockets[${MAX_LAYERS}], formPhases[${MAX_LAYERS}], formTransforms[${MAX_LAYERS}];
 uniform vec4 fields[${MAX_LAYERS}], layers[${MAX_LAYERS}], layerStyles[${MAX_LAYERS}], foldFields[${MAX_LAYERS}];
 uniform vec4 geometryA[${MAX_LAYERS}], geometryB[${MAX_LAYERS}], formInfo[${MAX_LAYERS}];
-uniform float editorPass, layerCount, backgroundAlpha;
+uniform float editorPass, layerCount, backgroundAlpha, exportLayer;
 uniform sampler2D paintAtlas;
 uniform vec4 paintBounds[${MAX_LAYERS}], paintMeta[${MAX_LAYERS}];
 uniform vec2 paintAtlasSize, paintCellSize;
@@ -87,7 +87,7 @@ void main() {
 
     float picked = 0.;
     for (int i=0; i<${MAX_LAYERS}; i++) {
-        if(float(i)>=layerCount)break;
+        if(float(i)>=layerCount || (exportLayer>=0. && float(i)>exportLayer))break;
         bool isolated=editorPass>1.5;
         if(isolated&&abs(float(i)-(editorPass-2.))>.1)continue;
         vec4 info=formInfo[i], ga=geometryA[i], gb=geometryB[i];
@@ -251,12 +251,15 @@ void main() {
         // No gray noise, foreign-color deposits or mid-scale clumps are added.
         pigment*=1.+grain*.16*(.5-droplets.y)*resolve;
         // Premultiplied source-over coverage preserves translucent spray and glow.
-        alpha=mix(alpha,1.,outsideHalo);
-        alpha=mix(alpha,1.,reflection);
-        alpha=mix(alpha,1.,mask);
-        color=mix(color,haloTint,outsideHalo);
-        color=mix(color,haloTint,reflection);
-        color=mix(color,clamp(pigment,0.,1.),mask);
+        // Keep lower coats in underpaint for reflected colors, but output only this layer.
+        if(exportLayer<0. || abs(float(i)-exportLayer)<.1) {
+            alpha=mix(alpha,1.,outsideHalo);
+            alpha=mix(alpha,1.,reflection);
+            alpha=mix(alpha,1.,mask);
+            color=mix(color,haloTint,outsideHalo);
+            color=mix(color,haloTint,reflection);
+            color=mix(color,clamp(pigment,0.,1.),mask);
+        }
     }
     gl_FragColor = editorPass > .5 ? vec4(picked/255.,0.,0.,1.) : vec4(clamp(color,0.,1.),alpha);
 }
@@ -294,12 +297,12 @@ export class LandscapeRenderer {
         if (!this.locations.has(name)) this.locations.set(name, this.gl.getUniformLocation(this.program, name));
         return this.locations.get(name);
     }
-    render(raw, width, height, editorPass = 0, transparent = false) {
+    render(raw, width, height, editorPass = 0, transparent = false, exportLayer = -1) {
         const s = normalizeSettings(raw), gl = this.gl;
         if (gl.isContextLost()) throw new Error('Graphics context lost. Reload to restore the renderer.');
         const max = Math.min(gl.getParameter(gl.MAX_TEXTURE_SIZE), gl.getParameter(gl.MAX_RENDERBUFFER_SIZE));
         if (width > max || height > max) throw new Error('This GPU cannot render that size. Reduce export scale.');
-        const key = JSON.stringify([s,width,height,editorPass,transparent]);
+        const key = JSON.stringify([s,width,height,editorPass,transparent,exportLayer]);
         if (key === this.cacheKey) return this.canvas;
         this.canvas.width = width; this.canvas.height = height;
         gl.viewport(0,0,width,height); gl.useProgram(this.program);
@@ -317,6 +320,7 @@ export class LandscapeRenderer {
         gl.uniform2f(this.location('rasterSize'),width,height);
         gl.uniform1f(this.location('editorPass'),editorPass);
         gl.uniform1f(this.location('backgroundAlpha'),transparent?0:1);
+        gl.uniform1f(this.location('exportLayer'),exportLayer);
         gl.uniform1f(this.location('layerCount'),scene.length);
         for(const [uniform,key] of Object.entries({formPhases:'phases',formTransforms:'transform',fields:'field',layers:'shape',layerStyles:'style',foldFields:'foldField',pockets:'pocket',geometryA:'geometryA',geometryB:'geometryB',formInfo:'info'})) {
             const data=Array.from({length:MAX_LAYERS},(_,i)=>scene[i]?.[key]??[0,0,0,0]).flat();

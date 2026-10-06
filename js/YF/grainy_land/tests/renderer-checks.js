@@ -1,10 +1,10 @@
-import { editCanvas } from '../canvas-size.js?v=alpha-1';
-import { renderPNG } from '../png-export.js?v=alpha-1';
-import {getLayers,withLayers,editLayer,addLayer,duplicateLayer,removeLayer,reorderLayer,convertLayer,MAX_LAYERS} from '../layers.js?v=alpha-1';
+import { editCanvas } from '../canvas-size.js?v=layers-zip-1';
+import { renderPNG } from '../png-export.js?v=layers-zip-1';
+import {getLayers,withLayers,editLayer,addLayer,duplicateLayer,removeLayer,reorderLayer,convertLayer,MAX_LAYERS} from '../layers.js?v=layers-zip-1';
 import { ShareCodec } from '../../infra/framework/src/preset/ShareCodec.js';
-import { LandscapeRenderer } from '../render.js?v=alpha-1';
-import { defaults, palettes, toneKeys, makeDocument, readDocument, editForm, regenerate, normalizeSettings } from '../document.js?v=alpha-1';
-import { adjacentColors } from '../scene.js?v=alpha-1';
+import { LandscapeRenderer } from '../render.js?v=layers-zip-1';
+import { defaults, palettes, toneKeys, makeDocument, readDocument, editForm, regenerate, normalizeSettings } from '../document.js?v=layers-zip-1';
+import { adjacentColors } from '../scene.js?v=layers-zip-1';
 const renderer = new LandscapeRenderer(), results = [], urls = [];
 const check = (name, condition) => { results.push((condition ? 'PASS ' : 'FAIL ') + name); if (!condition) throw new Error(name); };
 const capture = (settings,width=480,height=270,transparent=false) => {

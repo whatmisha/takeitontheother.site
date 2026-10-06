@@ -1,4 +1,4 @@
-import { normalizeStrokes } from './paint.js?v=alpha-1';
+import { normalizeStrokes } from './paint.js?v=layers-zip-1';
 
 export const MAX_LAYERS=16;
 export const layerSettingsKey=mode=>mode==='abstract'?'abstractLayers':'landscapeLayers';

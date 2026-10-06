@@ -6,7 +6,7 @@
     <title>Grainy Land — YF Tools</title>
     <link rel="icon" href="data:,">
     <link rel="stylesheet" href="../infra/framework/css/othersite-styles.css">
-    <link rel="stylesheet" href="./app.css?v=ui-5">
+    <link rel="stylesheet" href="./app.css?v=layers-zip-2">
     <link rel="stylesheet" href="../infra/framework/css/ui-contract.css?v=uiq-6">
 </head>
 <body>
@@ -184,9 +184,13 @@
         </div>
         <div class="action-dock__slot action-dock__slot--primary"><button id="exportPngBtn" class="btn-fixed" type="button">Export PNG</button></div>
         <div class="action-dock__slot action-dock__slot--options">
-            <label class="toggle-label" title="Export PNG without the background. The canvas preview keeps its background color.">
+            <label class="toggle-label" title="Remove the background from PNG or omit the Background layer from ZIP. The canvas preview keeps its background color.">
                 <div class="toggle-switch"><input type="checkbox" id="transparentBackground" aria-label="Transparent PNG background"><span class="toggle-slider"></span></div>
                 <span class="toggle-label-text">Transparent PNG</span>
+            </label>
+            <label class="toggle-label" title="Export all layers, including hidden layers, as separate PNGs in one ZIP. Full canvas size; Background is included unless Transparent PNG is on.">
+                <div class="toggle-switch"><input type="checkbox" id="exportLayers" aria-label="Export layers as ZIP"><span class="toggle-slider"></span></div>
+                <span class="toggle-label-text">Layers ZIP</span>
             </label>
         </div>
     </nav>
@@ -194,6 +198,6 @@
     <input id="jsonFileInput" type="file" accept=".json,application/json" hidden><button id="jsonPickerTrigger" type="button" hidden>Choose JSON</button>
     <dialog id="dialog" class="modal" aria-labelledby="dialogTitle"><div class="modal-content"><h2 id="dialogTitle" class="modal-title"></h2><div id="dialogText" class="modal-text"></div><input id="dialogInput" class="modal-input" type="text" style="display:none"><div id="dialogButtons" class="modal-buttons"></div></div></dialog>
 </div>
-<script type="module" src="./tool.js?v=ui-5"></script>
+<script type="module" src="./tool.js?v=layers-zip-2"></script>
 </body>
 </html>

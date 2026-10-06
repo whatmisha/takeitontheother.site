@@ -55,8 +55,21 @@ The shipped list is Ember, Drift and Quiet dunes; all three use Depth #FF5900.
   Escape cancels a gesture or deselects. Space + drag and zoom remain available.
   Shortcuts do not interfere with text entry. Each gesture is one undo step.
 - **Transparent PNG:** the export toggle beside Export PNG removes only the
-  background from the file. Spray edges, layer opacity and glow retain alpha;
+  background from a single PNG or omits the separate Background PNG from a Layers ZIP.
+  Spray edges, layer opacity and glow retain alpha;
   the working preview keeps its background. Saved in JSON, presets and share links.
+- **Layers ZIP:** exports every layer, including hidden and editing-locked layers,
+  as a separate transparent PNG in one ZIP. When Transparent PNG is off, the
+  canvas Background is included as a separate opaque PNG at the bottom of the stack.
+  Files are numbered front-to-back like the Layers list; hidden layers have a
+  `-hidden` suffix. Each PNG keeps the full export canvas, layer position, opacity,
+  spray, glow and reflected color from lower visible coats. Empty layers produce
+  clear PNGs. Millimetre documents retain DPI metadata. The two toggles are
+  independent: Layers ZIP changes the packaging; Transparent PNG removes the background.
+  Rendering is sequential from a snapshot and never changes the editor's visibility,
+  selection, document or history. ZIPs are limited to 512 MiB; reduce resolution
+  if this limit is reached. An empty stack exports only Background, or reports
+  an error when Transparent PNG is on.
 - **Brush / Erase:** `[` / `]` decrease/increase size by two percentage points
   (3–60%, hold to repeat). Physical keys work in Russian layout too. They only
   apply to Brush/Erase, outside text fields and outside a running stroke. Add to a selected silhouette or cut it away. Layers above it
@@ -113,7 +126,7 @@ The shipped list is Ember, Drift and Quiet dunes; all three use Depth #FF5900.
 
 Presets, share links, color pickers, slider editing, panel collapse, history,
 keyboard help and export feedback use `infra/framework/src/index.js`.
-Undo/redo: Cmd/Ctrl+Z / Cmd/Ctrl+Shift+Z. PNG: Cmd/Ctrl+E.
+Undo/redo: Cmd/Ctrl+Z / Cmd/Ctrl+Shift+Z. Export PNG or Layers ZIP: Cmd/Ctrl+E.
 J reveals JSON import/export; saved JSON is a versioned Grainy Land document.
 UI language follows the existing English YF interface.
 
@@ -205,6 +218,10 @@ layers, picking and PNG export. Print checks cover unit switching, DPI, oversize
 requests, persistence, independent CRC validation and a real A4 PNG export.
 Open `tests/renderer.html` on the same local server for real GPU/PNG checks
 and generated images. This fixture is separate from the tool's user interface.
+Open `tests/layers-export.html` for real ZIP/PNG checks: hidden and empty drawn
+layers, opacity, full canvas dimensions, progress, DPI metadata and reassembling
+Landscape/Abstract layers with glow and reflected colors. Node tests independently
+validate ZIP structure, UTF-8 filenames, CRCs, limits and cancellation.
 
 Initial acceptance is in `tests/acceptance.json`; scene-v2 evidence and its
 archived 20-image review are in `tests/reviews/pigment-v2`. Adjacent-tone evidence
