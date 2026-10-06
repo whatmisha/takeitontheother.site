@@ -42,23 +42,15 @@ export class FormEditor {
             try {const result=addLayer(this.tool.settings,mode);this.change(this.tool,result.settings,'Add layer');this.select(result.id);this.setTool(mode==='drawn'?'paint':'move');}
             catch(error){this.report(error.message);}
         });
-        on(byId('layerDuplicate'),'click',()=>{
-            if(!this.layer())return;
-            try {const result=duplicateLayer(this.tool.settings,this.selected);this.change(this.tool,result.settings,'Duplicate layer');this.select(result.id);}
-            catch(error){this.report(error.message);}
-        });
+        on(byId('layerDuplicate'),'click',()=>this.duplicateSelected());
         on(byId('layerDelete'),'click',()=>this.deleteSelected());
-        on(byId('layerForward'),'click',()=>this.shiftLayer(1));on(byId('layerBackward'),'click',()=>this.shiftLayer(-1));
-        on(byId('layerPin'),'click',()=>this.pin(this.selected));
-        on(byId('layerLock'),'click',()=>this.lock(this.selected));
         on(byId('layerConvert'),'click',()=>{this.change(this.tool,convertLayer(this.tool.settings,this.selected),'Convert to drawn');this.report('Silhouette preserved. Generation controls no longer change its shape.');});
         on(byId('backgroundLayer'),'click',()=>{
             this.select(null);
+            byId('materialPanel').querySelector('.panel-content').scrollTop=0;
             if(byId('materialPanel').classList.contains('panel-collapsed'))byId('materialPanelHeader').querySelector('.collapse-icon').click();
             byId('skyColorPreview').click();byId('skyColorPreview').scrollIntoView({block:'nearest'});
         });
-        const name=byId('layerName'),rename=()=>{if(name.value.trim()&&this.layer())this.commit({name:name.value},'Rename layer');else this.sync();};
-        on(name,'change',rename);on(name,'keydown',e=>{if(e.key==='Enter'){e.preventDefault();rename();}});
         on(byId('layerGroup'),'change',e=>this.commit({group:e.target.value},'Layer color group'));
         on(byId('layerOpacity'),'input',e=>{
             if(!this.layer()||this.layer().locked)return;
@@ -123,8 +115,29 @@ export class FormEditor {
         this.sync();return this;
     }
     endOpacity(){if(this.opacityEditing){this.opacityEditing=false;this.tool.history.endTransaction();}}
-    deleteSelected(){const layer=this.layer();if(!layer||layer.locked)return;this.change(this.tool,removeLayer(this.tool.settings,layer.id),'Delete layer');this.report();}
-    shiftLayer(delta){const stack=getLayers(this.tool.settings),i=this.index();if(i<0||!stack[i+delta])return;this.change(this.tool,reorderLayer(this.tool.settings,this.selected,stack[i+delta].id,delta>0?'before':'after'),'Reorder layers');}
+    canChangeLayer(){return !!this.layer()&&!this.gesture&&!this.reorderGesture;}
+    duplicateSelected(){
+        if(!this.canChangeLayer())return;this.endOpacity();
+        try {const result=duplicateLayer(this.tool.settings,this.selected);this.change(this.tool,result.settings,'Duplicate layer');this.select(result.id);this.container.focus({preventScroll:true});}
+        catch(error){this.report(error.message);}
+    }
+    deleteSelected(){const layer=this.layer();if(!this.canChangeLayer()||layer.locked)return;this.endOpacity();this.change(this.tool,removeLayer(this.tool.settings,layer.id),'Delete layer');this.report();this.container.focus({preventScroll:true});}
+    shiftLayer(delta){
+        if(!this.canChangeLayer()||this.layer().locked)return;
+        const stack=getLayers(this.tool.settings),i=this.index();if(!stack[i+delta])return;
+        this.endOpacity();this.change(this.tool,reorderLayer(this.tool.settings,this.selected,stack[i+delta].id,delta>0?'before':'after'),'Reorder layers');
+        byId('layerList').querySelector('.is-selected')?.scrollIntoView({block:'nearest'});
+    }
+    async renameLayer(id){
+        const layer=getLayers(this.tool.settings).find(l=>l.id===id),mode=this.tool.settings.mode;
+        if(!layer||layer.locked||this.renaming)return;
+        this.select(id);this.renaming=true;
+        try {
+            const value=await this.tool.dialog.prompt({title:'Rename layer',value:layer.name,placeholder:'Layer name',confirmText:'Rename'});
+            if(this.abort.signal.aborted||this.tool.settings.mode!==mode||!value?.trim()||value===layer.name)return;
+            this.change(this.tool,editLayer(this.tool.settings,id,{name:value.trim().slice(0,64)}),'Rename layer');
+        } finally {this.renaming=false;}
+    }
     pin(id){const layer=getLayers(this.tool.settings).find(l=>l.id===id);if(!layer||layer.locked||layer.mode==='drawn')return;this.change(this.tool,editLayer(this.tool.settings,id,{mode:layer.mode==='auto'?'pinned':'auto'}),'Pin layer');}
     lock(id){this.cancel();const layer=getLayers(this.tool.settings).find(l=>l.id===id);if(layer)this.change(this.tool,editLayer(this.tool.settings,id,{locked:!layer.locked}),'Lock layer');}
     setBrushSize(size){
@@ -139,20 +152,20 @@ export class FormEditor {
     }
     select(id){this.cancel();this.endOpacity();this.selected=id;this.cursor.hidden=true;this.report();this.sync();this.tool.render();}
     renderList(stack) {
-        const key=JSON.stringify([stack.map(l=>[l.id,l.name,l.mode,l.visible,l.locked,l.group]),this.selected]);
+        const key=JSON.stringify(stack.map(l=>[l.id,l.name,l.mode,l.visible,l.locked,l.group]));
         if(key===this.listKey)return;this.listKey=key;const list=byId('layerList'),scroll=list.scrollTop;list.replaceChildren();
         for(const layer of [...stack].reverse()) {
-            const row=document.createElement('div');row.className='layer-row';row.dataset.layerId=layer.id;row.setAttribute('role','listitem');row.dataset.locked=String(layer.locked);
+            const row=document.createElement('div');row.className='layer-row ui-list-row';row.dataset.layerId=layer.id;row.setAttribute('role','listitem');row.dataset.locked=String(layer.locked);
             row.classList.toggle('is-selected',layer.id===this.selected);row.classList.toggle('is-hidden',!layer.visible);
             const action=(key,title,pressed,run)=>{
-                const b=document.createElement('button');b.type='button';b.className='layer-icon';b.innerHTML=icon(key);b.title=title;b.setAttribute('aria-label',title+' '+layer.name);b.setAttribute('aria-pressed',String(pressed));b.addEventListener('click',run);return b;
+                const b=document.createElement('button');b.type='button';b.className='layer-icon ui-icon-button';b.innerHTML=icon(key);b.title=title;b.setAttribute('aria-label',title+' '+layer.name);b.setAttribute('aria-pressed',String(pressed));b.addEventListener('click',run);return b;
             };
             const eye=action('eye',layer.visible?'Hide':'Show',layer.visible,()=>this.change(this.tool,editLayer(this.tool.settings,layer.id,{visible:!layer.visible}),'Layer visibility'));
-            const select=document.createElement('button');select.type='button';select.className='layer-select';select.title='Click to select, drag to reorder';select.setAttribute('aria-pressed',String(layer.id===this.selected));select.setAttribute('aria-label','Select '+layer.name);
+            const select=document.createElement('button');select.type='button';select.className='layer-select ui-list-select';select.title='Click to select, double-click to rename, drag to reorder';select.setAttribute('aria-pressed',String(layer.id===this.selected));select.setAttribute('aria-label','Select '+layer.name);
             const thumb=document.createElement('canvas');thumb.className='layer-thumb';thumb.width=48;thumb.height=30;thumb.setAttribute('aria-hidden','true');thumb.dataset.thumbId=layer.id;
-            const text=document.createElement('span');text.className='layer-label';const title=document.createElement('span');title.textContent=layer.name;
-            const state=document.createElement('span');state.className='layer-state';state.textContent=layer.mode==='auto'?'Auto':layer.mode==='pinned'?'Pinned':'Drawn';text.append(title,state);select.append(thumb,text);
-            select.addEventListener('click',()=>this.select(layer.id));select.addEventListener('dblclick',()=>{this.select(layer.id);byId('layerProperties').open=true;byId('layerName').focus();byId('layerName').select();});
+            const text=document.createElement('span');text.className='layer-label';const title=document.createElement('span');title.className='ui-list-title';title.textContent=layer.name;
+            const state=document.createElement('span');state.className='layer-state ui-meta';state.textContent=layer.mode==='auto'?'Auto':layer.mode==='pinned'?'Pinned':'Drawn';state.title=this.modeDescription(layer);text.append(title,state);select.append(thumb,text);
+            select.addEventListener('click',()=>this.select(layer.id));select.addEventListener('dblclick',()=>this.renameLayer(layer.id));
             const pin=action('pin',layer.mode==='pinned'?'Unpin':'Pin',layer.mode==='pinned',()=>this.pin(layer.id));pin.disabled=layer.mode==='drawn'||layer.locked;
             if(layer.mode==='drawn')pin.title='Drawn layers are always kept by Generate';
             const lock=action('lock',layer.locked?'Unlock':'Lock',layer.locked,()=>this.lock(layer.id));row.append(eye,select,pin,lock);
@@ -197,6 +210,7 @@ export class FormEditor {
         }
     }
     clearDrops(){byId('layerList').querySelectorAll('.drop-before,.drop-after,.is-dragging').forEach(row=>row.classList.remove('drop-before','drop-after','is-dragging'));}
+    modeDescription(layer){return {auto:'Generate replaces this shape. Moving or painting pins it.',pinned:'Generate keeps this shape. Composition controls still apply.',drawn:'Shape follows your drawing. Generate and composition controls keep it.'}[layer.mode]+(layer.locked?' Locked against manual edits.':'');}
     sync() {
         const s=this.tool.settings,stack=getLayers(s);
         if(s.mode!==this.mode){this.cancel();this.mode=s.mode;this.selected=null;this.thumbs.clear();}
@@ -206,23 +220,24 @@ export class FormEditor {
         this.handle=null;
         if(!this.active)this.cursor.hidden=true;
         document.querySelectorAll('[data-form-tool]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.formTool===this.paintTool)));
-        this.renderList(stack);const layer=this.layer(),i=this.index();
-        byId('layerCount').textContent=stack.length+' / '+MAX_LAYERS;
-        for(const id of ['newDrawnLayer','newAutoLayer'])byId(id).disabled=stack.length>=MAX_LAYERS;
+        this.renderList(stack);const layer=this.layer();
+        byId('layerList').querySelectorAll('.layer-row').forEach(row=>{
+            const selected=row.dataset.layerId===this.selected;row.classList.toggle('is-selected',selected);
+            row.querySelector('.layer-select').setAttribute('aria-pressed',String(selected));
+        });
+        for(const id of ['newDrawnLayer','newAutoLayer']){
+            byId(id).disabled=stack.length>=MAX_LAYERS;
+            byId(id).title=(id==='newDrawnLayer'?'New drawn layer':'New generated layer')+' · '+stack.length+' / '+MAX_LAYERS+' layers';
+        }
         byId('layerDuplicate').disabled=!layer||stack.length>=MAX_LAYERS;byId('layerDelete').disabled=!layer||layer.locked;
-        byId('layerForward').disabled=!layer||layer.locked||i===stack.length-1;byId('layerBackward').disabled=!layer||layer.locked||i===0;
         byId('backgroundThumb').style.background=s.sky;
-        byId('layerEmptyNote').hidden=!!layer;byId('layerProperties').hidden=!layer;
+        byId('layerPanel').hidden=!layer;byId('brushControls').hidden=this.paintTool==='move';
         if(!layer)return;
-        byId('layerName').value=layer.name;byId('layerName').disabled=layer.locked;
-        byId('layerModeLabel').textContent=layer.mode==='auto'?'Auto':layer.mode==='pinned'?'Pinned':'Drawn';
-        byId('layerModeNote').textContent={auto:'Generate replaces this shape. Moving or painting pins it.',pinned:'Generate keeps this shape. Composition controls still apply.',drawn:'Shape follows your drawing. Generate and composition controls keep it.'}[layer.mode]+(layer.locked?' Locked against manual edits.':'');
-        byId('layerPin').disabled=layer.locked||layer.mode==='drawn';byId('layerPin').textContent=layer.mode==='pinned'?'Unpin':'Pin';byId('layerPin').setAttribute('aria-pressed',String(layer.mode==='pinned'));
-        byId('layerLock').textContent=layer.locked?'Unlock':'Lock';byId('layerLock').setAttribute('aria-pressed',String(layer.locked));
+        byId('selectedLayerName').textContent=layer.name;byId('selectedLayerName').title=layer.name;
+        const mode=byId('layerModeLabel');mode.textContent=(layer.mode==='auto'?'Auto':layer.mode==='pinned'?'Pinned':'Drawn')+(layer.locked?' · Locked':'');mode.title=this.modeDescription(layer);mode.setAttribute('aria-label',mode.textContent+'. '+mode.title);
         byId('layerEditable').disabled=layer.locked;byId('layerGroup').value=layer.group;byId('layerOpacity').value=layer.opacity;byId('layerOpacityValue').textContent=layer.opacity+'%';
-        byId('layerConvert').hidden=layer.mode==='drawn';byId('clearPaint').disabled=!layer.strokes.length;
-        byId('strokeCount').textContent=layer.strokes.length?layer.strokes.length+(layer.strokes.length===1?' stroke':' strokes'):'';
-        byId('brushControls').hidden=this.paintTool==='move';byId('formTransformControls').hidden=this.paintTool!=='move';
+        byId('layerConvert').hidden=layer.mode==='drawn';byId('layerConvert').title='Keep this silhouette and edit it only by drawing.';
+        byId('clearPaint').hidden=!layer.strokes.length;byId('clearPaint').title='Clear '+layer.strokes.length+' strokes';
         for(const [field,id]of Object.entries(fields))byId(id).value=Number((layer[field]*100).toFixed(1));
         if(layer.locked||!layer.visible)this.cursor.hidden=true;
     }
@@ -296,7 +311,7 @@ export class FormEditor {
         this.drawThumbs();if(!this.active)return;this.refreshMap();const t=this.tool.target,s=this.tool.settings,dpr=t.dpr,rect=this.container.getBoundingClientRect();
         this.overlay.width=Math.round(rect.width*dpr);this.overlay.height=Math.round(rect.height*dpr);const ctx=this.overlay.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);this.handle=null;
         const layer=this.layer();if(!layer)return;const selected=this.index(),map=this.map,bounds=visibleBounds(map,selected);
-        byId('formVisibilityNote').hidden=!!bounds;byId('formVisibilityNote').textContent=!layer.visible?'This layer is hidden. Show it to edit on the canvas.':layer.mode==='drawn'&&!layer.hasBase&&!layer.strokes.length?'Empty layer. Choose Brush to draw.':'This layer is covered or outside the canvas. Move it forward or adjust its position.';
+        byId('formVisibilityNote').hidden=!!bounds;byId('formVisibilityNote').textContent=!layer.visible?'This layer is hidden. Show it to edit on the canvas.':layer.mode==='drawn'&&!layer.hasBase&&!layer.strokes.length?'Empty layer. Use Brush to add a shape.':'This layer is covered or outside the canvas. Move it forward or adjust its position.';
         if(!bounds)return;this.mask.width=map.width;this.mask.height=map.height;const mc=this.mask.getContext('2d'),data=mc.createImageData(map.width,map.height),id=selected+1;
         for(let y=0;y<map.height;y++)for(let x=0;x<map.width;x++){const at=y*map.width+x;if(map.ids[at]!==id)continue;const edge=x===0||y===0||x===map.width-1||y===map.height-1||map.ids[at-1]!==id||map.ids[at+1]!==id||map.ids[at-map.width]!==id||map.ids[at+map.width]!==id;data.data.set([255,255,255,edge?180:0],at*4);}
         mc.putImageData(data,0,0);const w=s.width*t.zoom,h=s.height*t.zoom;ctx.drawImage(this.mask,t.panX,t.panY,w,h);if(this.paintTool!=='move'||layer.locked)return;

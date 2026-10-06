@@ -130,3 +130,26 @@ test('cancelling a stroke that began on empty space restores its layer',()=>{
     assert.deepEqual(editor.tool.getSnapshot(),before);
     assert.deepEqual(events,['Brush stroke','end','release']);
 });
+
+test('layer commands cannot interrupt a paint stroke or a layer reorder',()=>{
+    for(const state of ['gesture','reorderGesture']){
+        const {editor}=pointerEditor(),snapshot=editor.tool.getSnapshot();
+        editor[state]={pointerId:12};
+        editor.change=()=>assert.fail('A running gesture must not change layer history');
+        editor.duplicateSelected();editor.deleteSelected();editor.shiftLayer(-1);
+        assert.equal(editor.tool.getSnapshot(),snapshot);assert.ok(editor[state]);
+    }
+});
+test('layer commands keep editing locks but permit an independent unlocked duplicate',()=>{
+    const {editor}=pointerEditor(),original=editor.selected;
+    const s=editor.tool.settings,key=s.mode==='abstract'?'abstractLayers':'landscapeLayers';
+    editor.tool.applySnapshot({...s,[key]:s[key].map(l=>l.id===original?{...l,locked:true}:l)});
+    const snapshot=editor.tool.getSnapshot(),changes=[];
+    editor.change=(_tool,next,label)=>{changes.push(label);editor.tool.applySnapshot(next);};
+    editor.deleteSelected();editor.shiftLayer(-1);
+    assert.equal(editor.tool.getSnapshot(),snapshot);assert.deepEqual(changes,[]);
+    editor.duplicateSelected();
+    assert.notEqual(editor.selected,original);assert.equal(editor.layer().locked,false);
+    assert.equal(getLayers(editor.tool.settings).find(l=>l.id===original).locked,true);
+    assert.deepEqual(changes,['Duplicate layer']);
+});

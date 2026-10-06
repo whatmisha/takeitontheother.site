@@ -15,13 +15,14 @@ The shipped list is Ember, Drift and Quiet dunes; all three use Depth #FF5900.
   **Folds** adds local curls, pockets and pinched passages; 0 gives simpler forms.
   Generate (R) replaces Auto layers and preserves Pinned and Drawn layers.
   Color, texture, names, order, visibility, opacity and editing locks survive Generate.
-- **Layers:** independent draggable panel at the bottom right, expanded by default.
+- **Layers:** independent draggable panel at the bottom right, expanded by default, up to 480px tall (60% of the desktop viewport).
   The frontmost layer is at the top. Select a row or visible paint on the canvas;
-  drag rows to reorder, or use the forward/back arrows. Each row has an isolated
+  drag rows to reorder, or use **Cmd+[ / Cmd+]** (Ctrl on Windows/Linux) to move backward/forward. Each row has an isolated
   silhouette thumbnail, visibility, Pin and Lock. Double-click the name to rename.
   **+ Auto** creates a generated layer; **+ Drawn** creates an empty layer and selects
-  Brush. Duplicate preserves the shape (an Auto copy starts Pinned); Delete removes
-  the selected layer. Background opens the existing background color picker.
+  Brush. **Shift+D** duplicates the selection and preserves its shape (an Auto copy
+  starts Pinned); **Delete / Backspace** removes the selected unlocked layer. Each
+  command is undoable and stays inactive during text input, dialogs or gestures. Background opens the existing background color picker.
   There are up to 16 layers in each mode, with separate Landscape and Abstract stacks.
 - **Auto / Pinned / Drawn:** Auto follows composition settings and is replaced by
   Generate. Moving, resizing or painting an Auto layer pins it automatically.
@@ -34,9 +35,17 @@ The shipped list is Ember, Drift and Quiet dunes; all three use Depth #FF5900.
 - **Lock** separately prevents manual editing, deleting and reordering. It does
   not pin an Auto layer: Generate can still replace it. Visibility can be toggled
   while locked; duplicating a locked layer makes an unlocked copy.
-- **Layer properties:** collapsible controls below the list: name, color group
-  (Terrain / Depth / Light), opacity, Move / Brush / Erase and transforms. These
-  use the same four global base colors. Drag on the canvas to move, or use the
+- **Workspace:** Canvas starts collapsed at the top left; Composition is below
+  it, with Seed inside Generation. Layer properties appears immediately to the left of Layers
+  only for the current selection. It follows Layers until dragged independently;
+  its position is constrained to the viewport. Default panels keep a 20px window margin and
+  make room for neighboring panels; dragging overrides their default position.
+  The draggable Move / Brush / Erase toolbar stays above the canvas, with brush
+  size beside it while painting.
+- **Layer properties:** color group (Terrain / Depth / Light), opacity, folded
+  Transform controls, conversion and duplicate/delete actions. Pin and Lock live
+  only in the layer rows; names are edited by double-clicking a row. Mode help
+  and stroke/layer counts are tooltips. These use the same four global base colors. Drag on the canvas to move, or use the
   square handle to resize around the visible center. X/Y are canvas percentages;
   Width/Height are percentages of the original layer. Arrow keys move by 0.1%
   (Shift: 1%). **V** selects Move, **B** Brush, **E** Erase. Brush and Erase
@@ -59,7 +68,11 @@ The shipped list is Ember, Drift and Quiet dunes; all three use Depth #FF5900.
   without dropping existing work. Layers and strokes persist in presets, JSON and
   share links. Detailed drawings produce longer links; JSON is useful for exchange
   (import limit: 4 MiB). Selection, handles and the brush cursor are preview-only.
-- **Color:** four editable base colors.
+- **Appearance:** the top-right panel has stacked Color and Surface sections.
+  Color contains four editable base colors and folded Advanced tones. Surface
+  contains grain, softness, edge variation, contrast and glow. Halo width and
+  Glow coverage appear only when Glow is above zero; Landscape-only controls
+  disappear in Abstract mode. Selecting Background scrolls to and opens the background picker.
   Both palettes start with background **#2353DB** and Depth **#FF5900**.
 - **Advanced tones:** four base color pickers remain unchanged. **Amount** sets
   the strength of added neighboring tones (0 keeps the original automatic shading),
@@ -236,3 +249,9 @@ included in preset saving, undo/redo, share links and JSON round trips.
 The repository-wide directory-coverage check currently stops at the unrelated,
 existing, unregistered `grid_generator_02` directory. No exception was added
 to hide it and no historical migration evidence was rewritten.
+
+The editor uses the shared UI contract for button segments, appearance section headings,
+object-list states and metadata, panel actions, and native disclosures with panel
+chevrons. Application CSS owns layout and artwork thumbnails. Run
+`npm run check:ui-contract` to check Grainy Land alongside the eight other tools;
+GeneratorHost initializes its shared controller directly rather than auto-init.

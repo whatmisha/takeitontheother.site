@@ -2,15 +2,15 @@ import { editCanvas } from './canvas-size.js?v=alpha-1';
 import { renderPNG } from './png-export.js?v=alpha-1';
 import { downloadBlob } from '../infra/framework/src/ui/GeneratorHost.js?v=7';
 import { defineTool, UnifiedColorPicker, ToolUiController, FileIntakeController, PresetMenuKeyboardController } from '../infra/framework/src/index.js?v=tool-ui-4';
-import { defaults, ranges, regenerate, toneKeys, toneCharacters, migratePresets, normalizeSettings, makeDocument, readDocument, exportDimensions } from './document.js?v=alpha-1';
+import { defaults, ranges, regenerate, toneKeys, migratePresets, normalizeSettings, makeDocument, readDocument, exportDimensions } from './document.js?v=alpha-1';
 import { adjacentColors, hexRGB } from './scene.js?v=alpha-1';
 import { LandscapeRenderer } from './render.js?v=alpha-1';
 
 import { getLayers } from './layer-data.js?v=alpha-1';
-import { FormEditor } from './form-editor.js?v=alpha-1';
+import { FormEditor } from './form-editor.js?v=ui-4';
 
 let formEditor;
-let renderer, ui, intake, presetKeyboard, listeners, unsubscribe, resizeObserver, panelObserver, tonePicker;
+let renderer, ui, intake, presetKeyboard, listeners, unsubscribe, resizeObserver, panelObserver, panelPositionObserver, tonePicker;
 let renderFailed = false, lastSize = '';
 const byId = id => document.getElementById(id);
 const status = text => { byId('operationStatus').textContent = text; };
@@ -49,6 +49,7 @@ function sync(tool) {
     for (const radio of document.querySelectorAll('input[name="mode"]')) radio.checked = radio.value === s.mode;
     for (const key of ['horizon','relief']) {
         byId(key+'Slider').disabled = s.mode === 'abstract'; byId(key+'Value').disabled = s.mode === 'abstract';
+        byId(key+'Slider').closest('.control-group').hidden=s.mode==='abstract';
     }
     byId('toneCharacterSelect').value = s.toneCharacter;
     const neighbors=adjacentColors(s), strength=s.toneAmount/100;
@@ -62,11 +63,12 @@ function sync(tool) {
     const customCount = toneKeys.filter(key => s[key] != null).length;
     byId('customToneCount').textContent = customCount ? customCount + ' custom' : '';
     for (const key of toneKeys) byId(key+'Auto').disabled = s[key] == null;
-    byId('toneCharacterNote').textContent = {
+    byId('toneCharacterSelect').title = {
         pigment:'Uneven warm and cool pigment within each form.',
         pearlescent:'Soft color shifts that flow across the surface.',
         radiant:'Brighter neighboring tones along folds and edges.'
     }[s.toneCharacter];
+    for(const key of ['glowCoverage','halo'])byId(key+'Slider').closest('.control-group').hidden=s.glow===0;
     byId('seedInput').value = s.seed;
     const print=s.canvasUnit==='mm';
     byId('canvasUnitSelect').value=s.canvasUnit;byId('printControls').hidden=!print;byId('exportScaleRow').hidden=print;
@@ -157,8 +159,7 @@ function bind(tool) {
     ui = new ToolUiController({
         id: 'grainy_land', title: 'Grainy Land',
         summaries: {
-            compositionPanel: () => tool.settings.mode + ' · ' + tool.settings.seed,
-            materialPanel: () => toneCharacters[tool.settings.toneCharacter] + ' · Tones ' + tool.settings.toneAmount,
+            compositionPanel: () => tool.settings.mode,
             layersPanel: () => getLayers(tool.settings).length + ' layers'
         },
         actions: [
@@ -170,6 +171,10 @@ function bind(tool) {
                 enabled:()=>formEditor.paintTool!=='move'&&!formEditor.gesture,
                 run:()=>formEditor.setBrushSize(formEditor.brushSize+step)
             })),
+            { id:'layer-duplicate',label:'Duplicate layer',kind:'command',group:'keyboard',shortcut:'shift+d',enabled:()=>formEditor.canChangeLayer(),run:()=>formEditor.duplicateSelected() },
+            ...['delete','backspace'].map(shortcut=>({id:'layer-'+shortcut,label:'Delete layer',kind:'command',group:'keyboard',shortcut,run:()=>formEditor.deleteSelected()})),
+            // Consume browser-history keys even without a selection; shiftLayer guards editing state.
+            ...[[-1,'mod+[','Send layer backward'],[1,'mod+]','Bring layer forward']].map(([delta,shortcut,label])=>({id:delta<0?'layer-backward':'layer-forward',label,kind:'command',group:'keyboard',shortcut,repeat:true,run:()=>formEditor.shiftLayer(delta)})),
             { id:'generate', button:'generateBtn', label:'Generate', kind:'command', group:'utility', shortcut:'r',
                 run: () => { change(tool,regenerate(tool.settings,crypto.getRandomValues(new Uint32Array(1))[0]),'Generate'); status(''); } },
             { id:'png', button:'exportPngBtn', label:'Export PNG', kind:'export', group:'primary', shortcut:'mod+e',
@@ -193,13 +198,24 @@ function bind(tool) {
         ], onError: error => status(error.message || 'Operation failed.')
     }).init();
     resizeObserver = new ResizeObserver(() => fit()); resizeObserver.observe(byId('canvasContainer'));
-    // CSS owns the default stack; inline positions from dragging take precedence.
+    // Dock properties beside Layers; a manually dragged properties panel keeps its own position.
+    const updateLayerDock=()=>{
+        const root=document.querySelector('.grainy-land'),rect=byId('layersPanel').getBoundingClientRect();
+        root.style.setProperty('--layers-panel-left',rect.left+'px');
+        root.style.setProperty('--layers-panel-top',rect.top+'px');
+    };
+    on(window,'resize',updateLayerDock);
+    panelPositionObserver=new MutationObserver(updateLayerDock);
+    panelPositionObserver.observe(byId('layersPanel'),{attributes:true,attributeFilter:['style','class']});
     panelObserver = new ResizeObserver(entries => {
         const root=document.querySelector('.grainy-land');
-        for(const entry of entries)root.style.setProperty(entry.target.id==='canvasPanel'?'--canvas-panel-height':'--layers-panel-height',entry.target.getBoundingClientRect().height+'px');
+        const properties={canvasPanel:'--canvas-panel-height',layersPanel:'--layers-panel-height',layerPanel:'--layer-panel-height'};
+        for(const entry of entries)root.style.setProperty(properties[entry.target.id],entry.target.getBoundingClientRect().height+'px');
+        updateLayerDock();
         formEditor?.drawThumbs();
     });
-    panelObserver.observe(byId('canvasPanel'));panelObserver.observe(byId('layersPanel'));
+    for(const id of ['canvasPanel','layersPanel','layerPanel'])panelObserver.observe(byId(id));
+    updateLayerDock();
     sync(tool);
     document.documentElement.dataset.ready = 'true';
 }
@@ -212,7 +228,7 @@ const app = defineTool({
     controls: { sliders: Object.entries(ranges).map(([setting,[min,max,step]]) => ({
         id:setting+'Slider', valueId:setting+'Value',setting,min,max,decimals:step<1?1:0,baseStep:step,shiftStep:step*10
     })), toggles:false },
-    panels: ['canvas','composition','material','layers'].map(name => ({id:name+'Panel',headerId:name+'PanelHeader',persistent:true})),
+    panels: ['canvas','composition','material','layers','layer','tools'].map(name => ({id:name+'Panel',headerId:name+'PanelHeader',persistent:true})),
     colorPickers: { containerId:'unifiedColorPickerContainer',swatches:['sky','terrain','depth','light'].map(setting => ({
         type:setting,setting,itemId:setting+'ColorItem',dotId:setting+'ColorPreview',hexId:setting+'ColorHex',hsbSlotId:setting+'ColorHsbSlot'
     })) },
@@ -231,7 +247,7 @@ const app = defineTool({
     onReady: bind,
     onDestroy: () => {
         formEditor?.destroy(); formEditor=null;
-        listeners?.abort(); unsubscribe?.(); resizeObserver?.disconnect(); panelObserver?.disconnect(); intake?.destroy();
+        listeners?.abort(); unsubscribe?.(); resizeObserver?.disconnect(); panelObserver?.disconnect(); panelPositionObserver?.disconnect(); intake?.destroy();
         presetKeyboard?.destroy(); ui?.destroy(); renderer?.destroy(); renderer=null; ui=null; tonePicker=null;
         delete document.documentElement.dataset.ready;
     }

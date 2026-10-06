@@ -13,7 +13,8 @@ const applications = [
     'wordplayer',
     'dither',
     'pulsar_coder',
-    'wander_bender'
+    'wander_bender',
+    'grainy_land'
 ];
 const read = relative => readFile(new URL(resolveToolPath(relative), root), 'utf8');
 const [contractCss, controller, plan, ...entrypoints] = await Promise.all([
@@ -50,10 +51,13 @@ assert.match(contractCss, /\.btn-export-pdf,[\s\S]*?font-weight:\s*400\s*!import
 
 entrypoints.forEach((html, index) => {
     const app = applications[index];
-    const version = 'uiq-5';
+    const version = app === 'grainy_land' ? 'uiq-6' : 'uiq-5';
     const controllerVersion = app === 'pulsar_coder' ? 'uiq-3' : app === 'dither' ? 'uiq-4' : 'uiq-2';
     assert.ok(html.includes(`infra/framework/css/ui-contract.css?v=${version}`), `${app}: missing final UI CSS`);
-    assert.ok(html.includes(`infra/framework/src/ui/unifiedUiAutoInit.js?v=${controllerVersion}`), `${app}: missing shared UI controller`);
+    // GeneratorHost tools initialize ToolUiController in their module, not via legacy auto-init.
+    if (app !== 'grainy_land') {
+        assert.ok(html.includes(`infra/framework/src/ui/unifiedUiAutoInit.js?v=${controllerVersion}`), `${app}: missing shared UI controller`);
+    }
     if (app !== 'grid_generator') {
         assert.match(html, /←\s+YF Tools/u, `${app}: back link needs a readable arrow gap`);
     }
@@ -126,7 +130,7 @@ const swatchCount = entrypoints.reduce(
     (count, html) => count + (html.match(/class="[^"]*\b(?:color-dot|color-preview)\b[^"]*"/gu)?.length || 0),
     0
 ) + (pizzaNavigation.match(/class="[^"]*\b(?:color-dot|color-preview)\b[^"]*"/gu)?.length || 0);
-assert.equal(swatchCount, 13, 'the six color-enabled tools must expose 13 shared swatch triggers');
+assert.equal(swatchCount, 23, 'the seven color-enabled tools must expose 23 shared swatch triggers');
 
 const [sparkyHtml, ditherCss] = await Promise.all([
     read('sparky/index.html'),
@@ -150,4 +154,25 @@ assert.match(ditherHtml, /class="btn-secondary panel-action btn-full" id="resetT
 assert.match(contractCss, /\.controls-panel \.panel-action\s*\{[^}]*height:\s*36px;[^}]*border:\s*0;[^}]*background:\s*#000;/su);
 assert.match(contractCss, /\.controls-panel \.panel-action:focus-visible\s*\{[^}]*outline:\s*2px solid/u);
 
-console.log('Shared UI contract passed: 8 entrypoints, common swatches, controls, summaries, shortcuts and feedback are wired.');
+
+const grainyHtml = entrypoints[applications.indexOf('grainy_land')];
+const [grainyTool, grainyCss, grainyEditor] = await Promise.all([
+    read('grainy_land/tool.js'), read('grainy_land/app.css'), read('grainy_land/form-editor.js')
+]);
+assert.match(grainyTool, /new ToolUiController\(/u, 'Grainy Land must use the shared UI controller');
+assert.ok(grainyHtml.lastIndexOf('ui-contract.css') > grainyHtml.lastIndexOf('app.css'), 'Grainy Land must load the UI contract last');
+assert.match(grainyHtml, /class="form-tools segmented-control"/u, 'Drawing tools must use shared segments');
+assert.match(grainyHtml, /id="materialPanelHeader"><span>Appearance<\/span>/u, 'Appearance must have a regular panel heading');
+assert.match(grainyHtml, /id="colorHeading" class="control-field-heading">Color<\/h3>/u);
+assert.match(grainyHtml, /id="surfaceHeading" class="control-field-heading">Surface<\/h3>/u);
+assert.doesNotMatch(grainyHtml, /role="tab(?:list|panel)?"|colorTab|surfaceTab/u, 'Color and Surface must be stacked sections');
+assert.doesNotMatch(grainyTool + grainyEditor, /selectTab|colorTab|surfaceTab/u, 'No stale tab handlers may remain');
+assert.equal(grainyHtml.match(/<details class="ui-disclosure\b|<details id="[^"]+" class="ui-disclosure\b/gu)?.length, 4, 'All four disclosures must use shared styling');
+assert.equal(grainyHtml.match(/class="ui-disclosure__chevron"/gu)?.length, 4, 'Disclosures must use panel chevrons');
+for (const name of ['ui-list-row', 'ui-list-select', 'ui-list-title', 'ui-meta', 'ui-icon-button']) {
+    assert.ok(grainyEditor.includes(name), `Grainy Land layers must use ${name}`);
+}
+assert.doesNotMatch(grainyCss, /\.panel-action\s*\{|\.material-tabs button|\.form-tools button\[aria-pressed/u, 'Grainy Land must not fork shared action or selected-segment styles');
+assert.doesNotMatch(grainyCss, /font-size:\s*(?:9|10|11|12|13)px/u, 'Compact Grainy Land text must use shared type tokens');
+
+console.log('Shared UI contract passed: 9 entrypoints, common swatches, controls, summaries, shortcuts and feedback are wired.');

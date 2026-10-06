@@ -3,6 +3,10 @@
     --ui-font-stack: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
     --ui-foreground: #d2d2d2;
     --ui-panel-collapsed-height: 47px;
+    --ui-font-control: 0.9rem;
+    --ui-font-meta: 0.75rem;
+    --ui-item-hover: rgba(255, 255, 255, 0.05);
+    --ui-item-selected: rgba(255, 255, 255, 0.1);
 }
 
 body,
@@ -455,3 +459,102 @@ body,
         transition-duration: 1ms;
     }
 }
+
+/* Button segments share the existing radio-segment geometry. */
+.controls-panel .segmented-control > button {
+    display: inline-flex;
+    flex: 1 1 auto;
+    align-items: center;
+    justify-content: center;
+    height: 30px;
+    min-height: 30px;
+    min-width: 0;
+    margin: 0;
+    padding: 6px 8px;
+    border: 0;
+    border-radius: calc(var(--radius-input) - 4px);
+    background: transparent;
+    color: var(--color-text-secondary);
+    font-size: var(--ui-font-control);
+    line-height: 1;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color var(--transition-normal), color var(--transition-normal);
+}
+.controls-panel .segmented-control > button:hover { color: var(--ui-foreground); }
+.controls-panel .segmented-control > button[aria-pressed="true"] {
+    background: var(--ui-foreground);
+    color: var(--color-bg);
+}
+.controls-panel .segmented-control > button:disabled {
+    color: var(--color-inactive-text);
+    background: var(--color-inactive-bg);
+    cursor: default;
+}
+.controls-panel .segmented-control > button:focus-visible {
+    outline: 2px solid var(--ui-foreground);
+    outline-offset: 2px;
+}
+
+/* Native disclosure behavior with the same chevron and type as panel headers. */
+.controls-panel .ui-disclosure { margin: 0 0 var(--spacing-xl); }
+.controls-panel .ui-disclosure:last-child { margin-bottom: 0; }
+.controls-panel .ui-disclosure > summary {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md) 0;
+    color: var(--ui-foreground);
+    font-size: var(--ui-font-control);
+    line-height: normal;
+    list-style: none;
+    cursor: pointer;
+}
+.controls-panel .ui-disclosure > summary::-webkit-details-marker { display: none; }
+.controls-panel .ui-disclosure[open] > summary { margin-bottom: var(--spacing-xl); }
+.controls-panel .ui-disclosure__chevron {
+    flex: 0 0 10px;
+    margin-left: auto;
+    color: var(--color-text-muted);
+    transform: rotate(-90deg);
+    transition: transform var(--duration-collapse) var(--easing-standard);
+}
+.controls-panel .ui-disclosure[open] > summary > .ui-disclosure__chevron { transform: none; }
+.controls-panel .ui-disclosure > summary:hover > .ui-disclosure__chevron { color: var(--ui-foreground); }
+.controls-panel .ui-disclosure > summary:focus-visible {
+    outline: 2px solid var(--ui-foreground);
+    outline-offset: 2px;
+}
+
+/* Opt-in object/layer list surfaces; artwork thumbnails remain application-owned. */
+.controls-panel .ui-list-row {
+    border: 1px solid transparent;
+    border-radius: var(--radius-input);
+    background: transparent;
+    color: var(--ui-foreground);
+}
+.controls-panel .ui-list-row:hover { background: var(--ui-item-hover); }
+.controls-panel .ui-list-row.is-selected { background: var(--ui-item-selected); border-color: var(--color-text-muted); }
+.controls-panel .ui-list-row.drop-before { border-top-color: var(--ui-foreground); }
+.controls-panel .ui-list-row.drop-after { border-bottom-color: var(--ui-foreground); }
+.controls-panel .ui-list-select { border: 0; background: transparent; color: inherit; font-size: var(--ui-font-control); }
+.controls-panel .ui-list-title { font-size: var(--ui-font-control); }
+.controls-panel .ui-meta { color: var(--color-text-muted); font-size: var(--ui-font-meta); }
+.controls-panel .ui-icon-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 24px;
+    height: 30px;
+    padding: var(--spacing-sm);
+    border: 0;
+    border-radius: calc(var(--radius-input) - 2px);
+    background: transparent;
+    color: var(--color-text-muted);
+    cursor: pointer;
+}
+.controls-panel .ui-icon-button[aria-pressed="true"] { color: var(--ui-foreground); }
+.controls-panel .ui-icon-button:hover:not(:disabled) { color: var(--ui-foreground); background: var(--ui-item-hover); }
+.controls-panel .ui-icon-button:disabled { color: var(--color-inactive-text); cursor: default; }
+.controls-panel :is(.ui-list-row, .ui-list-select, .ui-icon-button):focus-visible { outline: 2px solid var(--ui-foreground); outline-offset: -2px; }
