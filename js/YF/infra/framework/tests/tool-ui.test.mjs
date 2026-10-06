@@ -215,3 +215,22 @@ test('profile identity and summaries do not require an app-name branch in the fr
     assert.deepEqual(ui.shortcutRows(), [['Regenerate', 'Space'], ['Shortcuts', '?']]);
     assert.deepEqual(ui.exportButtons(), []);
 });
+
+test('opt-in bracket commands repeat in Russian layout while retaining typing and dialog guards',async()=>{
+    const h=harness();h.ui.destroy();
+    h.options.actions.push({id:'size',label:'Smaller brush',kind:'command',group:'keyboard',shortcut:'[',repeat:true,run:()=>h.calls.push('smaller')});
+    const ui=h.make().init();
+    for(const event of [h.key('[',{code:'BracketLeft'}),h.key('х',{code:'BracketLeft',repeat:true})]){
+        ui.handleKeydown(event);await Promise.all(ui.bindings.map(b=>b.pending));
+        assert.equal(event.defaultPrevented,true);
+    }
+    for(const patch of [{target:{tagName:'INPUT'}},{target:{isContentEditable:true}},{metaKey:true},{shiftKey:true},{isComposing:true}])ui.handleKeydown(h.key('[',{code:'BracketLeft',repeat:true,...patch}));
+    ui.handleKeydown(h.key('e',{metaKey:true,repeat:true}));
+    ui.handleKeydown(h.key('j',{repeat:true}));assert.equal(h.buttons.get('json').hidden,true);
+    h.document.querySelectorAll=()=>[{getClientRects:()=>[{}],closest:()=>null}];
+    ui.handleKeydown(h.key('[',{code:'BracketLeft',repeat:true}));
+    assert.deepEqual(h.calls,['smaller','smaller']);
+    assert.ok(ui.shortcutRows().some(([label,key])=>label==='Smaller brush'&&key==='['));
+    ui.destroy();
+    assert.throws(()=>new ToolUiController({...h.options,actions:[{...h.options.actions[0],repeat:true}]}),/Only commands/);
+});

@@ -36,5 +36,12 @@
   "depthHigh": null,
   "lightHigh": null,
   "landscapeForms": null,
-  "abstractForms": null
+  "abstractForms": null,
+  "landscapeLayers": null,
+  "abstractLayers": null,
+  "canvasUnit": "px",
+  "dpi": 300,
+  "printWidthMM": null,
+  "printHeightMM": null,
+  "transparentBackground": false
 }

@@ -1,4 +1,6 @@
-import { normalizeStrokes } from './paint.js?v=paint-1';
+import { canvasDefaults, normalizeCanvas, assertExportSize } from './canvas-size.js?v=alpha-1';
+import { normalizeLayerStack, layerSettingsKey } from './layer-data.js?v=alpha-1';
+import { normalizeStrokes } from './paint.js?v=alpha-1';
 export const TOOL_ID = 'grainy_land';
 export const VERSION = 1;
 export const palettes = {
@@ -23,7 +25,7 @@ export const defaults = {
     scale: 100, complexity: 2, flow: 48, folds: 65, horizon: 53, relief: 62,
     softness: 38, edgeVariation: 70, glowCoverage: 35, glow: 0, halo: 65, contrast: 118, grain: 55, grainSize: 1,
     toneCharacter: 'radiant', toneAmount: 100, toneSpread: 65, toneScale: 110, toneBleed: 50,
-    exportScale: 1, ...palettes.ember, ...automaticTones, landscapeForms: null, abstractForms: null
+    exportScale: 1, transparentBackground: false, ...canvasDefaults, ...palettes.ember, ...automaticTones, landscapeForms: null, abstractForms: null, landscapeLayers: null, abstractLayers: null
 };
 const clamp = (n, a, b) => Math.min(b, Math.max(a, n));
 const formNumber = (value, fallback, min, max) => typeof value === 'number' && Number.isFinite(value)
@@ -57,16 +59,19 @@ export function normalizeSettings(value = {}) {
     for (const key of toneKeys) {
         if (typeof value[key] === 'string' && /^#[0-9a-f]{6}$/i.test(value[key])) out[key] = value[key].toUpperCase();
     }
-    for (const key of ['width', 'height']) {
-        if (Number.isFinite(Number(value[key])) && value[key] != null) out[key] = Math.round(clamp(Number(value[key]), 256, 4096));
-    }
+    Object.assign(out,normalizeCanvas(value,defaults));
+    out.transparentBackground=value.transparentBackground===true;
     if (Number.isFinite(Number(value.seed)) && value.seed != null) out.seed = Number(value.seed) >>> 0;
     if (Object.hasOwn(toneCharacters, value.toneCharacter)) out.toneCharacter = value.toneCharacter;
     if (Object.hasOwn(layouts,value.layout)) out.layout=value.layout;
     if (['landscape', 'abstract'].includes(value.mode)) out.mode = value.mode;
-    if ([1, 2, 3].includes(Number(value.exportScale))) out.exportScale = Number(value.exportScale);
     out.landscapeForms = normalizeForms(value.landscapeForms);
     out.abstractForms = normalizeForms(value.abstractForms);
+    out.landscapeLayers = normalizeLayerStack(value.landscapeLayers,out);
+    out.abstractLayers = normalizeLayerStack(value.abstractLayers,out);
+    // Explicit stacks supersede migrated six-form data.
+    if(out.landscapeLayers)out.landscapeForms=null;
+    if(out.abstractLayers)out.abstractForms=null;
     return out;
 }
 export function makeDocument(settings) {
@@ -79,18 +84,14 @@ export function readDocument(value) {
 export function exportDimensions(settings) {
     const s = normalizeSettings(settings);
     const width = s.width * s.exportScale, height = s.height * s.exportScale;
-    if (Math.max(width, height) > 8192 || width * height > 33554432) {
-        throw new Error('Export is too large. Reduce the canvas size or export scale (maximum 8192 px / 32 megapixels).');
-    }
-    return { width, height };
+    return assertExportSize(width,height);
 }
 
 // Backfill only the new fields of shipped presets already in local storage.
 // User presets and every explicitly saved value remain intact; this is idempotent.
 export const presetTones = {
-    Pigment: {toneCharacter:'pigment',toneAmount:60,toneSpread:50,toneScale:100,toneBleed:35},
     Ember: {toneCharacter:'radiant',toneAmount:100,toneSpread:65,toneScale:110,toneBleed:50},
-    Drift: {toneCharacter:'pearlescent',toneAmount:75,toneSpread:75,toneScale:90,toneBleed:55},
+    Drift: {toneCharacter:'radiant',toneAmount:100,toneSpread:65,toneScale:110,toneBleed:50},
     'Quiet dunes': {toneCharacter:'pigment',toneAmount:30,toneSpread:30,toneScale:150,toneBleed:20}
 };
 export function migrateTonePresets(store) {
@@ -115,10 +116,11 @@ export function migratePresets(store) {
     const all=store.loadAll();
     if(!all || typeof all!=='object' || Array.isArray(all)) return;
     let changed=false;
+    if(all.Pigment?.seeded===true){delete all.Pigment;changed=true;}
     for(const name of Object.keys(presetTones)) {
         const preset=all[name];
         if(!preset || preset.seeded!==true) continue;
-        const updates=name==='Ember' ? defaults : {depth:'#FF5900'};
+        const updates=name==='Ember' ? defaults : name==='Drift' ? {...defaults,mode:'abstract'} : {depth:'#FF5900'};
         if(Object.entries(updates).every(([key,value])=>preset[key]===value)) continue;
         all[name]={...preset,...updates};changed=true;
     }
@@ -141,5 +143,11 @@ export function editForm(settings, index, patch) {
 export function regenerate(settings, seed) {
     const s = normalizeSettings({...settings,seed});
     for (const key of ['landscapeForms','abstractForms']) s[key] = normalizeForms(s[key]?.map(form => form?.locked ? form : null));
+    for(const mode of ['landscape','abstract']) {
+        const key=layerSettingsKey(mode);
+        if(s[key])s[key]=s[key].map(layer=>layer.mode==='auto'?{
+            ...layer,seed:(s.seed+layer.salt)>>>0,layout:s.layout,x:0,y:0,scaleX:1,scaleY:1,strokes:[]
+        }:layer);
+    }
     return s;
 }

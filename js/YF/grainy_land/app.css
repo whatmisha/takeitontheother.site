@@ -83,13 +83,7 @@
 .grainy-land #formOverlay { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 .grainy-land .canvas-container.is-editing-forms { touch-action: none; }
 .grainy-land .canvas-container:focus { outline: none; }
-.grainy-land .form-edit-toggle { width: 100%; margin-bottom: 20px; }
-.grainy-land .form-edit-toggle[aria-pressed="true"], .grainy-land #formLock[aria-pressed="true"] { box-shadow: inset 0 0 0 1px var(--color-text-muted); }
-.grainy-land .form-help { margin: 0 0 16px; line-height: 1.45; }
-.grainy-land .form-list { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 4px; margin-bottom: 16px; }
-.grainy-land .form-list button { background: #111; color: var(--color-text); border: 1px solid transparent; border-radius: 5px; padding: 8px 4px; font: inherit; font-size: 12px; cursor: pointer; }
-.grainy-land .form-list button[aria-pressed="true"] { border-color: var(--color-text); }
-.grainy-land .form-list button:focus-visible { outline: 2px solid var(--color-text); }
+.grainy-land .form-help { margin: 10px 0 14px; line-height: 1.45; }
 .grainy-land .form-actions { display: flex; gap: 8px; margin-bottom: 12px; }
 
 .grainy-land .form-tools { display: flex; gap: 4px; margin-bottom: 16px; }
@@ -101,3 +95,70 @@
 .grainy-land #paintStatus:empty { display: none; }
 .grainy-land #brushCursor { position: absolute; z-index: 2; pointer-events: none; border: 1px solid #fff; box-shadow: 0 0 0 1px #1118; border-radius: 50%; transform: translate(-50%,-50%); box-sizing: border-box; }
 .grainy-land #brushCursor.is-eraser { border-style: dashed; }
+
+.grainy-land { --layers-panel-height: 360px; }
+.grainy-land #layersPanel { left: auto; right: var(--spacing-3xl); top: auto; bottom: var(--spacing-3xl); max-height: min(480px, 60dvh); }
+.grainy-land #materialPanel { max-height: calc(100dvh - var(--layers-panel-height) - 3 * var(--spacing-3xl)); }
+.grainy-land #layersPanel > .panel-content { padding: 12px; }
+.grainy-land .layer-create, .grainy-land .layer-commands, .grainy-land .layer-mode-row { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; }
+.grainy-land .layer-create .panel-action, .grainy-land .layer-commands .panel-action { padding: 6px 10px; font-size: 12px; }
+.grainy-land #layerCount { margin: 0 0 0 auto; font-size: 11px; }
+.grainy-land .layers-list { max-height: 220px; overflow-y: auto; overscroll-behavior: contain; }
+.grainy-land .layer-row { user-select: none; -webkit-user-select: none; display: flex; align-items: center; min-height: 42px; gap: 3px; border: 1px solid transparent; border-radius: 5px; }
+.grainy-land .layer-row[data-locked="false"] { cursor: grab; }
+.grainy-land .layer-row.is-selected { border-color: #8c8c8c; background: #292929; }
+.grainy-land .layer-row:hover { background: #242424; }
+.grainy-land .layer-select { touch-action: none; display: flex; flex: 1; min-width: 0; gap: 7px; align-items: center; padding: 4px 0; border: 0; color: var(--color-text); background: none; text-align: left; cursor: pointer; }
+.grainy-land .layer-label { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.grainy-land .layer-label > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
+.grainy-land .layer-state { color: var(--color-text-muted); font-size: 9px; }
+.grainy-land .layer-thumb { width: 40px; height: 25px; background: #080808; border-radius: 2px; flex: 0 0 40px; }
+.grainy-land .layer-icon { display: flex; align-items: center; justify-content: center; width: 22px; height: 28px; padding: 2px; border: 0; color: #666; background: none; cursor: pointer; }
+.grainy-land .layer-icon[aria-pressed="true"] { color: #eee; }
+.grainy-land .layer-icon:disabled { opacity: .22; cursor: default; }
+.grainy-land .is-hidden .layer-label, .grainy-land .is-hidden .layer-thumb { opacity: .4; }
+.grainy-land .layer-row.is-dragging { opacity: .4; }
+.grainy-land .layer-row.drop-before { border-top-color: #fff; }
+.grainy-land .layer-row.drop-after { border-bottom-color: #fff; }
+.grainy-land .background-layer { width: 100%; display: flex; align-items: center; gap: 9px; background: none; color: var(--color-text); border: 0; padding: 8px 5px; font: inherit; font-size: 12px; text-align: left; cursor: pointer; margin-bottom: 8px; }
+.grainy-land #backgroundThumb { display: block; width: 40px; height: 22px; margin-left: 23px; border-radius: 2px; }
+.grainy-land .background-layer .field-note { margin: 0 0 0 auto; font-size: 10px; }
+.grainy-land #layerEmptyNote { margin: 8px 0 0; line-height: 1.45; }
+.grainy-land #layerProperties { padding-top: 10px; border-top: 1px solid var(--color-border); }
+.grainy-land #layerProperties summary { cursor: pointer; font-size: 12px; padding-bottom: 12px; }
+.grainy-land .layer-name-label { display: flex; align-items: center; gap: 14px; font-size: 12px; margin-bottom: 12px; }
+.grainy-land #layerName { width: 100%; min-width: 0; border: 1px solid var(--color-border); border-radius: 4px; padding: 6px; background: #111; color: var(--color-text); font: inherit; }
+.grainy-land #layerModeLabel { margin-right: auto; font-size: 12px; }
+.grainy-land .layer-mode-row .panel-action { padding: 5px 12px; font-size: 12px; }
+.grainy-land .layer-mode-row [aria-pressed="true"] { box-shadow: inset 0 0 0 1px #aaa; }
+.grainy-land #layerEditable { border: 0; margin: 0; padding: 0; min-width: 0; }
+.grainy-land #layerEditable:disabled { opacity: .45; }
+.grainy-land #layerEditable .control-group { margin-bottom: 16px; }
+.grainy-land #layerOpacityValue { font-size: 12px; color: var(--color-text-muted); }
+.grainy-land #layerConvert { width: 100%; font-size: 12px; }
+.grainy-land .layer-row button:focus-visible, .grainy-land .background-layer:focus-visible { outline: 1px solid #fff; outline-offset: -1px; }
+@media (max-width: 1000px) {
+    .grainy-land #materialPanel, .grainy-land #layersPanel { max-height: none; }
+    .grainy-land #materialPanel { grid-column: 2; grid-row: 2 / 4; }
+    .grainy-land #layersPanel { grid-column: 1 / -1; grid-row: 4; }
+}
+@media (max-width: 620px) {
+    .grainy-land #layersPanel { grid-column: 1; grid-row: 4; }
+    .grainy-land #materialPanel { grid-column: 1; grid-row: 5; }
+}
+/* Keep the layer list visible when the selected layer's properties grow. */
+.grainy-land #layersPanel > .panel-content > * { flex-shrink: 0; }
+
+.grainy-land .dpi-row { display: flex; align-items: center; gap: 16px; font-size: .9rem; margin-bottom: 14px; }
+.grainy-land .dpi-row input { width: 100%; min-width: 0; }
+.grainy-land .print-help { line-height: 1.4; margin: 8px 0 0; }
+.grainy-land #canvasSizeError { line-height: 1.4; margin: 8px 0 0; }
+.grainy-land #canvasSizeError:empty { display: none; }
+
+.grainy-land .action-dock__slot--options .toggle-label { white-space: nowrap; }
+.grainy-land .action-dock__slot--options .toggle-switch { flex-shrink: 0; }
+@media (max-width: 620px) {
+    .grainy-land .action-dock__slot--options { flex-basis: 100%; justify-content: center; }
+    .grainy-land .bottom-buttons.action-dock { flex-wrap: wrap; }
+    .grainy-land .operation-status { bottom: 100px; }
+}

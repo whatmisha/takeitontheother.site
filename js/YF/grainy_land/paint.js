@@ -98,6 +98,6 @@ export function bakePaint(strokes) {
         pixels.set([lo>>8,lo&255,hi>>8,hi&255],i*4);
     }
     const value={key,width,height,bounds,pixels,lower,upper,commands};cache.set(key,value);
-    while(cache.size>8)cache.delete(cache.keys().next().value);
+    while(cache.size>18)cache.delete(cache.keys().next().value);
     return value;
 }

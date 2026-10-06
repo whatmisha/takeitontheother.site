@@ -1,5 +1,6 @@
+import { getLayers } from './layer-data.js?v=alpha-1';
 import { SeededRandom } from '../infra/framework/src/index.js';
-import { normalizeSettings, layouts, toneKeys, formSettingsKey } from './document.js?v=paint-1';
+import { normalizeSettings, layouts, toneKeys, formSettingsKey } from './document.js?v=alpha-1';
 
 // Geometry is independent of the palette, texture and raster resolution.
 // Coordinates are normalized; this is the extension point for future painted fields.
@@ -90,6 +91,24 @@ export function createScene(settings) {
         if (i===4) scene.pocketStyle = [...source.pocketStyle];
     }
     return scene;
+}
+
+// Ordered layer slots carry their own geometry source and material role. Moving
+// a row never changes the seed, source type or color group of that layer.
+export function createLayerScene(settings) {
+    const s=normalizeSettings(settings),stack=getLayers(s),sources=new Map();
+    return stack.map(layer=>{
+        const params=layer.mode==='drawn'?{...s,...layer.geometry}:s;
+        const key=JSON.stringify([layer.seed,layer.layout,params.scale,params.complexity,params.flow,params.folds,params.horizon,params.relief]);
+        if(!sources.has(key))sources.set(key,generatedScene({...params,seed:layer.seed,layout:layer.layout}));
+        const source=sources.get(key),i=layer.source;
+        return {...layer,phases:source.phases,transform:[layer.x,layer.y,layer.scaleX,layer.scaleY],
+            field:source.fields[i],shape:source.layers[i],style:source.layerStyles[i],foldField:source.foldFields[i],
+            crest:source.secondCrest,pocket:source.pocketStyle,
+            geometryA:[source.scale,source.complexity,source.flow,source.folds],
+            geometryB:[source.horizon,source.relief,source.mode,layer.hasBase?1:0],
+            info:[i,['terrain','depth','light'].indexOf(layer.group),layer.visible?layer.opacity/100:0,layer.seed%16381]};
+    });
 }
 
 export function hexRGB(hex) {

@@ -1,13 +1,16 @@
+import { editCanvas } from '../canvas-size.js?v=alpha-1';
+import { renderPNG } from '../png-export.js?v=alpha-1';
+import {getLayers,withLayers,editLayer,addLayer,duplicateLayer,removeLayer,reorderLayer,convertLayer,MAX_LAYERS} from '../layers.js?v=alpha-1';
 import { ShareCodec } from '../../infra/framework/src/preset/ShareCodec.js';
-import { LandscapeRenderer } from '../render.js?v=paint-1';
-import { defaults, palettes, toneKeys, makeDocument, readDocument, editForm, regenerate } from '../document.js?v=paint-1';
-import { adjacentColors } from '../scene.js?v=paint-1';
+import { LandscapeRenderer } from '../render.js?v=alpha-1';
+import { defaults, palettes, toneKeys, makeDocument, readDocument, editForm, regenerate, normalizeSettings } from '../document.js?v=alpha-1';
+import { adjacentColors } from '../scene.js?v=alpha-1';
 const renderer = new LandscapeRenderer(), results = [], urls = [];
 const check = (name, condition) => { results.push((condition ? 'PASS ' : 'FAIL ') + name); if (!condition) throw new Error(name); };
-const capture = (settings,width=480,height=270) => {
+const capture = (settings,width=480,height=270,transparent=false) => {
     const canvas = document.createElement('canvas'); canvas.width=width;canvas.height=height;
     const ctx=canvas.getContext('2d',{willReadFrequently:true});
-    ctx.drawImage(renderer.render(settings,width,height),0,0);
+    ctx.drawImage(renderer.render(settings,width,height,0,transparent),0,0);
     return {canvas,ctx,pixels:ctx.getImageData(0,0,width,height).data};
 };
 const equal = (a,b) => a.length===b.length && a.every((v,i)=>v===b[i]);
@@ -28,6 +31,35 @@ const artifact = async (name, settings, width, height) => {
 try {
     const initial=capture(defaults).pixels;
     check('Open sky is exactly #2353DB', equal(initial.slice(0,4),new Uint8Array([35,83,219,255])));
+    const transparentSettings={...defaults,transparentBackground:true};
+    check('Transparent export option leaves the working preview unchanged',equal(initial,capture(transparentSettings).pixels));
+    for(const mode of ['landscape','abstract']) {
+        const settings={...transparentSettings,mode,glow:75};
+        const transparent=capture(settings,480,270,true),opaque=capture(settings).pixels;
+        const alpha=transparent.pixels.filter((v,i)=>i%4===3);
+        check(mode+' transparent paint has clear sky, solid paint and soft edges',alpha.some(a=>a===0)&&alpha.some(a=>a===255)&&alpha.some(a=>a>0&&a<255));
+        const composite=document.createElement('canvas');composite.width=480;composite.height=270;
+        const ctx=composite.getContext('2d',{willReadFrequently:true});ctx.fillStyle=settings.sky;ctx.fillRect(0,0,480,270);ctx.drawImage(transparent.canvas,0,0);
+        const pixels=ctx.getImageData(0,0,480,270).data;
+        const error=pixels.reduce((sum,v,i)=>sum+Math.abs(v-opaque[i]),0)/pixels.length;
+        check(mode+' transparent paint recomposes over its sky without a matte ('+error.toFixed(3)+' MAE)',error<1);
+    }
+    const clearSettings=withLayers(transparentSettings,[]);
+    check('An empty transparent layer stack exports entirely clear pixels',capture(clearSettings,160,90,true).pixels.every(v=>v===0));
+    const faintSettings=withLayers({...transparentSettings,glow:0},[{...getLayers(defaults)[0],opacity:25}]);
+    const faintAlpha=capture(faintSettings,160,90,true).pixels.filter((v,i)=>i%4===3);
+    check('Layer opacity remains part of export alpha',Math.max(...faintAlpha)<=66&&Math.max(...faintAlpha)>=63);
+    const transparentSmall={...transparentSettings,width:320,height:180,exportScale:2};
+    for(const settings of [transparentSmall,editCanvas({...transparentSmall,exportScale:1},{canvasUnit:'mm'})]) {
+        const artifact=await renderPNG(renderer,settings),bitmap=await createImageBitmap(artifact.blob);
+        const decoded=document.createElement('canvas');decoded.width=artifact.width;decoded.height=artifact.height;
+        const ctx=decoded.getContext('2d',{willReadFrequently:true});ctx.drawImage(bitmap,0,0);bitmap.close();
+        check(settings.canvasUnit+' transparent PNG survives encoding at its export resolution',artifact.width===settings.width*settings.exportScale&&equal(ctx.getImageData(0,0,artifact.width,artifact.height).data,capture(settings,artifact.width,artifact.height,true).pixels));
+        const url=URL.createObjectURL(artifact.blob);urls.push(url);
+        const figure=document.createElement('figure'),img=document.createElement('img'),link=document.createElement('a');
+        img.src=url;img.alt='Transparent '+settings.canvasUnit+' PNG on checkerboard';img.style.background='repeating-conic-gradient(#ddd 0% 25%,#fff 0% 50%) 0 / 20px 20px';
+        link.href=url;link.download='grainy-transparent-'+settings.canvasUnit+'.png';link.textContent='Download transparent '+settings.canvasUnit+' PNG';figure.append(img,link);document.getElementById('artifacts').append(figure);
+    }
     const other=capture({...defaults,seed:defaults.seed+1}).pixels;
     check('Seed changes geometry', !equal(initial,other));
     check('Returning to a seed reproduces every pixel', equal(initial,capture(defaults).pixels));
@@ -136,6 +168,36 @@ try {
     const codec=new ShareCodec({pristineDefaults:defaults}),payload=await codec.encode(erased);
     check('Paint share link restores identical pixels',equal(capture(erased).pixels,capture((await codec.decode(payload)).full).pixels));
     const paintedLink=document.createElement('a');paintedLink.id='paintedShare';paintedLink.href='../#p='+payload;paintedLink.textContent='Open painted forms in the editor';document.getElementById('artifacts').append(paintedLink);
+    let layered=withLayers(defaults,getLayers(defaults));
+    check('Explicit layer migration preserves every default pixel',equal(initial,capture(layered).pixels));
+    const hidden=editLayer(layered,'form-5',{visible:false});
+    check('Hidden layer is absent from color and picking',!equal(initial,capture(hidden).pixels)&&!renderer.formMap(hidden,320,180).ids.includes(6));
+    check('Zero opacity matches hiding a layer',equal(capture(hidden).pixels,capture(editLayer(layered,'form-5',{opacity:0})).pixels));
+    const reordered=reorderLayer(layered,'form-0','form-5','before');
+    check('Layer order changes compositing',!equal(initial,capture(reordered).pixels));
+    check('Reordering retains the exact isolated silhouette',equal(renderer.formMap(layered,320,180,0).ids.map(n=>n?1:0),renderer.formMap(reordered,320,180,5).ids.map(n=>n?1:0)));
+    check('Changing layer color group changes material',!equal(initial,capture(editLayer(layered,'form-5',{group:'depth'})).pixels));
+    for(const l of getLayers(layered))layered=convertLayer(layered,l.id);
+    check('Converting every layer to Drawn preserves every pixel',equal(initial,capture(layered).pixels));
+    const frozen=regenerate({...layered,scale:200,flow:0,horizon:15,relief:0,complexity:6,folds:0},909);
+    check('Converted Drawn scene ignores Generate and all geometry controls',equal(initial,capture(frozen).pixels));
+    let blank=withLayers(defaults,[]);const created=addLayer(blank);blank=created.settings;
+    check('New Drawn layer starts completely empty',capture(blank).pixels.every((v,i)=>v===[35,83,219,255][i%4]));
+    let customPaint=editLayer(blank,created.id,{strokes:[brush],group:'light'},{manual:true});
+    check('Pure Drawn layer renders brush without procedural terrain',at(renderer.formMap(customPaint,480,270),.5,.19)===1&&at(renderer.formMap(customPaint,480,270),.5,.9)===0);
+    check('Pure Drawn layer survives Generate and geometry changes pixel for pixel',equal(capture(customPaint).pixels,capture(regenerate({...customPaint,scale:40,flow:100,folds:100,horizon:80,relief:0},414)).pixels));
+    const translucent=editLayer(customPaint,created.id,{opacity:45});
+    check('Layer opacity blends material with the background',!equal(capture(customPaint).pixels,capture(translucent).pixels)&&!equal(capture(blank).pixels,capture(translucent).pixels));
+    const dup=duplicateLayer(customPaint,created.id);
+    check('Duplicate keeps the same silhouette',equal(renderer.formMap(dup.settings,320,180,0).ids.map(n=>n?1:0),renderer.formMap(dup.settings,320,180,1).ids.map(n=>n?1:0)));
+    check('Deleting the last layer leaves only Background',capture(removeLayer(customPaint,created.id)).pixels.every((v,i)=>v===[35,83,219,255][i%4]));
+    const paintedConversion=convertLayer(withLayers(painted,getLayers(painted)),'form-5');
+    check('Converting a painted parametric layer preserves its image',equal(paintedPixels,capture(paintedConversion).pixels));
+    let fullStack=customPaint;
+    while(getLayers(fullStack).length<MAX_LAYERS)fullStack=duplicateLayer(fullStack,created.id).settings;
+    check('All sixteen painted layer slots render and pick',at(renderer.formMap(fullStack,240,135),.5,.19)===MAX_LAYERS);
+    check('Sixteen-layer JSON reproduces every pixel',equal(capture(fullStack,240,135).pixels,capture(readDocument(JSON.parse(JSON.stringify(makeDocument(fullStack)))),240,135).pixels));
+    await artifact('layered-drawn-1920',customPaint,1920,1080);
     const pick=renderer.formMap(defaults,320,180);
     check('Form picking distinguishes six paints and the background',new Set(pick.ids).size===7 && Math.max(...pick.ids)===6);
     check('Form picking leaves the exported image unchanged',equal(initial,capture(defaults).pixels));
@@ -187,6 +249,19 @@ try {
     check('Repeated 1920 render is unchanged after PNG encoding',equal(png1,capture(defaults,1920,1080).pixels));
     await artifact('ember-3840',ember,3840,2160);
     await artifact('abstract-1920',{...defaults,mode:'abstract',seed:925731,scale:125,flow:85,complexity:3,glow:34},1920,1080);
+    const printDefault=editCanvas(defaults,{canvasUnit:'mm'});
+    check('Switching to millimetres preserves every preview pixel',equal(initial,capture(printDefault).pixels));
+    check('DPI changes preserve normalized artwork at an exact aspect ratio',equal(initial,capture(editCanvas(printDefault,{dpi:150})).pixels));
+    const printA4=normalizeSettings({...defaults,canvasUnit:'mm',printWidthMM:210,printHeightMM:297,dpi:300});
+    const printArtifact=await renderPNG(renderer,printA4),printBitmap=await createImageBitmap(printArtifact.blob);
+    check('A4 at 300 DPI exports a decodable 2480 by 3508 PNG',printBitmap.width===2480&&printBitmap.height===3508);
+    const printCanvas=document.createElement('canvas');printCanvas.width=2480;printCanvas.height=3508;
+    const printCtx=printCanvas.getContext('2d',{willReadFrequently:true});printCtx.drawImage(printBitmap,0,0);printBitmap.close();
+    check('DPI metadata leaves exported paint pixels intact',equal(printCtx.getImageData(0,0,2480,3508).data,capture(printA4,2480,3508).pixels));
+    const printBytes=new Uint8Array(await printArtifact.blob.arrayBuffer()),printView=new DataView(printBytes.buffer);
+    check('Print PNG includes 300 DPI in both axes',String.fromCharCode(...printBytes.slice(37,41))==='pHYs'&&printView.getUint32(41)===11811&&printView.getUint32(45)===11811&&printBytes[49]===1);
+    const printURL=URL.createObjectURL(printArtifact.blob);urls.push(printURL);
+    const printLink=document.createElement('a');printLink.href=printURL;printLink.download='grainy-land-a4-300dpi.png';printLink.textContent='Download A4 at 300 DPI';document.getElementById('artifacts').append(printLink);
     document.getElementById('results').textContent=results.join('\n')+'\nAll renderer checks passed.';
 } catch(error) {
     document.getElementById('results').textContent=results.join('\n')+'\nERROR '+error.message;

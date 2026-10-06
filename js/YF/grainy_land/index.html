@@ -7,7 +7,7 @@
     <link rel="icon" href="data:,">
     <link rel="stylesheet" href="../infra/framework/css/othersite-styles.css">
     <link rel="stylesheet" href="../infra/framework/css/ui-contract.css?v=uiq-5">
-    <link rel="stylesheet" href="./app.css?v=paint-1">
+    <link rel="stylesheet" href="./app.css?v=alpha-1">
 </head>
 <body>
 <div class="container grainy-land">
@@ -33,8 +33,10 @@
             <div class="panel-header" id="canvasPanelHeader"><span>Canvas</span><button class="collapse-icon" type="button" aria-label="Expand canvas"><svg width="10" height="6" viewBox="0 0 12 8" fill="none" aria-hidden="true"><path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
             <div class="panel-content">
                 <section class="control-section">
-                    <div class="dimensions-row"><label for="widthInput">Width<input id="widthInput" type="number" min="256" max="4096" value="1920"></label><span>×</span><label for="heightInput">Height<input id="heightInput" type="number" min="256" max="4096" value="1080"></label></div>
-                    <label class="stacked-select-label" for="exportScaleSelect">Export resolution<select class="style-select" id="exportScaleSelect"><option value="1">1×</option><option value="2">2×</option><option value="3">3×</option></select></label>
+                    <label class="stacked-select-label" for="canvasUnitSelect">Units<select class="style-select" id="canvasUnitSelect"><option value="px">Pixels</option><option value="mm">Millimeters</option></select></label>
+                    <div class="dimensions-row"><label for="widthInput"><span id="widthInputLabel">Width, px</span><input id="widthInput" type="number" min="1" max="8192" value="1920"></label><span>×</span><label for="heightInput"><span id="heightInputLabel">Height, px</span><input id="heightInput" type="number" min="1" max="8192" value="1080"></label></div>
+                    <div id="printControls" hidden><label class="dpi-row" for="dpiInput">DPI<input id="dpiInput" type="number" min="36" max="1200" step="1" value="300"></label><p id="printSizeNote" class="field-note"></p><p class="field-note print-help">Changing DPI keeps the size in millimeters.</p></div>
+                    <label id="exportScaleRow" class="stacked-select-label" for="exportScaleSelect">Export resolution<select class="style-select" id="exportScaleSelect"><option value="1">1×</option><option value="2">2×</option><option value="3">3×</option></select></label><p id="canvasSizeError" class="field-note" role="status"></p>
                 </section>
             </div>
         </aside>
@@ -46,35 +48,6 @@
                         <input type="radio" id="modeLandscape" name="mode" value="landscape" checked><label for="modeLandscape">Landscape</label>
                         <input type="radio" id="modeAbstract" name="mode" value="abstract"><label for="modeAbstract">Abstract</label>
                     </div>
-                    <button id="editFormsBtn" class="panel-action form-edit-toggle" type="button" aria-pressed="false">Edit forms</button>
-                    <div id="formControls" hidden>
-                        <p id="formHelp" class="field-note form-help">Select a form on the image. Drag to move; drag the square to resize. Space + drag pans. Esc exits.</p>
-                        <div class="form-tools" role="group" aria-label="Form tool">
-                            <button type="button" data-form-tool="move" aria-pressed="true">Move</button>
-                            <button type="button" data-form-tool="paint" aria-pressed="false">Brush</button>
-                            <button type="button" data-form-tool="erase" aria-pressed="false">Erase</button>
-                        </div>
-                        <div id="brushControls" hidden>
-                            <div class="control-group"><label for="brushSize"><span>Brush size</span><output id="brushSizeValue" for="brushSize">18%</output></label><input id="brushSize" type="range" min="3" max="60" step="1" value="18"></div>
-                            <div class="form-actions"><button id="clearPaint" class="panel-action" type="button" disabled>Clear strokes</button><span id="strokeCount" class="field-note" aria-live="polite"></span></div>
-                            <p id="paintStatus" class="field-note form-help" role="status"></p>
-                        </div>
-                        <div class="form-list" role="group" aria-label="Forms">
-                            <button type="button" data-form-index="0" aria-pressed="false">Terrain</button>
-                            <button type="button" data-form-index="1" aria-pressed="false">Bank 1</button>
-                            <button type="button" data-form-index="2" aria-pressed="false">Basin</button>
-                            <button type="button" data-form-index="3" aria-pressed="false">Bank 2</button>
-                            <button type="button" data-form-index="4" aria-pressed="false">Fold</button>
-                            <button type="button" data-form-index="5" aria-pressed="false">Foreground</button>
-                        </div>
-                        <div id="selectedFormControls" hidden>
-                            <p id="formVisibilityNote" class="field-note form-help" hidden>This form is covered or outside the canvas. Use X and Y to bring it into view.</p>
-                            <div id="formTransformControls"><div class="dimensions-row"><label for="formX">X, %<input id="formX" type="number" min="-100" max="100" step="0.1" value="0"></label><label for="formY">Y, %<input id="formY" type="number" min="-100" max="100" step="0.1" value="0"></label></div>
-                            <div class="dimensions-row"><label for="formWidth">Width, %<input id="formWidth" type="number" min="25" max="300" step="1" value="100"></label><label for="formHeight">Height, %<input id="formHeight" type="number" min="25" max="300" step="1" value="100"></label></div></div>
-                            <div class="form-actions"><button id="formLock" class="panel-action" type="button" aria-pressed="false">Lock</button><button id="formReset" class="panel-action" type="button" disabled>Reset form</button></div>
-                            <p id="formSelectionNote" class="field-note form-help"></p>
-                        </div>
-                    </div>
                     <div class="control-group" data-control="scale"><label for="scaleSlider"><span>Scale</span><input id="scaleValue" class="value-display" value="100" aria-label="Scale value" inputmode="decimal"></label><input id="scaleSlider" type="range" min="40" max="220" step="1" value="100"></div>
 <div class="control-group" data-control="complexity"><label for="complexitySlider"><span>Complexity</span><input id="complexityValue" class="value-display" value="2" aria-label="Complexity value" inputmode="decimal"></label><input id="complexitySlider" type="range" min="1" max="6" step="1" value="2"></div>
 <div class="control-group" data-control="flow"><label for="flowSlider"><span>Flow</span><input id="flowValue" class="value-display" value="48" aria-label="Flow value" inputmode="decimal"></label><input id="flowSlider" type="range" min="0" max="100" step="1" value="48"></div>
@@ -83,6 +56,32 @@
 <div class="control-group" data-control="relief"><label for="reliefSlider"><span>Relief</span><input id="reliefValue" class="value-display" value="62" aria-label="Relief value" inputmode="decimal"></label><input id="reliefSlider" type="range" min="0" max="100" step="1" value="62"></div>
                     <div class="seed-row"><label for="seedInput">Seed</label><input id="seedInput" type="number" min="0" max="4294967295" value="1565559100" aria-label="Seed"></div>
                 </section>
+            </div>
+        </aside>
+        <aside class="controls-panel" id="layersPanel" aria-label="Layers panel">
+            <div class="panel-header" id="layersPanelHeader"><span>Layers</span><button class="collapse-icon" type="button" aria-label="Collapse layers"><svg width="10" height="6" viewBox="0 0 12 8" fill="none" aria-hidden="true"><path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
+            <div class="panel-content">
+                <div class="layer-create"><button id="newDrawnLayer" class="panel-action" type="button">+ Drawn</button><button id="newAutoLayer" class="panel-action" type="button">+ Auto</button><span id="layerCount" class="field-note"></span></div>
+                <div id="layerList" class="layers-list" role="list" aria-label="Layers, front to back"></div>
+                <button id="backgroundLayer" class="background-layer" type="button"><span id="backgroundThumb"></span><span>Background</span><span class="field-note">Color</span></button>
+                <div class="layer-commands"><button id="layerDuplicate" class="panel-action" type="button" disabled>Duplicate</button><button id="layerDelete" class="panel-action" type="button" disabled>Delete</button><button id="layerForward" class="panel-action" type="button" aria-label="Bring layer forward" title="Bring forward" disabled>↑</button><button id="layerBackward" class="panel-action" type="button" aria-label="Send layer backward" title="Send backward" disabled>↓</button></div>
+                <p id="layerEmptyNote" class="field-note">Select a layer to edit it, or add a drawn layer to paint.</p>
+                <details id="layerProperties" hidden open><summary>Layer properties</summary>
+                    <label class="layer-name-label" for="layerName">Name<input id="layerName" type="text" maxlength="64" autocomplete="off"></label>
+                    <div class="layer-mode-row"><span id="layerModeLabel"></span><button id="layerPin" class="panel-action" type="button" aria-pressed="false">Pin</button><button id="layerLock" class="panel-action" type="button" aria-pressed="false">Lock</button></div>
+                    <p id="layerModeNote" class="field-note form-help"></p>
+                    <fieldset id="layerEditable"><legend class="sr-only">Editable layer properties</legend>
+                        <label class="stacked-select-label" for="layerGroup">Color group<select class="style-select" id="layerGroup"><option value="terrain">Terrain</option><option value="depth">Depth</option><option value="light">Light</option></select></label>
+                        <div class="control-group"><label for="layerOpacity"><span>Opacity</span><output id="layerOpacityValue">100%</output></label><input id="layerOpacity" type="range" min="0" max="100" step="1" value="100"></div>
+                        <div class="form-tools" role="group" aria-label="Layer tool"><button type="button" data-form-tool="move" aria-pressed="false" title="Move (V)" aria-keyshortcuts="V">Move</button><button type="button" data-form-tool="paint" aria-pressed="false" title="Brush (B)" aria-keyshortcuts="B">Brush</button><button type="button" data-form-tool="erase" aria-pressed="false" title="Erase (E)" aria-keyshortcuts="E">Erase</button></div>
+                        <div id="brushControls" hidden><div class="control-group"><label for="brushSize"><span>Brush size</span><output id="brushSizeValue" for="brushSize">18%</output></label><input id="brushSize" title="Brush / Erase size: [ smaller, ] larger" aria-keyshortcuts="[ ]" type="range" min="3" max="60" step="1" value="18"></div></div>
+                        <p id="formVisibilityNote" class="field-note form-help" hidden></p>
+                        <div id="formTransformControls"><div class="dimensions-row"><label for="formX">X, %<input id="formX" type="number" min="-100" max="100" step="0.1" value="0"></label><label for="formY">Y, %<input id="formY" type="number" min="-100" max="100" step="0.1" value="0"></label></div><div class="dimensions-row"><label for="formWidth">Width, %<input id="formWidth" type="number" min="25" max="300" step="1" value="100"></label><label for="formHeight">Height, %<input id="formHeight" type="number" min="25" max="300" step="1" value="100"></label></div></div>
+                        <div class="form-actions"><button id="clearPaint" class="panel-action" type="button" disabled>Clear strokes</button><span id="strokeCount" class="field-note"></span></div>
+                        <button id="layerConvert" class="panel-action" type="button">Convert to drawn</button>
+                    </fieldset>
+                </details>
+                <p id="paintStatus" class="field-note form-help" role="status"></p>
             </div>
         </aside>
         <aside class="controls-panel" id="materialPanel">
@@ -178,12 +177,17 @@
             <button id="importJsonBtn" class="btn-fixed btn-fixed--muted" type="button" data-action-dock-extra hidden>Import JSON</button>
         </div>
         <div class="action-dock__slot action-dock__slot--primary"><button id="exportPngBtn" class="btn-fixed" type="button">Export PNG</button></div>
-        <div class="action-dock__slot action-dock__slot--options"></div>
+        <div class="action-dock__slot action-dock__slot--options">
+            <label class="toggle-label" title="Export PNG without the background. The canvas preview keeps its background color.">
+                <div class="toggle-switch"><input type="checkbox" id="transparentBackground" aria-label="Transparent PNG background"><span class="toggle-slider"></span></div>
+                <span class="toggle-label-text">Transparent PNG</span>
+            </label>
+        </div>
     </nav>
     <p id="operationStatus" class="operation-status" role="status" aria-live="polite"></p>
     <input id="jsonFileInput" type="file" accept=".json,application/json" hidden><button id="jsonPickerTrigger" type="button" hidden>Choose JSON</button>
     <dialog id="dialog" class="modal" aria-labelledby="dialogTitle"><div class="modal-content"><h2 id="dialogTitle" class="modal-title"></h2><div id="dialogText" class="modal-text"></div><input id="dialogInput" class="modal-input" type="text" style="display:none"><div id="dialogButtons" class="modal-buttons"></div></div></dialog>
 </div>
-<script type="module" src="./tool.js?v=paint-1"></script>
+<script type="module" src="./tool.js?v=alpha-1"></script>
 </body>
 </html>

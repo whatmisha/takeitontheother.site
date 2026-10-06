@@ -18,7 +18,7 @@ test('JSON preserves seed, palette, dimensions and all appearance settings', () 
 });
 test('imported values cannot allocate unbounded surfaces or inject extra state', () => {
     const s = normalizeSettings({width:1e9,height:-1,seed:-1,grain:Infinity,glow:-100,grainSize:.23,mode:'bad',sky:'url(x)',unsafe:'x'});
-    assert.equal(s.width,4096); assert.equal(s.height,256); assert.equal(s.seed,4294967295);
+    assert.equal(s.width,8192); assert.equal(s.height,1); assert.equal(s.seed,4294967295);
     assert.equal(s.grain,defaults.grain); assert.equal(s.glow,0); assert.equal(s.grainSize,.5);
     assert.equal(s.sky,defaults.sky); assert.equal(s.mode,'landscape'); assert.equal(s.unsafe,undefined);
 });
@@ -109,21 +109,31 @@ test('default settings match the shipped Ember and cached built-ins update witho
     const ember = JSON.parse(readFileSync(new URL('../presets/ember.json', import.meta.url), 'utf8'));
     assert.deepEqual(defaults, ember);
     assert.deepEqual(normalizeSettings(ember), ember);
-    const pigment = { seeded: true, seed: 80423, depth: '#713004', ...presetTones.Pigment };
+    const pigment = { seeded: true, seed: 80423, depth: '#713004', toneCharacter:'pigment' };
+    const drift = JSON.parse(readFileSync(new URL('../presets/drift.json', import.meta.url), 'utf8'));
+    assert.deepEqual(drift, {...ember,mode:'abstract'});
+    const manifest = JSON.parse(readFileSync(new URL('../presets/manifest.json', import.meta.url), 'utf8'));
+    assert.deepEqual(manifest.presets.map(p=>p.name), ['Ember','Drift','Quiet dunes']);
     const personal = { seed: 9, glow: 33 };
-    let all = { Ember: { seeded: true, createdAt: 123, seed: 80423, glow: 82, ...presetTones.Ember }, Pigment: pigment, Personal: personal };
+    let all = { Ember: { seeded: true, createdAt: 123, seed: 80423, glow: 82, ...presetTones.Ember }, Pigment: pigment, Drift: {seeded:true,createdAt:456,seed:925731,scale:125,glow:34,...presetTones.Drift}, Personal: personal };
     let writes = 0;
     const store = { loadAll: () => all, saveAll: next => { all = next; writes++; } };
     migratePresets(store);
     assert.deepEqual(normalizeSettings(all.Ember), ember);
     assert.equal(all.Ember.createdAt, 123);
-    assert.deepEqual(all.Pigment, {...pigment,depth:'#FF5900'});
+    assert.equal(Object.hasOwn(all,'Pigment'),false);
+    assert.deepEqual(normalizeSettings(all.Drift), drift);
+    assert.equal(all.Drift.createdAt,456);
     assert.deepEqual(all.Personal, personal);
     migratePresets(store);
     assert.equal(writes, 1);
     all.Ember = { ...personal };
+    all.Drift = { ...personal,seeded:false };
+    all.Pigment = { ...personal,seeded:false };
     migratePresets(store);
     assert.deepEqual(all.Ember, personal);
+    assert.deepEqual(all.Drift, {...personal,seeded:false});
+    assert.deepEqual(all.Pigment, {...personal,seeded:false});
     assert.equal(writes, 1);
 });
 
@@ -153,8 +163,8 @@ test('all shipped depths migrate once while personal colors and other settings s
     for(const {name} of manifest.presets) assert.deepEqual(all[name],{...old[name],depth:'#FF5900'});
     assert.deepEqual(all.Personal,old.Personal);
     migratePresets(store);assert.equal(writes,1);
-    all.Pigment={...old.Pigment,seeded:false};migratePresets(store);
-    assert.equal(all.Pigment.depth,'#713004');assert.equal(writes,1);
+    all['Quiet dunes']={...old['Quiet dunes'],seeded:false};migratePresets(store);
+    assert.equal(all['Quiet dunes'].depth,'#713004');assert.equal(writes,1);
 });
 
 
@@ -200,4 +210,12 @@ test('fixed tones survive palette and character changes while untouched endpoint
     const reset = adjacentColors({...changed,terrainLow:null,lightHigh:null});
     assert.deepEqual(reset, adjacentColors({...defaults,...palettes.pigment,toneCharacter:'pearlescent',toneSpread:100}));
     assert.deepEqual(adjacentColors({...settings,seed:123}), original);
+});
+
+test('transparent PNG is opt-in, survives documents, and does not change geometry',()=>{
+    assert.equal(normalizeSettings({}).transparentBackground,false);
+    for(const value of ['true',1,null])assert.equal(normalizeSettings({transparentBackground:value}).transparentBackground,false);
+    const transparent=normalizeSettings({...defaults,transparentBackground:true});
+    assert.deepEqual(readDocument(makeDocument(transparent)),transparent);
+    assert.deepEqual(createScene(transparent),createScene(defaults));
 });

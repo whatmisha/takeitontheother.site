@@ -36,5 +36,7 @@
   "depthHigh": null,
   "lightHigh": null,
   "landscapeForms": null,
-  "abstractForms": null
+  "abstractForms": null,
+  "landscapeLayers": null,
+  "abstractLayers": null
 }

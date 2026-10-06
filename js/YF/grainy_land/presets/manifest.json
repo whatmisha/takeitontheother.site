@@ -1,10 +1,6 @@
 {
   "presets": [
     {
-      "name": "Pigment",
-      "file": "pigment.json"
-    },
-    {
       "name": "Ember",
       "file": "ember.json"
     },

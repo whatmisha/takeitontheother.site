@@ -1,7 +1,7 @@
 import { UnifiedUiController } from './UnifiedUiController.js';
 import { ActionDockController } from './ActionDockController.js';
 import { ExportFeedbackController } from './ExportFeedbackController.js';
-import { parseCommandShortcut, shortcutIdentity, shortcutLabel, commandKey, matchesCommand, editableTarget, visibleDialog } from './CommandPolicy.js';
+import { parseCommandShortcut, shortcutIdentity, shortcutLabel, commandKey, matchesCommand, editableTarget, visibleDialog } from './CommandPolicy.js?v=2';
 
 const ownerKey = Symbol.for('upgrade.explicitToolUi');
 const managedAttributes = ['data-tool-action', 'data-action-dock-extra', 'data-action-dock-primary-export', 'data-action-dock-json-export', 'data-action-dock-json-import', 'data-export-feedback', 'data-export-feedback-state', 'data-export-feedback-message', 'aria-busy'];
@@ -20,6 +20,7 @@ export class ToolUiController {
             if (keyboardOnly && (action.button || action.kind !== 'command' || !action.shortcut)) throw new TypeError('Keyboard-only actions require a command and shortcut, without a button.');
             if (!['command', 'import', 'export'].includes(action.kind)) throw new TypeError(`${action.id}: explicit kind is required.`);
             if (!['panel', 'utility', 'primary', 'extra', 'keyboard'].includes(action.group)) throw new TypeError(`${action.id}: explicit group is required.`);
+            if (action.repeat && action.kind !== 'command') throw new TypeError('Only commands may repeat.');
             if (action.enabled != null && typeof action.enabled !== 'function') throw new TypeError(`${action.id}: enabled must be a callback.`);
             if (action.group === 'utility' && action.kind !== 'command') throw new TypeError('Utility dock actions must be commands.');
             if (action.group === 'primary' && action.kind !== 'export') throw new TypeError('Primary dock actions must be exports.');
@@ -120,14 +121,15 @@ export class ToolUiController {
     }
 
     handleKeydown(event) {
-        if (!this.bound || event.defaultPrevented || event.repeat || event.isComposing || event.keyCode === 229 || editableTarget(event.target) || visibleDialog(this.document)) return;
+        if (!this.bound || event.defaultPrevented || event.isComposing || event.keyCode === 229 || editableTarget(event.target) || visibleDialog(this.document)) return;
         let handled = false;
         const key = commandKey(event), mod = event.metaKey || event.ctrlKey;
         if (!mod && !event.shiftKey && !event.altKey && ['j', 'escape'].includes(key)) {
+            if (event.repeat) return;
             handled = this.dock.toggleExtras({ forceCollapsed: key === 'escape' });
         } else {
             const binding = this.bindings.find(item => item.action.spec && matchesCommand(event, item.action.spec));
-            if (binding && !binding.button?.disabled && (!binding.action.enabled || binding.action.enabled())) {
+            if (binding && (!event.repeat || binding.action.repeat) && !binding.button?.disabled && (!binding.action.enabled || binding.action.enabled())) {
                 void this.execute(binding);
                 handled = true;
             }

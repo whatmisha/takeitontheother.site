@@ -1,9 +1,13 @@
-import { defineTool, UnifiedColorPicker, ToolUiController, FileIntakeController, PresetMenuKeyboardController } from '../infra/framework/src/index.js?v=tool-ui-3';
-import { defaults, ranges, regenerate, toneKeys, toneCharacters, migratePresets, normalizeSettings, makeDocument, readDocument, exportDimensions } from './document.js?v=paint-1';
-import { adjacentColors, hexRGB } from './scene.js?v=paint-1';
-import { LandscapeRenderer } from './render.js?v=paint-1';
+import { editCanvas } from './canvas-size.js?v=alpha-1';
+import { renderPNG } from './png-export.js?v=alpha-1';
+import { downloadBlob } from '../infra/framework/src/ui/GeneratorHost.js?v=7';
+import { defineTool, UnifiedColorPicker, ToolUiController, FileIntakeController, PresetMenuKeyboardController } from '../infra/framework/src/index.js?v=tool-ui-4';
+import { defaults, ranges, regenerate, toneKeys, toneCharacters, migratePresets, normalizeSettings, makeDocument, readDocument, exportDimensions } from './document.js?v=alpha-1';
+import { adjacentColors, hexRGB } from './scene.js?v=alpha-1';
+import { LandscapeRenderer } from './render.js?v=alpha-1';
 
-import { FormEditor } from './form-editor.js?v=paint-1';
+import { getLayers } from './layer-data.js?v=alpha-1';
+import { FormEditor } from './form-editor.js?v=alpha-1';
 
 let formEditor;
 let renderer, ui, intake, presetKeyboard, listeners, unsubscribe, resizeObserver, panelObserver, tonePicker;
@@ -15,9 +19,9 @@ function draw({ ctx2d, settings, width, height }, exporting = false) {
     try {
         renderer ||= new LandscapeRenderer();
         const transform = ctx2d.getTransform();
-        const scale = exporting ? Math.abs(transform.a) : Math.min(1.5, Math.max(.5, Math.abs(transform.a)));
+        const scale = exporting ? Math.abs(transform.a) : Math.min(1.5, Math.max(.5, Math.abs(transform.a)),4096/Math.max(width,height),Math.sqrt(8388608/(width*height)));
         const w = Math.max(1, Math.round(width * scale)), h = Math.max(1, Math.round(height * scale));
-        const surface = renderer.render(settings, w, h);
+        const surface = renderer.render(settings, w, h, 0, exporting && settings.transparentBackground);
         ctx2d.drawImage(surface, 0, 0, width, height);
         if (renderFailed) status('');
         renderFailed = false;
@@ -28,13 +32,18 @@ function draw({ ctx2d, settings, width, height }, exporting = false) {
     }
 }
 function change(tool, updates, label = 'Edit') {
+    const next=normalizeSettings({...tool.getSnapshot(),...updates});
+    if(JSON.stringify(next)===JSON.stringify(tool.getSnapshot())){sync(tool);return;}
     tool.history?.flush();
     tool.history?.beginTransaction(label);
-    tool.settingsStore.setMultiple(normalizeSettings({ ...tool.getSnapshot(), ...updates }));
-    tool.history?.endTransaction();
-    tool.unifiedColorPicker?.sync();
-    sync(tool);
+    try {
+        // Dimensions, units and DPI must arrive together: per-key notifications
+        // would briefly expose a millimetre document without physical dimensions.
+        tool.applySnapshot(next);
+        tool.presets?.markDirty();
+    } finally {tool.history?.endTransaction();}
 }
+
 function sync(tool) {
     const s = tool.settings;
     for (const radio of document.querySelectorAll('input[name="mode"]')) radio.checked = radio.value === s.mode;
@@ -59,7 +68,17 @@ function sync(tool) {
         radiant:'Brighter neighboring tones along folds and edges.'
     }[s.toneCharacter];
     byId('seedInput').value = s.seed;
-    byId('widthInput').value = s.width; byId('heightInput').value = s.height;
+    const print=s.canvasUnit==='mm';
+    byId('canvasUnitSelect').value=s.canvasUnit;byId('printControls').hidden=!print;byId('exportScaleRow').hidden=print;
+    byId('dpiInput').value=s.dpi;
+    for(const axis of ['width','height']) {
+        const input=byId(axis+'Input'),mmKey=axis==='width'?'printWidthMM':'printHeightMM';
+        input.min=print?'.01':'1';input.max=print?'6000':'8192';input.step=print?'.01':'1';
+        input.value=print?Number(s[mmKey].toFixed(3)):s[axis];
+        byId(axis+'InputLabel').textContent=(axis==='width'?'Width, ':'Height, ')+s.canvasUnit;
+    }
+    byId('printSizeNote').textContent=print?s.width+' × '+s.height+' px · '+s.dpi+' DPI':'';
+    try {exportDimensions(s);byId('canvasSizeError').textContent='';}catch(error){byId('canvasSizeError').textContent=error.message;}
     const size = s.width + 'x' + s.height;
     if (size !== lastSize) {
         lastSize = size;
@@ -68,6 +87,7 @@ function sync(tool) {
         });
     }
     byId('exportScaleSelect').value = s.exportScale;
+    byId('transparentBackground').checked=s.transparentBackground;
     byId('mainCanvas').setAttribute('aria-label', s.mode === 'abstract' ? 'Generated grainy abstract artwork' : 'Generated grainy landscape');
     formEditor?.sync();
     ui?.refresh();
@@ -101,11 +121,29 @@ function bind(tool) {
     byId('canvasContainer').addEventListener('wheel', event => {
         if (matchMedia('(max-width: 1000px)').matches && !event.ctrlKey && !event.metaKey) event.stopImmediatePropagation();
     }, { capture: true, passive: true, signal: listeners.signal });
-    for (const key of ['width','height']) on(byId(key+'Input'),'change',e => { change(tool,{ [key]: Number(e.target.value) },'Canvas'); fit(); });
-    on(byId('exportScaleSelect'),'change',e => change(tool,{exportScale: Number(e.target.value)},'Resolution'));
+    const applyCanvas=patch=>{
+        try {change(tool,editCanvas(tool.settings,patch),'Canvas');}
+        catch(error){sync(tool);byId('canvasSizeError').textContent=error.message;}
+    };
+    on(byId('canvasUnitSelect'),'change',e=>applyCanvas({canvasUnit:e.target.value}));
+    for(const key of ['width','height','dpi']) {
+        const input=byId(key+'Input'),apply=()=>{
+            const value=Number(input.value);
+            if(!input.value.trim()||!Number.isFinite(value)||value<Number(input.min)||value>Number(input.max)){
+                sync(tool);byId('canvasSizeError').textContent='Enter a value from '+input.min+' to '+input.max+'.';return;
+            }
+            const property=key==='dpi'?'dpi':tool.settings.canvasUnit==='mm'?(key==='width'?'printWidthMM':'printHeightMM'):key;
+            // Keep the exact stored mm value when a rounded display is just focused and blurred.
+            const displayed=property.startsWith('print')?Number(tool.settings[property].toFixed(3)):tool.settings[property];
+            if(value!==displayed)applyCanvas({[property]:value});
+        };
+        on(input,'change',apply);on(input,'keydown',e=>{if(e.key==='Enter'){e.preventDefault();apply();}});
+    }
+    on(byId('exportScaleSelect'),'change',e=>applyCanvas({exportScale:Number(e.target.value)}));
+    on(byId('transparentBackground'),'change',e=>change(tool,{transparentBackground:e.target.checked},'Transparent PNG'));
     unsubscribe = tool.settingsStore.subscribe('*', () => sync(tool));
     intake = new FileIntakeController({
-        input: 'jsonFileInput', trigger: 'jsonPickerTrigger', accept: '.json,application/json', maxBytes: 2*1024*1024,
+        input: 'jsonFileInput', trigger: 'jsonPickerTrigger', accept: '.json,application/json', maxBytes: 4*1024*1024,
         errorText: error => error.message || 'Could not read settings.',
         onSelect: async file => {
             const settings = readDocument(JSON.parse(await file.text()));
@@ -115,22 +153,36 @@ function bind(tool) {
         onReject: result => status(result.message)
     }).init();
     formEditor = new FormEditor(tool,change).init();
-    on(byId('editFormsBtn'),'click',() => formEditor.toggle());
     presetKeyboard = new PresetMenuKeyboardController().init();
     ui = new ToolUiController({
         id: 'grainy_land', title: 'Grainy Land',
         summaries: {
             compositionPanel: () => tool.settings.mode + ' · ' + tool.settings.seed,
-            materialPanel: () => toneCharacters[tool.settings.toneCharacter] + ' · Tones ' + tool.settings.toneAmount
+            materialPanel: () => toneCharacters[tool.settings.toneCharacter] + ' · Tones ' + tool.settings.toneAmount,
+            layersPanel: () => getLayers(tool.settings).length + ' layers'
         },
         actions: [
-            { id:'edit-forms', label:'Edit forms', kind:'command', group:'keyboard', shortcut:'e', run: () => formEditor.toggle() },
+            { id:'tool-erase', label:'Erase', kind:'command', group:'keyboard', shortcut:'e', run: () => formEditor.setTool('erase') },
+            { id:'tool-brush', label:'Brush', kind:'command', group:'keyboard', shortcut:'b', run: () => formEditor.setTool('paint') },
+            { id:'tool-move', label:'Move', kind:'command', group:'keyboard', shortcut:'v', run: () => formEditor.setTool('move') },
+            ...[[-2,'[','Smaller brush'],[2,']','Larger brush']].map(([step,shortcut,label])=>({
+                id:step<0?'brush-smaller':'brush-larger',label,kind:'command',group:'keyboard',shortcut,repeat:true,
+                enabled:()=>formEditor.paintTool!=='move'&&!formEditor.gesture,
+                run:()=>formEditor.setBrushSize(formEditor.brushSize+step)
+            })),
             { id:'generate', button:'generateBtn', label:'Generate', kind:'command', group:'utility', shortcut:'r',
                 run: () => { change(tool,regenerate(tool.settings,crypto.getRandomValues(new Uint32Array(1))[0]),'Generate'); status(''); } },
             { id:'png', button:'exportPngBtn', label:'Export PNG', kind:'export', group:'primary', shortcut:'mod+e',
                 run: async () => {
                     exportDimensions(tool.settings); status('Rendering PNG…');
-                    try { await tool.exportPNG('grainy-land-'+tool.settings.seed+'.png',tool.settings.exportScale); status('PNG exported.'); }
+                    try {
+                        const snapshot=tool.getSnapshot(),filename='grainy-land-'+snapshot.seed+'.png';
+                        if(snapshot.canvasUnit==='mm'||snapshot.transparentBackground)await tool.runExport('png',async()=>{
+                            const {blob}=await renderPNG(renderer ||= new LandscapeRenderer(),snapshot);downloadBlob(blob,filename);
+                        });
+                        else await tool.exportPNG(filename,snapshot.exportScale);
+                        status(snapshot.transparentBackground?'Transparent PNG exported.':'PNG exported.');
+                    }
                     finally { tool.render(); }
                 } },
             { id:'json-export', button:'exportJsonBtn', label:'Export JSON', kind:'export', group:'extra', shortcut:'mod+j',
@@ -142,11 +194,12 @@ function bind(tool) {
     }).init();
     resizeObserver = new ResizeObserver(() => fit()); resizeObserver.observe(byId('canvasContainer'));
     // CSS owns the default stack; inline positions from dragging take precedence.
-    panelObserver = new ResizeObserver(([entry]) => {
-        const height = entry.target.getBoundingClientRect().height;
-        document.querySelector('.grainy-land').style.setProperty('--canvas-panel-height', height + 'px');
+    panelObserver = new ResizeObserver(entries => {
+        const root=document.querySelector('.grainy-land');
+        for(const entry of entries)root.style.setProperty(entry.target.id==='canvasPanel'?'--canvas-panel-height':'--layers-panel-height',entry.target.getBoundingClientRect().height+'px');
+        formEditor?.drawThumbs();
     });
-    panelObserver.observe(byId('canvasPanel'));
+    panelObserver.observe(byId('canvasPanel'));panelObserver.observe(byId('layersPanel'));
     sync(tool);
     document.documentElement.dataset.ready = 'true';
 }
@@ -159,7 +212,7 @@ const app = defineTool({
     controls: { sliders: Object.entries(ranges).map(([setting,[min,max,step]]) => ({
         id:setting+'Slider', valueId:setting+'Value',setting,min,max,decimals:step<1?1:0,baseStep:step,shiftStep:step*10
     })), toggles:false },
-    panels: ['canvas','composition','material'].map(name => ({id:name+'Panel',headerId:name+'PanelHeader',persistent:true})),
+    panels: ['canvas','composition','material','layers'].map(name => ({id:name+'Panel',headerId:name+'PanelHeader',persistent:true})),
     colorPickers: { containerId:'unifiedColorPickerContainer',swatches:['sky','terrain','depth','light'].map(setting => ({
         type:setting,setting,itemId:setting+'ColorItem',dotId:setting+'ColorPreview',hexId:setting+'ColorHex',hsbSlotId:setting+'ColorHsbSlot'
     })) },

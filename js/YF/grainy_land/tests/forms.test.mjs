@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {defaults, normalizeSettings, makeDocument, readDocument, editForm, formEdit, regenerate} from '../document.js';
 import {createScene} from '../scene.js';
+import {getLayers, addLayer} from '../layers.js';
 import {visibleBounds, resizedForm, FormEditor} from '../form-editor.js';
 
 const geometry = (scene,i) => Object.fromEntries(['layers','layerStyles','foldFields','fields','formPhases','formTransforms','formSeeds'].map(key=>[key,scene[key][i]]));
@@ -79,4 +80,53 @@ test('cancelling a drag restores its starting snapshot and releases capture',()=
     editor.cancel();editor.cancel();
     assert.equal(editor.gesture,null);
     assert.deepEqual(calls,[['restore',snapshot],['end'],['release',7]]);
+});
+
+// Exercise pointer gestures against real layer settings, without a WebGL context.
+function pointerEditor() {
+    const editor=Object.create(FormEditor.prototype),events=[];
+    const added=addLayer(defaults,'drawn');let settings=added.settings;
+    Object.assign(editor,{selected:added.id,active:true,paintTool:'paint',brushSize:18,gesture:null});
+    editor.container={focus(){},setPointerCapture(){},hasPointerCapture(){return true;},releasePointerCapture(){events.push('release');}};
+    editor.tool={get settings(){return settings;},target:{zoom:1},getSnapshot:()=>settings,
+        applySnapshot:s=>{settings=s;},settingsStore:{set:(key,value)=>{settings={...settings,[key]:value};}},
+        history:{flush(){},beginTransaction:label=>events.push(label),endTransaction:()=>events.push('end')}};
+    editor.point=e=>e.point;editor.cursorAt=()=>{};editor.report=()=>{};
+    editor.select=id=>{editor.cancel();editor.selected=id;editor.active=id!=null;};
+    editor.refreshMap=()=>{};editor.map={width:2,height:2,ids:Uint8Array.from([0,0,1,1])};
+    const pointer=point=>({point,pointerId:7,button:0,preventDefault(){}});
+    return {editor,events,pointer};
+}
+test('an empty brush click deselects without paint or an undo entry',()=>{
+    const {editor,events,pointer}=pointerEditor(),before=editor.tool.getSnapshot();
+    editor.start(pointer([.2,.2]));editor.finish(pointer([.2,.2]));
+    assert.equal(editor.selected,null);assert.equal(editor.active,false);
+    assert.deepEqual(editor.tool.getSnapshot(),before);assert.deepEqual(events,['release']);
+});
+test('a brush drag from empty space draws in one transaction and remains selected',()=>{
+    const {editor,events,pointer}=pointerEditor(),id=editor.selected;
+    editor.start(pointer([.2,.2]));editor.move(pointer([.35,.2]));editor.finish(pointer([.4,.2]));
+    assert.equal(editor.selected,id);assert.equal(editor.layer().strokes.length,1);
+    assert.ok(editor.layer().strokes[0].points.length>=2);
+    assert.deepEqual(events,['Brush stroke','end','release']);
+});
+test('deselected brush can select an object without marking it; outside click clears it',()=>{
+    const {editor,pointer}=pointerEditor(),before=editor.tool.getSnapshot();editor.select(null);
+    editor.start(pointer([.2,.7]));
+    assert.equal(editor.selected,getLayers(before)[0].id);assert.equal(editor.active,true);
+    assert.deepEqual(editor.tool.getSnapshot(),before);
+    editor.start(pointer([1.2,.7]));assert.equal(editor.selected,null);
+});
+test('Move keeps no selection while Brush and Erase activate an editable layer',()=>{
+    const {editor}=pointerEditor();editor.select(null);editor.setTool('move');
+    assert.equal(editor.selected,null);assert.equal(editor.active,false);
+    editor.setTool('paint');assert.ok(editor.layer());assert.equal(editor.active,true);
+    const id=editor.selected;editor.setTool('erase');editor.setTool('move');
+    assert.equal(editor.selected,id);assert.equal(editor.active,true);
+});
+test('cancelling a stroke that began on empty space restores its layer',()=>{
+    const {editor,events,pointer}=pointerEditor(),before=editor.tool.getSnapshot();
+    editor.start(pointer([.2,.2]));editor.move(pointer([.4,.2]));editor.cancel();
+    assert.deepEqual(editor.tool.getSnapshot(),before);
+    assert.deepEqual(events,['Brush stroke','end','release']);
 });

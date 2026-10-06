@@ -1,6 +1,7 @@
-import { createScene, materialColors, adjacentColors, hexRGB } from './scene.js?v=paint-1';
-import { bakePaint } from './paint.js?v=paint-1';
-import { normalizeSettings, formSettingsKey } from './document.js?v=paint-1';
+import { createLayerScene, materialColors, adjacentColors, hexRGB } from './scene.js?v=alpha-1';
+import { bakePaint } from './paint.js?v=alpha-1';
+import { MAX_LAYERS } from './layer-data.js?v=alpha-1';
+import { normalizeSettings } from './document.js?v=alpha-1';
 
 const vertexSource = `
 attribute vec2 position;
@@ -11,25 +12,17 @@ const fragmentSource = `
 precision highp float;
 varying vec2 uv;
 uniform vec2 artboard, rasterSize;
-uniform vec3 secondCrest;
-uniform vec4 pocketStyle;
-uniform vec4 formPhases[6], formTransforms[6], fields[6], layers[6], layerStyles[6], foldFields[6];
-uniform float formSeeds[6], editorPass;
-uniform sampler2D paint0, paint1, paint2, paint3, paint4, paint5;
-uniform vec4 paintBounds[6];
-uniform vec2 paintSize[6];
-uniform float hasPaint[6];
-vec4 paintSample(int i, vec2 p) {
-    if(i==0)return texture2D(paint0,p);
-    if(i==1)return texture2D(paint1,p);
-    if(i==2)return texture2D(paint2,p);
-    if(i==3)return texture2D(paint3,p);
-    if(i==4)return texture2D(paint4,p);
-    return texture2D(paint5,p);
-}
+uniform vec3 crests[${MAX_LAYERS}];
+uniform vec4 pockets[${MAX_LAYERS}], formPhases[${MAX_LAYERS}], formTransforms[${MAX_LAYERS}];
+uniform vec4 fields[${MAX_LAYERS}], layers[${MAX_LAYERS}], layerStyles[${MAX_LAYERS}], foldFields[${MAX_LAYERS}];
+uniform vec4 geometryA[${MAX_LAYERS}], geometryB[${MAX_LAYERS}], formInfo[${MAX_LAYERS}];
+uniform float editorPass, layerCount, backgroundAlpha;
+uniform sampler2D paintAtlas;
+uniform vec4 paintBounds[${MAX_LAYERS}], paintMeta[${MAX_LAYERS}];
+uniform vec2 paintAtlasSize, paintCellSize;
+uniform float paintColumns;
 uniform vec3 sky, colors[6], adjacent[6];
 uniform float toneAmount, toneScale, toneBleed, toneCharacter;
-uniform float mode, scale, complexity, flow, horizon, relief, folds;
 uniform float edgeVariation, glowCoverage;
 uniform float softness, glow, halo, contrast, grain, grainSize, seed;
 
@@ -74,7 +67,7 @@ float smoothUnion(float a, float b, float k) {
     float h=clamp(.5+.5*(a-b)/k,0.,1.);
     return mix(b,a,h)+k*h*(1.-h);
 }
-vec2 foldPoint(vec2 p, vec4 f, float strength) {
+vec2 foldPoint(vec2 p, vec4 f, float strength, float mode, float horizon) {
     vec2 center=vec2(f.x,(mode>.5 ? .13 : horizon)+f.y);
     vec2 v=p-center;
     float influence=exp(-dot(v/vec2(f.z,f.z*.85),v/vec2(f.z,f.z*.85)));
@@ -89,10 +82,21 @@ void main() {
     vec2 gp=p*2688.*vec2(1.,artboard.y/artboard.x)/grainSize;
     float footprint=max(2688./rasterSize.x,2688.*artboard.y/artboard.x/rasterSize.y)/grainSize;
     float resolve=min(1.,1.5/footprint);
-    vec3 color=sky, underpaint=sky;
+    vec3 color=sky*backgroundAlpha, underpaint=sky;
+    float alpha=backgroundAlpha;
 
     float picked = 0.;
-    for (int i=0; i<6; i++) {
+    for (int i=0; i<${MAX_LAYERS}; i++) {
+        if(float(i)>=layerCount)break;
+        bool isolated=editorPass>1.5;
+        if(isolated&&abs(float(i)-(editorPass-2.))>.1)continue;
+        vec4 info=formInfo[i], ga=geometryA[i], gb=geometryB[i];
+        float opacity=info.z;
+        if(!isolated&&opacity<=0.)continue;
+        int kind=int(info.x), group=int(info.y);
+        float scale=ga.x, complexity=ga.y, flow=ga.z, folds=ga.w;
+        float horizon=gb.x, relief=gb.y, mode=gb.z;
+        vec3 secondCrest=crests[i];vec4 pocketStyle=pockets[i];
         vec4 phases = formPhases[i], transform = formTransforms[i];
         vec2 point = p;
         if (transform != vec4(0.,0.,1.,1.)) point = (p-.5-transform.xy)/transform.zw+.5;
@@ -105,24 +109,24 @@ void main() {
         q.x += sin(q.y*5.+phases.z)*flow*.035;
 
         vec4 f = layers[i], style = layerStyles[i];
-        float id = float(i);
+        float id = info.x;
         // Local two-dimensional deformation lets one surface curl around another.
-        vec2 surface = foldPoint(q,foldFields[i],folds*(i==0 ? .25 : (i==4 ? .65 : 1.)));
+        vec2 surface = foldPoint(q,foldFields[i],folds*(kind==0 ? .25 : (kind==4 ? .65 : 1.)),mode,horizon);
         float x = surface.x;
         float wave = sin(x*(5.+complexity)+style.y)*.023
             + sin(x*(11.+complexity*2.)+style.y*2.)*.009*(complexity-1.);
         float crest = bell((x-f.x)/f.y);
         float y = horizon+f.z-relief*f.w*crest+style.x*(x-.5);
-        if (i==1) y = horizon+.15+relief*(f.z-.15+f.w*smoothstep(f.x-.12,f.x+f.y*1.7,x));
-        if (i==3) y = horizon+.15+relief*(f.z-.15+f.w*(1.-smoothstep(f.x-f.y*1.7,f.x+.12,x)));
-        if (i==0) y -= relief*secondCrest.z*bell((x-secondCrest.x)/secondCrest.y);
-        if (i==2) y += .21*bell((x+.06)/.26);
+        if (kind==1) y = horizon+.15+relief*(f.z-.15+f.w*smoothstep(f.x-.12,f.x+f.y*1.7,x));
+        if (kind==3) y = horizon+.15+relief*(f.z-.15+f.w*(1.-smoothstep(f.x-f.y*1.7,f.x+.12,x)));
+        if (kind==0) y -= relief*secondCrest.z*bell((x-secondCrest.x)/secondCrest.y);
+        if (kind==2) y += .21*bell((x+.06)/.26);
         // A foreground fold rises into the basin, then opens out of frame.
-        if (i==4) y += .20*bell((x+.08)/.35);
+        if (kind==4) y += .20*bell((x+.08)/.35);
         y += relief*flow*wave*2.;
         y += (fbm(vec2(x*(4.+complexity),id*9.)+offset)-.5)*.055*flow;
         float d = surface.y-y;
-        if (mode<.5 && i==4) {
+        if (mode<.5 && kind==4) {
             // A rounded pocket with an open tail, independent of the horizon graph.
             vec2 v=surface-vec2(f.x,horizon+f.z-.065);
             v.y-=sin(v.x*6.+style.y)*.035;
@@ -139,12 +143,14 @@ void main() {
             d = .21+fields[i].z*.5-length(v/vec2(1.35,.72));
             d += flow*(fbm(q*(3.+complexity)+id*7.+offset)-.5)*.45;
         }
-        if (hasPaint[i] > .5) {
+        if(gb.w<.5)d=-2.;
+        if (paintMeta[i].z > .5) {
             vec4 bounds=paintBounds[i];
             vec2 at=(point-bounds.xy)/bounds.zw;
             if(at.x>=0. && at.x<=1. && at.y>=0. && at.y<=1.) {
-                at=(at*(paintSize[i]-1.)+.5)/paintSize[i];
-                vec4 encoded=paintSample(i,at);
+                vec2 tile=vec2(mod(float(i),paintColumns),floor(float(i)/paintColumns));
+                at=(tile*paintCellSize+at*(paintMeta[i].xy-1.)+.5)/paintAtlasSize;
+                vec4 encoded=texture2D(paintAtlas,at);
                 vec2 limits=vec2(dot(encoded.rg,vec2(65280.,255.)),dot(encoded.ba,vec2(65280.,255.)))/65535.*2.-1.;
                 if(limits.y<.9999)d=min(d,limits.y);
                 if(limits.x>-.9999)d=max(d,limits.x);
@@ -163,24 +169,24 @@ void main() {
             // Rotate and offset each coat: adjacent paints never share a stencil.
             float angle=id*2.399963;
             vec2 point=mat2(cos(angle),-sin(angle),sin(angle),cos(angle))*gp;
-            point+=vec2(formSeeds[i]*.17,formSeeds[i]*.37)+id*vec2(107.,191.);
+            point+=vec2(info.w*.17,info.w*.37)+id*vec2(107.,191.);
             droplets=spray(point,smoothMask,footprint);
         }
-        float mask=mix(smoothMask,droplets.x,grain*resolve);
+        float mask=mix(smoothMask,droplets.x,grain*resolve)*opacity;
 
         vec3 base = colors[0];
-        if (i==1 || i==3 || i==4) base = colors[1];
-        if (i==2 || i==5) base = colors[2];
+        if (group==1) base = colors[1];
+        if (group==2) base = colors[2];
         float body = fbm(surface*vec2(5.,8.)+id*13.+offset);
         float patch=fbm(surface*vec2(4.,6.)+offset+id*5.7);
         float crease=bell((d-.04-.07*patch)/(.012+.024*body));
         float warmth = bell((x-f.x-style.w)/(.027+f.y*.06))
             *bell((d-.025)/.055);
         vec3 pigment = base;
-        if (i==0) {
+        if (group==0) {
             pigment = mix(base,colors[2],.05*body*body);
             pigment = mix(pigment,colors[3],warmth*.66);
-        } else if (i==2 || i==5) {
+        } else if (group==2) {
             pigment = mix(base,colors[0],.13+smoothstep(.38,.72,patch)*.32);
             pigment = mix(pigment,colors[4],.18+body*.44);
             pigment = mix(pigment,colors[0],.13*bell((body-.24)*8.));
@@ -210,16 +216,16 @@ void main() {
             positive=clamp(positive,0.,.95);
         }
         vec3 low = adjacent[0], high = adjacent[3];
-        if (i==1 || i==3 || i==4) { low=adjacent[1]; high=adjacent[4]; }
-        if (i==2 || i==5) { low=adjacent[2]; high=adjacent[5]; }
-        if (i==1 || i==3 || i==4) { negative*=.62; positive*=.62; }
+        if (group==1) { low=adjacent[1]; high=adjacent[4]; }
+        if (group==2) { low=adjacent[2]; high=adjacent[5]; }
+        if (group==1) { negative*=.62; positive*=.62; }
         pigment = mix(pigment,low,negative*toneAmount*.92);
         pigment = mix(pigment,high,positive*toneAmount*.88);
         // Broad reflected color and narrow folds share the surface coordinates.
         float reflectionPatch=smoothstep(.44,.72,patch)*bell((d-.065)/.15);
         vec3 reflected=mix(colors[4],adjacent[2],.55);
         pigment=mix(pigment,reflected,reflectionPatch*toneAmount*toneBleed*.42);
-        if (i==1 || i==3 || i==4) pigment=mix(pigment,colors[0],crease*warmth*toneAmount*.45);
+        if (group==1) pigment=mix(pigment,colors[0],crease*warmth*toneAmount*.45);
         // Neighbor reflection extends inside a mass; softness still owns opacity.
         float bleed = toneAmount*toneBleed*bell((d-.024)/(.023+softness*.07))*(.3+.7*body);
         pigment = mix(pigment,underpaint,bleed*.52);
@@ -236,26 +242,30 @@ void main() {
         pigment = mix(pigment,tint,glow*core*.93*illumination);
         pigment += glow*aura*illumination*tint*.15;
         // Lighting samples untextured paint, never the grain in lower coats.
-        float outsideHalo=aura*(1.-smoothMask)*glow*.25*illumination;
-        float reflection=bell(d/(edge*2.5+.015))*(1.-smoothMask)*toneAmount*toneBleed*.13;
+        float outsideHalo=aura*(1.-smoothMask)*glow*.25*illumination*opacity;
+        float reflection=bell(d/(edge*2.5+.015))*(1.-smoothMask)*toneAmount*toneBleed*.13*opacity;
         underpaint=mix(underpaint,haloTint,outsideHalo);
         underpaint=mix(underpaint,haloTint,reflection);
-        underpaint=mix(underpaint,clamp(pigment,0.,1.),smoothMask);
+        underpaint=mix(underpaint,clamp(pigment,0.,1.),smoothMask*opacity);
         // A dense coat retains only a very faint variation in its own pigment.
         // No gray noise, foreign-color deposits or mid-scale clumps are added.
         pigment*=1.+grain*.16*(.5-droplets.y)*resolve;
+        // Premultiplied source-over coverage preserves translucent spray and glow.
+        alpha=mix(alpha,1.,outsideHalo);
+        alpha=mix(alpha,1.,reflection);
+        alpha=mix(alpha,1.,mask);
         color=mix(color,haloTint,outsideHalo);
         color=mix(color,haloTint,reflection);
         color=mix(color,clamp(pigment,0.,1.),mask);
     }
-    gl_FragColor = editorPass > .5 ? vec4(picked/255.,0.,0.,1.) : vec4(clamp(color,0.,1.),1.);
+    gl_FragColor = editorPass > .5 ? vec4(picked/255.,0.,0.,1.) : vec4(clamp(color,0.,1.),alpha);
 }
 `;
 
 export class LandscapeRenderer {
     constructor() {
         this.canvas = document.createElement('canvas');
-        const gl = this.canvas.getContext('webgl', { alpha: false, antialias: false, preserveDrawingBuffer: true });
+        const gl = this.canvas.getContext('webgl', { alpha: true, premultipliedAlpha: true, antialias: false, preserveDrawingBuffer: true });
         if (!gl) throw new Error('Grainy Land needs WebGL. Enable hardware acceleration and reload.');
         this.gl = gl;
         const shader = (type, source) => {
@@ -277,45 +287,43 @@ export class LandscapeRenderer {
         const position = gl.getAttribLocation(this.program, 'position');
         gl.enableVertexAttribArray(position); gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
         this.locations = new Map(); this.cacheKey = '';
-        this.paintTextures=Array.from({length:6},()=>({texture:gl.createTexture(),key:null}));
+        this.paintTexture=gl.createTexture();this.paintKeys=[];this.atlasShape='';
         this.canvas.addEventListener('webglcontextlost', event => { event.preventDefault(); this.cacheKey = ''; });
     }
     location(name) {
         if (!this.locations.has(name)) this.locations.set(name, this.gl.getUniformLocation(this.program, name));
         return this.locations.get(name);
     }
-    render(raw, width, height, editorPass = 0) {
+    render(raw, width, height, editorPass = 0, transparent = false) {
         const s = normalizeSettings(raw), gl = this.gl;
         if (gl.isContextLost()) throw new Error('Graphics context lost. Reload to restore the renderer.');
         const max = Math.min(gl.getParameter(gl.MAX_TEXTURE_SIZE), gl.getParameter(gl.MAX_RENDERBUFFER_SIZE));
         if (width > max || height > max) throw new Error('This GPU cannot render that size. Reduce export scale.');
-        const key = JSON.stringify([s,width,height,editorPass]);
+        const key = JSON.stringify([s,width,height,editorPass,transparent]);
         if (key === this.cacheKey) return this.canvas;
         this.canvas.width = width; this.canvas.height = height;
         gl.viewport(0,0,width,height); gl.useProgram(this.program);
-        const scene = createScene(s);
-        this.uploadPaint(s[formSettingsKey(s.mode)]);
-        const values = { ...scene, softness: s.softness/100, glow: s.glow/100, halo: s.halo/100,
+        const scene = createLayerScene(s);
+        this.uploadPaint(scene);
+        const values = { softness: s.softness/100, glow: s.glow/100, halo: s.halo/100,
             contrast: s.contrast/100, grain: s.grain/100, grainSize: s.grainSize, seed: s.seed % 16381,
             toneAmount:s.toneAmount/100, toneScale:s.toneScale, toneBleed:s.toneBleed/100,
             edgeVariation:s.edgeVariation/100, glowCoverage:s.glowCoverage/100,
             toneCharacter:['pigment','pearlescent','radiant'].indexOf(s.toneCharacter) };
-        for (const name of ['mode','scale','complexity','flow','horizon','relief','softness','glow','halo','contrast','grain','grainSize','seed','toneAmount','toneScale','toneBleed','toneCharacter','folds','edgeVariation','glowCoverage']) {
+        for (const name of ['softness','glow','halo','contrast','grain','grainSize','seed','toneAmount','toneScale','toneBleed','toneCharacter','edgeVariation','glowCoverage']) {
             gl.uniform1f(this.location(name), values[name]);
         }
         gl.uniform2f(this.location('artboard'),s.width,s.height);
         gl.uniform2f(this.location('rasterSize'),width,height);
         gl.uniform1f(this.location('editorPass'),editorPass);
-        gl.uniform4fv(this.location('formPhases[0]'),scene.formPhases.flat());
-        gl.uniform4fv(this.location('formTransforms[0]'),scene.formTransforms.flat());
-        gl.uniform1fv(this.location('formSeeds[0]'),scene.formSeeds);
-        gl.uniform3fv(this.location('secondCrest'),scene.secondCrest);
-        gl.uniform4fv(this.location('pocketStyle'),scene.pocketStyle);
-        gl.uniform4fv(this.location('fields[0]'),scene.fields.flat());
+        gl.uniform1f(this.location('backgroundAlpha'),transparent?0:1);
+        gl.uniform1f(this.location('layerCount'),scene.length);
+        for(const [uniform,key] of Object.entries({formPhases:'phases',formTransforms:'transform',fields:'field',layers:'shape',layerStyles:'style',foldFields:'foldField',pockets:'pocket',geometryA:'geometryA',geometryB:'geometryB',formInfo:'info'})) {
+            const data=Array.from({length:MAX_LAYERS},(_,i)=>scene[i]?.[key]??[0,0,0,0]).flat();
+            gl.uniform4fv(this.location(uniform+'[0]'),data);
+        }
+        gl.uniform3fv(this.location('crests[0]'),Array.from({length:MAX_LAYERS},(_,i)=>scene[i]?.crest??[0,0,0]).flat());
         gl.uniform3fv(this.location('sky'),hexRGB(s.sky));
-        gl.uniform4fv(this.location('layers[0]'),scene.layers.flat());
-        gl.uniform4fv(this.location('foldFields[0]'),scene.foldFields.flat());
-        gl.uniform4fv(this.location('layerStyles[0]'),scene.layerStyles.flat());
         gl.uniform3fv(this.location('colors[0]'),materialColors(s).flat());
         gl.uniform3fv(this.location('adjacent[0]'),adjacentColors(s).flat());
         gl.drawArrays(gl.TRIANGLES,0,6);
@@ -324,25 +332,30 @@ export class LandscapeRenderer {
         this.cacheKey = key;
         return this.canvas;
     }
-    uploadPaint(forms) {
-        const gl=this.gl,bounds=[],sizes=[],active=[];
-        for(let i=0;i<6;i++) {
-            const strokes=forms?.[i]?.strokes,field=strokes?.length?bakePaint(strokes):null;
-            const slot=this.paintTextures[i];
-            gl.activeTexture(gl.TEXTURE0+i);gl.bindTexture(gl.TEXTURE_2D,slot.texture);
-            if(slot.key!==(field?.key??'')) {
-                gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,field?.width??1,field?.height??1,0,gl.RGBA,gl.UNSIGNED_BYTE,field?.pixels??new Uint8Array([0,0,255,255]));
-                gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
-                gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
-                slot.key=field?.key??'';
-            }
-            gl.uniform1i(this.location('paint'+i),i);
-            bounds.push(...(field?.bounds??[0,0,1,1]));sizes.push(field?.width??1,field?.height??1);active.push(field?1:0);
+    uploadPaint(scene) {
+        const gl=this.gl,fields=scene.map(layer=>layer.strokes.length?bakePaint(layer.strokes):null);
+        const any=fields.some(Boolean),columns=any?Math.min(4,scene.length):1,rows=any?Math.ceil(scene.length/columns):1;
+        const cellW=Math.max(1,...fields.map(f=>f?.width??0)),cellH=Math.max(1,...fields.map(f=>f?.height??0));
+        const width=cellW*columns,height=cellH*rows,shape=width+':'+height+':'+cellW+':'+cellH;
+        gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,this.paintTexture);
+        if(shape!==this.atlasShape) {
+            gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,width,height,0,gl.RGBA,gl.UNSIGNED_BYTE,null);
+            gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+            this.paintKeys=[];this.atlasShape=shape;
         }
-        gl.uniform4fv(this.location('paintBounds[0]'),bounds);gl.uniform2fv(this.location('paintSize[0]'),sizes);gl.uniform1fv(this.location('hasPaint[0]'),active);
+        for(let i=0;i<fields.length;i++) {
+            const field=fields[i];
+            if(field&&this.paintKeys[i]!==field.key)gl.texSubImage2D(gl.TEXTURE_2D,0,(i%columns)*cellW,Math.floor(i/columns)*cellH,field.width,field.height,gl.RGBA,gl.UNSIGNED_BYTE,field.pixels);
+            this.paintKeys[i]=field?.key??null;
+        }
+        gl.uniform1i(this.location('paintAtlas'),0);
+        gl.uniform2f(this.location('paintAtlasSize'),width,height);gl.uniform2f(this.location('paintCellSize'),cellW,cellH);gl.uniform1f(this.location('paintColumns'),columns);
+        gl.uniform4fv(this.location('paintBounds[0]'),Array.from({length:MAX_LAYERS},(_,i)=>fields[i]?.bounds??[0,0,1,1]).flat());
+        gl.uniform4fv(this.location('paintMeta[0]'),Array.from({length:MAX_LAYERS},(_,i)=>[fields[i]?.width??1,fields[i]?.height??1,fields[i]?1:0,0]).flat());
     }
-    formMap(settings, width, height) {
-        this.render(settings,width,height,1);
+    formMap(settings, width, height, isolatedIndex = null) {
+        this.render(settings,width,height,isolatedIndex==null?1:isolatedIndex+2);
         const pixels = new Uint8Array(width*height*4), ids = new Uint8Array(width*height);
         this.gl.readPixels(0,0,width,height,this.gl.RGBA,this.gl.UNSIGNED_BYTE,pixels);
         for (let y=0;y<height;y++) for (let x=0;x<width;x++) ids[y*width+x]=pixels[((height-1-y)*width+x)*4];
@@ -350,7 +363,7 @@ export class LandscapeRenderer {
     }
     destroy() {
         const gl = this.gl;
-        for(const slot of this.paintTextures)gl.deleteTexture(slot.texture);
+        gl.deleteTexture(this.paintTexture);
         gl.deleteBuffer(this.buffer); gl.deleteProgram(this.program);
         gl.getExtension('WEBGL_lose_context')?.loseContext();
         this.canvas.width = this.canvas.height = 1;

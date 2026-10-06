@@ -14,6 +14,8 @@ export const shortcutLabel = spec => `${spec.shift ? '‚áß' : ''}${spec.alt ? '‚å
 export function commandKey(event) {
     // Letter shortcuts follow physical keys in Russian layout as well as English.
     if (/^Key[A-Z]$/.test(event.code || '')) return event.code.slice(3).toLowerCase();
+    if (event.code === 'BracketLeft') return '[';
+    if (event.code === 'BracketRight') return ']';
     if (event.code === 'Backslash') return '\\';
     return event.key === ' ' ? 'space' : String(event.key || '').toLowerCase();
 }
