@@ -1,6 +1,7 @@
-import { canvasDefaults, normalizeCanvas, assertExportSize } from './canvas-size.js?v=layers-zip-1';
-import { normalizeLayerStack, layerSettingsKey } from './layer-data.js?v=layers-zip-1';
-import { normalizeStrokes } from './paint.js?v=layers-zip-1';
+import { normalizeCustomColors } from './custom-colors.js?v=custom-colors-1';
+import { canvasDefaults, normalizeCanvas, assertExportSize } from './canvas-size.js?v=custom-colors-1';
+import { normalizeLayerStack, layerSettingsKey } from './layer-data.js?v=custom-colors-1';
+import { normalizeStrokes } from './paint.js?v=custom-colors-1';
 export const TOOL_ID = 'grainy_land';
 export const VERSION = 1;
 export const palettes = {
@@ -9,23 +10,23 @@ export const palettes = {
 };
 export const layouts = {auto:'Auto',basin:'Basin',ridge:'Ridge',valley:'Valley',fold:'Fold'};
 export const toneCharacters = { pigment: 'Pigment', pearlescent: 'Pearlescent', radiant: 'Radiant' };
-// Array order matches the renderer: three low endpoints, then three high endpoints.
-export const toneKeys = ['terrainLow', 'depthLow', 'lightLow', 'terrainHigh', 'depthHigh', 'lightHigh'];
+// Keep the six paint endpoints in their original order; Background low/high follow.
+export const toneKeys = ['terrainLow', 'depthLow', 'lightLow', 'terrainHigh', 'depthHigh', 'lightHigh', 'skyLow', 'skyHigh'];
 export const automaticTones = Object.fromEntries(toneKeys.map(key => [key, null]));
 export const ranges = {
     scale: [40, 220, 1], complexity: [1, 6, 1], flow: [0, 100, 1], folds: [0, 100, 1],
     horizon: [15, 80, 1], relief: [0, 100, 1], softness: [0, 100, 1],
     edgeVariation: [0, 100, 1], glowCoverage: [0, 100, 1], glow: [0, 100, 1], halo: [0, 100, 1], contrast: [50, 180, 1],
     grain: [0, 100, 1], grainSize: [0.5, 4, 0.1],
-    toneAmount: [0, 100, 1], toneSpread: [0, 100, 1],
+    skyToneAmount: [0, 100, 1], toneAmount: [0, 100, 1], toneSpread: [0, 100, 1],
     toneScale: [20, 200, 1], toneBleed: [0, 100, 1]
 };
 export const defaults = {
     schemaVersion: VERSION, width: 1920, height: 1080, seed: 1565559100, mode: 'landscape', layout:'auto',
     scale: 100, complexity: 2, flow: 48, folds: 65, horizon: 53, relief: 62,
     softness: 38, edgeVariation: 70, glowCoverage: 35, glow: 0, halo: 65, contrast: 118, grain: 55, grainSize: 1,
-    toneCharacter: 'radiant', toneAmount: 100, toneSpread: 65, toneScale: 110, toneBleed: 50,
-    exportScale: 1, transparentBackground: false, exportLayers: false, ...canvasDefaults, ...palettes.ember, ...automaticTones, landscapeForms: null, abstractForms: null, landscapeLayers: null, abstractLayers: null
+    toneCharacter: 'radiant', skyToneAmount: 0, toneAmount: 100, toneSpread: 65, toneScale: 110, toneBleed: 50,
+    customColors: [], blueLayers: true, exportScale: 1, transparentBackground: false, exportLayers: false, ...canvasDefaults, ...palettes.ember, ...automaticTones, landscapeForms: null, abstractForms: null, landscapeLayers: null, abstractLayers: null
 };
 const clamp = (n, a, b) => Math.min(b, Math.max(a, n));
 const formNumber = (value, fallback, min, max) => typeof value === 'number' && Number.isFinite(value)
@@ -62,12 +63,15 @@ export function normalizeSettings(value = {}) {
     Object.assign(out,normalizeCanvas(value,defaults));
     out.transparentBackground=value.transparentBackground===true;
     out.exportLayers=value.exportLayers===true;
+    // Older documents keep their six original layers until blue layers are explicitly added.
+    out.blueLayers=value.blueLayers===true;
     if (Number.isFinite(Number(value.seed)) && value.seed != null) out.seed = Number(value.seed) >>> 0;
     if (Object.hasOwn(toneCharacters, value.toneCharacter)) out.toneCharacter = value.toneCharacter;
     if (Object.hasOwn(layouts,value.layout)) out.layout=value.layout;
     if (['landscape', 'abstract'].includes(value.mode)) out.mode = value.mode;
     out.landscapeForms = normalizeForms(value.landscapeForms);
     out.abstractForms = normalizeForms(value.abstractForms);
+    out.customColors = normalizeCustomColors(value.customColors);
     out.landscapeLayers = normalizeLayerStack(value.landscapeLayers,out);
     out.abstractLayers = normalizeLayerStack(value.abstractLayers,out);
     // Explicit stacks supersede migrated six-form data.
@@ -121,8 +125,8 @@ export function migratePresets(store) {
     for(const name of Object.keys(presetTones)) {
         const preset=all[name];
         if(!preset || preset.seeded!==true) continue;
-        const updates=name==='Ember' ? defaults : name==='Drift' ? {...defaults,mode:'abstract'} : {depth:'#FF5900'};
-        if(Object.entries(updates).every(([key,value])=>preset[key]===value)) continue;
+        const updates=name==='Ember' ? defaults : name==='Drift' ? {...defaults,mode:'abstract'} : {depth:'#FF5900',blueLayers:true};
+        if(Object.entries(updates).every(([key,value])=>JSON.stringify(preset[key])===JSON.stringify(value))) continue;
         all[name]={...preset,...updates};changed=true;
     }
     if(changed) store.saveAll(all);

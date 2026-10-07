@@ -1,6 +1,6 @@
-import { normalizeSettings, formSettingsKey } from './document.js?v=layers-zip-1';
-import { MAX_LAYERS, getLayers, layerSettingsKey, normalizeLayerStack, geometrySnapshot, sourceGroup } from './layer-data.js?v=layers-zip-1';
-export { MAX_LAYERS, getLayers, layerSettingsKey } from './layer-data.js?v=layers-zip-1';
+import { normalizeSettings, formSettingsKey } from './document.js?v=custom-colors-1';
+import { MAX_LAYERS, getLayers, layerSettingsKey, normalizeLayerStack, geometrySnapshot, sourceGroup, blueLayerPair } from './layer-data.js?v=custom-colors-1';
+export { MAX_LAYERS, getLayers, layerSettingsKey } from './layer-data.js?v=custom-colors-1';
 
 export function withLayers(settings,layers) {
     const s=normalizeSettings(settings);
@@ -51,4 +51,12 @@ export function convertLayer(settings,id) {
     // Freeze the analytic silhouette instead of rasterizing it. It is now an
     // immutable base for paint/erase, independent of every generation control.
     return editLayer(s,id,{mode:'drawn',hasBase:true,geometry:geometrySnapshot(s)});
+}
+
+export function addBlueLayers(settings) {
+    const s=normalizeSettings(settings),stack=getLayers(s);
+    if(stack.length>MAX_LAYERS-2)throw new Error('Two free layer slots are needed to add blue forms.');
+    let start=1;while(stack.some(layer=>layer.id==='blue-'+start||layer.id==='blue-'+(start+1)))start+=2;
+    const pair=blueLayerPair(s,start);
+    return {settings:withLayers(s,[...pair,...stack]),id:pair[1].id};
 }

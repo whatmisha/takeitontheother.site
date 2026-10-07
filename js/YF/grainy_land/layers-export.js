@@ -1,6 +1,6 @@
-import { normalizeSettings, exportDimensions } from './document.js?v=layers-zip-1';
-import { getLayers, layerSettingsKey } from './layer-data.js?v=layers-zip-1';
-import { renderPNG } from './png-export.js?v=layers-zip-1';
+import { normalizeSettings, exportDimensions } from './document.js?v=custom-colors-1';
+import { getLayers, layerSettingsKey } from './layer-data.js?v=custom-colors-1';
+import { renderPNG } from './png-export.js?v=custom-colors-1';
 import { StoredZipWriter } from '../infra/framework/src/export/StoredZipWriter.js?v=1';
 
 export function layerExportPlan(raw) {

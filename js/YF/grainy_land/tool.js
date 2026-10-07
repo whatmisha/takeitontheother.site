@@ -1,16 +1,17 @@
-import { editCanvas } from './canvas-size.js?v=layers-zip-1';
-import { renderPNG } from './png-export.js?v=layers-zip-1';
-import { renderLayersZIP } from './layers-export.js?v=layers-zip-2';
+import { CustomColorEditor } from './custom-color-editor.js?v=layer-swatches-1';
+import { editCanvas } from './canvas-size.js?v=custom-colors-1';
+import { renderPNG } from './png-export.js?v=custom-colors-1';
+import { renderLayersZIP } from './layers-export.js?v=custom-colors-1';
 import { downloadBlob } from '../infra/framework/src/ui/GeneratorHost.js?v=7';
 import { defineTool, UnifiedColorPicker, ToolUiController, FileIntakeController, PresetMenuKeyboardController } from '../infra/framework/src/index.js?v=tool-ui-4';
-import { defaults, ranges, regenerate, toneKeys, migratePresets, normalizeSettings, makeDocument, readDocument, exportDimensions } from './document.js?v=layers-zip-1';
-import { adjacentColors, hexRGB } from './scene.js?v=layers-zip-1';
-import { LandscapeRenderer } from './render.js?v=layers-zip-1';
+import { defaults, ranges, regenerate, toneKeys, migratePresets, normalizeSettings, makeDocument, readDocument, exportDimensions } from './document.js?v=custom-colors-1';
+import { adjacentColors, hexRGB } from './scene.js?v=custom-colors-1';
+import { LandscapeRenderer } from './render.js?v=custom-colors-1';
 
-import { getLayers } from './layer-data.js?v=layers-zip-1';
-import { FormEditor } from './form-editor.js?v=layers-zip-1';
+import { getLayers } from './layer-data.js?v=custom-colors-1';
+import { FormEditor } from './form-editor.js?v=layer-swatches-1';
 
-let formEditor;
+let formEditor, customColorEditor;
 let renderer, ui, intake, presetKeyboard, listeners, unsubscribe, resizeObserver, panelObserver, panelPositionObserver, tonePicker;
 let renderFailed = false, lastSize = '';
 const byId = id => document.getElementById(id);
@@ -54,13 +55,15 @@ function sync(tool) {
     }
     byId('toneCharacterSelect').value = s.toneCharacter;
     const neighbors=adjacentColors(s), strength=s.toneAmount/100;
-    ['terrain','depth','light'].forEach((key,i) => {
+    ['sky','terrain','depth','light'].forEach(key => {
         const base=hexRGB(s[key]);
         const css=rgb => 'rgb('+rgb.map(v => Math.round(v*255)).join(' ')+')';
-        const blend=other => base.map((v,k) => v+(other[k]-v)*strength);
-        byId(key+'TonePreview').style.background = 'linear-gradient(90deg,'+css(blend(neighbors[i]))+','+s[key]+','+css(blend(neighbors[i+3]))+')';
+        const amount=strength*(key==='sky'?s.skyToneAmount/100:1);
+        const blend=other => base.map((v,k) => v+(other[k]-v)*amount);
+        byId(key+'TonePreview').style.background = 'linear-gradient(90deg,'+css(blend(neighbors[toneKeys.indexOf(key+'Low')]))+','+s[key]+','+css(blend(neighbors[toneKeys.indexOf(key+'High')]))+')';
     });
     tonePicker?.sync();
+    customColorEditor?.sync();
     const customCount = toneKeys.filter(key => s[key] != null).length;
     byId('customToneCount').textContent = customCount ? customCount + ' custom' : '';
     for (const key of toneKeys) byId(key+'Auto').disabled = s[key] == null;
@@ -148,6 +151,7 @@ function bind(tool) {
     on(byId('exportScaleSelect'),'change',e=>applyCanvas({exportScale:Number(e.target.value)}));
     on(byId('transparentBackground'),'change',e=>change(tool,{transparentBackground:e.target.checked},'Transparent PNG'));
     on(byId('exportLayers'),'change',e=>change(tool,{exportLayers:e.target.checked},'Export layers'));
+    customColorEditor = new CustomColorEditor(tool,change,status).init();
     unsubscribe = tool.settingsStore.subscribe('*', () => sync(tool));
     intake = new FileIntakeController({
         input: 'jsonFileInput', trigger: 'jsonPickerTrigger', accept: '.json,application/json', maxBytes: 4*1024*1024,
@@ -263,7 +267,7 @@ const app = defineTool({
     renderTo: context => draw(context,true),
     onReady: bind,
     onDestroy: () => {
-        formEditor?.destroy(); formEditor=null;
+        formEditor?.destroy(); formEditor=null;customColorEditor?.destroy();customColorEditor=null;
         listeners?.abort(); unsubscribe?.(); resizeObserver?.disconnect(); panelObserver?.disconnect(); panelPositionObserver?.disconnect(); intake?.destroy();
         presetKeyboard?.destroy(); ui?.destroy(); renderer?.destroy(); renderer=null; ui=null; tonePicker=null;
         delete document.documentElement.dataset.ready;

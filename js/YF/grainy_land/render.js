@@ -1,7 +1,8 @@
-import { createLayerScene, materialColors, adjacentColors, hexRGB } from './scene.js?v=layers-zip-1';
-import { bakePaint } from './paint.js?v=layers-zip-1';
-import { MAX_LAYERS } from './layer-data.js?v=layers-zip-1';
-import { normalizeSettings } from './document.js?v=layers-zip-1';
+import { MAX_CUSTOM_COLORS } from './custom-colors.js?v=custom-colors-1';
+import { createLayerScene, materialColors, adjacentColors, customMaterialColors, hexRGB } from './scene.js?v=custom-colors-1';
+import { bakePaint } from './paint.js?v=custom-colors-1';
+import { MAX_LAYERS } from './layer-data.js?v=custom-colors-1';
+import { normalizeSettings } from './document.js?v=custom-colors-1';
 
 const vertexSource = `
 attribute vec2 position;
@@ -17,12 +18,12 @@ uniform vec4 pockets[${MAX_LAYERS}], formPhases[${MAX_LAYERS}], formTransforms[$
 uniform vec4 fields[${MAX_LAYERS}], layers[${MAX_LAYERS}], layerStyles[${MAX_LAYERS}], foldFields[${MAX_LAYERS}];
 uniform vec4 geometryA[${MAX_LAYERS}], geometryB[${MAX_LAYERS}], formInfo[${MAX_LAYERS}];
 uniform float editorPass, layerCount, backgroundAlpha, exportLayer;
-uniform sampler2D paintAtlas;
+uniform sampler2D paintAtlas, customPalette;
 uniform vec4 paintBounds[${MAX_LAYERS}], paintMeta[${MAX_LAYERS}];
 uniform vec2 paintAtlasSize, paintCellSize;
 uniform float paintColumns;
-uniform vec3 sky, colors[6], adjacent[6];
-uniform float toneAmount, toneScale, toneBleed, toneCharacter;
+uniform vec3 sky, colors[6], adjacent[8];
+uniform float skyToneAmount, toneAmount, toneScale, toneBleed, toneCharacter;
 uniform float edgeVariation, glowCoverage;
 uniform float softness, glow, halo, contrast, grain, grainSize, seed;
 
@@ -82,7 +83,32 @@ void main() {
     vec2 gp=p*2688.*vec2(1.,artboard.y/artboard.x)/grainSize;
     float footprint=max(2688./rasterSize.x,2688.*artboard.y/artboard.x/rasterSize.y)/grainSize;
     float resolve=min(1.,1.5/footprint);
-    vec3 color=sky*backgroundAlpha, underpaint=sky;
+    // Background tones are an optional opaque color field, independent of land geometry.
+    // Keep it in underpaint even for transparent/layer exports so reflected colors agree.
+    vec3 background=sky;
+    float backgroundAmount=skyToneAmount*toneAmount;
+    if(backgroundAmount>0.) {
+        float frequency=mix(17.,2.,(toneScale-20.)/180.);
+        vec2 offset=vec2(mod(seed,137.),floor(seed/137.))+vec2(47.3,91.7);
+        vec2 q=p*vec2(1.,artboard.y/artboard.x);
+        q+=(vec2(fbm(q*3.+offset),fbm(q*3.+offset+27.))-.5)*.15;
+        float field=noise(q*frequency*.45+offset)*.7+noise(q*frequency+offset)*.3;
+        float positive=pow(smoothstep(.3,.85,field),1.4);
+        float negative=pow(1.-smoothstep(.18,.7,field),1.4);
+        if(toneCharacter>.5 && toneCharacter<1.5) {
+            float pearl=.5+.5*sin((q.x+q.y*.65)*frequency*.8+field*3.+offset.x);
+            positive=pow(pearl,1.5)*.85;
+            negative=pow(1.-pearl,1.5)*.75;
+        } else if(toneCharacter>1.5) {
+            positive=pow(smoothstep(.32,.82,field),2.)*.95;
+            negative=smoothstep(.25,.75,1.-field)*.85;
+        }
+        background=mix(background,adjacent[6],negative*backgroundAmount*.92);
+        background=mix(background,adjacent[7],positive*backgroundAmount*.88);
+        // Use the same filtered pigment texture, without changing the opaque background alpha.
+        if(grain>0.)background*=1.+grain*.04*backgroundAmount*(.5-spray(gp+offset,1.,footprint).y)*resolve;
+    }
+    vec3 color=background*backgroundAlpha, underpaint=background;
     float alpha=backgroundAlpha;
 
     float picked = 0.;
@@ -135,13 +161,22 @@ void main() {
             float tail=surface.y-(horizon+pocketStyle.w+.08*sin(x*4.+style.y));
             d=mix(d,smoothUnion(pocket,tail,.055),folds);
         }
-        if (mode>.5) {
+        if (mode>.5 && kind<6) {
             // Independent rotated lobes; no periodic color ramp or horizon.
             float angle = style.y;
             vec2 v = surface-fields[i].xy;
             v = mat2(cos(angle),-sin(angle),sin(angle),cos(angle))*v;
             d = .21+fields[i].z*.5-length(v/vec2(1.35,.72));
             d += flow*(fbm(q*(3.+complexity)+id*7.+offset)-.5)*.45;
+        }
+        if(kind>=6) {
+            // Two broad, independently editable sky coats, with irregular sprayed silhouettes.
+            vec2 v=q-fields[i].xy;
+            float angle=style.y;
+            v=mat2(cos(angle),-sin(angle),sin(angle),cos(angle))*v;
+            v+=(vec2(fbm(q*3.+offset+id*11.),fbm(q*3.+offset+id*11.+27.))-.5)*flow*.12;
+            d=(1.-length(v/fields[i].zw))*min(fields[i].z,fields[i].w);
+            d+=flow*(fbm(q*(3.+complexity*.4)+offset+id*7.)-.5)*.045;
         }
         if(gb.w<.5)d=-2.;
         if (paintMeta[i].z > .5) {
@@ -177,6 +212,9 @@ void main() {
         vec3 base = colors[0];
         if (group==1) base = colors[1];
         if (group==2) base = colors[2];
+        if (group==3) base = sky;
+        float customRow=(float(group)-4.+.5)/float(${MAX_CUSTOM_COLORS});
+        if (group>=4) base=texture2D(customPalette,vec2(1./6.,customRow)).rgb;
         float body = fbm(surface*vec2(5.,8.)+id*13.+offset);
         float patch=fbm(surface*vec2(4.,6.)+offset+id*5.7);
         float crease=bell((d-.04-.07*patch)/(.012+.024*body));
@@ -191,6 +229,11 @@ void main() {
             pigment = mix(pigment,colors[4],.18+body*.44);
             pigment = mix(pigment,colors[0],.13*bell((body-.24)*8.));
             pigment = mix(pigment,colors[3],warmth*.42);
+        } else if(group>=4) {
+            pigment=base*(.92+.12*body);
+        } else if(group==3) {
+            // Shade within the blue anchor; neighboring blue tones supply the variation.
+            pigment=base*(kind==6 ? .84+.14*body : 1.02+.12*body);
         } else {
             pigment = mix(base,colors[5],smoothstep(.01,.15,d)*.32+body*.14);
             pigment *= .78+.20*body+.09*smoothstep(.02,.20,d);
@@ -218,13 +261,18 @@ void main() {
         vec3 low = adjacent[0], high = adjacent[3];
         if (group==1) { low=adjacent[1]; high=adjacent[4]; }
         if (group==2) { low=adjacent[2]; high=adjacent[5]; }
+        if (group==3) { low=adjacent[6]; high=adjacent[7]; }
+        if (group>=4) {
+            low=texture2D(customPalette,vec2(.5,customRow)).rgb;
+            high=texture2D(customPalette,vec2(5./6.,customRow)).rgb;
+        }
         if (group==1) { negative*=.62; positive*=.62; }
         pigment = mix(pigment,low,negative*toneAmount*.92);
         pigment = mix(pigment,high,positive*toneAmount*.88);
         // Broad reflected color and narrow folds share the surface coordinates.
         float reflectionPatch=smoothstep(.44,.72,patch)*bell((d-.065)/.15);
         vec3 reflected=mix(colors[4],adjacent[2],.55);
-        pigment=mix(pigment,reflected,reflectionPatch*toneAmount*toneBleed*.42);
+        if(group<3)pigment=mix(pigment,reflected,reflectionPatch*toneAmount*toneBleed*.42);
         if (group==1) pigment=mix(pigment,colors[0],crease*warmth*toneAmount*.45);
         // Neighbor reflection extends inside a mass; softness still owns opacity.
         float bleed = toneAmount*toneBleed*bell((d-.024)/(.023+softness*.07))*(.3+.7*body);
@@ -239,6 +287,8 @@ void main() {
         float aura=bell(d/(.008+halo*.085));
         vec3 tint = mix(mix(colors[2],colors[3],.4),adjacent[5],toneAmount*.6);
         vec3 haloTint = mix(tint,adjacent[2],toneAmount*.75);
+        if(group==3) { tint=mix(sky,adjacent[7],toneAmount);haloTint=tint; }
+        if(group>=4) { tint=mix(base,high,toneAmount);haloTint=tint; }
         pigment = mix(pigment,tint,glow*core*.93*illumination);
         pigment += glow*aura*illumination*tint*.15;
         // Lighting samples untextured paint, never the grain in lower coats.
@@ -290,6 +340,7 @@ export class LandscapeRenderer {
         const position = gl.getAttribLocation(this.program, 'position');
         gl.enableVertexAttribArray(position); gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
         this.locations = new Map(); this.cacheKey = '';
+        this.customTexture=gl.createTexture();this.customPaletteKey='';
         this.paintTexture=gl.createTexture();this.paintKeys=[];this.atlasShape='';
         this.canvas.addEventListener('webglcontextlost', event => { event.preventDefault(); this.cacheKey = ''; });
     }
@@ -308,12 +359,13 @@ export class LandscapeRenderer {
         gl.viewport(0,0,width,height); gl.useProgram(this.program);
         const scene = createLayerScene(s);
         this.uploadPaint(scene);
+        this.uploadCustomColors(s);
         const values = { softness: s.softness/100, glow: s.glow/100, halo: s.halo/100,
             contrast: s.contrast/100, grain: s.grain/100, grainSize: s.grainSize, seed: s.seed % 16381,
-            toneAmount:s.toneAmount/100, toneScale:s.toneScale, toneBleed:s.toneBleed/100,
+            skyToneAmount:s.skyToneAmount/100, toneAmount:s.toneAmount/100, toneScale:s.toneScale, toneBleed:s.toneBleed/100,
             edgeVariation:s.edgeVariation/100, glowCoverage:s.glowCoverage/100,
             toneCharacter:['pigment','pearlescent','radiant'].indexOf(s.toneCharacter) };
-        for (const name of ['softness','glow','halo','contrast','grain','grainSize','seed','toneAmount','toneScale','toneBleed','toneCharacter','edgeVariation','glowCoverage']) {
+        for (const name of ['softness','glow','halo','contrast','grain','grainSize','seed','skyToneAmount','toneAmount','toneScale','toneBleed','toneCharacter','edgeVariation','glowCoverage']) {
             gl.uniform1f(this.location(name), values[name]);
         }
         gl.uniform2f(this.location('artboard'),s.width,s.height);
@@ -335,6 +387,19 @@ export class LandscapeRenderer {
         if (error !== gl.NO_ERROR) throw new Error('Graphics allocation failed. Reduce export size.');
         this.cacheKey = key;
         return this.canvas;
+    }
+    uploadCustomColors(settings) {
+        const gl=this.gl,key=JSON.stringify([settings.customColors,settings.toneCharacter,settings.toneSpread]);
+        gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,this.customTexture);
+        if(key!==this.customPaletteKey) {
+            const pixels=new Uint8Array(3*MAX_CUSTOM_COLORS*4);
+            customMaterialColors(settings).forEach((colors,row)=>colors.forEach((rgb,col)=>pixels.set([...rgb.map(v=>Math.round(v*255)),255],(row*3+col)*4)));
+            gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,3,MAX_CUSTOM_COLORS,0,gl.RGBA,gl.UNSIGNED_BYTE,pixels);
+            gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);
+            gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+            this.customPaletteKey=key;
+        }
+        gl.uniform1i(this.location('customPalette'),1);
     }
     uploadPaint(scene) {
         const gl=this.gl,fields=scene.map(layer=>layer.strokes.length?bakePaint(layer.strokes):null);
@@ -367,7 +432,7 @@ export class LandscapeRenderer {
     }
     destroy() {
         const gl = this.gl;
-        gl.deleteTexture(this.paintTexture);
+        gl.deleteTexture(this.paintTexture);gl.deleteTexture(this.customTexture);
         gl.deleteBuffer(this.buffer); gl.deleteProgram(this.program);
         gl.getExtension('WEBGL_lose_context')?.loseContext();
         this.canvas.width = this.canvas.height = 1;

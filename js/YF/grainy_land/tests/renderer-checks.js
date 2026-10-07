@@ -1,10 +1,12 @@
-import { editCanvas } from '../canvas-size.js?v=layers-zip-1';
-import { renderPNG } from '../png-export.js?v=layers-zip-1';
-import {getLayers,withLayers,editLayer,addLayer,duplicateLayer,removeLayer,reorderLayer,convertLayer,MAX_LAYERS} from '../layers.js?v=layers-zip-1';
+import { addCustomColor, removeCustomColor } from '../custom-colors.js?v=custom-colors-1';
+import { editCanvas } from '../canvas-size.js?v=custom-colors-1';
+import { renderPNG } from '../png-export.js?v=custom-colors-1';
+import {getLayers,withLayers,editLayer,addLayer,duplicateLayer,removeLayer,reorderLayer,convertLayer,MAX_LAYERS} from '../layers.js?v=custom-colors-1';
 import { ShareCodec } from '../../infra/framework/src/preset/ShareCodec.js';
-import { LandscapeRenderer } from '../render.js?v=layers-zip-1';
-import { defaults, palettes, toneKeys, makeDocument, readDocument, editForm, regenerate, normalizeSettings } from '../document.js?v=layers-zip-1';
-import { adjacentColors } from '../scene.js?v=layers-zip-1';
+import { LandscapeRenderer } from '../render.js?v=custom-colors-1';
+import { defaults as currentDefaults, palettes, toneKeys, makeDocument, readDocument, editForm, regenerate, normalizeSettings } from '../document.js?v=custom-colors-1';
+import { adjacentColors } from '../scene.js?v=custom-colors-1';
+const defaults={...currentDefaults,blueLayers:false};
 const renderer = new LandscapeRenderer(), results = [], urls = [];
 const check = (name, condition) => { results.push((condition ? 'PASS ' : 'FAIL ') + name); if (!condition) throw new Error(name); };
 const capture = (settings,width=480,height=270,transparent=false) => {
@@ -31,6 +33,69 @@ const artifact = async (name, settings, width, height) => {
 try {
     const initial=capture(defaults).pixels;
     check('Open sky is exactly #2353DB', equal(initial.slice(0,4),new Uint8Array([35,83,219,255])));
+    const tonedSky={...defaults,skyToneAmount:85,skyLow:'#182A91',skyHigh:'#5A92EE'};
+    check('Background tones at zero preserve the exact old artwork',equal(initial,capture({...tonedSky,skyToneAmount:0}).pixels));
+    check('Global tone Amount zero also disables Background tones',equal(capture({...defaults,toneAmount:0}).pixels,capture({...tonedSky,toneAmount:0}).pixels));
+    const skyOnly=withLayers(tonedSky,[]),skyPixels=capture(skyOnly).pixels;
+    check('Background tones create opaque color variation',skyPixels.every((v,i)=>i%4!==3||v===255)&&!equal(skyPixels.slice(0,4),skyPixels.slice(400*4,401*4)));
+    for(const toneCharacter of ['pigment','pearlescent','radiant']) {
+        const s={...skyOnly,toneCharacter},p=capture(s).pixels;
+        check(toneCharacter+' colors the Background',!equal(p,capture({...s,skyToneAmount:0}).pixels));
+        check(toneCharacter+' is seed-repeatable',equal(p,capture(s).pixels)&&!equal(p,capture({...s,seed:s.seed+1}).pixels));
+    }
+    for(const [key,value] of Object.entries({skyToneAmount:15,toneScale:20,toneSpread:5,sky:'#B76129',skyLow:'#F077BB',skyHigh:'#88FFCC'})) {
+        const s={...skyOnly,skyLow:null,skyHigh:null};
+        check(key+' controls Background colors',!equal(capture(s).pixels,capture({...s,[key]:value}).pixels));
+    }
+    check('Background tones leave picking unchanged',equal(renderer.formMap(defaults,480,270).ids,renderer.formMap(tonedSky,480,270).ids));
+    check('Transparent empty Background stays completely clear with tones enabled',capture(skyOnly,480,270,true).pixels.every(v=>v===0));
+    check('Background tones survive JSON pixel for pixel',equal(capture(tonedSky).pixels,capture(readDocument(JSON.parse(JSON.stringify(makeDocument(tonedSky))))).pixels));
+    const skyCodec=new ShareCodec({pristineDefaults:defaults});
+    const toneShare=await skyCodec.decode(await skyCodec.encode(tonedSky));
+    check('Background tones survive share links',equal(capture(tonedSky).pixels,capture(toneShare.full).pixels));
+    for(const mode of ['landscape','abstract']) {
+        const s={...tonedSky,mode,glow:75},opaque=capture(s),paint=capture(s,480,270,true),base=capture(withLayers(s,[]));
+        base.ctx.drawImage(paint.canvas,0,0);const combined=base.ctx.getImageData(0,0,480,270).data;
+        const error=combined.reduce((n,v,i)=>n+Math.abs(v-opaque.pixels[i]),0)/combined.length;
+        check(mode+' transparent paint recomposes over the toned Background ('+error.toFixed(3)+' MAE)',error<1);
+    }
+    await artifact('background-tones-1920',tonedSky,1920,1080);
+    const blueTemplate=currentDefaults,bluePair=withLayers(blueTemplate,getLayers(blueTemplate).slice(0,2));
+    for(const mode of ['landscape','abstract']) {
+        const settings={...blueTemplate,mode},pair={...bluePair,mode,abstractLayers:getLayers(bluePair)};
+        const map=renderer.formMap(pair,480,270),transparent=capture(pair,480,270,true).pixels;
+        check(mode+' both blue coats are independently selectable',map.ids.some(id=>id===1)&&map.ids.some(id=>id===2));
+        check(mode+' blue coats remain in transparent output',transparent.some((v,i)=>i%4===3&&v>0)&&transparent.some((v,i)=>i%4===3&&v===0));
+        check(mode+' blue coats receive sprayed coverage',!equal(capture({...pair,grain:0}).pixels,capture({...pair,grain:100}).pixels));
+        check(mode+' new template has eight independently rendered layers',getLayers(settings).length===8&&!equal(capture(settings).pixels,capture({...settings,blueLayers:false}).pixels));
+    }
+    const blueId='blue-1',movedBlue=editLayer(bluePair,blueId,{x:.14},{manual:true});
+    check('Blue layer moves independently',!equal(capture(bluePair).pixels,capture(movedBlue).pixels));
+    check('Pinned blue layer survives Generate',equal(capture(withLayers(movedBlue,[getLayers(movedBlue)[0]])).pixels,capture(regenerate(withLayers(movedBlue,[getLayers(movedBlue)[0]]),42)).pixels));
+    const drawnBlue=convertLayer(movedBlue,blueId);
+    check('Converting blue coat to Drawn preserves pixels',equal(capture(movedBlue).pixels,capture(drawnBlue).pixels));
+    const brushBlue=editLayer(bluePair,blueId,{strokes:[{kind:'paint',rx:.05,ry:.08,points:[[.8,.8],[.9,.8]]}]},{manual:true});
+    check('Blue coat accepts brush edits',!equal(capture(bluePair).pixels,capture(brushBlue).pixels));
+    check('Blue material follows the editable blue anchor',!equal(capture(bluePair).pixels,capture({...bluePair,sky:'#934FBA'}).pixels));
+    check('Blue material follows Background low/high tones',!equal(capture(bluePair).pixels,capture({...bluePair,skyLow:'#173BBB',skyHigh:'#82BBFF'}).pixels));
+    await artifact('blue-layers-1920',blueTemplate,1920,1080);
+    await artifact('blue-layers-isolated-1920',bluePair,1920,1080);
+    const paletteFirst=addCustomColor(defaults),paletteSecond=addCustomColor(paletteFirst.settings);
+    check('Unused custom colors leave the original artwork pixel-identical',equal(initial,capture(paletteSecond.settings).pixels));
+    for(const mode of ['landscape','abstract']) {
+        const seed={...paletteSecond.settings,mode};
+        const colored=editLayer(seed,'form-0',{group:paletteSecond.id});
+        const image=capture(colored).pixels;
+        check(mode+' custom color changes the assigned layer material',!equal(capture(seed).pixels,image));
+        check(mode+' assigning a custom color preserves picking geometry',equal(renderer.formMap(seed,480,270).ids,renderer.formMap(colored,480,270).ids));
+        check(mode+' removing an unused color preserves all remaining pixels',equal(image,capture(removeCustomColor(colored,paletteFirst.id)).pixels));
+        check(mode+' custom palette survives JSON exactly',equal(image,capture(readDocument(JSON.parse(JSON.stringify(makeDocument(colored))))).pixels));
+        const solo=withLayers(colored,[getLayers(colored)[0]]);
+        check(mode+' custom paint responds to advanced tones',!equal(capture(solo).pixels,capture({...solo,toneCharacter:'pigment',toneSpread:0}).pixels));
+        check(mode+' custom paint responds to its hex anchor',!equal(capture(solo).pixels,capture({...solo,customColors:solo.customColors.map(c=>c.id===paletteSecond.id?{...c,color:'#AC28DC'}:c)}).pixels));
+        check(mode+' custom paint retains transparent spray edges',capture(solo,480,270,true).pixels.some((v,i)=>i%4===3&&v>0&&v<255));
+    }
+    await artifact('custom-color-1920',editLayer(paletteSecond.settings,'form-0',{group:paletteSecond.id}),1920,1080);
     const transparentSettings={...defaults,transparentBackground:true};
     check('Transparent export option leaves the working preview unchanged',equal(initial,capture(transparentSettings).pixels));
     for(const mode of ['landscape','abstract']) {
@@ -129,7 +194,7 @@ try {
     const automatic = adjacentColors(defaults);
     const exactOverrides = Object.fromEntries(toneKeys.map((key,i) => [key, '#' + automatic[i].map(v=>Math.round(v*255).toString(16).padStart(2,'0')).join('')]));
     check('Fixing automatic endpoints preserves every default pixel', equal(initial,capture({...defaults,...exactOverrides}).pixels));
-    for (const key of toneKeys) {
+    for (const key of toneKeys.slice(0,6)) {
         check(key+' changes rendered material', !equal(initial,capture({...defaults,[key]:'#169DAB'}).pixels));
     }
     const manual = {...defaults,terrainLow:'#169DAB',depthHigh:'#CB39BC',lightLow:'#624DB2'};

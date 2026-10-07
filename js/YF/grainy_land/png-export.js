@@ -1,4 +1,4 @@
-import { normalizeSettings, exportDimensions } from './document.js?v=layers-zip-1';
+import { normalizeSettings, exportDimensions } from './document.js?v=custom-colors-1';
 const signature=[137,80,78,71,13,10,26,10];
 const crcTable=Uint32Array.from({length:256},(_,n)=>{for(let k=0;k<8;k++)n=(n&1)?0xedb88320^(n>>>1):n>>>1;return n>>>0;});
 function crc32(bytes){let crc=0xffffffff;for(const b of bytes)crc=crcTable[(crc^b)&255]^(crc>>>8);return (crc^0xffffffff)>>>0;}

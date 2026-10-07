@@ -130,7 +130,7 @@ const swatchCount = entrypoints.reduce(
     (count, html) => count + (html.match(/class="[^"]*\b(?:color-dot|color-preview)\b[^"]*"/gu)?.length || 0),
     0
 ) + (pizzaNavigation.match(/class="[^"]*\b(?:color-dot|color-preview)\b[^"]*"/gu)?.length || 0);
-assert.equal(swatchCount, 23, 'the seven color-enabled tools must expose 23 shared swatch triggers');
+assert.equal(swatchCount, 25, 'the seven color-enabled tools must expose 25 shared swatch triggers, including Background low/high tones');
 
 const [sparkyHtml, ditherCss] = await Promise.all([
     read('sparky/index.html'),

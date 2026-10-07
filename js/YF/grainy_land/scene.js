@@ -1,6 +1,6 @@
-import { getLayers } from './layer-data.js?v=layers-zip-1';
+import { getLayers, layerGroups } from './layer-data.js?v=custom-colors-1';
 import { SeededRandom } from '../infra/framework/src/index.js';
-import { normalizeSettings, layouts, toneKeys, formSettingsKey } from './document.js?v=layers-zip-1';
+import { normalizeSettings, layouts, toneKeys, formSettingsKey } from './document.js?v=custom-colors-1';
 
 // Geometry is independent of the palette, texture and raster resolution.
 // Coordinates are normalized; this is the extension point for future painted fields.
@@ -93,6 +93,15 @@ export function createScene(settings) {
     return scene;
 }
 
+// Separate seeded streams leave all existing terrain geometry unchanged.
+function blueForm(seed,index) {
+    const random=new SeededRandom(seed).fork('blue-forms-v1-'+index),between=(a,b)=>random.float(a,b);
+    const x=index===0?between(.16,.31):between(.66,.83),y=index===0?between(.10,.21):between(.24,.36);
+    return {field:[x,y,between(.35,.46),between(.19,.28)],
+        shape:[x,.4,0,0],style:[0,between(-.42,.42),between(.7,1.15),0],
+        foldField:[x,y,between(.24,.4),between(-.6,.6)]};
+}
+
 // Ordered layer slots carry their own geometry source and material role. Moving
 // a row never changes the seed, source type or color group of that layer.
 export function createLayerScene(settings) {
@@ -101,13 +110,13 @@ export function createLayerScene(settings) {
         const params=layer.mode==='drawn'?{...s,...layer.geometry}:s;
         const key=JSON.stringify([layer.seed,layer.layout,params.scale,params.complexity,params.flow,params.folds,params.horizon,params.relief]);
         if(!sources.has(key))sources.set(key,generatedScene({...params,seed:layer.seed,layout:layer.layout}));
-        const source=sources.get(key),i=layer.source;
+        const source=sources.get(key),i=layer.source,blue=i>=6?blueForm(layer.seed,i-6):null;
         return {...layer,phases:source.phases,transform:[layer.x,layer.y,layer.scaleX,layer.scaleY],
-            field:source.fields[i],shape:source.layers[i],style:source.layerStyles[i],foldField:source.foldFields[i],
+            field:blue?.field??source.fields[i],shape:blue?.shape??source.layers[i],style:blue?.style??source.layerStyles[i],foldField:blue?.foldField??source.foldFields[i],
             crest:source.secondCrest,pocket:source.pocketStyle,
             geometryA:[source.scale,source.complexity,source.flow,source.folds],
             geometryB:[source.horizon,source.relief,source.mode,layer.hasBase?1:0],
-            info:[i,['terrain','depth','light'].indexOf(layer.group),layer.visible?layer.opacity/100:0,layer.seed%16381]};
+            info:[i,layerGroups.includes(layer.group)?layerGroups.indexOf(layer.group):4+s.customColors.findIndex(color=>color.id===layer.group),layer.visible?layer.opacity/100:0,layer.seed%16381]};
     });
 }
 
@@ -169,12 +178,12 @@ export function materialColors(settings) {
         ...[warm,cool,earth].map(lab => fromLab(lab).map(v => v/255))];
 }
 
-// Low/high neighbors for terrain, depth and light, in that order. All endpoints
-// are derived from the four anchors in OKLCH unless explicitly overridden.
-// Null overrides keep following the anchors; neither mode changes geometry.
-export function adjacentColors(settings) {
+// Low/high neighbors for terrain, depth and light, then Background low/high. Endpoints
+// are derived in OKLCH from the base anchors and custom palette.
+// Null overrides keep following the built-in anchors; neither mode changes geometry.
+function deriveNeighbors(settings) {
     const s = normalizeSettings(settings), spread = s.toneSpread/100;
-    const labs = [s.terrain,s.depth,s.light,s.sky].map(hex => toLab(hexRGB(hex)));
+    const labs = [s.terrain,s.depth,s.light,s.sky,...s.customColors.map(color=>color.color)].map(hex => toLab(hexRGB(hex)));
     const polar = labs.map(([L,a,b]) => [L,Math.hypot(a,b),Math.atan2(b,a)]);
     const profile = {
         pigment: { hue: .8, light: .09, chroma: 1.1 },
@@ -196,7 +205,7 @@ export function adjacentColors(settings) {
         return fromLab(lab(C)).map(v=>v/255);
     };
     const low=[],high=[];
-    for (let i=0;i<3;i++) {
+    for (let i=0;i<polar.length;i++) {
         const [L,C,h]=polar[i];
         let lowHue=h-spread*profile.hue*.95, highHue=h+spread*profile.hue*.6;
         let lowC=C*(1+spread*.18), highC=C*(1+spread*(profile.chroma-1));
@@ -216,5 +225,13 @@ export function adjacentColors(settings) {
         low.push(encode(lowL,lowC,lowHue));
         high.push(encode(highL,highC,highHue));
     }
-    return [...low,...high].map((automatic, i) => s[toneKeys[i]] ? hexRGB(s[toneKeys[i]]) : automatic);
+    return {s,low,high};
+}
+export function adjacentColors(settings) {
+    const {s,low,high}=deriveNeighbors(settings);
+    return [...low.slice(0,3),...high.slice(0,3),low[3],high[3]].map((automatic, i) => s[toneKeys[i]] ? hexRGB(s[toneKeys[i]]) : automatic);
+}
+export function customMaterialColors(settings) {
+    const {s,low,high}=deriveNeighbors(settings);
+    return s.customColors.map((color,i)=>[hexRGB(color.color),low[i+4],high[i+4]]);
 }

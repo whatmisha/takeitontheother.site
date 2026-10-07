@@ -61,7 +61,7 @@
 
 .grainy-land .action-dock__slot--options:empty { display: none; }
 
-.grainy-land .tone-previews { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px; margin-bottom: 20px; }
+.grainy-land .tone-previews { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; margin-bottom: 20px; }
 .grainy-land .tone-previews span { display: block; font-size: var(--ui-font-meta); color: var(--color-text-muted); margin-bottom: 6px; }
 .grainy-land .tone-previews [role="img"] { height: 12px; border-radius: 3px; }
 
@@ -91,6 +91,7 @@
 .grainy-land #layersPanel { left: auto; right: var(--spacing-3xl); top: auto; bottom: var(--spacing-3xl); height: min(480px, 60dvh); max-height: calc(100dvh - 2 * var(--spacing-3xl)); }
 .grainy-land #materialPanel { max-height: calc(100dvh - var(--layers-panel-height) - 3 * var(--spacing-3xl)); }
 .grainy-land .layer-create, .grainy-land .layer-commands { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; }
+.grainy-land .layer-create { flex-wrap: wrap; white-space: nowrap; }
 .grainy-land .layers-list { overflow-y: auto; overscroll-behavior: contain; }
 .grainy-land .layer-row { user-select: none; -webkit-user-select: none; display: flex; align-items: center; min-height: 44px; gap: var(--spacing-xs); }
 .grainy-land .layer-row[data-locked="false"] { cursor: grab; }
@@ -192,3 +193,22 @@
 
 /* Keep the centered dock still when the shared hover style changes font weight. */
 .grainy-land #exportPngBtn { inline-size: 10rem; flex-shrink: 0; white-space: nowrap; }
+
+/* New palette entries reuse the shared swatch and HSB controls. */
+.grainy-land .custom-color-add { background: transparent; border: 0; color: var(--color-text-muted); }
+.grainy-land .custom-color-add-preview { flex: 0 0 30px; }
+.grainy-land .custom-color-add:hover:not(:disabled) { color: var(--ui-foreground); }
+.grainy-land .custom-color-add:focus-visible { outline: 2px solid var(--ui-foreground); outline-offset: 0; }
+.grainy-land .custom-color-add:disabled { opacity: .4; cursor: default; }
+.grainy-land .custom-color-line { display: flex; align-items: center; gap: 4px; }
+.grainy-land .custom-color-line .color-swatch-compact { flex: 1; min-width: 0; }
+.grainy-land .custom-color-line .color-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Assign palette colors directly with the framework's round swatches. */
+.grainy-land .layer-color-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.grainy-land #layerColorName { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.grainy-land .layer-color-swatches { display: flex; flex-wrap: wrap; gap: 8px; padding: 2px; }
+.grainy-land .layer-color-swatch { position: relative; }
+.grainy-land .layer-color-swatch::after { content: ''; position: absolute; inset: 6px; border: 1px solid rgba(255,255,255,.18); border-radius: 50%; pointer-events: none; }
+.grainy-land .layer-color-swatch[aria-checked="true"] { box-shadow: 0 0 0 1.5px var(--ui-foreground); }
+.grainy-land .layer-color-swatch:disabled { cursor: default; transform: none; }

@@ -85,7 +85,7 @@ test('adjacent colors remain finite, follow anchors, and keep neutral palettes n
     for(const toneCharacter of ['pigment','pearlescent','radiant']) for(const toneSpread of [0,50,100]) {
         for(const palette of [palettes.pigment,palettes.ember,{sky:'#FFFFFF',terrain:'#000000',depth:'#FFFFFF',light:'#000000'}]) {
             const colors=adjacentColors({...defaults,...palette,toneCharacter,toneSpread});
-            assert.equal(colors.length,6);
+            assert.equal(colors.length,8);
             assert.ok(colors.flat().every(v => Number.isFinite(v) && v>=0 && v<=1));
         }
         const gray=adjacentColors({...defaults,sky:'#777777',terrain:'#AAAAAA',depth:'#222222',light:'#EEEEEE',toneCharacter,toneSpread});
@@ -187,7 +187,7 @@ test('layout choices round-trip and Auto yields all four reproducible families',
 
 
 test('manual endpoints round-trip, sanitize independently, and legacy documents remain automatic', () => {
-    const overrides = Object.fromEntries(toneKeys.map((key, i) => [key, ['#aabbcc','#234567','#ffffff','#000000','#123456','#fedcba'][i]]));
+    const overrides = Object.fromEntries(toneKeys.map((key, i) => [key, ['#aabbcc','#234567','#ffffff','#000000','#123456','#fedcba','#14349b','#4c79ef'][i]]));
     const settings = normalizeSettings({...defaults, ...overrides});
     assert.deepEqual(readDocument(JSON.parse(JSON.stringify(makeDocument(settings)))), settings);
     toneKeys.forEach(key => assert.equal(settings[key], overrides[key].toUpperCase()));
@@ -218,4 +218,19 @@ test('transparent PNG is opt-in, survives documents, and does not change geometr
     const transparent=normalizeSettings({...defaults,transparentBackground:true});
     assert.deepEqual(readDocument(makeDocument(transparent)),transparent);
     assert.deepEqual(createScene(transparent),createScene(defaults));
+});
+
+
+test('background tones opt in independently, keep geometry and round-trip with custom endpoints',()=>{
+    assert.equal(normalizeSettings({}).skyToneAmount,0);
+    const s=normalizeSettings({...defaults,skyToneAmount:72,skyLow:'#113399',skyHigh:'#55aaff'});
+    assert.equal(s.skyHigh,'#55AAFF');
+    assert.deepEqual(readDocument(makeDocument(s)),s);
+    assert.deepEqual(createScene(s),createScene(defaults));
+    assert.deepEqual(adjacentColors(s).slice(0,6),adjacentColors(defaults).slice(0,6));
+    assert.deepEqual(adjacentColors(s).slice(6),[hexRGB(s.skyLow),hexRGB(s.skyHigh)]);
+    assert.deepEqual(adjacentColors({...s,sky:'#ff7700',toneSpread:10}).slice(6),adjacentColors(s).slice(6));
+    assert.notDeepEqual(adjacentColors({...s,skyLow:null,skyHigh:null}).slice(6),adjacentColors(s).slice(6));
+    assert.equal(normalizeSettings({skyToneAmount:120}).skyToneAmount,100);
+    assert.equal(normalizeSettings({skyToneAmount:-1}).skyToneAmount,0);
 });

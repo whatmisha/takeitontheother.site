@@ -44,5 +44,10 @@
   "printWidthMM": null,
   "printHeightMM": null,
   "transparentBackground": false,
-  "exportLayers": false
+  "exportLayers": false,
+  "skyToneAmount": 0,
+  "skyLow": null,
+  "skyHigh": null,
+  "blueLayers": true,
+  "customColors": []
 }

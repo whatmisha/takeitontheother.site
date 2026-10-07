@@ -6,7 +6,8 @@ runtime dependencies are needed. Rendering requires WebGL.
 
 The default preset is **Ember**, based on `grainy-land-1565559100.json`: seed
 1565559100, Glow 0, Grain 55 and Radiant tones at 100. Drift has exactly the same settings as Ember, including the seed, with mode set to Abstract.
-The shipped list is Ember, Drift and Quiet dunes; all three use Depth #FF5900.
+The shipped list is Ember, Drift and Quiet dunes; all three use Depth #FF5900
+and start with eight layers: six original forms above two blue background coats.
 
 ## Controls
 
@@ -24,6 +25,18 @@ The shipped list is Ember, Drift and Quiet dunes; all three use Depth #FF5900.
   starts Pinned); **Delete / Backspace** removes the selected unlocked layer. Each
   command is undoable and stays inactive during text input, dialogs or gestures. Background opens the existing background color picker.
   There are up to 16 layers in each mode, with separate Landscape and Abstract stacks.
+- **Blue 1 / Blue 2:** two large seeded blue forms above Background and below the
+  original artwork. They are ordinary Auto layers: move, paint/erase, Pin, Lock,
+  opacity, reorder, duplicate, delete and conversion to Drawn work normally.
+  **+ Blue** adds another pair at the back, including in older compositions; it
+  requires two free slots. The Background color group uses the editable blue
+  anchor and its Low / High tones. Grain, Grain size, Softness and Edge variation
+  control the spray edges. Global Amount controls neighboring colors in these
+  layers; Background amount affects only the underlying background color field.
+  Transparent removes only Background, retaining both blue forms. Layers exports
+  the forms as independent transparent PNGs. Older JSON without the new
+  `blueLayers` template flag retains its original six forms; explicit stacks are
+  never auto-populated or recreated after deletion.
 - **Auto / Pinned / Drawn:** Auto follows composition settings and is replaced by
   Generate. Moving, resizing or painting an Auto layer pins it automatically.
   Pinned keeps its seed, transforms and brushwork through Generate, while global
@@ -92,12 +105,21 @@ The shipped list is Ember, Drift and Quiet dunes; all three use Depth #FF5900.
   **Hue range** sets hue separation, **Patch size** sets the size of color variations
   without changing landforms, and **Color bleed** controls reflected neighbor colors
   inside a boundary. These settings do not change the seed or geometry.
+- **Background amount:** inside Advanced tones, enables neighboring shades in the
+  Background (the editable blue anchor defaults to **#2353DB**). Zero keeps the
+  existing flat background exactly; 100 applies the full global Amount. Background
+  shares Character, Hue range and Patch size with the painted layers. Its broad
+  seeded color fields have subtle spray texture and do not change layer geometry.
+  Edit tones includes Background Low / High with the same color picker and Auto
+  reset as the other anchors. Custom endpoints, strength and the seed survive
+  JSON, presets, share links and undo/redo. Transparent removes the background
+  including its tones; Layers exports it in its own PNG when Transparent is off.
 - **Character:** Pigment gives soft, uneven warm/cool shading; Pearlescent creates
   broad flowing color shifts; Radiant concentrates brighter tones near folds and
-  edges. Glow and contrast remain independently adjustable. Three read-only
+  edges. Glow and contrast remain independently adjustable. Four read-only
   gradient strips preview the terrain, depth and light colors.
 - **Edit tones:** collapsed by default inside Advanced tones. Low and High endpoints
-  for Terrain, Depth and Light use the shared HSB picker and editable hex fields.
+  for Background, Terrain, Depth and Light use the shared HSB picker and editable hex fields.
   Editing an endpoint fixes that color; **Auto** returns that endpoint to automatic
   calculation from the current base colors, character and hue range. Unedited
   endpoints keep following those controls. Amount still controls the overall effect;
@@ -148,7 +170,7 @@ fields and ignores the disabled horizon and relief settings. Painted masks exten
 OKLab from the editable anchors. `adjacentColors` adds neighboring endpoints in
 OKLCH, reducing chroma to fit RGB without shifting hue through channel clipping.
 Independent low-frequency color fields distribute those tones within the surfaces.
-Color changes never reroll geometry. Six optional hex endpoints override the
+Color changes never reroll geometry. Eight optional hex endpoints override the
 computed colors; null means automatic. They are additive v1 document fields,
 so earlier JSON files keep their automatic appearance.
 
@@ -217,7 +239,9 @@ pixel-exact conversion, frozen Drawn geometry, opacity, visibility, 16 painted
 layers, picking and PNG export. Print checks cover unit switching, DPI, oversized
 requests, persistence, independent CRC validation and a real A4 PNG export.
 Open `tests/renderer.html` on the same local server for real GPU/PNG checks
-and generated images. This fixture is separate from the tool's user interface.
+and generated images. Background checks cover disabled/default parity, all tone
+characters, manual endpoints, picking, JSON/share links and transparent compositing.
+This fixture is separate from the tool's user interface.
 Open `tests/layers-export.html` for real ZIP/PNG checks: hidden and empty drawn
 layers, opacity, full canvas dimensions, progress, DPI metadata and reassembling
 Landscape/Abstract layers with glow and reflected colors. Node tests independently
@@ -272,3 +296,9 @@ object-list states and metadata, panel actions, and native disclosures with pane
 chevrons. Application CSS owns layout and artwork thumbnails. Run
 `npm run check:ui-contract` to check Grainy Land alongside the eight other tools;
 GeneratorHost initializes its shared controller directly rather than auto-init.
+
+### Custom colors
+
+The circular **Add color** swatch below Light creates an additional palette entry and opens the shared inline HSB editor. Each entry has a hex input and appears as a round preview in a layer's **Color group** palette; click a preview to assign it, or use arrow keys when the palette is focused. The selected color has an outline, and hovering shows its name and HEX. Adding a swatch does not change existing layer assignments. Up to 16 custom colors are supported; their neighboring tones follow Advanced tones, while grain, softness, glow and transparent exports use the same renderer as the built-in materials.
+
+Custom color IDs and layer assignments are preserved in both composition modes, presets, undo/redo, JSON and share links. Removing an unused swatch does not renumber the remaining colors. A swatch used by either mode cannot be removed until those layers use another color. Older documents default to an empty custom palette.

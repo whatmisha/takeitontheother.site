@@ -1,9 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {defaults, normalizeSettings, makeDocument, readDocument, editForm, formEdit, regenerate} from '../document.js';
+import {defaults as currentDefaults, normalizeSettings, makeDocument, readDocument, editForm, formEdit, regenerate} from '../document.js';
 import {createScene} from '../scene.js';
 import {getLayers, addLayer} from '../layers.js';
 import {visibleBounds, resizedForm, FormEditor} from '../form-editor.js';
+const defaults={...currentDefaults,blueLayers:false};
 
 const geometry = (scene,i) => Object.fromEntries(['layers','layerStyles','foldFields','fields','formPhases','formTransforms','formSeeds'].map(key=>[key,scene[key][i]]));
 test('editing one form leaves every other generated surface untouched',()=>{

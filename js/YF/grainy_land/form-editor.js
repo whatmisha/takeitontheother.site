@@ -1,7 +1,8 @@
-import { brushStroke, localPaintPoint, strokePointCount, MAX_STROKES, MAX_STROKE_POINTS, MAX_FORM_POINTS } from './paint.js?v=layers-zip-1';
-import { getLayers, layerSettingsKey, MAX_LAYERS, editLayer, addLayer, duplicateLayer, removeLayer, reorderLayer, convertLayer } from './layers.js?v=layers-zip-1';
-import { createLayerScene } from './scene.js?v=layers-zip-1';
-import { LandscapeRenderer } from './render.js?v=layers-zip-1';
+import { groupColor } from './custom-colors.js?v=custom-colors-1';
+import { brushStroke, localPaintPoint, strokePointCount, MAX_STROKES, MAX_STROKE_POINTS, MAX_FORM_POINTS } from './paint.js?v=custom-colors-1';
+import { getLayers, layerSettingsKey, MAX_LAYERS, editLayer, addLayer, addBlueLayers, duplicateLayer, removeLayer, reorderLayer, convertLayer } from './layers.js?v=custom-colors-1';
+import { createLayerScene } from './scene.js?v=custom-colors-1';
+import { LandscapeRenderer } from './render.js?v=custom-colors-1';
 
 export function visibleBounds(map, selected) {
     let left=map.width,top=map.height,right=-1,bottom=-1;
@@ -42,6 +43,10 @@ export class FormEditor {
             try {const result=addLayer(this.tool.settings,mode);this.change(this.tool,result.settings,'Add layer');this.select(result.id);this.setTool(mode==='drawn'?'paint':'move');}
             catch(error){this.report(error.message);}
         });
+        on(byId('newBlueLayers'),'click',()=>{
+            try {const result=addBlueLayers(this.tool.settings);this.change(this.tool,result.settings,'Add blue layers');this.select(result.id);this.setTool('move');}
+            catch(error){this.report(error.message);}
+        });
         on(byId('layerDuplicate'),'click',()=>this.duplicateSelected());
         on(byId('layerDelete'),'click',()=>this.deleteSelected());
         on(byId('layerConvert'),'click',()=>{this.change(this.tool,convertLayer(this.tool.settings,this.selected),'Convert to drawn');this.report('Silhouette preserved. Generation controls no longer change its shape.');});
@@ -51,7 +56,21 @@ export class FormEditor {
             if(byId('materialPanel').classList.contains('panel-collapsed'))byId('materialPanelHeader').querySelector('.collapse-icon').click();
             byId('skyColorPreview').click();byId('skyColorPreview').scrollIntoView({block:'nearest'});
         });
-        on(byId('layerGroup'),'change',e=>this.commit({group:e.target.value},'Layer color group'));
+        const colorSwatches=byId('layerColorSwatches');
+        on(colorSwatches,'click',e=>{
+            const button=e.target.closest('[data-color-group]'),layer=this.layer();
+            if(button&&layer&&!layer.locked&&layer.group!==button.dataset.colorGroup)this.commit({group:button.dataset.colorGroup},'Layer color group');
+        });
+        on(colorSwatches,'keydown',e=>{
+            // Keep Space on a swatch from activating canvas panning.
+            if(e.key===' '||e.key==='Enter'){e.stopPropagation();return;}
+            if(e.altKey||e.ctrlKey||e.metaKey||!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'].includes(e.key))return;
+            const buttons=[...colorSwatches.querySelectorAll('[data-color-group]')],index=buttons.indexOf(e.target);
+            if(index<0||this.layer()?.locked)return;
+            e.preventDefault();e.stopPropagation();
+            const next=e.key==='Home'?0:e.key==='End'?buttons.length-1:(index+(['ArrowLeft','ArrowUp'].includes(e.key)?-1:1)+buttons.length)%buttons.length;
+            buttons[next].click();buttons[next].focus();
+        });
         on(byId('layerOpacity'),'input',e=>{
             if(!this.layer()||this.layer().locked)return;
             if(!this.opacityEditing){this.tool.history.flush();this.tool.history.beginTransaction('Layer opacity');this.opacityEditing=true;}
@@ -211,6 +230,25 @@ export class FormEditor {
     }
     clearDrops(){byId('layerList').querySelectorAll('.drop-before,.drop-after,.is-dragging').forEach(row=>row.classList.remove('drop-before','drop-after','is-dragging'));}
     modeDescription(layer){return {auto:'Generate replaces this shape. Moving or painting pins it.',pinned:'Generate keeps this shape. Composition controls still apply.',drawn:'Shape follows your drawing. Generate and composition controls keep it.'}[layer.mode]+(layer.locked?' Locked against manual edits.':'');}
+    syncColorSwatches(layer) {
+        const s=this.tool.settings,container=byId('layerColorSwatches');
+        const colors=[...Object.entries({sky:'Background',terrain:'Terrain',depth:'Depth',light:'Light'}).map(([id,name])=>({id,name,color:s[id]})),...(s.customColors??[])];
+        const key=colors.map(color=>color.id).join('|');
+        if(key!==this.colorSwatchesKey) {
+            this.colorSwatchesKey=key;
+            container.replaceChildren(...colors.map(color=>{
+                const button=document.createElement('button');button.type='button';button.className='color-dot layer-color-swatch';
+                button.dataset.colorGroup=color.id;button.setAttribute('role','radio');return button;
+            }));
+        }
+        [...container.children].forEach((button,i)=>{
+            const color=colors[i],selected=color.id===layer.group;
+            button.style.backgroundColor=color.color;
+            button.title=color.name+' · '+color.color.toUpperCase();button.setAttribute('aria-label',button.title);
+            button.setAttribute('aria-checked',String(selected));button.tabIndex=selected?0:-1;button.disabled=layer.locked;
+        });
+        byId('layerColorName').textContent=colors.find(color=>color.id===layer.group)?.name??'';
+    }
     sync() {
         const s=this.tool.settings,stack=getLayers(s);
         if(s.mode!==this.mode){this.cancel();this.mode=s.mode;this.selected=null;this.thumbs.clear();}
@@ -229,13 +267,15 @@ export class FormEditor {
             byId(id).disabled=stack.length>=MAX_LAYERS;
             byId(id).title=(id==='newDrawnLayer'?'New drawn layer':'New generated layer')+' · '+stack.length+' / '+MAX_LAYERS+' layers';
         }
+        byId('newBlueLayers').disabled=stack.length>MAX_LAYERS-2;
+        byId('newBlueLayers').title='Add two blue layers behind the artwork · '+stack.length+' / '+MAX_LAYERS+' layers';
         byId('layerDuplicate').disabled=!layer||stack.length>=MAX_LAYERS;byId('layerDelete').disabled=!layer||layer.locked;
         byId('backgroundThumb').style.background=s.sky;
         byId('layerPanel').hidden=!layer;byId('brushControls').hidden=this.paintTool==='move';
         if(!layer)return;
         byId('selectedLayerName').textContent=layer.name;byId('selectedLayerName').title=layer.name;
         const mode=byId('layerModeLabel');mode.textContent=(layer.mode==='auto'?'Auto':layer.mode==='pinned'?'Pinned':'Drawn')+(layer.locked?' · Locked':'');mode.title=this.modeDescription(layer);mode.setAttribute('aria-label',mode.textContent+'. '+mode.title);
-        byId('layerEditable').disabled=layer.locked;byId('layerGroup').value=layer.group;byId('layerOpacity').value=layer.opacity;byId('layerOpacityValue').textContent=layer.opacity+'%';
+        byId('layerEditable').disabled=layer.locked;this.syncColorSwatches(layer);byId('layerOpacity').value=layer.opacity;byId('layerOpacityValue').textContent=layer.opacity+'%';
         byId('layerConvert').hidden=layer.mode==='drawn';byId('layerConvert').title='Keep this silhouette and edit it only by drawing.';
         byId('clearPaint').hidden=!layer.strokes.length;byId('clearPaint').title='Clear '+layer.strokes.length+' strokes';
         for(const [field,id]of Object.entries(fields))byId(id).value=Number((layer[field]*100).toFixed(1));
@@ -300,9 +340,9 @@ export class FormEditor {
         if(byId('layersPanel').classList.contains('panel-collapsed'))return;
         const s=this.tool.settings,scene=createLayerScene(s);this.picker ||=new LandscapeRenderer();
         scene.forEach((l,i)=>{const canvas=byId('layerList').querySelector('[data-thumb-id="'+l.id+'"]');if(!canvas)return;
-            const key=JSON.stringify([l.phases,l.transform,l.field,l.shape,l.style,l.foldField,l.crest,l.pocket,l.geometryA,l.geometryB,l.strokes,s[l.group],s.width/s.height]);
+            const key=JSON.stringify([l.phases,l.transform,l.field,l.shape,l.style,l.foldField,l.crest,l.pocket,l.geometryA,l.geometryB,l.strokes,groupColor(s,l.group),s.width/s.height]);
             let cached=this.thumbs.get(l.id);
-            if(cached?.key!==key){const map=this.picker.formMap(s,48,30,i),ctx=canvas.getContext('2d'),data=ctx.createImageData(48,30),rgb=s[l.group].slice(1).match(/../g).map(v=>parseInt(v,16));for(let n=0;n<map.ids.length;n++)if(map.ids[n])data.data.set([...rgb,230],n*4);cached={key,data};this.thumbs.set(l.id,cached);}
+            if(cached?.key!==key){const map=this.picker.formMap(s,48,30,i),ctx=canvas.getContext('2d'),data=ctx.createImageData(48,30),rgb=groupColor(s,l.group).slice(1).match(/../g).map(v=>parseInt(v,16));for(let n=0;n<map.ids.length;n++)if(map.ids[n])data.data.set([...rgb,230],n*4);cached={key,data};this.thumbs.set(l.id,cached);}
             canvas.getContext('2d').putImageData(cached.data,0,0);
         });
         for(const id of this.thumbs.keys())if(!scene.some(l=>l.id===id))this.thumbs.delete(id);
