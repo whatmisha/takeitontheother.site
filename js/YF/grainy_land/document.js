@@ -1,7 +1,7 @@
-import { normalizeCustomColors } from './custom-colors.js?v=vector-1';
-import { canvasDefaults, normalizeCanvas, assertExportSize } from './canvas-size.js?v=vector-1';
-import { normalizeLayerStack, layerSettingsKey } from './layer-data.js?v=vector-1';
-import { normalizeStrokes } from './paint.js?v=vector-1';
+import { normalizeCustomColors } from './custom-colors.js?v=studio-1';
+import { canvasDefaults, normalizeCanvas, assertExportSize } from './canvas-size.js?v=studio-1';
+import { normalizeLayerStack, layerSettingsKey } from './layer-data.js?v=studio-1';
+import { normalizeStrokes } from './paint.js?v=studio-1';
 export const TOOL_ID = 'grainy_land';
 export const VERSION = 1;
 export const palettes = {
@@ -26,7 +26,7 @@ export const defaults = {
     scale: 100, complexity: 2, flow: 48, folds: 65, horizon: 53, relief: 62,
     softness: 38, edgeVariation: 70, glowCoverage: 35, glow: 0, halo: 65, contrast: 118, grain: 55, grainSize: 1,
     toneCharacter: 'radiant', skyToneAmount: 0, toneAmount: 100, toneSpread: 65, toneScale: 110, toneBleed: 50,
-    customColors: [], blueLayers: true, exportScale: 1, transparentBackground: false, exportLayers: false, ...canvasDefaults, ...palettes.ember, ...automaticTones, landscapeForms: null, abstractForms: null, landscapeLayers: null, abstractLayers: null
+    previewTransparent:false,softProof:false,printIntent:1,motionAmount:3,motionDuration:6,customColors: [], blueLayers: true, exportScale: 1, transparentBackground: false, exportLayers: false, ...canvasDefaults, ...palettes.ember, ...automaticTones, landscapeForms: null, abstractForms: null, landscapeLayers: null, abstractLayers: null
 };
 const clamp = (n, a, b) => Math.min(b, Math.max(a, n));
 const formNumber = (value, fallback, min, max) => typeof value === 'number' && Number.isFinite(value)
@@ -63,6 +63,8 @@ export function normalizeSettings(value = {}) {
     Object.assign(out,normalizeCanvas(value,defaults));
     out.transparentBackground=value.transparentBackground===true;
     out.exportLayers=value.exportLayers===true;
+    out.previewTransparent=value.previewTransparent===true;out.softProof=value.softProof===true;out.printIntent=[0,1,3].includes(value.printIntent)?value.printIntent:1;
+    out.motionAmount=formNumber(value.motionAmount,3,0,20);out.motionDuration=formNumber(value.motionDuration,6,2,30);
     // Older documents keep their six original layers until blue layers are explicitly added.
     out.blueLayers=value.blueLayers===true;
     if (Number.isFinite(Number(value.seed)) && value.seed != null) out.seed = Number(value.seed) >>> 0;

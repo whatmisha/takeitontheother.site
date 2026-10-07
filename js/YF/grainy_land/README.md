@@ -135,7 +135,7 @@ and start with eight layers: six original forms above two blue background coats.
   Grain is anchored in normalized artwork coordinates and filtered for the current
   pixel size. Grain 0 disables all texture, including changes to Grain size.
 - **Canvas:** separate panel, collapsed by default. **Units** switches between
-  Pixels and Millimeters. Pixels uses width/height (1–8192 px) and Export resolution
+  Pixels and Millimeters. Pixels uses width/height (1–32768 px) and Export resolution
   1× / 2× / 3×. Millimeters uses physical width/height and **DPI** (36–1200, default
   300), and shows the resulting PNG pixel dimensions. Changing DPI keeps the entered
   physical size; dimensions are rounded to whole pixels. Switching units preserves
@@ -144,7 +144,7 @@ and start with eight layers: six original forms above two blue background coats.
   For example, 210 × 297 mm at 300 DPI exports 2480 × 3508 px.
   Print dimensions and DPI persist in presets, JSON, share links and undo/redo.
   Oversized print edits are rejected with a message, retaining the previous artwork.
-  The maximum remains 8192 px per side and 32 megapixels, also bounded by GPU limits.
+  Export is limited to 32768 px per side and 256 megapixels. Large PNGs render in bounded GPU tiles and encode scanlines incrementally, so their dimensions can exceed the GPU texture limit.
 
 Presets, share links, color pickers, slider editing, panel collapse, history,
 keyboard help and export feedback use `infra/framework/src/index.js`.
@@ -217,14 +217,11 @@ size remain transient editor choices, separate from the artwork.
 
 `canvas-size.js` owns unit conversion, physical dimensions and export bounds.
 Print documents retain the requested millimetres and derive their integer pixel
-size from DPI. Legacy documents default to Pixels. `png-export.js` renders the
-full print raster and writes the PNG pHYs chunk (pixels/metre with CRC), replacing
-any browser density metadata while preserving compressed image bytes. See the
+size from DPI. Legacy documents default to Pixels. `png-export.js` routes large rasters through `tiled-export.js` and writes PNG pHYs density metadata (pixels/metre with CRC). The tiled path uses global pixel coordinates for seamless grain, banded readback, and streamed Deflate encoding without allocating a full uncompressed print raster. See the
 [PNG specification](https://www.w3.org/TR/png-3/#11pHYs). Preview rendering is bounded
 separately from full-size export to avoid allocating print-sized preview surfaces.
 
-Animation, tiled export and print color management are deferred. Current output is
-RGB PNG with physical-size metadata; it is not a CMYK or ICC conversion. Current seeds are tied to scene version 4. Existing v1 settings JSON still loads,
+PNG remains sRGB. Optional ICC conversion and loop video are described below. Current seeds are tied to scene version 4. Existing v1 settings JSON still loads,
 but renders with the new geometry and material; it does not reproduce images
 from previous scene versions. The
 original 20-image review is preserved in `tests/reviews/pigment-20`.
@@ -277,8 +274,7 @@ Completed roadmap stages: composition diversity, manual adjacent-tone correction
 direct editing of large forms, painting masks with brush/eraser, and the independent
 Layers panel with Auto / Pinned / Drawn modes and editing locks, and physical print
 dimensions with DPI metadata in PNG.
-Next: tiled high-resolution export and print color management.
-Animation remains a later option.
+Tiled export, local ICC color management and loop video are now implemented. The current 20-seed default review is in `tests/reviews/studio-20/`.
 
 New settings retain JSON schema v1 compatibility. Missing fields get safe defaults;
 the preset migration fills missing tone fields in known shipped presets marked
@@ -313,7 +309,7 @@ transforms, grain, glow, visibility, locks, duplication and both PNG and Layers
 ZIP export use the same pipeline as other layers.
 
 Double-click a vector shape on the canvas, or use **Edit path** in Layer properties, to reopen the editor:
-- Drag an anchor to move it together with its handles; drag a handle to change curvature.
+- Drag an anchor to move it together with its handles; drag a handle to change curvature. Shift-click selects multiple anchors for moving, corner/smooth conversion, or deletion.
 - Smooth handles stay aligned; Alt-drag makes a handle independent.
 - Double-click an anchor to collapse/restore handles (corner/smooth).
 - Double-click the contour to insert a point without changing the curve.
@@ -330,3 +326,73 @@ During canvas Move, hold Option/Alt or Cmd to duplicate the layer once per drag,
 including when the modifier is pressed after movement starts. The original stays
 at its position at that moment; the copy follows the pointer. Undo/Esc cancels
 the entire gesture. Resizing, painting and editing vector nodes do not duplicate.
+
+
+### Studio controls
+
+- **Pen (P):** draw a closed vector shape from scratch. Click adds corners; dragging
+  adds mirrored Bézier handles. Click the first anchor or press Enter to close;
+  Esc discards the unfinished path. A completed path is one undoable action.
+- **Transform:** layer rotation and horizontal/vertical flips work for all four
+  layer types. The path editor, brushes, thumbnails and picking use the same
+  aspect-correct transform as the renderer. Transforming Auto layers pins them.
+- **Multiple selection and groups:** Cmd/Ctrl-click layer rows to toggle individual
+  layers, Shift-click for a range, or Shift-click objects on the canvas. Group gives
+  the selection a name; clicking a grouped layer selects its group. These are flat
+  groups, without nesting. Move, scale, rotate, opacity, duplicate, delete and reorder
+  operate on the selection, respecting editing locks. Alt/Cmd-drag duplicates the
+  selected set once; each copied group is independent of the original. Ungroup removes
+  the association. A single grouped layer can be selected using modifier clicks.
+- **Layer surface:** collapsed overrides for grain, grain size, softness, edge
+  variation, glow, halo, glow coverage and contrast. Values initially inherit
+  Appearance; editing a value fixes it locally, and **Auto** restores inheritance.
+- **Transparency preview:** checkerboard in Canvas. Independent of the Transparent
+  export switch; it removes Background in preview while retaining blue paint layers.
+- **Print color:** load an RGB or CMYK ICC profile, choose rendering intent, preview
+  a soft proof, and export a TIFF with that exact profile embedded, plus physical DPI.
+  Conversion runs locally through LittleCMS (vendor license and provenance included).
+  TIFF includes Background and is opaque. PNG continues to use sRGB. The ICC file is
+  held for the current session and is not embedded in JSON, presets or share links;
+  reload it after reopening the tool. Soft proof is a screen simulation, not printer
+  calibration. No printer-specific profile is bundled.
+- **Animation:** a deterministic loop moves and rotates unlocked layers. Composition
+  contains amount, duration, Play and Export video. Editing stops preview; the stored
+  still composition is unchanged. Video uses the browser encoder (WebM, or MP4 where
+  available), 30 fps target, up to 1920 px on the long side, with Background. Recording
+  runs in real time and can be cancelled; heavy scenes can produce fewer frames.
+
+`tests/studio-renderer.html` verifies rotated picking, local material, pixel-matching
+GPU tile boundaries, a 9000 px PNG and real video encoding/decoding. Studio node tests
+cover group transforms, duplicate identity, undo snapshots, inheritance, loop closure,
+PNG scanlines and TIFF tags. The browser smoke test also loaded macOS Generic CMYK
+and exported a TIFF recognized by ColorSync as CMYK, 1920 × 1080, 300 DPI with its ICC.
+
+### Current reference comparison — 20 Ember seeds
+
+Run `python3 grainy_land/tests/review-server.py --review studio-20 --port 8022`
+and open `/grainy_land/tests/reviews/studio-20/`. The page shows both references and
+20 renders at 960 × 540. A contact sheet and exact seeds are saved beside the page.
+This review uses the current default Ember settings, including the two blue coats;
+it does not silently tune the preset toward either reference.
+
+The renders still differ in several visible ways:
+
+- Blue occupies a similar upper field, but blue coats and adjacent tones make it
+  much busier and more cloud-like. Both references have a much quieter blue area.
+- Generated terrain uses more overlapping ribbons and smooth volume shading. The
+  first reference has broader, flatter paint masses, darker cavities and fewer seams.
+- Ember stays mostly orange/red with cream highlights. The first reference places
+  more pink, coral and dark brown in large areas. Depth #FF5900 remains as requested.
+- The second reference has tall, asymmetric folds and concentrated luminous rims;
+  the default preset has Glow 0 and cannot show that light treatment without adjustment.
+- Fine spray is present in the exports, but at thumbnail scale our broad gradients
+  dominate. The references read as deposited pigment more consistently at that scale.
+
+The next visual pass should reduce blue-coat tonal amplitude, simplify internal
+ribbons, strengthen broad pink/dark pigment regions and localize brighter edges.
+The new per-layer surface controls and Pen allow those adjustments to be explored
+without changing the entire scene at once.
+
+Current static checks: the shared UI, range and action contracts pass. The broader
+`check-toggle-contracts.mjs` has an existing unrelated OpenType feature-chip mismatch:
+it expects font weight 500, while unchanged `ui-contract.css` specifies 400.

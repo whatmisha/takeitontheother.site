@@ -1,6 +1,6 @@
-import { normalizeSettings, exportDimensions } from './document.js?v=vector-1';
-import { getLayers, layerSettingsKey } from './layer-data.js?v=vector-1';
-import { renderPNG } from './png-export.js?v=vector-1';
+import { normalizeSettings, exportDimensions } from './document.js?v=studio-1';
+import { getLayers, layerSettingsKey } from './layer-data.js?v=studio-1';
+import { renderPNG } from './png-export.js?v=studio-1';
 import { StoredZipWriter } from '../infra/framework/src/export/StoredZipWriter.js?v=1';
 
 export function layerExportPlan(raw) {
@@ -28,7 +28,7 @@ export async function renderLayersZIP(renderer,raw,{signal,onProgress=()=>{}}={}
         const background=entry.index===-1;
         const isolated={...settings,transparentBackground:!background,exportLayers:false,
             [key]:background?[]:stack.map((layer,index)=>index===entry.index?{...layer,visible:true}:layer)};
-        const {blob}=await renderPNG(renderer,isolated,{layerIndex:entry.index});
+        const {blob}=await renderPNG(renderer,isolated,{layerIndex:entry.index,signal});
         signal?.throwIfAborted();
         await zip.add(entry.name,blob,{signal});
     }

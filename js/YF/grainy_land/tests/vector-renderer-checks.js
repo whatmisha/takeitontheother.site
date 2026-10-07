@@ -1,7 +1,7 @@
-import {LandscapeRenderer} from '../render.js?v=vector-1';
-import {defaults,regenerate,readDocument,makeDocument} from '../document.js?v=vector-1';
-import {addLayer,withLayers,editLayer,convertLayer} from '../layers.js?v=vector-1';
-import {moveVectorNode,defaultVectorPath} from '../vector-path.js?v=vector-1';
+import {LandscapeRenderer} from '../render.js?v=studio-1';
+import {defaults,regenerate,readDocument,makeDocument} from '../document.js?v=studio-1';
+import {addLayer,withLayers,editLayer,convertLayer} from '../layers.js?v=studio-1';
+import {moveVectorNode,defaultVectorPath} from '../vector-path.js?v=studio-1';
 const r=new LandscapeRenderer(),results=[];
 const check=(name,ok)=>{results.push((ok?'PASS ':'FAIL ')+name);if(!ok)throw Error(name);};
 const capture=s=>{const c=document.createElement('canvas');c.width=480;c.height=270;const ctx=c.getContext('2d',{willReadFrequently:true});ctx.drawImage(r.render(s,480,270,0,true),0,0);return ctx.getImageData(0,0,480,270).data;};

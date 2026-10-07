@@ -35,8 +35,8 @@ test('millimetres drive resolution; changing DPI retains print size and layer ge
 });
 test('invalid or oversized print settings are rejected before changing the artwork',()=>{
     const s=editCanvas(defaults,{canvasUnit:'mm'}),before=structuredClone(s);
-    assert.throws(()=>editCanvas(s,{printWidthMM:1000}),/too large/);
-    assert.throws(()=>normalizeSettings({...s,printWidthMM:300,printHeightMM:300,dpi:600}),/too large/);
+    assert.throws(()=>editCanvas(s,{printWidthMM:4000}),/too large/);
+    assert.throws(()=>normalizeSettings({...s,printWidthMM:900,printHeightMM:900,dpi:600}),/too large/);
     assert.throws(()=>readDocument({toolId:'grainy_land',schemaVersion:1,settings:{...s,printWidthMM:6000,dpi:1200}}),/too large/);
     assert.deepEqual(s,before);
     const unsafe=normalizeSettings({...s,dpi:Infinity,printWidthMM:'bad',printHeightMM:null});

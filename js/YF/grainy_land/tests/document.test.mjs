@@ -18,7 +18,7 @@ test('JSON preserves seed, palette, dimensions and all appearance settings', () 
 });
 test('imported values cannot allocate unbounded surfaces or inject extra state', () => {
     const s = normalizeSettings({width:1e9,height:-1,seed:-1,grain:Infinity,glow:-100,grainSize:.23,mode:'bad',sky:'url(x)',unsafe:'x'});
-    assert.equal(s.width,8192); assert.equal(s.height,1); assert.equal(s.seed,4294967295);
+    assert.equal(s.width,32768); assert.equal(s.height,1); assert.equal(s.seed,4294967295);
     assert.equal(s.grain,defaults.grain); assert.equal(s.glow,0); assert.equal(s.grainSize,.5);
     assert.equal(s.sky,defaults.sky); assert.equal(s.mode,'landscape'); assert.equal(s.unsafe,undefined);
 });
@@ -53,8 +53,8 @@ test('generated fields and automatic half-tones remain finite across seeds', () 
 test('PNG dimensions are independent of viewport and oversized exports are rejected', () => {
     assert.deepEqual(exportDimensions({...defaults,exportScale:2}),{width:3840,height:2160});
     assert.deepEqual(exportDimensions({...defaults,exportScale:3}),{width:5760,height:3240});
-    assert.throws(() => exportDimensions({...defaults,width:4096,height:4096,exportScale:3}),/too large/);
-    assert.throws(() => exportDimensions({...defaults,width:4096,height:4096,exportScale:2}),/too large/);
+    assert.throws(() => exportDimensions({...defaults,width:12000,height:12000,exportScale:3}),/too large/);
+    assert.throws(() => exportDimensions({...defaults,width:12000,height:12000,exportScale:2}),/too large/);
 });
 
 test('derived material colors follow custom anchors and remain displayable', () => {

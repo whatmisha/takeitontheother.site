@@ -1,0 +1,4 @@
+lcms-wasm 1.0.5 (LittleCMS 2.16), MIT.
+Source: https://github.com/mattdesl/lcms-wasm
+Package: https://registry.npmjs.org/lcms-wasm/-/lcms-wasm-1.0.5.tgz
+Unmodified lcms.js / lcms.wasm; bundled locally for offline ICC processing.

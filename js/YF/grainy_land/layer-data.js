@@ -1,5 +1,6 @@
-import { normalizeVectorPath, defaultVectorPath } from './vector-path.js?v=vector-1';
-import { normalizeStrokes } from './paint.js?v=vector-1';
+import { normalizeMaterial } from './transforms.js?v=studio-1';
+import { normalizeVectorPath, defaultVectorPath } from './vector-path.js?v=studio-1';
+import { normalizeStrokes } from './paint.js?v=studio-1';
 
 export const MAX_LAYERS=16;
 export const layerSettingsKey=mode=>mode==='abstract'?'abstractLayers':'landscapeLayers';
@@ -22,6 +23,9 @@ export function normalizeLayerStack(value,settings) {
             source,mode,seed:number(item.seed,settings.seed,0,4294967295)>>>0,salt:number(item.salt,0,0,4294967295)>>>0,
             layout:['auto','basin','ridge','valley','fold'].includes(item.layout)?item.layout:'auto',
             x:number(item.x,0,-1,1),y:number(item.y,0,-1,1),scaleX:number(item.scaleX,1,.25,3),scaleY:number(item.scaleY,1,.25,3),
+            ...(item.rotation?{rotation:number(item.rotation,0,-3600,3600)}:{}),...(item.flipX?{flipX:true}:{}),...(item.flipY?{flipY:true}:{}),
+            ...(item.material?{material:normalizeMaterial(item.material)}:{}),
+            ...(typeof item.collection==='string'&&item.collection.trim()?{collection:item.collection.trim().slice(0,48)}:{}),
             group:layerGroups.includes(item.group)||settings.customColors?.some(color=>color.id===item.group)?item.group:sourceGroup(source),opacity:number(item.opacity,100,0,100),
             visible:item.visible!==false,locked:item.locked===true,strokes:normalizeStrokes(item.strokes),
             geometry:['drawn','vector'].includes(mode)?geometrySnapshot(item.geometry??settings):null,

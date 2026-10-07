@@ -223,3 +223,15 @@
 .grainy-land .vector-point-actions { display: flex; gap: 6px; }
 .grainy-land #vectorPointLabel { margin: 12px 0 8px; }
 .grainy-land #vectorPointControls .form-help { margin-bottom: 0; }
+
+.grainy-land .local-material-row { display:grid; grid-template-columns:1fr 60px auto; gap:6px; align-items:center; margin:10px 0; }
+.grainy-land .local-material-row label { font-size:var(--ui-font-meta); }
+.grainy-land .local-material-row .is-inherited { color:var(--color-text-muted,#888); }
+
+.grainy-land #printColorControls > .field-note { margin:8px 0 14px; }
+.grainy-land #printColorControls > .toggle-label { margin:12px 0; }
+.grainy-land #motionControls > .dimensions-row { margin-top:14px; }
+
+.grainy-land .rotation-controls { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:14px; }
+.grainy-land .rotation-controls > label { grid-column:1 / -1; display:flex; align-items:center; justify-content:space-between; }
+.grainy-land .rotation-controls input { width:80px; }

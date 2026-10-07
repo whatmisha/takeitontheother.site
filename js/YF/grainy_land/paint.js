@@ -1,4 +1,5 @@
-import { flattenVectorPath, vectorDistance } from './vector-path.js?v=vector-1';
+import { canvasToLocal } from './transforms.js?v=studio-1';
+import { flattenVectorPath, vectorDistance } from './vector-path.js?v=studio-1';
 // Strokes live in a form's local coordinates, independent of preview/export size.
 export const MAX_STROKES = 64;
 export const MAX_STROKE_POINTS = 192;
@@ -20,12 +21,11 @@ export function normalizeStrokes(value) {
         return [{kind:stroke.kind,rx:rounded(clamp(stroke.rx,.0001,2)),ry:rounded(clamp(stroke.ry,.0001,2)),points}];
     });
 }
-export function localPaintPoint(point,edit) {
-    return [(point[0]-.5-edit.x)/edit.scaleX+.5,(point[1]-.5-edit.y)/edit.scaleY+.5];
+export function localPaintPoint(point,edit,aspect=1) {return canvasToLocal(point,edit,aspect);
 }
 export function brushStroke(settings,edit,point,size,kind) {
     const radius=Math.min(settings.width,settings.height)*size/200;
-    return {kind,rx:radius/settings.width/edit.scaleX,ry:radius/settings.height/edit.scaleY,points:[localPaintPoint(point,edit)]};
+    return {kind,rx:radius/settings.width/edit.scaleX,ry:radius/settings.height/edit.scaleY,points:[localPaintPoint(point,edit,settings.width/settings.height)]};
 }
 export const strokePointCount = strokes => strokes.reduce((n,s)=>n+s.points.length,0);
 export function capsuleDistance(point,a,b,rx,ry) {

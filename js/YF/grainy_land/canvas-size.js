@@ -1,12 +1,12 @@
-export const MAX_EXPORT_SIDE = 8192;
-export const MAX_EXPORT_PIXELS = 33554432;
+export const MAX_EXPORT_SIDE = 32768;
+export const MAX_EXPORT_PIXELS = 268435456;
 export const canvasDefaults = {canvasUnit:'px',dpi:300,printWidthMM:null,printHeightMM:null};
 const number = (v,fallback,min,max) => v!=null && v!=='' && Number.isFinite(Number(v)) ? Math.max(min,Math.min(max,Number(v))) : fallback;
 export const mmToPixels = (mm,dpi) => Math.max(1,Math.round(mm*dpi/25.4));
 export const pixelsToMM = (px,dpi) => px*25.4/dpi;
 export function assertExportSize(width,height) {
     if(Math.max(width,height)>MAX_EXPORT_SIDE || width*height>MAX_EXPORT_PIXELS)
-        throw new RangeError('Export is too large. Reduce size or resolution (maximum 8192 px per side / 32 megapixels).');
+        throw new RangeError('Export is too large. Reduce size or resolution (maximum 32768 px per side / 256 megapixels).');
     return {width,height};
 }
 export function normalizeCanvas(value,defaults) {

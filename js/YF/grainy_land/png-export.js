@@ -1,4 +1,5 @@
-import { normalizeSettings, exportDimensions } from './document.js?v=vector-1';
+import { renderTiledPNG } from './tiled-export.js?v=studio-1';
+import { normalizeSettings, exportDimensions } from './document.js?v=studio-1';
 const signature=[137,80,78,71,13,10,26,10];
 const crcTable=Uint32Array.from({length:256},(_,n)=>{for(let k=0;k<8;k++)n=(n&1)?0xedb88320^(n>>>1):n>>>1;return n>>>0;});
 function crc32(bytes){let crc=0xffffffff;for(const b of bytes)crc=crcTable[(crc^b)&255]^(crc>>>8);return (crc^0xffffffff)>>>0;}
@@ -26,8 +27,11 @@ export async function withPngDpi(blob,dpi) {
     if(!header||!end)throw new Error('Incomplete PNG image.');
     return new Blob(parts,{type:'image/png'});
 }
-export async function renderPNG(renderer,settings,{layerIndex=-1}={}) {
+export async function renderPNG(renderer,settings,{layerIndex=-1,signal,onProgress,forceTiled=false}={}) {
     const s=normalizeSettings(settings),{width,height}=exportDimensions(s);
+    const max=Math.min(renderer.gl.getParameter(renderer.gl.MAX_TEXTURE_SIZE),renderer.gl.getParameter(renderer.gl.MAX_RENDERBUFFER_SIZE));
+    if(forceTiled||width>4096||height>4096||width>max||height>max||width*height>16777216)return renderTiledPNG(renderer,s,width,height,{layerIndex,transparent:layerIndex>=0||s.transparentBackground,signal,onProgress});
+    signal?.throwIfAborted();
     const surface=renderer.render(s,width,height,0,layerIndex>=0||s.transparentBackground,layerIndex),canvas=document.createElement('canvas');
     canvas.width=width;canvas.height=height;
     try {

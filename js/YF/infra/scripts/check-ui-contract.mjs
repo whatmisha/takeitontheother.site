@@ -167,8 +167,8 @@ assert.match(grainyHtml, /id="colorHeading" class="control-field-heading">Color<
 assert.match(grainyHtml, /id="surfaceHeading" class="control-field-heading">Surface<\/h3>/u);
 assert.doesNotMatch(grainyHtml, /role="tab(?:list|panel)?"|colorTab|surfaceTab/u, 'Color and Surface must be stacked sections');
 assert.doesNotMatch(grainyTool + grainyEditor, /selectTab|colorTab|surfaceTab/u, 'No stale tab handlers may remain');
-assert.equal(grainyHtml.match(/<details class="ui-disclosure\b|<details id="[^"]+" class="ui-disclosure\b/gu)?.length, 4, 'All four disclosures must use shared styling');
-assert.equal(grainyHtml.match(/class="ui-disclosure__chevron"/gu)?.length, 4, 'Disclosures must use panel chevrons');
+assert.equal(grainyHtml.match(/<details class="ui-disclosure\b|<details id="[^"]+" class="ui-disclosure\b/gu)?.length, 7, 'All seven disclosures must use shared styling');
+assert.equal(grainyHtml.match(/class="ui-disclosure__chevron"/gu)?.length, 7, 'Disclosures must use panel chevrons');
 for (const name of ['ui-list-row', 'ui-list-select', 'ui-list-title', 'ui-meta', 'ui-icon-button']) {
     assert.ok(grainyEditor.includes(name), `Grainy Land layers must use ${name}`);
 }

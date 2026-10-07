@@ -1,8 +1,8 @@
-import { addCustomColor } from '../custom-colors.js?v=vector-1';
-import {defaults as currentDefaults,normalizeSettings} from '../document.js?v=vector-1';
-import {getLayers,withLayers,addLayer,editLayer} from '../layers.js?v=vector-1';
-import {LandscapeRenderer} from '../render.js?v=vector-1';
-import {renderLayersZIP} from '../layers-export.js?v=vector-1';
+import { addCustomColor } from '../custom-colors.js?v=studio-1';
+import {defaults as currentDefaults,normalizeSettings} from '../document.js?v=studio-1';
+import {getLayers,withLayers,addLayer,editLayer} from '../layers.js?v=studio-1';
+import {LandscapeRenderer} from '../render.js?v=studio-1';
+import {renderLayersZIP} from '../layers-export.js?v=studio-1';
 import {readStoredZip} from './zip-reader.js';
 const defaults={...currentDefaults,blueLayers:false};
 const results=[],renderer=new LandscapeRenderer();

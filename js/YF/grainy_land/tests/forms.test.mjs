@@ -92,7 +92,7 @@ function pointerEditor() {
     editor.tool={get settings(){return settings;},target:{zoom:1},getSnapshot:()=>settings,
         applySnapshot:s=>{settings=s;},settingsStore:{set:(key,value)=>{settings={...settings,[key]:value};}},
         history:{flush(){},beginTransaction:label=>events.push(label),endTransaction:()=>events.push('end')}};
-    editor.point=e=>e.point;editor.cursorAt=()=>{};editor.report=()=>{};
+    editor.point=e=>e.point;editor.cursorAt=()=>{};editor.report=()=>{};editor.sync=()=>{};editor.tool.render=()=>{};
     editor.select=id=>{editor.cancel();editor.selected=id;editor.active=id!=null;};
     editor.refreshMap=()=>{};editor.map={width:2,height:2,ids:Uint8Array.from([0,0,1,1])};
     const pointer=point=>({point,pointerId:7,button:0,preventDefault(){}});

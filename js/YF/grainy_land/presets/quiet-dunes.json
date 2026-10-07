@@ -49,5 +49,10 @@
   "skyLow": null,
   "skyHigh": null,
   "blueLayers": true,
-  "customColors": []
+  "customColors": [],
+  "previewTransparent": false,
+  "softProof": false,
+  "printIntent": 1,
+  "motionAmount": 3,
+  "motionDuration": 6
 }

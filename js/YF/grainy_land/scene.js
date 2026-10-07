@@ -1,6 +1,6 @@
-import { getLayers, layerGroups } from './layer-data.js?v=vector-1';
+import { getLayers, layerGroups } from './layer-data.js?v=studio-1';
 import { SeededRandom } from '../infra/framework/src/index.js';
-import { normalizeSettings, layouts, toneKeys, formSettingsKey } from './document.js?v=vector-1';
+import { normalizeSettings, layouts, toneKeys, formSettingsKey } from './document.js?v=studio-1';
 
 // Geometry is independent of the palette, texture and raster resolution.
 // Coordinates are normalized; this is the extension point for future painted fields.
@@ -111,7 +111,9 @@ export function createLayerScene(settings) {
         const key=JSON.stringify([layer.seed,layer.layout,params.scale,params.complexity,params.flow,params.folds,params.horizon,params.relief]);
         if(!sources.has(key))sources.set(key,generatedScene({...params,seed:layer.seed,layout:layer.layout}));
         const source=sources.get(key),i=layer.source,blue=i>=6?blueForm(layer.seed,i-6):null;
-        return {...layer,phases:source.phases,transform:[layer.x,layer.y,layer.scaleX,layer.scaleY],
+        const m={...s,...layer.material},angle=(layer.rotation||0)*Math.PI/180;
+        return {...layer,affine:[Math.cos(angle),Math.sin(angle),layer.flipX?-1:1,layer.flipY?-1:1],
+            materialA:[m.grain/100,m.grainSize,m.softness/100,m.glow/100],materialB:[m.edgeVariation/100,m.halo/100,m.glowCoverage/100,m.contrast/100],phases:source.phases,transform:[layer.x,layer.y,layer.scaleX,layer.scaleY],
             field:blue?.field??source.fields[i],shape:blue?.shape??source.layers[i],style:blue?.style??source.layerStyles[i],foldField:blue?.foldField??source.foldFields[i],
             crest:source.secondCrest,pocket:source.pocketStyle,
             geometryA:[source.scale,source.complexity,source.flow,source.folds],

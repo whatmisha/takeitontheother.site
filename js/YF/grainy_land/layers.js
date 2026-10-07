@@ -1,7 +1,7 @@
-import { defaultVectorPath } from './vector-path.js?v=vector-1';
-import { normalizeSettings, formSettingsKey } from './document.js?v=vector-1';
-import { MAX_LAYERS, getLayers, layerSettingsKey, normalizeLayerStack, geometrySnapshot, sourceGroup, blueLayerPair } from './layer-data.js?v=vector-1';
-export { MAX_LAYERS, getLayers, layerSettingsKey } from './layer-data.js?v=vector-1';
+import { defaultVectorPath } from './vector-path.js?v=studio-1';
+import { normalizeSettings, formSettingsKey } from './document.js?v=studio-1';
+import { MAX_LAYERS, getLayers, layerSettingsKey, normalizeLayerStack, geometrySnapshot, sourceGroup, blueLayerPair } from './layer-data.js?v=studio-1';
+export { MAX_LAYERS, getLayers, layerSettingsKey } from './layer-data.js?v=studio-1';
 
 export function withLayers(settings,layers) {
     const s=normalizeSettings(settings);

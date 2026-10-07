@@ -1,16 +1,20 @@
-import { CustomColorEditor } from './custom-color-editor.js?v=vector-1';
-import { editCanvas } from './canvas-size.js?v=vector-1';
-import { renderPNG } from './png-export.js?v=vector-1';
-import { renderLayersZIP } from './layers-export.js?v=vector-1';
+import { PrintColor } from './print-color.js?v=studio-1';
+import { motionFrame, renderVideo } from './motion.js?v=studio-1';
+import { CustomColorEditor } from './custom-color-editor.js?v=studio-1';
+import { editCanvas } from './canvas-size.js?v=studio-1';
+import { renderPNG } from './png-export.js?v=studio-1';
+import { renderLayersZIP } from './layers-export.js?v=studio-1';
 import { downloadBlob } from '../infra/framework/src/ui/GeneratorHost.js?v=7';
 import { defineTool, UnifiedColorPicker, ToolUiController, FileIntakeController, PresetMenuKeyboardController } from '../infra/framework/src/index.js?v=tool-ui-4';
-import { defaults, ranges, regenerate, toneKeys, migratePresets, normalizeSettings, makeDocument, readDocument, exportDimensions } from './document.js?v=vector-1';
-import { adjacentColors, hexRGB } from './scene.js?v=vector-1';
-import { LandscapeRenderer } from './render.js?v=vector-1';
+import { defaults, ranges, regenerate, toneKeys, migratePresets, normalizeSettings, makeDocument, readDocument, exportDimensions } from './document.js?v=studio-1';
+import { adjacentColors, hexRGB } from './scene.js?v=studio-1';
+import { LandscapeRenderer } from './render.js?v=studio-1';
 
-import { getLayers } from './layer-data.js?v=vector-1';
-import { FormEditor } from './form-editor.js?v=vector-1';
+import { getLayers } from './layer-data.js?v=studio-1';
+import { FormEditor } from './form-editor.js?v=studio-1';
 
+const printColor=new PrintColor();
+let motionStart=null,motionRAF=0;
 let formEditor, customColorEditor;
 let renderer, ui, intake, presetKeyboard, listeners, unsubscribe, resizeObserver, panelObserver, panelPositionObserver, tonePicker;
 let renderFailed = false, lastSize = '';
@@ -23,7 +27,11 @@ function draw({ ctx2d, settings, width, height }, exporting = false) {
         const transform = ctx2d.getTransform();
         const scale = exporting ? Math.abs(transform.a) : Math.min(1.5, Math.max(.5, Math.abs(transform.a)),4096/Math.max(width,height),Math.sqrt(8388608/(width*height)));
         const w = Math.max(1, Math.round(width * scale)), h = Math.max(1, Math.round(height * scale));
-        const surface = renderer.render(settings, w, h, 0, exporting && settings.transparentBackground);
+        const animated=!exporting&&motionStart!=null?motionFrame(settings,(performance.now()-motionStart)/1000/settings.motionDuration):settings;
+        const transparent=exporting?settings.transparentBackground:settings.previewTransparent&&!settings.softProof;
+        let surface = renderer.render(animated, w, h, 0, transparent);
+        if(!exporting&&settings.softProof&&printColor.profile)surface=printColor.proof(surface,settings.printIntent);
+        if(!exporting&&transparent){const size=12/Math.max(.01,Math.abs(transform.a));ctx2d.fillStyle='#555';ctx2d.fillRect(0,0,width,height);ctx2d.fillStyle='#777';for(let y=0;y<height;y+=size)for(let x=0;x<width;x+=size)if((Math.floor(x/size)+Math.floor(y/size))%2===0)ctx2d.fillRect(x,y,size,size);}
         ctx2d.drawImage(surface, 0, 0, width, height);
         if (renderFailed) status('');
         renderFailed = false;
@@ -79,7 +87,7 @@ function sync(tool) {
     byId('dpiInput').value=s.dpi;
     for(const axis of ['width','height']) {
         const input=byId(axis+'Input'),mmKey=axis==='width'?'printWidthMM':'printHeightMM';
-        input.min=print?'.01':'1';input.max=print?'6000':'8192';input.step=print?'.01':'1';
+        input.min=print?'.01':'1';input.max=print?'6000':'32768';input.step=print?'.01':'1';
         input.value=print?Number(s[mmKey].toFixed(3)):s[axis];
         byId(axis+'InputLabel').textContent=(axis==='width'?'Width, ':'Height, ')+s.canvasUnit;
     }
@@ -93,6 +101,8 @@ function sync(tool) {
         });
     }
     byId('exportScaleSelect').value = s.exportScale;
+    for(const key of ['previewTransparent','softProof'])byId(key).checked=s[key];
+    for(const key of ['printIntent','motionAmount','motionDuration'])byId(key).value=s[key];
     byId('exportLayers').checked=s.exportLayers;
     byId('transparentBackground').checked=s.transparentBackground;
     const exportAction=ui?.actions.find(action=>action.id==='png');
@@ -104,7 +114,7 @@ function sync(tool) {
 function bind(tool) {
     listeners = new AbortController();
     const lifecycleSignal = listeners.signal;
-    const on = (element, type, callback) => element.addEventListener(type, callback, { signal: listeners.signal });
+    const on = (element, type, callback, options={}) => element.addEventListener(type, callback, { ...options, signal: listeners.signal });
     // The shared picker sees resolved colors; the document stores only explicit edits.
     tonePicker = new UnifiedColorPicker({
         containerId: 'toneColorPickerContainer',
@@ -164,6 +174,19 @@ function bind(tool) {
         onReject: result => status(result.message)
     }).init();
     formEditor = new FormEditor(tool,change).init();
+    for(const key of ['previewTransparent','softProof'])on(byId(key),'change',()=>change(tool,{[key]:byId(key).checked},'Preview'));
+    for(const key of ['printIntent','motionAmount','motionDuration'])on(byId(key),'change',()=>change(tool,{[key]:Number(byId(key).value)},'Output settings'));
+    on(byId('loadICC'),'click',()=>byId('iccFile').click());
+    on(byId('iccFile'),'change',async()=>{const file=byId('iccFile').files[0];if(!file)return;try{if(file.size>4*1024*1024)throw Error('ICC profiles are limited to 4 MiB.');const profile=await printColor.load(new Uint8Array(await file.arrayBuffer()),file.name);byId('iccName').textContent=profile.name+' · '+profile.space;byId('softProof').disabled=false;byId('exportTIFF').disabled=false;tool.render();status('ICC profile loaded for this session.');}catch(error){status(error.message);}finally{byId('iccFile').value='';}});
+    const stopMotion=()=>{if(motionStart==null)return;motionStart=null;cancelAnimationFrame(motionRAF);byId('playMotion').textContent='Play';tool.renderNow();};
+    on(document,'pointerdown',event=>{if(!event.target.closest('#playMotion'))stopMotion();},{capture:true});
+    on(document,'keydown',stopMotion,{capture:true});
+    on(byId('playMotion'),'click',()=>{
+        if(motionStart!=null){stopMotion();return;}
+        formEditor.select(null);motionStart=performance.now();byId('playMotion').textContent='Stop';
+        const frame=()=>{if(motionStart==null||listeners.signal.aborted)return;tool.render();motionRAF=requestAnimationFrame(frame);};frame();
+    });
+
     presetKeyboard = new PresetMenuKeyboardController().init();
     ui = new ToolUiController({
         id: 'grainy_land', title: 'Grainy Land',
@@ -174,6 +197,7 @@ function bind(tool) {
         actions: [
             { id:'tool-erase', label:'Erase', kind:'command', group:'keyboard', shortcut:'e', run: () => formEditor.setTool('erase') },
             { id:'tool-brush', label:'Brush', kind:'command', group:'keyboard', shortcut:'b', run: () => formEditor.setTool('paint') },
+            { id:'tool-pen', label:'Pen', kind:'command', group:'keyboard', shortcut:'p', run:()=>formEditor.vector.startPen() },
             { id:'tool-move', label:'Move', kind:'command', group:'keyboard', shortcut:'v', run: () => formEditor.setTool('move') },
             ...[[-2,'[','Smaller brush'],[2,']','Larger brush']].map(([step,shortcut,label])=>({
                 id:step<0?'brush-smaller':'brush-larger',label,kind:'command',group:'keyboard',shortcut,repeat:true,
@@ -203,14 +227,14 @@ function bind(tool) {
                             } finally {exportRenderer.destroy();}
                             return;
                         }
-                        if(snapshot.canvasUnit==='mm'||snapshot.transparentBackground)await tool.runExport('png',async()=>{
-                            const {blob}=await renderPNG(renderer ||= new LandscapeRenderer(),snapshot);downloadBlob(blob,filename);
-                        });
-                        else await tool.exportPNG(filename,snapshot.exportScale);
+                        const exportRenderer=new LandscapeRenderer();
+                        try{const {blob}=await renderPNG(exportRenderer,snapshot,{signal,onProgress:({current,total})=>status('Rendering '+Math.round(current/total*100)+'%…')});signal.throwIfAborted();downloadBlob(blob,filename);}finally{exportRenderer.destroy();}
                         status(snapshot.transparentBackground?'Transparent PNG exported.':'PNG exported.');
                     }
                     finally { tool.render(); }
                 } },
+            { id:'print-tiff',button:'exportTIFF',label:'Export print TIFF',kind:'export',group:'panel',enabled:()=>!!printColor.profile,run:async({signal})=>{const r=new LandscapeRenderer();try{const snapshot=tool.getSnapshot();const {blob}=await printColor.export(r,snapshot,{signal,onProgress:({current,total})=>status('Preparing print '+Math.round(current/total*100)+'%…')});signal.throwIfAborted();downloadBlob(blob,'grainy-land-'+snapshot.seed+'.tif');status('Print TIFF exported with ICC profile.');}finally{r.destroy();}}},
+            { id:'motion-video',button:'exportMotion',label:'Export video',kind:'export',group:'panel',run:async({signal})=>{const r=new LandscapeRenderer();try{const snapshot=tool.getSnapshot(),result=await renderVideo(r,snapshot,{signal,onProgress:({current,total})=>status('Recording '+Math.round(current/total*100)+'%…')});signal.throwIfAborted();downloadBlob(result.blob,'grainy-land-'+snapshot.seed+'.'+result.extension);status('Loop video exported.');}finally{r.destroy();}}},
             { id:'json-export', button:'exportJsonBtn', label:'Export JSON', kind:'export', group:'extra', shortcut:'mod+j',
                 run: () => tool.exporter.exportJSON(makeDocument(tool.getSnapshot()),'grainy-land-'+tool.settings.seed+'.json') },
             { id:'json-import', button:'importJsonBtn', label:'Import JSON', kind:'import', group:'extra', shortcut:'mod+shift+j', run: () => intake.open() },
@@ -267,6 +291,7 @@ const app = defineTool({
     renderTo: context => draw(context,true),
     onReady: bind,
     onDestroy: () => {
+        motionStart=null;cancelAnimationFrame(motionRAF);printColor.clear();
         formEditor?.destroy(); formEditor=null;customColorEditor?.destroy();customColorEditor=null;
         listeners?.abort(); unsubscribe?.(); resizeObserver?.disconnect(); panelObserver?.disconnect(); panelPositionObserver?.disconnect(); intake?.destroy();
         presetKeyboard?.destroy(); ui?.destroy(); renderer?.destroy(); renderer=null; ui=null; tonePicker=null;

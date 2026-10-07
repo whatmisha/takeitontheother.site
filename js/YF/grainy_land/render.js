@@ -1,8 +1,8 @@
-import { MAX_CUSTOM_COLORS } from './custom-colors.js?v=vector-1';
-import { createLayerScene, materialColors, adjacentColors, customMaterialColors, hexRGB } from './scene.js?v=vector-1';
-import { bakePaint } from './paint.js?v=vector-1';
-import { MAX_LAYERS } from './layer-data.js?v=vector-1';
-import { normalizeSettings } from './document.js?v=vector-1';
+import { MAX_CUSTOM_COLORS } from './custom-colors.js?v=studio-1';
+import { createLayerScene, materialColors, adjacentColors, customMaterialColors, hexRGB } from './scene.js?v=studio-1';
+import { bakePaint } from './paint.js?v=studio-1';
+import { MAX_LAYERS } from './layer-data.js?v=studio-1';
+import { normalizeSettings } from './document.js?v=studio-1';
 
 const vertexSource = `
 attribute vec2 position;
@@ -13,6 +13,8 @@ const fragmentSource = `
 precision highp float;
 varying vec2 uv;
 uniform vec2 artboard, rasterSize;
+uniform vec4 renderRegion;
+uniform vec4 formAffine[${MAX_LAYERS}], materialA[${MAX_LAYERS}], materialB[${MAX_LAYERS}];
 uniform vec3 crests[${MAX_LAYERS}];
 uniform vec4 pockets[${MAX_LAYERS}], formPhases[${MAX_LAYERS}], formTransforms[${MAX_LAYERS}];
 uniform vec4 fields[${MAX_LAYERS}], layers[${MAX_LAYERS}], layerStyles[${MAX_LAYERS}], foldFields[${MAX_LAYERS}];
@@ -77,7 +79,7 @@ vec2 foldPoint(vec2 p, vec4 f, float strength, float mode, float horizon) {
 }
 
 void main() {
-    vec2 p = vec2(uv.x, 1.-uv.y);
+    vec2 p = (renderRegion.xy+vec2(gl_FragCoord.x,renderRegion.w-gl_FragCoord.y))/rasterSize;
 
     // Grain size is relative to the artwork, independent of export resolution.
     vec2 gp=p*2688.*vec2(1.,artboard.y/artboard.x)/grainSize;
@@ -116,6 +118,11 @@ void main() {
         if(float(i)>=layerCount || (exportLayer>=0. && float(i)>exportLayer))break;
         bool isolated=editorPass>1.5;
         if(isolated&&abs(float(i)-(editorPass-2.))>.1)continue;
+        float grain=materialA[i].x,grainSize=materialA[i].y,softness=materialA[i].z,glow=materialA[i].w;
+        float edgeVariation=materialB[i].x,halo=materialB[i].y,glowCoverage=materialB[i].z,contrast=materialB[i].w;
+        vec2 gp=p*2688.*vec2(1.,artboard.y/artboard.x)/grainSize;
+        float footprint=max(2688./rasterSize.x,2688.*artboard.y/artboard.x/rasterSize.y)/grainSize;
+        float resolve=min(1.,1.5/footprint);
         vec4 info=formInfo[i], ga=geometryA[i], gb=geometryB[i];
         float opacity=info.z;
         if(!isolated&&opacity<=0.)continue;
@@ -125,7 +132,13 @@ void main() {
         vec3 secondCrest=crests[i];vec4 pocketStyle=pockets[i];
         vec4 phases = formPhases[i], transform = formTransforms[i];
         vec2 point = p;
-        if (transform != vec4(0.,0.,1.,1.)) point = (p-.5-transform.xy)/transform.zw+.5;
+        vec4 affine=formAffine[i];
+        if (transform != vec4(0.,0.,1.,1.) || affine != vec4(1.,0.,1.,1.)) {
+            float aspect=artboard.x/artboard.y;
+            vec2 v=(p-.5-transform.xy)*vec2(aspect,1.);
+            v=vec2(v.x*affine.x+v.y*affine.y,-v.x*affine.y+v.y*affine.x);
+            point=v/vec2(aspect,1.)/transform.zw*affine.zw+.5;
+        }
         vec2 anchor = vec2(.5,mode>.5 ? .5 : horizon);
         vec2 q = (point-anchor)*scale+anchor;
         vec2 offset = phases.xy*2.;
@@ -348,12 +361,12 @@ export class LandscapeRenderer {
         if (!this.locations.has(name)) this.locations.set(name, this.gl.getUniformLocation(this.program, name));
         return this.locations.get(name);
     }
-    render(raw, width, height, editorPass = 0, transparent = false, exportLayer = -1) {
+    render(raw, width, height, editorPass = 0, transparent = false, exportLayer = -1, region = null) {
         const s = normalizeSettings(raw), gl = this.gl;
         if (gl.isContextLost()) throw new Error('Graphics context lost. Reload to restore the renderer.');
         const max = Math.min(gl.getParameter(gl.MAX_TEXTURE_SIZE), gl.getParameter(gl.MAX_RENDERBUFFER_SIZE));
         if (width > max || height > max) throw new Error('This GPU cannot render that size. Reduce export scale.');
-        const key = JSON.stringify([s,width,height,editorPass,transparent,exportLayer]);
+        const key = JSON.stringify([s,width,height,editorPass,transparent,exportLayer,region]);
         if (key === this.cacheKey) return this.canvas;
         this.canvas.width = width; this.canvas.height = height;
         gl.viewport(0,0,width,height); gl.useProgram(this.program);
@@ -369,12 +382,13 @@ export class LandscapeRenderer {
             gl.uniform1f(this.location(name), values[name]);
         }
         gl.uniform2f(this.location('artboard'),s.width,s.height);
-        gl.uniform2f(this.location('rasterSize'),width,height);
+        gl.uniform2f(this.location('rasterSize'),region?.fullWidth??width,region?.fullHeight??height);
+        gl.uniform4fv(this.location('renderRegion'),region?[region.x,region.y,width,height]:[0,0,width,height]);
         gl.uniform1f(this.location('editorPass'),editorPass);
         gl.uniform1f(this.location('backgroundAlpha'),transparent?0:1);
         gl.uniform1f(this.location('exportLayer'),exportLayer);
         gl.uniform1f(this.location('layerCount'),scene.length);
-        for(const [uniform,key] of Object.entries({formPhases:'phases',formTransforms:'transform',fields:'field',layers:'shape',layerStyles:'style',foldFields:'foldField',pockets:'pocket',geometryA:'geometryA',geometryB:'geometryB',formInfo:'info'})) {
+        for(const [uniform,key] of Object.entries({formAffine:'affine',materialA:'materialA',materialB:'materialB',formPhases:'phases',formTransforms:'transform',fields:'field',layers:'shape',layerStyles:'style',foldFields:'foldField',pockets:'pocket',geometryA:'geometryA',geometryB:'geometryB',formInfo:'info'})) {
             const data=Array.from({length:MAX_LAYERS},(_,i)=>scene[i]?.[key]??[0,0,0,0]).flat();
             gl.uniform4fv(this.location(uniform+'[0]'),data);
         }
