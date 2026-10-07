@@ -189,3 +189,6 @@
 }
 
 .grainy-land .action-dock__slot--options { flex-wrap: wrap; gap: var(--spacing-xl); }
+
+/* Keep the centered dock still when the shared hover style changes font weight. */
+.grainy-land #exportPngBtn { inline-size: 10rem; flex-shrink: 0; white-space: nowrap; }
