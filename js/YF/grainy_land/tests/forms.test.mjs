@@ -154,3 +154,42 @@ test('layer commands keep editing locks but permit an independent unlocked dupli
     assert.equal(getLayers(editor.tool.settings).find(l=>l.id===original).locked,true);
     assert.deepEqual(changes,['Duplicate layer']);
 });
+
+
+test('Alt/Cmd movement duplicates every layer type once and keeps the original at the modifier position',()=>{
+    for(const mode of ['auto','pinned','drawn','vector'])for(const modifier of ['altKey','metaKey']) {
+        const {editor,events,pointer}=pointerEditor(),added=addLayer(defaults,mode==='pinned'?'auto':mode);
+        if(mode==='pinned')added.settings.landscapeLayers.at(-1).mode='pinned';
+        editor.tool.applySnapshot(added.settings);editor.selected=added.id;editor.paintTool='move';editor.hit=()=>editor.selected;
+        const originalId=added.id,count=getLayers(editor.tool.settings).length;
+        editor.start(pointer([.4,.4]));editor.move(pointer([.45,.4]));
+        const frozen=structuredClone(editor.layer());
+        editor.move({...pointer([.5,.4]),[modifier]:true});const copyId=editor.selected;
+        assert.notEqual(copyId,originalId);assert.equal(getLayers(editor.tool.settings).length,count+1);
+        editor.move({...pointer([.55,.45]),[modifier]:true});editor.move(pointer([.6,.5]));editor.finish(pointer([.6,.5]));
+        assert.equal(getLayers(editor.tool.settings).length,count+1);assert.equal(editor.selected,copyId);
+        assert.deepEqual(getLayers(editor.tool.settings).find(l=>l.id===originalId),frozen);
+        assert.ok(Math.abs(editor.layer().x-.2)<1e-10);assert.ok(Math.abs(editor.layer().y-.1)<1e-10);
+        assert.equal(editor.layer().mode,mode==='auto'?'pinned':mode);
+        assert.deepEqual(editor.layer().vectorPath,frozen.vectorPath);
+        assert.deepEqual(events,['Move layer','end','release']);
+    }
+});
+test('Alt click makes no copy; cancelling an Alt drag restores both stack and selection',()=>{
+    const {editor,pointer}=pointerEditor();editor.paintTool='move';editor.hit=()=>editor.selected;
+    const before=editor.tool.getSnapshot(),id=editor.selected;
+    editor.start({...pointer([.4,.4]),altKey:true});editor.finish(pointer([.4,.4]));
+    assert.deepEqual(editor.tool.getSnapshot(),before);
+    editor.start(pointer([.4,.4]));editor.move({...pointer([.5,.4]),altKey:true});
+    assert.notEqual(editor.selected,id);editor.cancel();
+    assert.deepEqual(editor.tool.getSnapshot(),before);assert.equal(editor.selected,id);
+});
+test('layer limit prevents drag copies without interrupting movement',()=>{
+    const {editor,pointer}=pointerEditor();let s=editor.tool.settings;
+    while(getLayers(s).length<16)s=addLayer(s).settings;
+    editor.tool.applySnapshot(s);editor.paintTool='move';editor.hit=()=>editor.selected;
+    const id=editor.selected,messages=[];editor.report=m=>messages.push(m);
+    editor.start(pointer([.4,.4]));editor.move({...pointer([.5,.4]),altKey:true});editor.move({...pointer([.6,.4]),altKey:true});editor.finish(pointer([.6,.4]));
+    assert.equal(editor.selected,id);assert.equal(getLayers(editor.tool.settings).length,16);
+    assert.equal(messages.length,1);assert.match(messages[0],/Maximum 16/);assert.ok(editor.layer().x>.19);
+});

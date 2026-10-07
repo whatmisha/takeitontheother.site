@@ -1,8 +1,8 @@
-import { MAX_CUSTOM_COLORS } from './custom-colors.js?v=custom-colors-1';
-import { createLayerScene, materialColors, adjacentColors, customMaterialColors, hexRGB } from './scene.js?v=custom-colors-1';
-import { bakePaint } from './paint.js?v=custom-colors-1';
-import { MAX_LAYERS } from './layer-data.js?v=custom-colors-1';
-import { normalizeSettings } from './document.js?v=custom-colors-1';
+import { MAX_CUSTOM_COLORS } from './custom-colors.js?v=vector-1';
+import { createLayerScene, materialColors, adjacentColors, customMaterialColors, hexRGB } from './scene.js?v=vector-1';
+import { bakePaint } from './paint.js?v=vector-1';
+import { MAX_LAYERS } from './layer-data.js?v=vector-1';
+import { normalizeSettings } from './document.js?v=vector-1';
 
 const vertexSource = `
 attribute vec2 position;
@@ -402,7 +402,7 @@ export class LandscapeRenderer {
         gl.uniform1i(this.location('customPalette'),1);
     }
     uploadPaint(scene) {
-        const gl=this.gl,fields=scene.map(layer=>layer.strokes.length?bakePaint(layer.strokes):null);
+        const gl=this.gl,fields=scene.map(layer=>layer.strokes.length||layer.vectorPath?bakePaint(layer.strokes,layer.vectorPath):null);
         const any=fields.some(Boolean),columns=any?Math.min(4,scene.length):1,rows=any?Math.ceil(scene.length/columns):1;
         const cellW=Math.max(1,...fields.map(f=>f?.width??0)),cellH=Math.max(1,...fields.map(f=>f?.height??0));
         const width=cellW*columns,height=cellH*rows,shape=width+':'+height+':'+cellW+':'+cellH;

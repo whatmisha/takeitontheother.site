@@ -1,6 +1,7 @@
-import { normalizeSettings, formSettingsKey } from './document.js?v=custom-colors-1';
-import { MAX_LAYERS, getLayers, layerSettingsKey, normalizeLayerStack, geometrySnapshot, sourceGroup, blueLayerPair } from './layer-data.js?v=custom-colors-1';
-export { MAX_LAYERS, getLayers, layerSettingsKey } from './layer-data.js?v=custom-colors-1';
+import { defaultVectorPath } from './vector-path.js?v=vector-1';
+import { normalizeSettings, formSettingsKey } from './document.js?v=vector-1';
+import { MAX_LAYERS, getLayers, layerSettingsKey, normalizeLayerStack, geometrySnapshot, sourceGroup, blueLayerPair } from './layer-data.js?v=vector-1';
+export { MAX_LAYERS, getLayers, layerSettingsKey } from './layer-data.js?v=vector-1';
 
 export function withLayers(settings,layers) {
     const s=normalizeSettings(settings);
@@ -19,9 +20,9 @@ export function addLayer(settings,mode='drawn') {
     const s=normalizeSettings(settings),stack=getLayers(s);
     if(stack.length>=MAX_LAYERS)throw new Error('Maximum '+MAX_LAYERS+' layers per composition.');
     const id=uniqueId(stack),salt=Number(id.slice(6))*2654435761>>>0,source=stack.length%6;
-    const drawn=mode==='drawn';
-    const layer={id,name:drawn?'Drawn layer':'Generated layer',source,mode:drawn?'drawn':'auto',seed:(s.seed+salt)>>>0,salt,
-        layout:s.layout,group:drawn?'terrain':sourceGroup(source),geometry:drawn?geometrySnapshot(s):null,hasBase:!drawn};
+    const vector=mode==='vector',drawn=mode==='drawn'||vector;
+    const layer={id,name:vector?'Vector shape':drawn?'Drawn layer':'Generated layer',source,mode:vector?'vector':drawn?'drawn':'auto',seed:(s.seed+salt)>>>0,salt,
+        layout:s.layout,group:drawn?'terrain':sourceGroup(source),geometry:drawn?geometrySnapshot(s):null,hasBase:!drawn,...(vector?{vectorPath:defaultVectorPath()}: {})};
     return {settings:withLayers(s,[...stack,layer]),id};
 }
 export function duplicateLayer(settings,id) {
@@ -50,7 +51,7 @@ export function convertLayer(settings,id) {
     if(!layer||layer.locked||layer.mode==='drawn')return s;
     // Freeze the analytic silhouette instead of rasterizing it. It is now an
     // immutable base for paint/erase, independent of every generation control.
-    return editLayer(s,id,{mode:'drawn',hasBase:true,geometry:geometrySnapshot(s)});
+    return editLayer(s,id,{mode:'drawn',hasBase:!layer.vectorPath,geometry:layer.geometry??geometrySnapshot(s)});
 }
 
 export function addBlueLayers(settings) {

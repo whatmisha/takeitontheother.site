@@ -302,3 +302,31 @@ GeneratorHost initializes its shared controller directly rather than auto-init.
 The circular **Add color** swatch below Light creates an additional palette entry and opens the shared inline HSB editor. Each entry has a hex input and appears as a round preview in a layer's **Color group** palette; click a preview to assign it, or use arrow keys when the palette is focused. The selected color has an outline, and hovering shows its name and HEX. Adding a swatch does not change existing layer assignments. Up to 16 custom colors are supported; their neighboring tones follow Advanced tones, while grain, softness, glow and transparent exports use the same renderer as the built-in materials.
 
 Custom color IDs and layer assignments are preserved in both composition modes, presets, undo/redo, JSON and share links. Removing an unused swatch does not renumber the remaining colors. A swatch used by either mode cannot be removed until those layers use another color. Older documents default to an empty custom palette.
+
+
+### Vector layers
+
+`+ Vector` creates a closed Bézier oval and opens its path editor. Vector is a
+fourth layer type alongside Auto, Pinned and Drawn. Generate and composition
+controls preserve its contour. Color groups (including custom colors), opacity,
+transforms, grain, glow, visibility, locks, duplication and both PNG and Layers
+ZIP export use the same pipeline as other layers.
+
+Double-click a vector shape on the canvas, or use **Edit path** in Layer properties, to reopen the editor:
+- Drag an anchor to move it together with its handles; drag a handle to change curvature.
+- Smooth handles stay aligned; Alt-drag makes a handle independent.
+- Double-click an anchor to collapse/restore handles (corner/smooth).
+- Double-click the contour to insert a point without changing the curve.
+- Delete point or Delete/Backspace while the canvas is focused removes the selected
+  node (minimum 3, maximum 48). Arrow keys move it by one canvas pixel; Shift by ten.
+- Esc finishes path editing; moving a node is one undoable action.
+
+Brush/Erase exits path editing and adds/subtracts paint while retaining the editable
+vector base. Convert to drawn freezes that base and keeps the appearance intact.
+The document stores normalized cubic nodes, while exported PNGs contain the final
+textured artwork. This feature does not introduce SVG export.
+
+During canvas Move, hold Option/Alt or Cmd to duplicate the layer once per drag,
+including when the modifier is pressed after movement starts. The original stays
+at its position at that moment; the copy follows the pointer. Undo/Esc cancels
+the entire gesture. Resizing, painting and editing vector nodes do not duplicate.

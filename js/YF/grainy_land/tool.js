@@ -1,15 +1,15 @@
-import { CustomColorEditor } from './custom-color-editor.js?v=layer-swatches-1';
-import { editCanvas } from './canvas-size.js?v=custom-colors-1';
-import { renderPNG } from './png-export.js?v=custom-colors-1';
-import { renderLayersZIP } from './layers-export.js?v=custom-colors-1';
+import { CustomColorEditor } from './custom-color-editor.js?v=vector-1';
+import { editCanvas } from './canvas-size.js?v=vector-1';
+import { renderPNG } from './png-export.js?v=vector-1';
+import { renderLayersZIP } from './layers-export.js?v=vector-1';
 import { downloadBlob } from '../infra/framework/src/ui/GeneratorHost.js?v=7';
 import { defineTool, UnifiedColorPicker, ToolUiController, FileIntakeController, PresetMenuKeyboardController } from '../infra/framework/src/index.js?v=tool-ui-4';
-import { defaults, ranges, regenerate, toneKeys, migratePresets, normalizeSettings, makeDocument, readDocument, exportDimensions } from './document.js?v=custom-colors-1';
-import { adjacentColors, hexRGB } from './scene.js?v=custom-colors-1';
-import { LandscapeRenderer } from './render.js?v=custom-colors-1';
+import { defaults, ranges, regenerate, toneKeys, migratePresets, normalizeSettings, makeDocument, readDocument, exportDimensions } from './document.js?v=vector-1';
+import { adjacentColors, hexRGB } from './scene.js?v=vector-1';
+import { LandscapeRenderer } from './render.js?v=vector-1';
 
-import { getLayers } from './layer-data.js?v=custom-colors-1';
-import { FormEditor } from './form-editor.js?v=layer-swatches-1';
+import { getLayers } from './layer-data.js?v=vector-1';
+import { FormEditor } from './form-editor.js?v=vector-1';
 
 let formEditor, customColorEditor;
 let renderer, ui, intake, presetKeyboard, listeners, unsubscribe, resizeObserver, panelObserver, panelPositionObserver, tonePicker;

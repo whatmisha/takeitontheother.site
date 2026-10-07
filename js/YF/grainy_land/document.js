@@ -1,7 +1,7 @@
-import { normalizeCustomColors } from './custom-colors.js?v=custom-colors-1';
-import { canvasDefaults, normalizeCanvas, assertExportSize } from './canvas-size.js?v=custom-colors-1';
-import { normalizeLayerStack, layerSettingsKey } from './layer-data.js?v=custom-colors-1';
-import { normalizeStrokes } from './paint.js?v=custom-colors-1';
+import { normalizeCustomColors } from './custom-colors.js?v=vector-1';
+import { canvasDefaults, normalizeCanvas, assertExportSize } from './canvas-size.js?v=vector-1';
+import { normalizeLayerStack, layerSettingsKey } from './layer-data.js?v=vector-1';
+import { normalizeStrokes } from './paint.js?v=vector-1';
 export const TOOL_ID = 'grainy_land';
 export const VERSION = 1;
 export const palettes = {

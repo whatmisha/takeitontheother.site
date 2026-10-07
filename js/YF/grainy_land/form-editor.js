@@ -1,8 +1,9 @@
-import { groupColor } from './custom-colors.js?v=custom-colors-1';
-import { brushStroke, localPaintPoint, strokePointCount, MAX_STROKES, MAX_STROKE_POINTS, MAX_FORM_POINTS } from './paint.js?v=custom-colors-1';
-import { getLayers, layerSettingsKey, MAX_LAYERS, editLayer, addLayer, addBlueLayers, duplicateLayer, removeLayer, reorderLayer, convertLayer } from './layers.js?v=custom-colors-1';
-import { createLayerScene } from './scene.js?v=custom-colors-1';
-import { LandscapeRenderer } from './render.js?v=custom-colors-1';
+import { VectorEditor } from './vector-editor.js?v=vector-1';
+import { groupColor } from './custom-colors.js?v=vector-1';
+import { brushStroke, localPaintPoint, strokePointCount, MAX_STROKES, MAX_STROKE_POINTS, MAX_FORM_POINTS } from './paint.js?v=vector-1';
+import { getLayers, layerSettingsKey, MAX_LAYERS, editLayer, addLayer, addBlueLayers, duplicateLayer, removeLayer, reorderLayer, convertLayer } from './layers.js?v=vector-1';
+import { createLayerScene } from './scene.js?v=vector-1';
+import { LandscapeRenderer } from './render.js?v=vector-1';
 
 export function visibleBounds(map, selected) {
     let left=map.width,top=map.height,right=-1,bottom=-1;
@@ -38,6 +39,7 @@ export class FormEditor {
     commit(patch,label,manual=false){this.change(this.tool,editLayer(this.tool.settings,this.selected,patch,{manual}),label);}
     report(message=''){byId('paintStatus').textContent=message;}
     init() {
+        this.vector=new VectorEditor(this).init();
         const on=(target,event,handler,opts={})=>target.addEventListener(event,handler,{...opts,signal:this.abort.signal});
         for(const mode of ['drawn','auto'])on(byId(mode==='drawn'?'newDrawnLayer':'newAutoLayer'),'click',()=>{
             try {const result=addLayer(this.tool.settings,mode);this.change(this.tool,result.settings,'Add layer');this.select(result.id);this.setTool(mode==='drawn'?'paint':'move');}
@@ -47,6 +49,7 @@ export class FormEditor {
             try {const result=addBlueLayers(this.tool.settings);this.change(this.tool,result.settings,'Add blue layers');this.select(result.id);this.setTool('move');}
             catch(error){this.report(error.message);}
         });
+        on(byId('newVectorLayer'),'click',()=>{try{const result=addLayer(this.tool.settings,'vector');this.change(this.tool,result.settings,'Add vector layer');this.select(result.id);this.vector.setEditing(true);}catch(error){this.report(error.message);}});
         on(byId('layerDuplicate'),'click',()=>this.duplicateSelected());
         on(byId('layerDelete'),'click',()=>this.deleteSelected());
         on(byId('layerConvert'),'click',()=>{this.change(this.tool,convertLayer(this.tool.settings,this.selected),'Convert to drawn');this.report('Silhouette preserved. Generation controls no longer change its shape.');});
@@ -134,7 +137,7 @@ export class FormEditor {
         this.sync();return this;
     }
     endOpacity(){if(this.opacityEditing){this.opacityEditing=false;this.tool.history.endTransaction();}}
-    canChangeLayer(){return !!this.layer()&&!this.gesture&&!this.reorderGesture;}
+    canChangeLayer(){return !!this.layer()&&!this.gesture&&!this.vector?.drag&&!this.reorderGesture;}
     duplicateSelected(){
         if(!this.canChangeLayer())return;this.endOpacity();
         try {const result=duplicateLayer(this.tool.settings,this.selected);this.change(this.tool,result.settings,'Duplicate layer');this.select(result.id);this.container.focus({preventScroll:true});}
@@ -157,7 +160,7 @@ export class FormEditor {
             this.change(this.tool,editLayer(this.tool.settings,id,{name:value.trim().slice(0,64)}),'Rename layer');
         } finally {this.renaming=false;}
     }
-    pin(id){const layer=getLayers(this.tool.settings).find(l=>l.id===id);if(!layer||layer.locked||layer.mode==='drawn')return;this.change(this.tool,editLayer(this.tool.settings,id,{mode:layer.mode==='auto'?'pinned':'auto'}),'Pin layer');}
+    pin(id){const layer=getLayers(this.tool.settings).find(l=>l.id===id);if(!layer||layer.locked||['drawn','vector'].includes(layer.mode))return;this.change(this.tool,editLayer(this.tool.settings,id,{mode:layer.mode==='auto'?'pinned':'auto'}),'Pin layer');}
     lock(id){this.cancel();const layer=getLayers(this.tool.settings).find(l=>l.id===id);if(layer)this.change(this.tool,editLayer(this.tool.settings,id,{locked:!layer.locked}),'Lock layer');}
     setBrushSize(size){
         this.brushSize=clamp(Math.round(size),3,60);
@@ -165,11 +168,11 @@ export class FormEditor {
         if(this.lastPointer)this.cursorAt(this.lastPointer);
     }
     setTool(name){
-        this.cancel();this.paintTool=name;
+        this.vector?.cancel();if(this.vector)this.vector.editing=false;this.cancel();this.paintTool=name;
         const fallback=name==='move'?null:getLayers(this.tool.settings).findLast(l=>l.visible&&!l.locked)?.id??null;
         this.select(this.layer()?.id??fallback);this.container.focus({preventScroll:true});
     }
-    select(id){this.cancel();this.endOpacity();this.selected=id;this.cursor.hidden=true;this.report();this.sync();this.tool.render();}
+    select(id){this.vector?.cancel();this.cancel();this.endOpacity();this.selected=id;this.cursor.hidden=true;this.report();this.sync();this.tool.render();}
     renderList(stack) {
         const key=JSON.stringify(stack.map(l=>[l.id,l.name,l.mode,l.visible,l.locked,l.group]));
         if(key===this.listKey)return;this.listKey=key;const list=byId('layerList'),scroll=list.scrollTop;list.replaceChildren();
@@ -183,10 +186,10 @@ export class FormEditor {
             const select=document.createElement('button');select.type='button';select.className='layer-select ui-list-select';select.title='Click to select, double-click to rename, drag to reorder';select.setAttribute('aria-pressed',String(layer.id===this.selected));select.setAttribute('aria-label','Select '+layer.name);
             const thumb=document.createElement('canvas');thumb.className='layer-thumb';thumb.width=48;thumb.height=30;thumb.setAttribute('aria-hidden','true');thumb.dataset.thumbId=layer.id;
             const text=document.createElement('span');text.className='layer-label';const title=document.createElement('span');title.className='ui-list-title';title.textContent=layer.name;
-            const state=document.createElement('span');state.className='layer-state ui-meta';state.textContent=layer.mode==='auto'?'Auto':layer.mode==='pinned'?'Pinned':'Drawn';state.title=this.modeDescription(layer);text.append(title,state);select.append(thumb,text);
+            const state=document.createElement('span');state.className='layer-state ui-meta';state.textContent=layer.mode==='auto'?'Auto':layer.mode==='pinned'?'Pinned':layer.mode==='vector'?'Vector':'Drawn';state.title=this.modeDescription(layer);text.append(title,state);select.append(thumb,text);
             select.addEventListener('click',()=>this.select(layer.id));select.addEventListener('dblclick',()=>this.renameLayer(layer.id));
-            const pin=action('pin',layer.mode==='pinned'?'Unpin':'Pin',layer.mode==='pinned',()=>this.pin(layer.id));pin.disabled=layer.mode==='drawn'||layer.locked;
-            if(layer.mode==='drawn')pin.title='Drawn layers are always kept by Generate';
+            const pin=action('pin',layer.mode==='pinned'?'Unpin':'Pin',layer.mode==='pinned',()=>this.pin(layer.id));pin.disabled=['drawn','vector'].includes(layer.mode)||layer.locked;
+            if(['drawn','vector'].includes(layer.mode))pin.title='Drawn and vector layers are always kept by Generate';
             const lock=action('lock',layer.locked?'Unlock':'Lock',layer.locked,()=>this.lock(layer.id));row.append(eye,select,pin,lock);
             list.append(row);
         }
@@ -229,7 +232,7 @@ export class FormEditor {
         }
     }
     clearDrops(){byId('layerList').querySelectorAll('.drop-before,.drop-after,.is-dragging').forEach(row=>row.classList.remove('drop-before','drop-after','is-dragging'));}
-    modeDescription(layer){return {auto:'Generate replaces this shape. Moving or painting pins it.',pinned:'Generate keeps this shape. Composition controls still apply.',drawn:'Shape follows your drawing. Generate and composition controls keep it.'}[layer.mode]+(layer.locked?' Locked against manual edits.':'');}
+    modeDescription(layer){return {auto:'Generate replaces this shape. Moving or painting pins it.',pinned:'Generate keeps this shape. Composition controls still apply.',drawn:'Shape follows your drawing. Generate and composition controls keep it.',vector:'Editable Bezier shape. Generate and composition controls keep its contour.'}[layer.mode]+(layer.locked?' Locked against manual edits.':'');}
     syncColorSwatches(layer) {
         const s=this.tool.settings,container=byId('layerColorSwatches');
         const colors=[...Object.entries({sky:'Background',terrain:'Terrain',depth:'Depth',light:'Light'}).map(([id,name])=>({id,name,color:s[id]})),...(s.customColors??[])];
@@ -263,18 +266,19 @@ export class FormEditor {
             const selected=row.dataset.layerId===this.selected;row.classList.toggle('is-selected',selected);
             row.querySelector('.layer-select').setAttribute('aria-pressed',String(selected));
         });
-        for(const id of ['newDrawnLayer','newAutoLayer']){
+        for(const id of ['newDrawnLayer','newAutoLayer','newVectorLayer']){
             byId(id).disabled=stack.length>=MAX_LAYERS;
-            byId(id).title=(id==='newDrawnLayer'?'New drawn layer':'New generated layer')+' · '+stack.length+' / '+MAX_LAYERS+' layers';
+            byId(id).title=(id==='newVectorLayer'?'New vector shape':id==='newDrawnLayer'?'New drawn layer':'New generated layer')+' · '+stack.length+' / '+MAX_LAYERS+' layers';
         }
         byId('newBlueLayers').disabled=stack.length>MAX_LAYERS-2;
         byId('newBlueLayers').title='Add two blue layers behind the artwork · '+stack.length+' / '+MAX_LAYERS+' layers';
         byId('layerDuplicate').disabled=!layer||stack.length>=MAX_LAYERS;byId('layerDelete').disabled=!layer||layer.locked;
         byId('backgroundThumb').style.background=s.sky;
         byId('layerPanel').hidden=!layer;byId('brushControls').hidden=this.paintTool==='move';
+        this.vector?.sync();
         if(!layer)return;
         byId('selectedLayerName').textContent=layer.name;byId('selectedLayerName').title=layer.name;
-        const mode=byId('layerModeLabel');mode.textContent=(layer.mode==='auto'?'Auto':layer.mode==='pinned'?'Pinned':'Drawn')+(layer.locked?' · Locked':'');mode.title=this.modeDescription(layer);mode.setAttribute('aria-label',mode.textContent+'. '+mode.title);
+        const mode=byId('layerModeLabel');mode.textContent=(layer.mode==='auto'?'Auto':layer.mode==='pinned'?'Pinned':layer.mode==='vector'?'Vector':'Drawn')+(layer.locked?' · Locked':'');mode.title=this.modeDescription(layer);mode.setAttribute('aria-label',mode.textContent+'. '+mode.title);
         byId('layerEditable').disabled=layer.locked;this.syncColorSwatches(layer);byId('layerOpacity').value=layer.opacity;byId('layerOpacityValue').textContent=layer.opacity+'%';
         byId('layerConvert').hidden=layer.mode==='drawn';byId('layerConvert').title='Keep this silhouette and edit it only by drawing.';
         byId('clearPaint').hidden=!layer.strokes.length;byId('clearPaint').title='Clear '+layer.strokes.length+' strokes';
@@ -322,8 +326,17 @@ export class FormEditor {
     move(event){this.cursorAt(event);const g=this.gesture;if(!g||event.pointerId!==g.pointerId)return;if(g.stroke){event.preventDefault();if(!g.started){if(!this.moved(this.point(event)))return;this.beginStroke();}this.paintMove(event);return;}
         const point=this.point(event),dx=point[0]-g.point[0],dy=point[1]-g.point[1];if(!g.started&&Math.hypot(dx*this.tool.settings.width*this.tool.target.zoom,dy*this.tool.settings.height*this.tool.target.zoom)<3)return;
         event.preventDefault();if(!g.started){this.tool.history.flush();this.tool.history.beginTransaction(g.resize?'Resize layer':'Move layer');g.started=true;}
+        if(!g.resize&&!g.duplicated&&!g.duplicateBlocked&&(event.altKey||event.metaKey)) {
+            try {
+                // Freeze the original where it was when the modifier was pressed;
+                // keep the copy attached to the same pointer offset, as in Pizza Boxer.
+                const copy=duplicateLayer(this.tool.settings,g.id);
+                g.originalId=g.id;g.id=copy.id;g.workingSnapshot=copy.settings;g.duplicated=true;
+                this.selected=copy.id;
+            } catch(error){g.duplicateBlocked=true;this.report(error.message);}
+        }
         const patch=g.resize?resizedForm(g.edit,g.edit.scaleX*(1+dx/Math.max(.02,g.point[0]-g.center[0])),g.edit.scaleY*(1+dy/Math.max(.02,g.point[1]-g.center[1])),g.center):{x:g.edit.x+dx,y:g.edit.y+dy};
-        const next=editLayer(g.snapshot,g.id,patch,{manual:true}),key=layerSettingsKey(g.snapshot.mode);this.tool.settingsStore.set(key,next[key]);
+        const next=editLayer(g.workingSnapshot??g.snapshot,g.id,patch,{manual:true}),key=layerSettingsKey(g.snapshot.mode);this.tool.settingsStore.set(key,next[key]);
     }
     finish(event){
         const g=this.gesture;if(!g||event.pointerId!==g.pointerId)return;
@@ -335,12 +348,12 @@ export class FormEditor {
         this.gesture=null;if(g.started)this.tool.history.endTransaction();
         if(this.container.hasPointerCapture(g.pointerId))this.container.releasePointerCapture(g.pointerId);
     }
-    cancel(){const g=this.gesture;if(!g)return;this.gesture=null;if(g.started){this.tool.applySnapshot(g.snapshot);this.tool.history.endTransaction();}if(this.container.hasPointerCapture(g.pointerId))this.container.releasePointerCapture(g.pointerId);}
+    cancel(){const g=this.gesture;if(!g)return;this.gesture=null;if(g.duplicated)this.selected=g.originalId;if(g.started){this.tool.applySnapshot(g.snapshot);this.tool.history.endTransaction();}if(this.container.hasPointerCapture(g.pointerId))this.container.releasePointerCapture(g.pointerId);}
     drawThumbs(){
         if(byId('layersPanel').classList.contains('panel-collapsed'))return;
         const s=this.tool.settings,scene=createLayerScene(s);this.picker ||=new LandscapeRenderer();
         scene.forEach((l,i)=>{const canvas=byId('layerList').querySelector('[data-thumb-id="'+l.id+'"]');if(!canvas)return;
-            const key=JSON.stringify([l.phases,l.transform,l.field,l.shape,l.style,l.foldField,l.crest,l.pocket,l.geometryA,l.geometryB,l.strokes,groupColor(s,l.group),s.width/s.height]);
+            const key=JSON.stringify([l.phases,l.transform,l.field,l.shape,l.style,l.foldField,l.crest,l.pocket,l.geometryA,l.geometryB,l.strokes,l.vectorPath,groupColor(s,l.group),s.width/s.height]);
             let cached=this.thumbs.get(l.id);
             if(cached?.key!==key){const map=this.picker.formMap(s,48,30,i),ctx=canvas.getContext('2d'),data=ctx.createImageData(48,30),rgb=groupColor(s,l.group).slice(1).match(/../g).map(v=>parseInt(v,16));for(let n=0;n<map.ids.length;n++)if(map.ids[n])data.data.set([...rgb,230],n*4);cached={key,data};this.thumbs.set(l.id,cached);}
             canvas.getContext('2d').putImageData(cached.data,0,0);
@@ -348,7 +361,7 @@ export class FormEditor {
         for(const id of this.thumbs.keys())if(!scene.some(l=>l.id===id))this.thumbs.delete(id);
     }
     draw(){
-        this.drawThumbs();if(!this.active)return;this.refreshMap();const t=this.tool.target,s=this.tool.settings,dpr=t.dpr,rect=this.container.getBoundingClientRect();
+        this.drawThumbs();this.vector?.draw();if(this.vector?.editing||!this.active)return;this.refreshMap();const t=this.tool.target,s=this.tool.settings,dpr=t.dpr,rect=this.container.getBoundingClientRect();
         this.overlay.width=Math.round(rect.width*dpr);this.overlay.height=Math.round(rect.height*dpr);const ctx=this.overlay.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);this.handle=null;
         const layer=this.layer();if(!layer)return;const selected=this.index(),map=this.map,bounds=visibleBounds(map,selected);
         byId('formVisibilityNote').hidden=!!bounds;byId('formVisibilityNote').textContent=!layer.visible?'This layer is hidden. Show it to edit on the canvas.':layer.mode==='drawn'&&!layer.hasBase&&!layer.strokes.length?'Empty layer. Use Brush to add a shape.':'This layer is covered or outside the canvas. Move it forward or adjust its position.';
@@ -358,5 +371,5 @@ export class FormEditor {
         const x=t.panX+bounds.left*w,y=t.panY+bounds.top*h,bw=(bounds.right-bounds.left)*w,bh=(bounds.bottom-bounds.top)*h;ctx.strokeStyle='rgba(255,255,255,.85)';ctx.lineWidth=1;ctx.setLineDash([4,4]);ctx.strokeRect(x,y,bw,bh);ctx.setLineDash([]);
         const hx=clamp(x+bw-7,7,rect.width-7),hy=clamp(y+bh-7,7,rect.height-7);ctx.fillStyle='#FFF';ctx.fillRect(hx-5,hy-5,10,10);ctx.strokeStyle='#111';ctx.strokeRect(hx-5,hy-5,10,10);this.handle=[(hx-t.panX)/w,(hy-t.panY)/h];
     }
-    destroy(){this.cancel();this.finishReorder(false);this.endOpacity();this.abort.abort();this.picker?.destroy();}
+    destroy(){this.vector?.cancel();this.cancel();this.finishReorder(false);this.endOpacity();this.abort.abort();this.picker?.destroy();}
 }

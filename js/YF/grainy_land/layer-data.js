@@ -1,4 +1,5 @@
-import { normalizeStrokes } from './paint.js?v=custom-colors-1';
+import { normalizeVectorPath, defaultVectorPath } from './vector-path.js?v=vector-1';
+import { normalizeStrokes } from './paint.js?v=vector-1';
 
 export const MAX_LAYERS=16;
 export const layerSettingsKey=mode=>mode==='abstract'?'abstractLayers':'landscapeLayers';
@@ -16,15 +17,16 @@ export function normalizeLayerStack(value,settings) {
         let id=typeof item.id==='string'&&/^[a-zA-Z0-9_-]{1,64}$/.test(item.id)?item.id:'layer-'+i;
         const base=id;let suffix=1;while(ids.has(id))id=base.slice(0,52)+'-copy-'+suffix++;ids.add(id);
         const source=Math.round(number(item.source,0,0,7));
-        const mode=['auto','pinned','drawn'].includes(item.mode)?item.mode:'auto';
+        const mode=['auto','pinned','drawn','vector'].includes(item.mode)?item.mode:'auto';
         return [{id,name:typeof item.name==='string'&&item.name.trim()?item.name.trim().slice(0,64):'Layer '+(i+1),
             source,mode,seed:number(item.seed,settings.seed,0,4294967295)>>>0,salt:number(item.salt,0,0,4294967295)>>>0,
             layout:['auto','basin','ridge','valley','fold'].includes(item.layout)?item.layout:'auto',
             x:number(item.x,0,-1,1),y:number(item.y,0,-1,1),scaleX:number(item.scaleX,1,.25,3),scaleY:number(item.scaleY,1,.25,3),
             group:layerGroups.includes(item.group)||settings.customColors?.some(color=>color.id===item.group)?item.group:sourceGroup(source),opacity:number(item.opacity,100,0,100),
             visible:item.visible!==false,locked:item.locked===true,strokes:normalizeStrokes(item.strokes),
-            geometry:mode==='drawn'?geometrySnapshot(item.geometry??settings):null,
-            hasBase:mode!=='drawn'||item.hasBase===true}];
+            geometry:['drawn','vector'].includes(mode)?geometrySnapshot(item.geometry??settings):null,
+            ...(mode==='vector'||item.vectorPath?{vectorPath:normalizeVectorPath(item.vectorPath)??(mode==='vector'?defaultVectorPath():null)}:{}),
+            hasBase:mode==='vector'?false:mode!=='drawn'||item.hasBase===true}];
     });
 }
 // Missing stacks preserve old documents exactly. An empty array is deliberately

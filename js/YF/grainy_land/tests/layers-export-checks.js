@@ -1,8 +1,8 @@
-import { addCustomColor } from '../custom-colors.js?v=custom-colors-1';
-import {defaults as currentDefaults,normalizeSettings} from '../document.js?v=custom-colors-1';
-import {getLayers,withLayers,addLayer,editLayer} from '../layers.js?v=custom-colors-1';
-import {LandscapeRenderer} from '../render.js?v=custom-colors-1';
-import {renderLayersZIP} from '../layers-export.js?v=custom-colors-1';
+import { addCustomColor } from '../custom-colors.js?v=vector-1';
+import {defaults as currentDefaults,normalizeSettings} from '../document.js?v=vector-1';
+import {getLayers,withLayers,addLayer,editLayer} from '../layers.js?v=vector-1';
+import {LandscapeRenderer} from '../render.js?v=vector-1';
+import {renderLayersZIP} from '../layers-export.js?v=vector-1';
 import {readStoredZip} from './zip-reader.js';
 const defaults={...currentDefaults,blueLayers:false};
 const results=[],renderer=new LandscapeRenderer();
@@ -17,12 +17,13 @@ try {
         settings=withLayers(settings,stack);let added=addLayer(settings,'drawn');settings=added.settings;
         settings=editLayer(settings,added.id,{strokes:[{kind:'paint',rx:.06,ry:.09,points:[[.14,.15],[.25,.29]]}]});
         settings=addLayer(settings,'drawn').settings; // deliberately empty layer
+        settings=addLayer(settings,'vector').settings;
         const before=JSON.stringify(settings),width=640,height=360;
         const expected=canvas(width,height);expected.getContext('2d').drawImage(renderer.render(settings,width,height,0,transparentBackground),0,0);
         const progress=[],artifact=await renderLayersZIP(renderer,settings,{onProgress:e=>progress.push(e.current)});
         check(variant+' leaves the source snapshot intact',JSON.stringify(settings)===before);
         const files=readStoredZip(new Uint8Array(await artifact.blob.arrayBuffer()));
-        check(variant+' exports every layer with PNG-only filenames',files.length===(transparentBackground?8:9)&&files.every(e=>e.name.endsWith('.png')));
+        check(variant+' exports every layer with PNG-only filenames',files.length===(transparentBackground?9:10)&&files.every(e=>e.name.endsWith('.png')));
         check(variant+' reports progress for each PNG',progress.join(',')===files.map((_,i)=>i+1).join(','));
         const composite=canvas(width,height),ctx=composite.getContext('2d');
         for(const [order,file] of [...files].reverse().entries()) {
@@ -38,6 +39,7 @@ try {
             }
             else check(variant+' '+file.name+' contains transparency',rgba.some((v,i)=>i%4===3&&v===0));
             if(index===6)check(variant+' drawn paint exports visible pixels',rgba.some((v,i)=>i%4===3&&v>0));
+            if(index===8)check(variant+' vector shape exports visible pixels',rgba.some((v,i)=>i%4===3&&v>0));
             if(index===7)check(variant+' empty drawn layer is completely clear',rgba.every(v=>v===0));
             if(index===2)check(variant+' hidden layer still exports its pixels',rgba.some((v,i)=>i%4===3&&v>0));
             if(index===1)check(variant+' layer opacity is preserved',rgba.reduce((max,v,i)=>i%4===3?Math.max(max,v):max,0)<128);

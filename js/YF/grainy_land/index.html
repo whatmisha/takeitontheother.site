@@ -6,7 +6,7 @@
     <title>Grainy Land — YF Tools</title>
     <link rel="icon" href="data:,">
     <link rel="stylesheet" href="../infra/framework/css/othersite-styles.css">
-    <link rel="stylesheet" href="./app.css?v=compact-layer-actions-1">
+    <link rel="stylesheet" href="./app.css?v=vector-1">
     <link rel="stylesheet" href="../infra/framework/css/ui-contract.css?v=uiq-6">
 </head>
 <body>
@@ -27,7 +27,7 @@
         <h1 class="sr-only">Grainy Land</h1>
         <section class="canvas-container" id="canvasContainer" aria-label="Artwork viewport" tabindex="0">
             <canvas id="mainCanvas" role="img" aria-label="Generated grainy landscape"></canvas>
-            <div id="brushCursor" hidden aria-hidden="true"></div><canvas id="formOverlay" aria-hidden="true" hidden></canvas>
+            <div id="brushCursor" hidden aria-hidden="true"></div><canvas id="formOverlay" aria-hidden="true" hidden></canvas><svg id="vectorOverlay" aria-label="Vector path editor" hidden></svg>
         </section>
         <aside class="controls-panel tool-palette" id="toolsPanel" aria-label="Drawing tools">
             <div class="tool-palette-grip" id="toolsPanelHeader" title="Drag tools"><svg viewBox="0 0 12 16" width="12" height="16" fill="currentColor" aria-hidden="true"><circle cx="4" cy="4" r="1"/><circle cx="8" cy="4" r="1"/><circle cx="4" cy="8" r="1"/><circle cx="8" cy="8" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="8" cy="12" r="1"/></svg></div>
@@ -65,7 +65,7 @@
         <aside class="controls-panel" id="layersPanel" aria-label="Layers panel">
             <div class="panel-header" id="layersPanelHeader"><span>Layers</span><button class="collapse-icon" type="button" aria-label="Collapse layers"><svg width="10" height="6" viewBox="0 0 12 8" fill="none" aria-hidden="true"><path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
             <div class="panel-content">
-                <div class="layer-create"><button id="newDrawnLayer" class="btn-add-object" type="button" title="New drawn layer">+ Drawn</button><button id="newAutoLayer" class="btn-add-object" type="button" title="New generated layer">+ Auto</button><button id="newBlueLayers" class="btn-add-object" type="button" title="Add two blue layers behind the artwork">+ Blue</button></div>
+                <div class="layer-create"><button id="newDrawnLayer" class="btn-add-object" type="button" title="New drawn layer">+ Drawn</button><button id="newAutoLayer" class="btn-add-object" type="button" title="New generated layer">+ Auto</button><button id="newBlueLayers" class="btn-add-object" type="button" title="Add two blue layers behind the artwork">+ Blue</button><button id="newVectorLayer" class="btn-add-object" type="button" title="New editable vector shape">+ Vector</button></div>
                 <div id="layerList" class="layers-list" role="list" aria-label="Layers, front to back"></div>
                 <button id="backgroundLayer" class="background-layer ui-list-row" type="button"><span id="backgroundThumb"></span><span class="ui-list-title">Background</span><span class="field-note ui-meta">Color</span></button>
                 <p id="paintStatus" class="field-note form-help" role="status"></p>
@@ -78,6 +78,7 @@
                 <fieldset id="layerEditable"><legend class="sr-only">Editable layer properties</legend>
                     <div class="control-group layer-color-group"><div class="layer-color-heading"><span id="layerColorLabel">Color group</span><output id="layerColorName" class="ui-meta"></output></div><div id="layerColorSwatches" class="layer-color-swatches" role="radiogroup" aria-labelledby="layerColorLabel"></div></div>
                     <div class="control-group"><label for="layerOpacity"><span>Opacity</span><output id="layerOpacityValue">100%</output></label><input id="layerOpacity" type="range" min="0" max="100" step="1" value="100"></div>
+                    <div id="vectorControls" class="control-group" hidden><button id="editVectorPath" class="btn-add-object" type="button" aria-pressed="false">Edit path</button><div id="vectorPointControls" hidden><p id="vectorPointLabel" class="ui-meta"></p><div class="vector-point-actions"><button id="toggleVectorPoint" class="btn-add-object" type="button">Make corner</button><button id="deleteVectorPoint" class="btn-add-object" type="button">Delete point</button></div><p class="field-note form-help">Double-click: point — corner/smooth; contour — add point. Alt-drag: independent handle. Esc: finish.</p></div></div>
                     <details id="formTransformControls" class="ui-disclosure compact-details"><summary>Transform<svg class="ui-disclosure__chevron" width="10" height="6" viewBox="0 0 12 8" fill="none" aria-hidden="true"><path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></summary><div class="dimensions-row"><label for="formX">X, %<input id="formX" type="number" min="-100" max="100" step="0.1" value="0"></label><label for="formY">Y, %<input id="formY" type="number" min="-100" max="100" step="0.1" value="0"></label></div><div class="dimensions-row"><label for="formWidth">Width, %<input id="formWidth" type="number" min="25" max="300" step="1" value="100"></label><label for="formHeight">Height, %<input id="formHeight" type="number" min="25" max="300" step="1" value="100"></label></div></details>
                     <p id="formVisibilityNote" class="field-note form-help" hidden></p>
                     <div class="form-actions"><button id="clearPaint" class="panel-action" type="button" hidden>Clear strokes</button><button id="layerConvert" class="panel-action" type="button">Convert to drawn</button></div>
@@ -218,6 +219,6 @@
     <input id="jsonFileInput" type="file" accept=".json,application/json" hidden><button id="jsonPickerTrigger" type="button" hidden>Choose JSON</button>
     <dialog id="dialog" class="modal" aria-labelledby="dialogTitle"><div class="modal-content"><h2 id="dialogTitle" class="modal-title"></h2><div id="dialogText" class="modal-text"></div><input id="dialogInput" class="modal-input" type="text" style="display:none"><div id="dialogButtons" class="modal-buttons"></div></div></dialog>
 </div>
-<script type="module" src="./tool.js?v=layer-swatches-1"></script>
+<script type="module" src="./tool.js?v=vector-1"></script>
 </body>
 </html>

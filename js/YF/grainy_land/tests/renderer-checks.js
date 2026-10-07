@@ -1,11 +1,11 @@
-import { addCustomColor, removeCustomColor } from '../custom-colors.js?v=custom-colors-1';
-import { editCanvas } from '../canvas-size.js?v=custom-colors-1';
-import { renderPNG } from '../png-export.js?v=custom-colors-1';
-import {getLayers,withLayers,editLayer,addLayer,duplicateLayer,removeLayer,reorderLayer,convertLayer,MAX_LAYERS} from '../layers.js?v=custom-colors-1';
+import { addCustomColor, removeCustomColor } from '../custom-colors.js?v=vector-1';
+import { editCanvas } from '../canvas-size.js?v=vector-1';
+import { renderPNG } from '../png-export.js?v=vector-1';
+import {getLayers,withLayers,editLayer,addLayer,duplicateLayer,removeLayer,reorderLayer,convertLayer,MAX_LAYERS} from '../layers.js?v=vector-1';
 import { ShareCodec } from '../../infra/framework/src/preset/ShareCodec.js';
-import { LandscapeRenderer } from '../render.js?v=custom-colors-1';
-import { defaults as currentDefaults, palettes, toneKeys, makeDocument, readDocument, editForm, regenerate, normalizeSettings } from '../document.js?v=custom-colors-1';
-import { adjacentColors } from '../scene.js?v=custom-colors-1';
+import { LandscapeRenderer } from '../render.js?v=vector-1';
+import { defaults as currentDefaults, palettes, toneKeys, makeDocument, readDocument, editForm, regenerate, normalizeSettings } from '../document.js?v=vector-1';
+import { adjacentColors } from '../scene.js?v=vector-1';
 const defaults={...currentDefaults,blueLayers:false};
 const renderer = new LandscapeRenderer(), results = [], urls = [];
 const check = (name, condition) => { results.push((condition ? 'PASS ' : 'FAIL ') + name); if (!condition) throw new Error(name); };

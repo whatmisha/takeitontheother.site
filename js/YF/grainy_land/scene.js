@@ -1,6 +1,6 @@
-import { getLayers, layerGroups } from './layer-data.js?v=custom-colors-1';
+import { getLayers, layerGroups } from './layer-data.js?v=vector-1';
 import { SeededRandom } from '../infra/framework/src/index.js';
-import { normalizeSettings, layouts, toneKeys, formSettingsKey } from './document.js?v=custom-colors-1';
+import { normalizeSettings, layouts, toneKeys, formSettingsKey } from './document.js?v=vector-1';
 
 // Geometry is independent of the palette, texture and raster resolution.
 // Coordinates are normalized; this is the extension point for future painted fields.
@@ -107,7 +107,7 @@ function blueForm(seed,index) {
 export function createLayerScene(settings) {
     const s=normalizeSettings(settings),stack=getLayers(s),sources=new Map();
     return stack.map(layer=>{
-        const params=layer.mode==='drawn'?{...s,...layer.geometry}:s;
+        const params=['drawn','vector'].includes(layer.mode)?{...s,...layer.geometry}:s;
         const key=JSON.stringify([layer.seed,layer.layout,params.scale,params.complexity,params.flow,params.folds,params.horizon,params.relief]);
         if(!sources.has(key))sources.set(key,generatedScene({...params,seed:layer.seed,layout:layer.layout}));
         const source=sources.get(key),i=layer.source,blue=i>=6?blueForm(layer.seed,i-6):null;

@@ -1,3 +1,4 @@
+import { flattenVectorPath, vectorDistance } from './vector-path.js?v=vector-1';
 // Strokes live in a form's local coordinates, independent of preview/export size.
 export const MAX_STROKES = 64;
 export const MAX_STROKE_POINTS = 192;
@@ -47,11 +48,12 @@ export function paintDistance(original,point,strokes) {
 
 const cache=new Map();
 const DISTANCE=1;
-export function bakePaint(strokes) {
-    const key=JSON.stringify(strokes);
+export function bakePaint(strokes,vectorPath=null) {
+    const vectorKey=JSON.stringify(vectorPath),key=JSON.stringify([strokes,vectorPath]);
     if(cache.has(key)) {const value=cache.get(key);cache.delete(key);cache.set(key,value);return value;}
     let left=Infinity,top=Infinity,right=-Infinity,bottom=-Infinity,minRx=Infinity,minRy=Infinity;
-    const commands=[];
+    const commands=[],polygon=vectorPath?flattenVectorPath(vectorPath):null;
+    if(polygon)for(const p of polygon){left=Math.min(left,p[0]-.25);right=Math.max(right,p[0]+.25);top=Math.min(top,p[1]-.25);bottom=Math.max(bottom,p[1]+.25);}
     for(const s of strokes) {
         minRx=Math.min(minRx,s.rx);minRy=Math.min(minRy,s.ry);
         const marginX=s.rx+DISTANCE*s.rx/s.ry,marginY=s.ry+DISTANCE;
@@ -68,14 +70,17 @@ export function bakePaint(strokes) {
     const width=clamp(Math.ceil((right-left)/Math.min(.004,minRx/6)),64,1024);
     const height=clamp(Math.ceil((bottom-top)/Math.min(.004,minRy/6)),64,1024);
     const bounds=[left,top,right-left,bottom-top],size=width*height;
-    let lower=new Float32Array(size).fill(-DISTANCE),upper=new Float32Array(size).fill(DISTANCE),start=0;
+    let lower=new Float32Array(size).fill(-DISTANCE),upper=new Float32Array(size).fill(DISTANCE),start=0,reused=false;
     for(const previous of [...cache.values()].reverse()) {
-        if(previous.width!==width || previous.height!==height || !previous.bounds.every((v,i)=>v===bounds[i])
+        if(previous.vectorKey!==vectorKey||previous.width!==width || previous.height!==height || !previous.bounds.every((v,i)=>v===bounds[i])
             || previous.commands.length>=commands.length)continue;
         if(!previous.commands.every((c,i)=>c.every((v,j)=>v===commands[i][j])))continue;
-        lower=previous.lower.slice();upper=previous.upper.slice();start=previous.commands.length;break;
+        lower=previous.lower.slice();upper=previous.upper.slice();start=previous.commands.length;reused=true;break;
     }
     const dx=bounds[2]/(width-1),dy=bounds[3]/(height-1);
+    if(polygon&&!reused)for(let y=0;y<height;y++)for(let x=0;x<width;x++) {
+        const at=y*width+x,d=clamp(vectorDistance(left+x*dx,top+y*dy,polygon),-DISTANCE,DISTANCE);lower[at]=d;upper[at]=d;
+    }
     for(let i=start;i<commands.length;i++) {
         const [kind,rx,ry,ax,ay,bx,by]=commands[i];
         const vx=(bx-ax)/rx,vy=(by-ay)/ry,den=vx*vx+vy*vy||1;
@@ -97,7 +102,7 @@ export function bakePaint(strokes) {
         const lo=Math.round((lower[i]/DISTANCE*.5+.5)*65535),hi=Math.round((upper[i]/DISTANCE*.5+.5)*65535);
         pixels.set([lo>>8,lo&255,hi>>8,hi&255],i*4);
     }
-    const value={key,width,height,bounds,pixels,lower,upper,commands};cache.set(key,value);
+    const value={key,vectorKey,width,height,bounds,pixels,lower,upper,commands};cache.set(key,value);
     while(cache.size>18)cache.delete(cache.keys().next().value);
     return value;
 }
