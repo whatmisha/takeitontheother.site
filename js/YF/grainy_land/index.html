@@ -6,7 +6,7 @@
     <title>Grainy Land — YF Tools</title>
     <link rel="icon" href="data:,">
     <link rel="stylesheet" href="../infra/framework/css/othersite-styles.css">
-    <link rel="stylesheet" href="./app.css?v=layer-swatches-1">
+    <link rel="stylesheet" href="./app.css?v=compact-layer-actions-1">
     <link rel="stylesheet" href="../infra/framework/css/ui-contract.css?v=uiq-6">
 </head>
 <body>
@@ -65,7 +65,7 @@
         <aside class="controls-panel" id="layersPanel" aria-label="Layers panel">
             <div class="panel-header" id="layersPanelHeader"><span>Layers</span><button class="collapse-icon" type="button" aria-label="Collapse layers"><svg width="10" height="6" viewBox="0 0 12 8" fill="none" aria-hidden="true"><path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
             <div class="panel-content">
-                <div class="layer-create"><button id="newDrawnLayer" class="panel-action" type="button" title="New drawn layer">+ Drawn</button><button id="newAutoLayer" class="panel-action" type="button" title="New generated layer">+ Auto</button><button id="newBlueLayers" class="panel-action" type="button" title="Add two blue layers behind the artwork">+ Blue</button></div>
+                <div class="layer-create"><button id="newDrawnLayer" class="btn-add-object" type="button" title="New drawn layer">+ Drawn</button><button id="newAutoLayer" class="btn-add-object" type="button" title="New generated layer">+ Auto</button><button id="newBlueLayers" class="btn-add-object" type="button" title="Add two blue layers behind the artwork">+ Blue</button></div>
                 <div id="layerList" class="layers-list" role="list" aria-label="Layers, front to back"></div>
                 <button id="backgroundLayer" class="background-layer ui-list-row" type="button"><span id="backgroundThumb"></span><span class="ui-list-title">Background</span><span class="field-note ui-meta">Color</span></button>
                 <p id="paintStatus" class="field-note form-help" role="status"></p>
