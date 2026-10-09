@@ -11,7 +11,7 @@ import { adjacentColors, hexRGB } from './scene.js?v=studio-1';
 import { LandscapeRenderer } from './render.js?v=studio-1';
 
 import { getLayers } from './layer-data.js?v=studio-1';
-import { FormEditor } from './form-editor.js?v=studio-1';
+import { FormEditor } from './form-editor.js?v=pen-ux-1';
 
 const printColor=new PrintColor();
 let motionStart=null,motionRAF=0;

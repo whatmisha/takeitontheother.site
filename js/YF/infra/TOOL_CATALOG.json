@@ -232,6 +232,19 @@
         "height": 900
       },
       "capabilityContract": "grainy_land/capabilities.json#grainy_land"
+    },
+    {
+      "id": "wander_wall",
+      "name": "Wander Wall",
+      "group": "lunnen",
+      "entry": "wander_wall/index.html",
+      "state": "accepted",
+      "cohort": "native",
+      "referenceViewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "capabilityContract": "wander_wall/capabilities.json#wander_wall"
     }
   ]
 }

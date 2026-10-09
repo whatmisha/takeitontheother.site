@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "toolId": "wander_wall",
+  "renderer": "canvas",
+  "framework": "infra/framework/src/index.js",
+  "modes": ["desktop", "phone"],
+  "exports": ["png", "json"],
+  "presets": true,
+  "history": true,
+  "share": true,
+  "storageKey": "upgrade:wander_wall:presets:v1",
+  "acceptance": {
+    "status": "passed",
+    "unit": ["wander_wall/tests/layout.test.mjs"],
+    "artifact": ["wander_wall/tests/browser.mjs", "wander_wall/tests/acceptance.json"],
+    "browser": ["wander_wall/tests/browser.mjs", "wander_wall/tests/acceptance.json"]
+  }
+}

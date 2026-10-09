@@ -34,17 +34,23 @@ export function moveVectorNode(path,index,p,side='anchor',independent=false) {
     }
     return normalizeVectorPath(nodes);
 }
-export function toggleVectorNode(path,index) {
-    const nodes=structuredClone(path),n=nodes[index];if(!n)return nodes;
-    if(n.smooth||Math.hypot(n.in[0]-n.x,n.in[1]-n.y,n.out[0]-n.x,n.out[1]-n.y)>1e-8) {n.smooth=false;n.in=[n.x,n.y];n.out=[n.x,n.y];}
-    else {
+export function setVectorNodesSmooth(path,indices,smooth) {
+    const nodes=structuredClone(path);
+    for(const index of indices){
+        const n=nodes[index];if(!n)continue;
+        if(!smooth){n.smooth=false;n.in=[n.x,n.y];n.out=[n.x,n.y];continue;}
+        if(n.smooth)continue;
         const prev=nodes[(index-1+nodes.length)%nodes.length],next=nodes[(index+1)%nodes.length];
-        const dx=next.x-prev.x,dy=next.y-prev.y,l=Math.hypot(dx,dy)||1;
-        const a=Math.hypot(n.x-prev.x,n.y-prev.y)/3,b=Math.hypot(next.x-n.x,next.y-n.y)/3;
-        n.in=[n.x-dx/l*a,n.y-dy/l*a];n.out=[n.x+dx/l*b,n.y+dy/l*b];n.smooth=true;
+        const inLength=Math.hypot(n.in[0]-n.x,n.in[1]-n.y),outLength=Math.hypot(n.out[0]-n.x,n.out[1]-n.y);
+        // Re-align independent handles without collapsing or shortening them.
+        const dx=outLength>1e-8?n.out[0]-n.x:inLength>1e-8?n.x-n.in[0]:next.x-prev.x;
+        const dy=outLength>1e-8?n.out[1]-n.y:inLength>1e-8?n.y-n.in[1]:next.y-prev.y;
+        const length=Math.hypot(dx,dy)||1,a=inLength||Math.hypot(n.x-prev.x,n.y-prev.y)/3,b=outLength||Math.hypot(next.x-n.x,next.y-n.y)/3;
+        n.in=[n.x-dx/length*a,n.y-dy/length*a];n.out=[n.x+dx/length*b,n.y+dy/length*b];n.smooth=true;
     }
     return normalizeVectorPath(nodes);
 }
+export function toggleVectorNode(path,index) {return setVectorNodesSmooth(path,[index],!path[index]?.smooth);}
 export function splitVectorSegment(path,index,t=.5) {
     if(path.length>=MAX_VECTOR_NODES)return path;
     t=Math.max(.02,Math.min(.98,t));const nodes=structuredClone(path),[a,b,c,d]=vectorSegment(nodes,index);

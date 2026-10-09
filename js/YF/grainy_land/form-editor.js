@@ -1,6 +1,6 @@
 import { editSelection, duplicateSelection, reorderSelection, resizeSelection } from './selection.js?v=studio-1';
 import { localToCanvas, canvasToLocal, materialRanges } from './transforms.js?v=studio-1';
-import { VectorEditor } from './vector-editor.js?v=studio-1';
+import { VectorEditor } from './vector-editor.js?v=pen-ux-1';
 import { groupColor } from './custom-colors.js?v=studio-1';
 import { brushStroke, localPaintPoint, strokePointCount, MAX_STROKES, MAX_STROKE_POINTS, MAX_FORM_POINTS } from './paint.js?v=studio-1';
 import { getLayers, withLayers, layerSettingsKey, MAX_LAYERS, editLayer, addLayer, addBlueLayers, duplicateLayer, removeLayer, reorderLayer, convertLayer } from './layers.js?v=studio-1';
@@ -40,7 +40,7 @@ export class FormEditor {
     index(){return getLayers(this.tool.settings).findIndex(l=>l.id===this.selected);}
     selection(){return this.selectedIds?.size?[...this.selectedIds]:this.selected?[this.selected]:[];}
     commit(patch,label,manual=false){this.change(this.tool,editSelection(this.tool.settings,this.selection(),patch,this.selected),label);}
-    report(message=''){byId('paintStatus').textContent=message;}
+    report(message=''){byId('paintStatus').textContent=message||this.vector?.draftHint()||'';}
     init() {
         this.selectedIds=new Set();this.vector=new VectorEditor(this).init();
         const on=(target,event,handler,opts={})=>target.addEventListener(event,handler,{...opts,signal:this.abort.signal});
@@ -184,12 +184,12 @@ export class FormEditor {
         if(this.lastPointer)this.cursorAt(this.lastPointer);
     }
     setTool(name){
-        if(this.vector?.pen)this.vector.stopPen();this.vector?.cancel();if(this.vector)this.vector.editing=false;this.cancel();this.paintTool=name;
+        this.vector?.deactivate();this.cancel();this.paintTool=name;
         const fallback=name==='move'?null:getLayers(this.tool.settings).findLast(l=>l.visible&&!l.locked)?.id??null;
         this.select(this.layer()?.id??fallback);this.container.focus({preventScroll:true});
     }
     select(id,{toggle=false,range=false,individual=false}={}){
-        this.vector?.cancel();this.cancel();this.endOpacity();const stack=getLayers(this.tool.settings);let ids=new Set(this.selection());
+        this.vector?.pausePen();this.vector?.cancel();this.cancel();this.endOpacity();const stack=getLayers(this.tool.settings);let ids=new Set(this.selection());
         if(range&&id&&this.selected){const a=stack.findIndex(l=>l.id===this.selected),b=stack.findIndex(l=>l.id===id);ids=new Set(stack.slice(Math.min(a,b),Math.max(a,b)+1).map(l=>l.id));}
         else if(toggle&&id){if(ids.has(id))ids.delete(id);else ids.add(id);}
         else {const l=stack.find(l=>l.id===id);ids=new Set(!id?[]:!individual&&l?.collection?stack.filter(x=>x.collection===l.collection).map(x=>x.id):[id]);}
@@ -287,7 +287,6 @@ export class FormEditor {
         this.container.classList.toggle('is-editing-forms',this.active);this.overlay.hidden=!this.active;
         this.handle=null;
         if(!this.active)this.cursor.hidden=true;
-        document.querySelectorAll('[data-form-tool]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.formTool===this.paintTool)));
         this.renderList(stack);const layer=this.layer();
         byId('layerList').querySelectorAll('.layer-row').forEach(row=>{
             const selected=this.selection().includes(row.dataset.layerId);row.classList.toggle('is-selected',selected);
@@ -303,6 +302,7 @@ export class FormEditor {
         byId('backgroundThumb').style.background=s.sky;
         byId('layerPanel').hidden=!layer;byId('brushControls').hidden=this.paintTool==='move';
         this.vector?.sync();
+        document.querySelectorAll('[data-form-tool]').forEach(button=>button.setAttribute('aria-pressed',String(!this.vector?.pen&&button.dataset.formTool===this.paintTool)));
         if(!layer)return;
         byId('selectedLayerName').textContent=this.selection().length>1?this.selection().length+' selected':layer.name;
         byId('groupLayers').disabled=this.selection().length<2;byId('ungroupLayers').disabled=!getLayers(s).some(l=>this.selection().includes(l.id)&&l.collection);

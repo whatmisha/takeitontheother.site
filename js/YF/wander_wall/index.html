@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en" data-tool-name="Wander Wall">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Wander Wall - YF Tools</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="../infra/framework/css/othersite-styles.css">
+    <link rel="stylesheet" href="./app.css">
+    <link rel="stylesheet" href="../infra/framework/css/ui-contract.css?v=uiq-6">
+</head>
+<body>
+<div class="container wander-wall">
+    <header class="top-links" aria-label="Tool navigation">
+        <a class="top-link back-link" href="../"><span data-icon="back"></span><span>YF Tools</span></a>
+        <h1>Wander Wall</h1>
+        <div class="preset-toolbar-cluster">
+            <div class="preset-dropdown" id="presetDropdown">
+                <button class="preset-dropdown-toggle" id="presetDropdownToggle" type="button" aria-haspopup="listbox" aria-expanded="false" aria-controls="presetDropdownMenu"><span class="preset-dropdown-text">Presets</span><span data-icon="chevron"></span></button>
+                <ul class="preset-dropdown-menu" id="presetDropdownMenu" role="listbox"></ul>
+            </div>
+            <button id="presetToolbarShareBtn" class="preset-toolbar-share-btn" type="button" aria-label="Copy share link" data-tooltip="Copy share link"><span data-icon="link"></span></button>
+            <button id="savePresetBtn" class="icon-button" type="button" style="display:none" aria-label="Save preset" data-tooltip="Save preset" data-icon="save"></button>
+        </div>
+    </header>
+    <main class="main-content">
+        <section class="canvas-container" id="canvasContainer" aria-label="Wallpaper canvas" tabindex="0">
+            <canvas id="mainCanvas" role="img" aria-label="Generated letter wallpaper" title="Click an element to change its variant. Drag to move. Space-drag to pan."></canvas>
+        </section>
+        <div class="stage-toolbar" role="toolbar" aria-label="Canvas tools">
+            <button id="undoBtn" class="icon-button" type="button" aria-label="Undo" data-tooltip="Undo" data-icon="undo"></button>
+            <button id="redoBtn" class="icon-button" type="button" aria-label="Redo" data-tooltip="Redo" data-icon="redo"></button>
+            <span class="toolbar-divider"></span>
+            <button id="zoomOutBtn" class="icon-button" type="button" aria-label="Zoom out" data-tooltip="Zoom out" data-icon="minus"></button>
+            <button id="zoomIndicator" class="zoom-indicator" type="button" data-tooltip="Fit to screen">100%</button>
+            <button id="zoomInBtn" class="icon-button" type="button" aria-label="Zoom in" data-tooltip="Zoom in" data-icon="plus"></button>
+        </div>
+        <aside class="controls-panel" id="compositionPanel">
+            <div class="panel-header" id="compositionPanelHeader"><span>Composition</span><button class="collapse-icon" type="button" aria-label="Collapse composition" data-icon="chevron"></button></div>
+            <div class="panel-content">
+                <fieldset id="compositionFieldset">
+                    <div class="text-heading"><label for="textInput">Text</label><output id="letterCount" for="textInput">6 / 32</output></div>
+                    <textarea id="textInput" class="text-input" rows="2" maxlength="96" spellcheck="false" autocapitalize="characters" aria-describedby="textError">WANDER</textarea>
+                    <p id="textError" class="input-error" role="status"></p>
+                    <button id="applyTextBtn" class="panel-action apply-text" type="button">Apply text</button>
+                    <section class="control-field-group" aria-labelledby="canvasHeading">
+                        <h2 id="canvasHeading" class="control-field-heading">Canvas</h2>
+                        <div class="segmented-control" role="radiogroup" aria-label="Canvas format">
+                            <input id="formatDesktop" type="radio" name="format" value="desktop" checked><label for="formatDesktop">Desktop</label>
+                            <input id="formatPhone" type="radio" name="format" value="phone"><label for="formatPhone">iPhone</label>
+                        </div>
+                        <output id="canvasDimensions" class="meta">3840 &times; 2160</output>
+                    </section>
+                    <section class="control-field-group" aria-labelledby="layoutHeading">
+                        <h2 id="layoutHeading" class="control-field-heading">Layout</h2>
+                        <div class="control-group"><label for="fillSlider"><span>Fill</span><output id="fillValue" for="fillSlider">100%</output></label><input id="fillSlider" type="range" min="70" max="125" step="1" value="100"></div>
+                        <label class="toggle-label"><span class="toggle-switch"><input id="shuffleToggle" type="checkbox"><span class="toggle-slider"></span></span><span>Shuffle letters</span></label>
+                    </section>
+                    <section class="control-field-group" aria-labelledby="formsHeading">
+                        <h2 id="formsHeading" class="control-field-heading">Extra forms</h2>
+                        <label class="toggle-label"><span class="toggle-switch"><input id="formsToggle" type="checkbox" checked><span class="toggle-slider"></span></span><span>Include forms</span></label>
+                        <div class="control-group" id="formsCountGroup"><label for="formCountSlider"><span>Count</span><output id="formCountValue" for="formCountSlider">4</output></label><input id="formCountSlider" type="range" min="0" max="16" step="1" value="4"></div>
+                    </section>
+                    <details class="seed-details"><summary>Seed</summary><input id="seedInput" class="text-input" type="number" min="0" max="4294967295" step="1" value="20261009" aria-label="Random seed"></details>
+                </fieldset>
+            </div>
+        </aside>
+        <aside class="controls-panel" id="elementsPanel">
+            <div class="panel-header" id="elementsPanelHeader"><span>Elements <span class="meta" id="elementCount">10</span></span><button class="collapse-icon" type="button" aria-label="Collapse elements" data-icon="chevron"></button></div>
+            <div class="panel-content">
+                <div class="element-list" id="elementList" role="group" aria-label="Elements"></div>
+                <section id="selectionControls" hidden>
+                    <div class="selection-heading"><span id="selectionName"></span><button id="pinBtn" class="icon-button" type="button" aria-label="Pin element" aria-pressed="false" data-icon="pin"></button></div>
+                    <fieldset id="selectionFieldset">
+                        <div class="variant-row"><span class="meta" id="variantNumber"></span><button id="variantBtn" class="icon-button" type="button" aria-label="Next variant" data-tooltip="Next variant" data-icon="refresh"></button></div>
+                        <div class="control-group"><label for="scaleSlider"><span>Size</span><output id="scaleValue" for="scaleSlider">50%</output></label><input id="scaleSlider" type="range" min="3" max="300" step="1" value="50"></div>
+                        <div class="control-group"><label for="rotationSlider"><span>Rotation</span><output id="rotationValue" for="rotationSlider">0&deg;</output></label><input id="rotationSlider" type="range" min="-180" max="180" step="1" value="0"></div>
+                        <div class="position-row"><label for="xInput">X, %<input id="xInput" class="text-input" type="number" min="0" max="100" step=".1"></label><label for="yInput">Y, %<input id="yInput" class="text-input" type="number" min="0" max="100" step=".1"></label></div>
+                        <div class="layer-actions"><button id="backBtn" class="icon-button" type="button" aria-label="Send backward" data-tooltip="Send backward" data-icon="down"></button><button id="frontBtn" class="icon-button" type="button" aria-label="Bring forward" data-tooltip="Bring forward" data-icon="up"></button></div>
+                    </fieldset>
+                </section>
+            </div>
+        </aside>
+    </main>
+    <nav class="bottom-buttons action-dock" role="toolbar" aria-label="Tool actions">
+        <div class="action-dock__slot action-dock__slot--utility">
+            <button id="generateBtn" class="btn-fixed btn-fixed--muted" type="button" disabled>Generate</button>
+            <button id="exportJsonBtn" class="btn-fixed btn-fixed--muted" type="button" data-action-dock-extra hidden>Export JSON</button>
+            <button id="importJsonBtn" class="btn-fixed btn-fixed--muted" type="button" data-action-dock-extra hidden>Import JSON</button>
+        </div>
+        <div class="action-dock__slot action-dock__slot--primary"><button id="exportPngBtn" class="btn-fixed" type="button" disabled>Export PNG</button></div>
+        <div class="action-dock__slot action-dock__slot--options"></div>
+    </nav>
+    <p id="operationStatus" class="operation-status" role="status" aria-live="polite">Loading artwork...</p>
+    <button id="retryBtn" class="panel-action retry-button" type="button" hidden>Retry</button>
+    <input id="jsonFileInput" type="file" accept=".json,application/json" hidden><button id="jsonPickerTrigger" type="button" hidden>Choose JSON</button>
+    <dialog id="dialog" class="modal" aria-labelledby="dialogTitle"><div class="modal-content"><h2 id="dialogTitle" class="modal-title"></h2><div id="dialogText" class="modal-text"></div><input id="dialogInput" class="modal-input" type="text" style="display:none"><div id="dialogButtons" class="modal-buttons"></div></div></dialog>
+</div>
+<script type="module" src="./tool.js"></script>
+</body>
+</html>

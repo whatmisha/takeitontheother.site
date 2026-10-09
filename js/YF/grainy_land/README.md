@@ -332,7 +332,19 @@ the entire gesture. Resizing, painting and editing vector nodes do not duplicate
 
 - **Pen (P):** draw a closed vector shape from scratch. Click adds corners; dragging
   adds mirrored Bézier handles. Click the first anchor or press Enter to close;
-  Esc discards the unfinished path. A completed path is one undoable action.
+  Cmd/Ctrl+Z and Shift+Cmd/Ctrl+Z undo/redo draft points; Backspace removes the
+  last point. Repeated P keeps the draft. Move/Brush/Erase and selecting a layer
+  pause it; P resumes. Landscape and Abstract retain independent session drafts.
+  Esc discards the active unfinished path. Drafts are not saved in JSON and do not
+  survive reloading. A completed path is one document undo action. Pen is disabled
+  at the layer limit before drawing starts.
+- **Path editing:** Pen and Edit path are mutually exclusive. Delete/Backspace
+  remove selected points even after using properties-panel buttons; inputs keep
+  their native keyboard editing. A closed path always keeps at least three points.
+  Make smooth/corner sets one type for the whole selected set. Making independent
+  handles smooth aligns them while keeping their lengths.
+  `tests/vector-editor.test.mjs` covers these transitions, draft history, capacity,
+  pointer cancellation and keyboard routing.
 - **Transform:** layer rotation and horizontal/vertical flips work for all four
   layer types. The path editor, brushes, thumbnails and picking use the same
   aspect-correct transform as the renderer. Transforming Auto layers pins them.

@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "test:wall": "node --test wander_wall/tests/layout.test.mjs",
     "test:grainy": "node --test grainy_land/tests/*.test.mjs",
     "routes:check": "node --test infra/catalog/tests/public-routes.test.mjs",
     "catalog:sync": "node infra/scripts/sync-tool-catalog.mjs --write",

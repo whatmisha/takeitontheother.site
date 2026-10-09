@@ -1,0 +1,24 @@
+{
+  "date": "2026-10-09",
+  "status": "passed",
+  "checks": [
+    "Desktop startup: loaded assets, nonblank colorful canvas, no console errors.",
+    "Click cycles a letter variant, pins the edit, and undo/redo restores exact scenes.",
+    "Dragging is one undo step; Generate keeps the exact pinned element.",
+    "Rotation handle, scale control, and position inputs edit and pin selected elements.",
+    "Forms on/off/count, 32 letters, shuffle, and iPhone format keep all elements inside the canvas.",
+    "Real 3840 x 2160 PNG download exactly matches the artwork renderer and excludes selection handles.",
+    "Real 1290 x 2796 PNG download; responsive iPhone preview at 390 and 430 px without horizontal overflow.",
+    "JSON round trip, invalid-import recovery, saved-preset reload, and share-link round trip preserve exact compositions."
+  ],
+  "consoleErrors": [],
+  "screenshots": [
+    "/tmp/wander-wall-desktop.png",
+    "/tmp/wander-wall-selection.png",
+    "/tmp/wander-wall-mobile.png"
+  ],
+  "artifacts": [
+    "/tmp/wander-wall-export-desktop.png",
+    "/tmp/wander-wall-export-phone.png"
+  ]
+}
