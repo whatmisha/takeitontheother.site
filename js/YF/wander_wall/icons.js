@@ -17,8 +17,10 @@ import Down from './vendor/lucide/icons/arrow-down.js';
 import Maximize from './vendor/lucide/icons/maximize.js';
 import Link from './vendor/lucide/icons/link.js';
 import Save from './vendor/lucide/icons/save.js';
+import Select from './vendor/lucide/icons/mouse-pointer-2.js';
+import Grip from './vendor/lucide/icons/grip-vertical.js';
 
 const icons = { back: ArrowLeft, chevron: ChevronDown, undo: Undo, redo: Redo, pin: Pin, unpin: PinOff, rotate: Rotate,
-    scale: Scaling, shuffle: Shuffle, refresh: Refresh, plus: Plus, minus: Minus, trash: Trash, up: Up, down: Down, fit: Maximize, link: Link, save: Save };
+    scale: Scaling, shuffle: Shuffle, refresh: Refresh, plus: Plus, minus: Minus, trash: Trash, up: Up, down: Down, fit: Maximize, link: Link, save: Save, select: Select, grip: Grip };
 export function icon(name, size = 18) { return createElement(icons[name], { width: size, height: size, 'aria-hidden': 'true', 'stroke-width': 1.6 }); }
 export function mountIcons() { document.querySelectorAll('[data-icon]').forEach(node => node.replaceChildren(icon(node.dataset.icon))); }

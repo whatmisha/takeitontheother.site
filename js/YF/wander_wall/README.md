@@ -6,8 +6,9 @@ dependencies are needed.
 
 ## Composition
 
-- Up to 32 Latin letters, with spaces allowed. Apply text or press Enter;
-  Generate also applies the current text. Empty text produces a shapes-only canvas.
+- Up to 32 Latin letters, with spaces allowed. Text applies automatically after
+  a 300 ms pause; Enter applies immediately. Edits made during artwork loading
+  remain pending and apply next. Empty text produces a shapes-only canvas.
 - Nine alternatives per letter: three silhouettes and three treatments per set.
 - Generate randomizes unpinned letters, forms, and layout. Letter order is
   preserved by default; Shuffle letters changes their spatial order.
@@ -21,11 +22,16 @@ dependencies are needed.
 
 ## Editing
 
-Click an element on the canvas to select it and cycle its variant. The Elements
-panel selects without changing the artwork. Drag to move; the lower-right handle
-scales and the circular handle rotates. Size, Rotation, X/Y, and layer order are
-also available in the selection panel. Manual transforms and variant changes
-automatically pin that element. The pin button makes it free again.
+In Change variant mode, click an element to select it and cycle its variant.
+Select and move mode only selects on click. Both modes support dragging to move,
+the lower-right resize handle, and the circular rotation handle. The Layers
+panel also selects without changing artwork. Its front-to-back order matches
+the canvas; drag a grip to reorder, or use the selection panel's arrow buttons.
+Size and Rotation use shared editable numeric controls alongside their sliders.
+
+Pins are explicit: moving, resizing, rotating, and changing variants preserve
+the current pin state. Each layer has a pin button, and Unpin all clears all
+pins in one undo step. The list shows Auto/Pinned states and a pinned count.
 
 Generate preserves the exact variant, transform, and layer position of pinned
 elements. Editing text retains pins only for unchanged letters at the same text
@@ -33,10 +39,16 @@ index. Reducing the form count or disabling forms removes those form instances,
 including their pins. Undo restores them.
 
 Each drag is one undo step. Escape cancels an unfinished gesture. Cmd/Ctrl+Z and
-Cmd/Ctrl+Shift+Z undo/redo, arrows nudge (Shift: 10 px), P pins, V cycles a variant,
+Cmd/Ctrl+Shift+Z undo/redo, arrows nudge (Shift: 10 px), P pins, V selects Move
+mode, C selects Change variant mode, Shift+V cycles the selected variant,
 R generates, and Space-drag pans. Use the zoom controls or Cmd/Ctrl+wheel to zoom.
 The shared framework provides the shortcut help and suppresses commands while
 typing or using dialogs.
+
+At widths up to 1100 px, Composition, Layers, and Selection share a scrollable
+bottom panel. The canvas stays visible above it, with export actions in their
+own reserved row. Selecting artwork opens Selection; the chevron collapses the
+panel to enlarge the canvas. Tabs support arrow-key navigation.
 
 Presets, share links, JSON, and history store exact instances, not just the seed.
 J reveals JSON actions. PNG renders a separate snapshot at full resolution with
@@ -63,5 +75,7 @@ determinism, reading order, bounds, pins, forms, and JSON round trips.
 
 `node wander_wall/tests/browser.mjs` runs Playwright against port 8016 by default.
 Set `WANDER_URL`, `WANDER_CHROME`, and `WANDER_NODE_MODULES` for another local
-setup. It checks editing, actual PNG downloads, responsive layouts, presets,
-import recovery, and share links. Results are in `tests/acceptance.json`.
+setup. It checks both editing modes, automatic text and in-flight drafts, exact
+numeric controls, layer reordering, explicit pins, actual PNG downloads,
+mobile panels, presets, import recovery, and share links. Results are in
+`tests/acceptance.json`.

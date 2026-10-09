@@ -3,13 +3,19 @@
   "status": "passed",
   "checks": [
     "Desktop startup: loaded assets, nonblank colorful canvas, no console errors.",
-    "Click cycles a letter variant, pins the edit, and undo/redo restores exact scenes.",
-    "Dragging is one undo step; Generate keeps the exact pinned element.",
-    "Rotation handle, scale control, and position inputs edit and pin selected elements.",
+    "Variant mode cycles without auto-pinning; undo/redo restores exact scenes.",
+    "Move mode selects artwork without changing its variant or history.",
+    "Dragging is one undo step and does not pin; explicit pins survive Generate.",
+    "Rotation handle, exact numeric size/rotation, and position inputs edit without auto-pinning.",
+    "Layer rows reflect front-to-back order; arrow and pointer reordering are undoable.",
+    "Per-row pins and Unpin all are explicit, counted, and undoable.",
+    "Text auto-applies, survives another control change, and retains edits made during asset loading.",
+    "Composition values accept exact input; reversing a pending slider edit leaves the original value.",
     "Forms on/off/count, 32 letters, shuffle, and iPhone format keep all elements inside the canvas.",
     "Real 3840 x 2160 PNG download exactly matches the artwork renderer and excludes selection handles.",
-    "Real 1290 x 2796 PNG download; responsive iPhone preview at 390 and 430 px without horizontal overflow.",
-    "JSON round trip, invalid-import recovery, saved-preset reload, and share-link round trip preserve exact compositions."
+    "Real phone PNG download; mobile tabs, numeric editing with a stationary visible canvas, and collapsible panels without overflow or dock overlap.",
+    "JSON round trip, invalid-import recovery, saved-preset reload, and share-link round trip preserve exact compositions.",
+    "Real touch selection and layer dragging work; narrow/landscape screens and a simulated keyboard viewport keep the canvas and controls visible."
   ],
   "consoleErrors": [],
   "screenshots": [

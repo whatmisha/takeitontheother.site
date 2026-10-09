@@ -2,7 +2,7 @@
 <html lang="en" data-tool-name="Wander Wall">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Wander Wall - YF Tools</title>
     <link rel="icon" href="data:,">
     <link rel="stylesheet" href="../infra/framework/css/othersite-styles.css">
@@ -13,7 +13,6 @@
 <div class="container wander-wall">
     <header class="top-links" aria-label="Tool navigation">
         <a class="top-link back-link" href="../"><span data-icon="back"></span><span>YF Tools</span></a>
-        <h1>Wander Wall</h1>
         <div class="preset-toolbar-cluster">
             <div class="preset-dropdown" id="presetDropdown">
                 <button class="preset-dropdown-toggle" id="presetDropdownToggle" type="button" aria-haspopup="listbox" aria-expanded="false" aria-controls="presetDropdownMenu"><span class="preset-dropdown-text">Presets</span><span data-icon="chevron"></span></button>
@@ -22,27 +21,32 @@
             <button id="presetToolbarShareBtn" class="preset-toolbar-share-btn" type="button" aria-label="Copy share link" data-tooltip="Copy share link"><span data-icon="link"></span></button>
             <button id="savePresetBtn" class="icon-button" type="button" style="display:none" aria-label="Save preset" data-tooltip="Save preset" data-icon="save"></button>
         </div>
+        <button id="zoomIndicator" class="zoom-indicator" type="button" data-tooltip="Fit to screen" aria-label="Fit canvas to screen">100%</button>
     </header>
     <main class="main-content">
+        <h1 class="sr-only">Wander Wall</h1>
         <section class="canvas-container" id="canvasContainer" aria-label="Wallpaper canvas" tabindex="0">
-            <canvas id="mainCanvas" role="img" aria-label="Generated letter wallpaper" title="Click an element to change its variant. Drag to move. Space-drag to pan."></canvas>
+            <canvas id="mainCanvas" role="img" aria-label="Generated letter wallpaper"></canvas>
         </section>
         <div class="stage-toolbar" role="toolbar" aria-label="Canvas tools">
             <button id="undoBtn" class="icon-button" type="button" aria-label="Undo" data-tooltip="Undo" data-icon="undo"></button>
             <button id="redoBtn" class="icon-button" type="button" aria-label="Redo" data-tooltip="Redo" data-icon="redo"></button>
             <span class="toolbar-divider"></span>
+            <div class="editor-modes" role="group" aria-label="Editing mode">
+                <button id="variantModeBtn" class="icon-button" type="button" aria-label="Change variant mode" aria-pressed="true" data-tooltip="Change variant" data-icon="refresh"></button>
+                <button id="moveModeBtn" class="icon-button" type="button" aria-label="Select and move mode" aria-pressed="false" data-tooltip="Select and move" data-icon="select"></button>
+            </div>
+            <span class="toolbar-divider"></span>
             <button id="zoomOutBtn" class="icon-button" type="button" aria-label="Zoom out" data-tooltip="Zoom out" data-icon="minus"></button>
-            <button id="zoomIndicator" class="zoom-indicator" type="button" data-tooltip="Fit to screen">100%</button>
             <button id="zoomInBtn" class="icon-button" type="button" aria-label="Zoom in" data-tooltip="Zoom in" data-icon="plus"></button>
         </div>
         <aside class="controls-panel" id="compositionPanel">
-            <div class="panel-header" id="compositionPanelHeader"><span>Composition</span><button class="collapse-icon" type="button" aria-label="Collapse composition" data-icon="chevron"></button></div>
+            <div class="panel-header" id="compositionPanelHeader"><span>Wander Wall</span><button class="collapse-icon" type="button" aria-label="Collapse composition" data-icon="chevron"></button></div>
             <div class="panel-content">
-                <fieldset id="compositionFieldset">
                     <div class="text-heading"><label for="textInput">Text</label><output id="letterCount" for="textInput">6 / 32</output></div>
                     <textarea id="textInput" class="text-input" rows="2" maxlength="96" spellcheck="false" autocapitalize="characters" aria-describedby="textError">WANDER</textarea>
                     <p id="textError" class="input-error" role="status"></p>
-                    <button id="applyTextBtn" class="panel-action apply-text" type="button">Apply text</button>
+                <fieldset id="compositionFieldset">
                     <section class="control-field-group" aria-labelledby="canvasHeading">
                         <h2 id="canvasHeading" class="control-field-heading">Canvas</h2>
                         <div class="segmented-control" role="radiogroup" aria-label="Canvas format">
@@ -53,35 +57,45 @@
                     </section>
                     <section class="control-field-group" aria-labelledby="layoutHeading">
                         <h2 id="layoutHeading" class="control-field-heading">Layout</h2>
-                        <div class="control-group"><label for="fillSlider"><span>Fill</span><output id="fillValue" for="fillSlider">100%</output></label><input id="fillSlider" type="range" min="70" max="125" step="1" value="100"></div>
+                        <div class="control-group"><label for="fillSlider"><span>Fill <span class="unit">%</span></span><input id="fillValue" class="value-display" value="100" inputmode="decimal" aria-label="Fill value"></label><input id="fillSlider" type="range" min="70" max="125" step="1" value="100"></div>
                         <label class="toggle-label"><span class="toggle-switch"><input id="shuffleToggle" type="checkbox"><span class="toggle-slider"></span></span><span>Shuffle letters</span></label>
                     </section>
                     <section class="control-field-group" aria-labelledby="formsHeading">
                         <h2 id="formsHeading" class="control-field-heading">Extra forms</h2>
                         <label class="toggle-label"><span class="toggle-switch"><input id="formsToggle" type="checkbox" checked><span class="toggle-slider"></span></span><span>Include forms</span></label>
-                        <div class="control-group" id="formsCountGroup"><label for="formCountSlider"><span>Count</span><output id="formCountValue" for="formCountSlider">4</output></label><input id="formCountSlider" type="range" min="0" max="16" step="1" value="4"></div>
+                        <div class="control-group" id="formsCountGroup"><label for="formCountSlider"><span>Count</span><input id="formCountValue" class="value-display" value="4" inputmode="numeric" aria-label="Form count value"></label><input id="formCountSlider" type="range" min="0" max="16" step="1" value="4"></div>
                     </section>
-                    <details class="seed-details"><summary>Seed</summary><input id="seedInput" class="text-input" type="number" min="0" max="4294967295" step="1" value="20261009" aria-label="Random seed"></details>
+                    <details class="ui-disclosure seed-details"><summary>Seed<span class="ui-disclosure__chevron" data-icon="chevron"></span></summary><input id="seedInput" class="text-input" type="number" min="0" max="4294967295" step="1" value="20261009" aria-label="Random seed"></details>
                 </fieldset>
             </div>
         </aside>
         <aside class="controls-panel" id="elementsPanel">
-            <div class="panel-header" id="elementsPanelHeader"><span>Elements <span class="meta" id="elementCount">10</span></span><button class="collapse-icon" type="button" aria-label="Collapse elements" data-icon="chevron"></button></div>
+            <div class="panel-header" id="elementsPanelHeader"><span>Layers <span class="meta" id="elementCount">10</span></span><button class="collapse-icon" type="button" aria-label="Collapse layers" data-icon="chevron"></button></div>
             <div class="panel-content">
-                <div class="element-list" id="elementList" role="group" aria-label="Elements"></div>
-                <section id="selectionControls" hidden>
-                    <div class="selection-heading"><span id="selectionName"></span><button id="pinBtn" class="icon-button" type="button" aria-label="Pin element" aria-pressed="false" data-icon="pin"></button></div>
+                <div class="layers-heading"><span class="meta" id="pinCount">0 pinned</span><button id="unpinAllBtn" class="ui-icon-button" type="button" aria-label="Unpin all layers" data-tooltip="Unpin all layers" data-icon="unpin" disabled></button></div>
+                <div class="layer-list" id="elementList" role="list" aria-label="Layers, front to back"></div>
+            </div>
+        </aside>
+        <aside class="controls-panel" id="selectionPanel" hidden>
+            <div class="panel-header" id="selectionPanelHeader"><span>Selection</span><button class="collapse-icon" type="button" aria-label="Collapse selection" data-icon="chevron"></button></div>
+            <div class="panel-content" id="selectionControls">
+                    <div class="selection-heading"><span id="selectionName"></span><button id="pinBtn" class="ui-icon-button" type="button" aria-label="Pin element" aria-pressed="false" data-icon="pin"></button></div>
                     <fieldset id="selectionFieldset">
-                        <div class="variant-row"><span class="meta" id="variantNumber"></span><button id="variantBtn" class="icon-button" type="button" aria-label="Next variant" data-tooltip="Next variant" data-icon="refresh"></button></div>
-                        <div class="control-group"><label for="scaleSlider"><span>Size</span><output id="scaleValue" for="scaleSlider">50%</output></label><input id="scaleSlider" type="range" min="3" max="300" step="1" value="50"></div>
-                        <div class="control-group"><label for="rotationSlider"><span>Rotation</span><output id="rotationValue" for="rotationSlider">0&deg;</output></label><input id="rotationSlider" type="range" min="-180" max="180" step="1" value="0"></div>
+                        <div class="variant-row"><span class="meta" id="variantNumber"></span><button id="variantBtn" class="ui-icon-button" type="button" aria-label="Next variant" data-tooltip="Next variant" data-icon="refresh"></button></div>
+                        <div class="control-group"><label for="scaleSlider"><span>Size <span class="unit">%</span></span><input id="scaleValue" class="value-display" value="50" inputmode="decimal" aria-label="Size value"></label><input id="scaleSlider" type="range" min="2.5" max="300" step=".1" value="50"></div>
+                        <div class="control-group"><label for="rotationSlider"><span>Rotation <span class="unit">&deg;</span></span><input id="rotationValue" class="value-display" value="0" inputmode="decimal" aria-label="Rotation value"></label><input id="rotationSlider" type="range" min="-180" max="180" step=".1" value="0"></div>
                         <div class="position-row"><label for="xInput">X, %<input id="xInput" class="text-input" type="number" min="0" max="100" step=".1"></label><label for="yInput">Y, %<input id="yInput" class="text-input" type="number" min="0" max="100" step=".1"></label></div>
-                        <div class="layer-actions"><button id="backBtn" class="icon-button" type="button" aria-label="Send backward" data-tooltip="Send backward" data-icon="down"></button><button id="frontBtn" class="icon-button" type="button" aria-label="Bring forward" data-tooltip="Bring forward" data-icon="up"></button></div>
+                        <div class="layer-actions"><button id="backBtn" class="ui-icon-button" type="button" aria-label="Send backward" data-tooltip="Send backward" data-icon="down"></button><button id="frontBtn" class="ui-icon-button" type="button" aria-label="Bring forward" data-tooltip="Bring forward" data-icon="up"></button></div>
                     </fieldset>
-                </section>
             </div>
         </aside>
     </main>
+    <nav class="mobile-panel-tabs" role="tablist" aria-label="Editor panels">
+        <button id="compositionTab" type="button" role="tab" aria-controls="compositionPanel" aria-selected="true" data-panel="composition">Composition</button>
+        <button id="elementsTab" type="button" role="tab" aria-controls="elementsPanel" aria-selected="false" data-panel="elements" tabindex="-1">Layers</button>
+        <button id="selectionTab" type="button" role="tab" aria-controls="selectionPanel" aria-selected="false" data-panel="selection" tabindex="-1" disabled>Selection</button>
+        <button id="sheetToggleBtn" type="button" aria-label="Collapse panels" aria-expanded="true" data-tooltip="Collapse panels" data-icon="chevron"></button>
+    </nav>
     <nav class="bottom-buttons action-dock" role="toolbar" aria-label="Tool actions">
         <div class="action-dock__slot action-dock__slot--utility">
             <button id="generateBtn" class="btn-fixed btn-fixed--muted" type="button" disabled>Generate</button>
