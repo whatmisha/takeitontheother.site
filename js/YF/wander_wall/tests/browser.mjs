@@ -205,6 +205,78 @@ try {
     checks.push('Real phone PNG download; mobile tabs, numeric editing with a stationary visible canvas, and collapsible panels without overflow or dock overlap.');
 
     await page.setViewportSize({ width: 1440, height: 900 });
+    await page.locator('#jsonFileInput').setInputFiles({ name: 'visibility.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify({ type: 'wander-wall', version: 1, settings: initial })) }); await idle();
+    await page.locator('[data-item="letter-5"] .layer-select').click();
+    const beforeHide = await snapshot(), hiddenPoint = await visiblePoint('letter-5');
+    await page.keyboard.press('Delete');
+    assert.equal((await snapshot()).items.find(item => item.id === 'letter-5').visible, false);
+    assert.equal((await snapshot()).text, beforeHide.text);
+    assert.equal(await page.locator('[data-item="letter-5"] .ui-meta').textContent(), 'Hidden');
+    assert.equal(await page.locator('#visibilityBtn').getAttribute('aria-label'), 'Show layer');
+    const hiddenExport = await page.evaluate(async () => {
+        const scene = wall.app.getSnapshot(), digest = async snapshot => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', await (await wall.renderPNG(snapshot, wall.assets, wall.geometry)).arrayBuffer()))).join(',');
+        return [await digest(scene), await digest({ ...scene, items: scene.items.filter(item => item.visible !== false) })];
+    });
+    assert.equal(hiddenExport[0], hiddenExport[1]);
+    await page.mouse.click(hiddenPoint.x, hiddenPoint.y);
+    assert.notEqual(await page.evaluate(() => wall.editor.selected), 'letter-5');
+    await page.locator('#undoBtn').click(); await idle(); assert.deepEqual(await snapshot(), beforeHide);
+    await page.locator('#redoBtn').click(); await idle();
+    await page.locator('#generateBtn').click(); await idle();
+    assert.equal((await snapshot()).items.find(item => item.id === 'letter-5').visible, false);
+    await page.locator('#showAllBtn').click(); assert.ok((await snapshot()).items.every(item => item.visible));
+    await page.locator('[data-item="form-0"] [data-action="visibility"]').click();
+    assert.equal((await snapshot()).items.find(item => item.id === 'form-0').visible, false);
+    await page.locator('#showAllBtn').click();
+    checks.push('Delete and eye buttons hide layers without editing text; hidden layers survive Generate, ignore canvas clicks, and are absent from PNG. Show all and undo restore them.');
+
+    await page.locator('[data-item="letter-1"] .layer-select').click();
+    await page.evaluate(() => {
+        const load = wall.assets.load;
+        wall.assets.load = async function(id) { this.load = load; await new Promise(resolve => setTimeout(resolve, 500)); return load.call(this, id); };
+        const slider = document.getElementById('rotationRangeSlider');
+        slider.value = '80'; slider.dispatchEvent(new Event('input', { bubbles: true }));
+        document.getElementById('variantBtn').click();
+    });
+    await idle(); assert.equal((await snapshot()).rotationRange, 80);
+    await page.locator('#rotationRangeValue').fill('0'); await page.locator('#rotationRangeValue').press('Enter'); await idle();
+    assert.ok((await snapshot()).items.every(item => item.rotation === 0));
+    await page.locator('[data-item="letter-0"] .layer-select').click();
+    await page.locator('#rotationValue').fill('43'); await page.locator('#rotationValue').press('Enter');
+    await page.locator('#pinBtn').click();
+    await page.locator('#rotationRangeValue').fill('65'); await page.locator('#rotationRangeValue').press('Enter'); await idle();
+    await page.locator('#generateBtn').click(); await idle();
+    assert.equal((await snapshot()).items.find(item => item.id === 'letter-0').rotation, 43);
+    assert.ok((await snapshot()).items.filter(item => !item.pinned).every(item => Math.abs(item.rotation) <= 65));
+    await page.locator('#unpinAllBtn').click();
+    checks.push('Rotation range survives overlapping variant loads, zero makes free layers upright, and pinned angles survive regeneration.');
+
+    await page.locator('#overflowValue').fill('25'); await page.locator('#overflowValue').press('Enter'); await idle();
+    await page.locator('[data-item="letter-5"] .layer-select').click();
+    await page.locator('#xInput').fill('0'); await page.locator('#xInput').press('Tab');
+    const leftOverflow = () => page.evaluate(() => {
+        const scene = wall.app.settings, item = scene.items.find(item => item.id === 'letter-5'), box = wall.geometry.box(item, scene);
+        return (box.width / 2 - item.x * scene.width) / box.width;
+    });
+    assert.ok(await leftOverflow() > 0); assert.ok(await leftOverflow() <= .25);
+    await page.locator('#pinBtn').click();
+    await page.locator('#overflowValue').fill('0'); await page.locator('#overflowValue').press('Enter'); await idle();
+    assert.ok(await leftOverflow() <= 0);
+    assert.equal((await snapshot()).items.find(item => item.id === 'letter-5').pinned, true);
+    await page.locator('#overflowValue').fill('20'); await page.locator('#overflowValue').press('Enter'); await idle();
+    await page.locator('[data-item="letter-0"] [data-action="visibility"]').click();
+    await page.evaluate(() => { wall.editor.select(null); wall.app.renderNow(); });
+    const outsideAlpha = await page.evaluate(() => {
+        const t = wall.app.target;
+        return t.canvas.getContext('2d').getImageData(Math.floor(t.panX - 3), Math.floor(t.panY + 100 * t.zoom), 1, 1).data[3];
+    });
+    assert.equal(outsideAlpha, 0);
+    await page.screenshot({ path: '/tmp/wander-wall-layout-controls.png' });
+    const newSettings = await snapshot();
+    await page.locator('#jsonFileInput').setInputFiles({ name: 'controls.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify({ type: 'wander-wall', version: 1, settings: newSettings })) }); await idle();
+    assert.deepEqual(await snapshot(), newSettings);
+    checks.push('Overflow allows bounded manual clipping, tightening it fits pinned layers back inside, canvas clipping stays clean, and JSON retains all new settings.');
+
     const beforeInvalid = await snapshot();
     await page.locator('#jsonFileInput').setInputFiles({ name: 'invalid.json', mimeType: 'application/json', buffer: Buffer.from('{"type":"other","version":1}') });
     await page.waitForFunction(() => document.getElementById('operationStatus').textContent.includes('Wander Wall'));
@@ -264,6 +336,10 @@ try {
     await touch.locator('#compositionTab').tap(); await touch.locator('label[for="formatPhone"]').tap();
     await touch.waitForFunction(() => !document.getElementById('exportPngBtn').disabled);
     await touch.locator('#elementsTab').tap();
+    await touch.locator('#elementList [data-action="visibility"]').first().tap();
+    assert.equal(await touch.locator('#elementList .is-hidden').count(), 1);
+    await touch.locator('#showAllBtn').tap();
+    assert.equal(await touch.locator('#elementList .is-hidden').count(), 0);
     await touch.screenshot({ path: '/tmp/wander-wall-mobile-layers.png' });
     await touch.locator('#compositionTab').tap();
     await touch.evaluate(() => {

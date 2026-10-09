@@ -15,6 +15,10 @@ const status = message => { byId('operationStatus').textContent = message; };
 const newSeed = () => crypto.getRandomValues(new Uint32Array(1))[0];
 const on = (node, type, callback, options = {}) => node.addEventListener(type, callback, { ...options, signal: lifecycle.signal });
 const hasPending = () => draftText !== null || Object.keys(pendingControls).length > 0;
+const layoutControls = {
+    fill: { min: 70, max: 125, label: 'Fill' }, formCount: { min: 0, max: 16, label: 'Form count' },
+    rotationRange: { min: 0, max: 180, label: 'Rotation range' }, overflow: { min: 0, max: 50, label: 'Edge overflow' }
+};
 
 function refreshAvailability() {
     ui?.refresh();
@@ -117,7 +121,13 @@ async function nextVariant(id) {
         change({ ...app.getSnapshot(), items: app.settings.items.map(entry => entry.id === id ? next : entry) }, 'Change variant');
         status('');
     } catch (error) { status(error.message); }
-    finally { setBusy(false); if (draftText !== null) textTimer = setTimeout(applyText, 250); }
+    finally {
+        setBusy(false);
+        if (Object.keys(pendingControls).length) {
+            clearTimeout(layoutTimer);
+            layoutTimer = setTimeout(() => generated({}, { reroll: false, label: 'Layout' }), 180);
+        } else if (draftText !== null) textTimer = setTimeout(applyText, 250);
+    }
 }
 
 function ensureArtwork(tool) {
@@ -142,7 +152,7 @@ function sync(tool) {
     for (const radio of document.querySelectorAll('input[name="format"]')) radio.checked = radio.value === s.format;
     document.querySelector('.wander-wall').dataset.format = s.format;
     byId('canvasDimensions').textContent = s.width + ' \u00d7 ' + s.height;
-    for (const key of ['fill', 'formCount']) {
+    for (const key of Object.keys(layoutControls)) {
         if (!(key in pendingControls) && document.activeElement !== byId(key + 'Value')) sliders?.setDisplayValue(key + 'Slider', s[key]);
     }
     byId('shuffleToggle').checked = s.shuffle; byId('formsToggle').checked = s.formsEnabled;
@@ -179,14 +189,14 @@ function bind(tool) {
     on(byId('textInput'), 'keydown', event => { if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) { event.preventDefault(); applyText(); } });
     for (const radio of document.querySelectorAll('input[name="format"]')) on(radio, 'change', () => generated({ format: radio.value }, { reroll: false, format: true, label: 'Canvas format' }));
     sliders = new SliderController(tool.settingsStore);
-    for (const key of ['fill', 'formCount']) {
-        sliders.initSlider(key + 'Slider', { valueId: key + 'Value', min: key === 'fill' ? 70 : 0, max: key === 'fill' ? 125 : 16, baseStep: 1, decimals: 0,
+    for (const [key, config] of Object.entries(layoutControls)) {
+        sliders.initSlider(key + 'Slider', { valueId: key + 'Value', min: config.min, max: config.max, baseStep: 1, decimals: 0,
             onUpdate: value => {
                 if (busy) return;
                 if (Math.round(value) === tool.settings[key]) delete pendingControls[key];
                 else pendingControls[key] = Math.round(value);
                 clearTimeout(layoutTimer); refreshAvailability();
-                if (Object.keys(pendingControls).length) layoutTimer = setTimeout(() => generated({}, { reroll: false, label: key === 'fill' ? 'Fill' : 'Form count' }), 180);
+                if (Object.keys(pendingControls).length) layoutTimer = setTimeout(() => generated({}, { reroll: false, label: config.label }), 180);
             }
         });
     }
@@ -246,6 +256,8 @@ function bind(tool) {
             { id: 'undo', label: 'Undo', kind: 'command', group: 'keyboard', shortcut: 'mod+z', enabled: () => !busy, run: () => undoRedo() },
             { id: 'redo', label: 'Redo', kind: 'command', group: 'keyboard', shortcut: 'mod+shift+z', enabled: () => !busy, run: () => undoRedo(true) },
             { id: 'pin', label: 'Pin element', kind: 'command', group: 'keyboard', shortcut: 'p', enabled: () => !busy && !!editor.item(), run: () => editor.pin() },
+            ...['delete', 'backspace'].map(shortcut => ({ id: 'hide-' + shortcut, label: 'Hide selected layer', kind: 'command', group: 'keyboard', shortcut,
+                enabled: () => !busy && !!editor.item() && editor.item().visible !== false, run: () => editor.visibility(editor.selected, false) })),
             { id: 'move-mode', label: 'Select and move', kind: 'command', group: 'keyboard', shortcut: 'v', run: () => editor.setMode('move') },
             { id: 'variant-mode', label: 'Change variant mode', kind: 'command', group: 'keyboard', shortcut: 'c', run: () => editor.setMode('variant') },
             { id: 'variant', label: 'Next variant', kind: 'command', group: 'keyboard', shortcut: 'shift+v', enabled: () => !busy && !!editor.item(), run: () => nextVariant(editor.selected) },

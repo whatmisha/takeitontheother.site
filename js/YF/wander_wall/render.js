@@ -6,6 +6,7 @@ export function drawArtwork(ctx, scene, assets, geometry, items = scene.items) {
     ctx.fillStyle = gradient; ctx.fillRect(0, 0, scene.width, scene.height);
     ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
     for (const item of items) {
+        if (item.visible === false) continue;
         const image = assets.get(item.asset);
         if (!image) continue;
         const [x, y, width, height] = geometry.metrics[item.asset].bounds;

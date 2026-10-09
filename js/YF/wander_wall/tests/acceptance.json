@@ -14,6 +14,9 @@
     "Forms on/off/count, 32 letters, shuffle, and iPhone format keep all elements inside the canvas.",
     "Real 3840 x 2160 PNG download exactly matches the artwork renderer and excludes selection handles.",
     "Real phone PNG download; mobile tabs, numeric editing with a stationary visible canvas, and collapsible panels without overflow or dock overlap.",
+    "Delete and eye buttons hide layers without editing text; hidden layers survive Generate, ignore canvas clicks, and are absent from PNG. Show all and undo restore them.",
+    "Rotation range survives overlapping variant loads, zero makes free layers upright, and pinned angles survive regeneration.",
+    "Overflow allows bounded manual clipping, tightening it fits pinned layers back inside, canvas clipping stays clean, and JSON retains all new settings.",
     "JSON round trip, invalid-import recovery, saved-preset reload, and share-link round trip preserve exact compositions.",
     "Real touch selection and layer dragging work; narrow/landscape screens and a simulated keyboard viewport keep the canvas and controls visible."
   ],

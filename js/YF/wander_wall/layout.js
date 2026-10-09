@@ -22,16 +22,20 @@ export class Silhouettes {
     }
 
     constrain(item, scene) {
-        const result = { ...item }, margin = Math.min(scene.width, scene.height) * .008;
+        const result = { ...item }, fraction = clamp(scene.overflow ?? 0, 0, 50) / 100;
+        const retained = 1 - 2 * fraction, margin = Math.min(scene.width, scene.height) * .008 * retained;
         let box = this.box(result, scene);
-        result.scale *= Math.min(1, (scene.width - margin * 2) / box.width, (scene.height - margin * 2) / box.height);
+        // Overflow is a fraction of the rotated bounds on each edge, not of the canvas.
+        if (retained > 0) result.scale *= Math.min(1, (scene.width - margin * 2) / (box.width * retained), (scene.height - margin * 2) / (box.height * retained));
         box = this.box(result, scene);
-        result.x = clamp(result.x, (box.width / 2 + margin) / scene.width, 1 - (box.width / 2 + margin) / scene.width);
-        result.y = clamp(result.y, (box.height / 2 + margin) / scene.height, 1 - (box.height / 2 + margin) / scene.height);
+        const insetX = box.width * (.5 - fraction) + margin, insetY = box.height * (.5 - fraction) + margin;
+        result.x = clamp(result.x, insetX / scene.width, 1 - insetX / scene.width);
+        result.y = clamp(result.y, insetY / scene.height, 1 - insetY / scene.height);
         return result;
     }
 
     contains(item, scene, x, y) {
+        if (item.visible === false) return false;
         const size = this.dimensions(item, scene), angle = radians(item.rotation);
         const dx = x - item.x * scene.width, dy = y - item.y * scene.height;
         const u = (dx * Math.cos(angle) + dy * Math.sin(angle)) / size.width + .5;
@@ -120,8 +124,12 @@ export function generate(settings, geometry, { seed = settings.seed, reroll = tr
     const old = new Map(scene.items.map(item => [item.id, item]));
     const letters = Array.from(lettersOf(scene.text), (letter, index) => {
         const id = 'letter-' + index, previous = old.get(id);
-        if (previous?.letter === letter && (previous.pinned || !reroll)) return { ...previous };
-        return { id, kind: 'letter', letter, index, asset: assetRandom.pick(alternatives(letter)), rotation: random.float(-15, 15), x: .5, y: .5, scale: .5, pinned: false };
+        if (previous?.letter === letter) {
+            if (previous.visible === false) return { ...previous };
+            if (previous.pinned) return geometry.constrain(previous, scene);
+            if (!reroll) return { ...previous, rotation: random.float(-scene.rotationRange, scene.rotationRange) };
+        }
+        return { id, kind: 'letter', letter, index, asset: assetRandom.pick(alternatives(letter)), rotation: random.float(-scene.rotationRange, scene.rotationRange), x: .5, y: .5, scale: .5, pinned: false, visible: true };
     });
     if (scene.shuffle) for (let i = letters.length - 1; i > 0; i--) {
         const j = random.int(0, i); [letters[i], letters[j]] = [letters[j], letters[i]];
@@ -133,12 +141,14 @@ export function generate(settings, geometry, { seed = settings.seed, reroll = tr
     }
     const forms = Array.from({ length: count }, (_, index) => {
         const id = 'form-' + index, previous = old.get(id);
-        if (previous && (previous.pinned || !reroll)) return { ...previous };
+        if (previous?.visible === false) return { ...previous };
+        if (previous?.pinned) return geometry.constrain(previous, scene);
+        if (previous && !reroll) return { ...previous };
         return { id, kind: 'form', letter: '', index, asset: formPool[index % formPool.length].id,
-            rotation: random.float(-32, 32), x: .5, y: .5, scale: .4, pinned: false };
+            rotation: random.float(-scene.rotationRange, scene.rotationRange), x: .5, y: .5, scale: .4, pinned: false, visible: true };
     });
-    const field = new Coverage(scene, geometry), placed = arrangeLetters(letters, scene, geometry, random);
-    for (const form of forms.filter(item => item.pinned)) field.add(field.cells(form), 1);
+    const field = new Coverage(scene, geometry), placed = arrangeLetters(letters.filter(item => item.visible !== false), scene, geometry, random);
+    for (const form of forms.filter(item => item.pinned && item.visible !== false)) field.add(field.cells(form), 1);
     for (const entry of placed) { entry.cells = field.cells(entry.item); field.add(entry.cells, 1); }
     for (let pass = 0; pass < 7; pass++) for (const entry of placed) {
         if (entry.item.pinned) continue;
@@ -150,7 +160,7 @@ export function generate(settings, geometry, { seed = settings.seed, reroll = tr
                 x: clamp(entry.item.x + random.float(-.095, .095) * entry.anchor.dx, entry.anchor.x - .22 * entry.anchor.dx, entry.anchor.x + .22 * entry.anchor.dx),
                 y: clamp(entry.item.y + random.float(-.10, .10) * entry.anchor.dy, entry.anchor.y - .2 * entry.anchor.dy, entry.anchor.y + .2 * entry.anchor.dy),
                 scale: Math.min(entry.maxScale, entry.item.scale * random.float(.96, 1.08)),
-                rotation: clamp(entry.item.rotation + random.float(-4, 4), -24, 24) }, scene);
+                rotation: clamp(entry.item.rotation + random.float(-scene.rotationRange / 6, scene.rotationRange / 6), -scene.rotationRange, scene.rotationRange) }, scene);
             const nextCells = field.cells(candidate), nextScore = field.score(nextCells) - penalty(candidate);
             if (nextScore > score) { best = candidate; cells = nextCells; score = nextScore; }
         }
@@ -158,17 +168,17 @@ export function generate(settings, geometry, { seed = settings.seed, reroll = tr
     }
     const meanScale = placed.length ? placed.reduce((sum, entry) => sum + entry.item.scale, 0) / placed.length : .7;
     const packedForms = forms.map(form => {
-        if (form.pinned) return form;
+        if (form.pinned || form.visible === false) return form;
         let best, bestCells, bestScore = -Infinity;
         for (let trial = 0; trial < 320; trial++) {
             const candidate = geometry.constrain({ ...form, x: random.next(), y: random.next(),
-                rotation: random.float(-45, 45), scale: meanScale * random.float(.35, 1.02) * scene.fill / 100 }, scene);
+                rotation: random.float(-scene.rotationRange, scene.rotationRange), scale: meanScale * random.float(.35, 1.02) * scene.fill / 100 }, scene);
             const cells = field.cells(candidate), score = field.score(cells, 2.5);
             if (score > bestScore) { best = candidate; bestCells = cells; bestScore = score; }
         }
         field.add(bestCells, 1); return best;
     });
-    const generated = [...packedForms, ...placed.map(entry => entry.item)];
+    const generated = [...packedForms, ...placed.map(entry => entry.item), ...letters.filter(item => item.visible === false)];
     const byId = new Map(generated.map(item => [item.id, item]));
     const previousOrder = scene.items.flatMap(item => byId.has(item.id) ? [byId.get(item.id)] : []);
     const previousIds = new Set(previousOrder.map(item => item.id));

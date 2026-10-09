@@ -39,7 +39,7 @@ const packageRoot = process.env.WANDER_NODE_MODULES
     ? resolve(process.env.WANDER_NODE_MODULES, 'lucide') : dirname(require.resolve('lucide/package.json'));
 const vendor = resolve(root, 'vendor/lucide');
 await mkdir(resolve(vendor, 'icons'), { recursive: true });
-const icons = ['arrow-left', 'chevron-down', 'undo-2', 'redo-2', 'pin', 'pin-off', 'rotate-cw', 'scaling', 'shuffle', 'refresh-cw', 'plus', 'minus', 'trash-2', 'arrow-up', 'arrow-down', 'maximize', 'link', 'save', 'mouse-pointer-2', 'check', 'grip-vertical'];
+const icons = ['arrow-left', 'chevron-down', 'undo-2', 'redo-2', 'pin', 'pin-off', 'rotate-cw', 'scaling', 'shuffle', 'refresh-cw', 'plus', 'minus', 'trash-2', 'arrow-up', 'arrow-down', 'maximize', 'link', 'save', 'mouse-pointer-2', 'check', 'grip-vertical', 'eye', 'eye-off'];
 for (const name of ['createElement', 'defaultAttributes', ...icons.map(name => 'icons/' + name)]) {
     await copyFile(resolve(packageRoot, 'dist/esm', name + '.js'), resolve(vendor, name + '.js'));
 }

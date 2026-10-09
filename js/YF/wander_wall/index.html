@@ -58,6 +58,8 @@
                     <section class="control-field-group" aria-labelledby="layoutHeading">
                         <h2 id="layoutHeading" class="control-field-heading">Layout</h2>
                         <div class="control-group"><label for="fillSlider"><span>Fill <span class="unit">%</span></span><input id="fillValue" class="value-display" value="100" inputmode="decimal" aria-label="Fill value"></label><input id="fillSlider" type="range" min="70" max="125" step="1" value="100"></div>
+                        <div class="control-group"><label for="rotationRangeSlider" data-tooltip="Random rotation of unpinned layers, from minus to plus this angle"><span>Rotation range <span class="unit">&plusmn;&deg;</span></span><input id="rotationRangeValue" class="value-display" value="24" inputmode="decimal" aria-label="Random rotation range"></label><input id="rotationRangeSlider" type="range" min="0" max="180" step="1" value="24"></div>
+                        <div class="control-group"><label for="overflowSlider" data-tooltip="Maximum portion of each layer allowed beyond each canvas edge"><span>Edge overflow <span class="unit">%</span></span><input id="overflowValue" class="value-display" value="0" inputmode="decimal" aria-label="Edge overflow value"></label><input id="overflowSlider" type="range" min="0" max="50" step="1" value="0"></div>
                         <label class="toggle-label"><span class="toggle-switch"><input id="shuffleToggle" type="checkbox"><span class="toggle-slider"></span></span><span>Shuffle letters</span></label>
                     </section>
                     <section class="control-field-group" aria-labelledby="formsHeading">
@@ -72,14 +74,14 @@
         <aside class="controls-panel" id="elementsPanel">
             <div class="panel-header" id="elementsPanelHeader"><span>Layers <span class="meta" id="elementCount">10</span></span><button class="collapse-icon" type="button" aria-label="Collapse layers" data-icon="chevron"></button></div>
             <div class="panel-content">
-                <div class="layers-heading"><span class="meta" id="pinCount">0 pinned</span><button id="unpinAllBtn" class="ui-icon-button" type="button" aria-label="Unpin all layers" data-tooltip="Unpin all layers" data-icon="unpin" disabled></button></div>
+                <div class="layers-heading"><span class="meta" id="pinCount">0 pinned</span><div class="layer-commands"><button id="showAllBtn" class="ui-icon-button" type="button" aria-label="Show all layers" data-tooltip="Show all layers" data-icon="eye" disabled></button><button id="unpinAllBtn" class="ui-icon-button" type="button" aria-label="Unpin all layers" data-tooltip="Unpin all layers" data-icon="unpin" disabled></button></div></div>
                 <div class="layer-list" id="elementList" role="list" aria-label="Layers, front to back"></div>
             </div>
         </aside>
         <aside class="controls-panel" id="selectionPanel" hidden>
             <div class="panel-header" id="selectionPanelHeader"><span>Selection</span><button class="collapse-icon" type="button" aria-label="Collapse selection" data-icon="chevron"></button></div>
             <div class="panel-content" id="selectionControls">
-                    <div class="selection-heading"><span id="selectionName"></span><button id="pinBtn" class="ui-icon-button" type="button" aria-label="Pin element" aria-pressed="false" data-icon="pin"></button></div>
+                    <div class="selection-heading"><span id="selectionName"></span><div class="layer-commands"><button id="visibilityBtn" class="ui-icon-button" type="button" aria-label="Hide layer" aria-pressed="true" data-icon="eye"></button><button id="pinBtn" class="ui-icon-button" type="button" aria-label="Pin element" aria-pressed="false" data-icon="pin"></button></div></div>
                     <fieldset id="selectionFieldset">
                         <div class="variant-row"><span class="meta" id="variantNumber"></span><button id="variantBtn" class="ui-icon-button" type="button" aria-label="Next variant" data-tooltip="Next variant" data-icon="refresh"></button></div>
                         <div class="control-group"><label for="scaleSlider"><span>Size <span class="unit">%</span></span><input id="scaleValue" class="value-display" value="50" inputmode="decimal" aria-label="Size value"></label><input id="scaleSlider" type="range" min="2.5" max="300" step=".1" value="50"></div>

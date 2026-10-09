@@ -27,6 +27,7 @@ export class Editor {
             const button = event.target.closest('button'), row = button?.closest('[data-item]');
             if (!row) return;
             if (button.dataset.action === 'pin') this.pin(row.dataset.item);
+            else if (button.dataset.action === 'visibility') this.visibility(row.dataset.item);
             else if (button.dataset.action === 'select') this.select(row.dataset.item);
         });
         on(list, 'pointerdown', event => this.startReorder(event));
@@ -38,6 +39,8 @@ export class Editor {
         on(document.getElementById('moveModeBtn'), 'click', () => this.setMode('move'));
         on(document.getElementById('pinBtn'), 'click', () => this.pin());
         on(document.getElementById('unpinAllBtn'), 'click', () => this.unpinAll());
+        on(document.getElementById('showAllBtn'), 'click', () => this.showAll());
+        on(document.getElementById('visibilityBtn'), 'click', () => this.visibility());
         on(document.getElementById('variantBtn'), 'click', () => this.nextVariant(this.selected));
         on(document.getElementById('backBtn'), 'click', () => this.reorder(-1));
         on(document.getElementById('frontBtn'), 'click', () => this.reorder(1));
@@ -77,11 +80,11 @@ export class Editor {
         if (event.button !== 0 || this.space || this.isBusy() || this.gesture) return;
         const point = this.coordinates(event), scene = this.app.settings, selected = this.item();
         let mode = 'move', hit;
-        if (selected) {
+        if (selected && selected.visible !== false) {
             const handles = this.handles(selected), radius = (event.pointerType === 'touch' ? 20 : 12) / this.app.target.zoom;
             for (const [name, handle] of Object.entries(handles)) if (Math.hypot(point.x - handle.x, point.y - handle.y) < radius) { mode = name; hit = selected; }
         }
-        if (!hit) hit = [...scene.items].reverse().find(item => this.geometry.contains(item, scene, point.x, point.y));
+        if (!hit && point.x >= 0 && point.y >= 0 && point.x <= scene.width && point.y <= scene.height) hit = [...scene.items].reverse().find(item => this.geometry.contains(item, scene, point.x, point.y));
         if (!hit) { this.select(null); return; }
         event.preventDefault(); this.container.focus({ preventScroll: true });
         this.select(hit.id);
@@ -139,6 +142,22 @@ export class Editor {
     unpinAll() {
         if (this.isBusy()) return;
         this.change({ ...this.app.getSnapshot(), items: this.app.settings.items.map(item => ({ ...item, pinned: false })) }, 'Unpin all layers');
+    }
+
+    visibility(id = this.selected, visible) {
+        const item = this.app.settings.items.find(entry => entry.id === id);
+        if (!item || this.isBusy()) return;
+        this.cancel();
+        const next = { ...item, visible: visible ?? item.visible === false };
+        const constrained = next.visible ? this.geometry.constrain(next, this.app.settings) : next;
+        this.change({ ...this.app.getSnapshot(), items: this.app.settings.items.map(old => old.id === id ? constrained : old) }, next.visible ? 'Show layer' : 'Hide layer');
+    }
+
+    showAll() {
+        if (this.isBusy()) return;
+        this.cancel();
+        const items = this.app.settings.items.map(item => item.visible === false ? this.geometry.constrain({ ...item, visible: true }, this.app.settings) : item);
+        this.change({ ...this.app.getSnapshot(), items }, 'Show all layers');
     }
 
     reorder(delta) {
@@ -215,7 +234,7 @@ export class Editor {
         const scene = this.app.settings, item = this.item();
         if (!item) this.selected = null;
         const list = document.getElementById('elementList');
-        const signature = scene.items.map(entry => `${entry.id}:${entry.asset}:${entry.pinned}`).join('|');
+        const signature = scene.items.map(entry => `${entry.id}:${entry.asset}:${entry.pinned}:${entry.visible}`).join('|');
         if (signature !== this.listSignature) {
             this.listSignature = signature;
             const scroll = list.scrollTop, focused = document.activeElement, focusId = focused?.closest('[data-item]')?.dataset.item, focusAction = focused?.dataset.action;
@@ -232,10 +251,13 @@ export class Editor {
                 const image = document.createElement('img'); image.src = ASSETS[entry.asset].src; image.alt = ''; image.draggable = false;
                 const text = document.createElement('span'); text.className = 'layer-label';
                 const title = document.createElement('span'); title.className = 'ui-list-title'; title.textContent = label;
-                const state = document.createElement('span'); state.className = 'ui-meta'; state.textContent = entry.pinned ? 'Pinned' : 'Auto';
+                const state = document.createElement('span'); state.className = 'ui-meta'; state.textContent = entry.visible === false ? (entry.pinned ? 'Hidden, pinned' : 'Hidden') : entry.pinned ? 'Pinned' : 'Auto';
                 text.append(title, state); button.append(image, text);
                 const pin = action('pin', (entry.pinned ? 'Unpin ' : 'Pin ') + label, 'pin'); pin.setAttribute('aria-pressed', String(entry.pinned));
-                row.append(grip, button, pin); return row;
+                const eye = action('visibility', (entry.visible === false ? 'Show ' : 'Hide ') + label, entry.visible === false ? 'hidden' : 'eye');
+                eye.setAttribute('aria-pressed', String(entry.visible !== false));
+                row.classList.toggle('is-hidden', entry.visible === false);
+                row.append(grip, button, eye, pin); return row;
             }));
             list.scrollTop = scroll;
             if (focusId && focusAction) [...list.children].find(row => row.dataset.item === focusId)?.querySelector(`[data-action="${focusAction}"]`)?.focus({ preventScroll: true });
@@ -247,7 +269,9 @@ export class Editor {
         }
         document.getElementById('elementCount').textContent = scene.items.length;
         const pins = scene.items.filter(item => item.pinned).length;
-        document.getElementById('pinCount').textContent = pins + ' pinned';
+        const hidden = scene.items.filter(item => item.visible === false).length;
+        document.getElementById('pinCount').textContent = pins + ' pinned' + (hidden ? ', ' + hidden + ' hidden' : '');
+        document.getElementById('showAllBtn').disabled = !hidden || this.isBusy();
         document.getElementById('unpinAllBtn').disabled = !pins || this.isBusy();
         document.getElementById('selectionPanel').hidden = !item;
         document.getElementById('selectionTab').disabled = !item;
@@ -261,6 +285,10 @@ export class Editor {
         document.getElementById('pinBtn').title = item.pinned ? 'Unpin element' : 'Pin element';
         document.getElementById('pinBtn').setAttribute('aria-label', document.getElementById('pinBtn').title);
         document.getElementById('pinBtn').disabled = this.isBusy();
+        const visibility = document.getElementById('visibilityBtn');
+        visibility.title = item.visible === false ? 'Show layer' : 'Hide layer'; visibility.setAttribute('aria-label', visibility.title);
+        visibility.setAttribute('aria-pressed', String(item.visible !== false)); visibility.disabled = this.isBusy();
+        visibility.replaceChildren(icon(item.visible === false ? 'hidden' : 'eye'));
         const index = scene.items.indexOf(item);
         document.getElementById('backBtn').disabled = index === 0;
         document.getElementById('frontBtn').disabled = index === scene.items.length - 1;
@@ -273,7 +301,7 @@ export class Editor {
 
     draw(ctx) {
         const scene = this.app.settings, item = this.items().find(entry => entry.id === this.selected);
-        if (!item) return;
+        if (!item || item.visible === false) return;
         const size = this.geometry.dimensions(item, scene), zoom = this.app.target.zoom, angle = item.rotation * Math.PI / 180;
         ctx.save(); ctx.translate(item.x * scene.width, item.y * scene.height); ctx.rotate(angle);
         ctx.lineWidth = 1 / zoom; ctx.strokeStyle = '#fff'; ctx.shadowColor = '#0009'; ctx.shadowBlur = 2 / zoom;

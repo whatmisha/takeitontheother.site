@@ -13,7 +13,13 @@ dependencies are needed.
 - Generate randomizes unpinned letters, forms, and layout. Letter order is
   preserved by default; Shuffle letters changes their spatial order.
 - Fill adjusts packing density. Silhouette masks allow interlocking forms and
-  controlled overlaps; transformed bounds stay inside the artboard.
+  controlled overlaps.
+- Rotation range sets random angles from minus to plus 0-180 degrees for free
+  letters and forms. Zero makes them upright; pinned angles stay unchanged.
+- Edge overflow allows 0-50% of each layer's rotated bounding box beyond each
+  canvas edge, both in generation and manual edits. Zero keeps everything
+  inside. Reducing the limit constrains pinned layers too; exports always clip
+  to the canvas. Centers remain inside the canvas even at the maximum allowance.
 - Include forms and Count control 0-16 extra forms. Forms are sampled without
   repeats until the catalog has been used once.
 - Desktop exports 3840 x 2160; iPhone exports 1290 x 2796. Both use the reference's
@@ -33,8 +39,14 @@ Pins are explicit: moving, resizing, rotating, and changing variants preserve
 the current pin state. Each layer has a pin button, and Unpin all clears all
 pins in one undo step. The list shows Auto/Pinned states and a pinned count.
 
+Eye buttons hide or show individual layers; Delete/Backspace hides the selected
+layer without removing a character from Text. Hidden layers stay in the list,
+survive Generate, and are excluded from packing, hit testing, and PNG output.
+Show all restores them in one undo step. Text changes preserve visibility only
+for unchanged letters at the same text index; form count/off works as before.
+
 Generate preserves the exact variant, transform, and layer position of pinned
-elements. Editing text retains pins only for unchanged letters at the same text
+elements within the current overflow limit. Editing text retains pins only for unchanged letters at the same text
 index. Reducing the form count or disabling forms removes those form instances,
 including their pins. Undo restores them.
 
@@ -71,11 +83,13 @@ no selection UI. Storage is scoped to `upgrade:wander_wall:presets:v1`.
 ## Verification
 
 `node --test wander_wall/tests/layout.test.mjs` checks both formats, 1-32 letters,
-determinism, reading order, bounds, pins, forms, and JSON round trips.
+determinism, reading order, bounds/overflow, rotation limits, pins, hidden layers,
+forms, legacy defaults, and JSON round trips.
 
 `node wander_wall/tests/browser.mjs` runs Playwright against port 8016 by default.
 Set `WANDER_URL`, `WANDER_CHROME`, and `WANDER_NODE_MODULES` for another local
 setup. It checks both editing modes, automatic text and in-flight drafts, exact
 numeric controls, layer reordering, explicit pins, actual PNG downloads,
-mobile panels, presets, import recovery, and share links. Results are in
+mobile panels, visibility/export, rotation/overflow controls, presets, import
+recovery, and share links. Results are in
 `tests/acceptance.json`.

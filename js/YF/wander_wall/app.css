@@ -36,9 +36,11 @@
 .wander-wall #savePresetBtn { padding: 0; width: 32px; height: 32px; border-radius: var(--radius-input); }
 .wander-wall #elementsPanel > .panel-content { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
 .wander-wall .layers-heading { display: flex; justify-content: space-between; align-items: center; flex: 0 0 32px; margin-bottom: 8px; }
+.wander-wall .layer-commands { display: flex; align-items: center; gap: 4px; }
 .wander-wall .layer-list { overflow-y: auto; min-height: 0; overscroll-behavior: contain; }
 .wander-wall .layer-row { display: flex; align-items: center; gap: 4px; min-height: 52px; }
 .wander-wall .layer-row.is-dragging { opacity: .4; }
+.wander-wall .layer-row.is-hidden .layer-select { opacity: .45; }
 .wander-wall .layer-select { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; padding: 4px 0; text-align: left; cursor: pointer; }
 .wander-wall .layer-select img { width: 38px; height: 38px; object-fit: contain; flex-shrink: 0; }
 .wander-wall .layer-label { display: grid; gap: 2px; min-width: 0; }
