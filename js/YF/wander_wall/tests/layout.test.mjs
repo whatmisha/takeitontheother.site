@@ -1,11 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { defaults, cleanText, lettersOf, normalize, makeDocument, readDocument } from '../document.js';
-import { ASSETS } from '../assets.js';
+import { defaults, shareDefaults, cleanText, lettersOf, normalize, makeDocument, readDocument } from '../document.js';
+import { ShareCodec } from '../../infra/framework/src/index.js';
+import { ASSETS, alternatives, installCatalog } from '../assets.js';
 import { Silhouettes, generate, changeFormat } from '../layout.js';
 
-const metrics = JSON.parse(await readFile(new URL('../asset-metrics.json', import.meta.url), 'utf8'));
+const metrics = installCatalog(JSON.parse(await readFile(new URL('../asset-catalog.json', import.meta.url), 'utf8')));
 const geometry = new Silhouettes(metrics);
 function assertInside(scene) {
     for (const item of scene.items) {
@@ -16,7 +17,7 @@ function assertInside(scene) {
 }
 
 test('the asset catalog covers every letter variant and form', () => {
-    assert.equal(Object.keys(ASSETS).length, 238);
+    for (const letter of 'ABCDEFGHIJKLMNOPQRSTUVWXYZ') assert.ok(alternatives(letter).length > 0);
     assert.deepEqual(Object.keys(metrics).sort(), Object.keys(ASSETS).sort());
     for (const metric of Object.values(metrics)) { assert.equal(metric.rows.length, 32); assert.ok(metric.bounds[2] > 0 && metric.bounds[3] > 0); }
 });
@@ -71,6 +72,17 @@ test('JSON round trip keeps the exact scene and rejects unknown assets', () => {
     const bad = makeDocument(scene); bad.settings.items[0].asset = '../../elsewhere.png';
     assert.throws(() => readDocument(bad), /unknown or invalid/);
     assert.throws(() => readDocument({ version: 2, type: 'wander-wall' }), /version 1/);
+});
+
+test('share links always carry exact initial layers, independently of catalog growth', async () => {
+    const scene = generate(defaults, geometry);
+    const codec = new ShareCodec({ pristineDefaults: shareDefaults, quantizableFloatKeys: [] });
+    const encoded = await codec.encode(scene);
+    const decoded = await codec.decode(encoded);
+    assert.deepEqual(normalize(decoded.full), scene);
+    assert.deepEqual(decoded.full.items, scene.items);
+    const empty = normalize({ text: 'A', items: [] });
+    assert.deepEqual((await codec.decode(await codec.encode(empty))).full.items, []);
 });
 
 test('visibility and layout controls round trip, with defaults for older documents', () => {

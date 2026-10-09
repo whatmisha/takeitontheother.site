@@ -120,6 +120,8 @@ function arrangeLetters(items, scene, geometry, random) {
 
 export function generate(settings, geometry, { seed = settings.seed, reroll = true } = {}) {
     const scene = normalize({ ...settings, seed });
+    const missing = [...new Set(lettersOf(scene.text))].filter(letter => !alternatives(letter).length);
+    if (missing.length) throw new Error('No artwork for: ' + missing.join(', ') + '. Add these letters to the library.');
     const random = new SeededRandom(seed), assetRandom = random.fork('assets');
     const old = new Map(scene.items.map(item => [item.id, item]));
     const letters = Array.from(lettersOf(scene.text), (letter, index) => {
@@ -134,7 +136,7 @@ export function generate(settings, geometry, { seed = settings.seed, reroll = tr
     if (scene.shuffle) for (let i = letters.length - 1; i > 0; i--) {
         const j = random.int(0, i); [letters[i], letters[j]] = [letters[j], letters[i]];
     }
-    const count = scene.formsEnabled ? scene.formCount : 0;
+    const count = scene.formsEnabled && FORMS.length ? scene.formCount : 0;
     const formPool = [...FORMS], formRandom = random.fork('forms');
     for (let i = formPool.length - 1; i > 0; i--) {
         const j = formRandom.int(0, i); [formPool[i], formPool[j]] = [formPool[j], formPool[i]];

@@ -1,0 +1,8 @@
+Generated with built-in image_gen.
+
+Create a SQUARE RGBA PNG on actual TRANSPARENT BACKGROUND, a clean isolated mineral asset with no other visible content.
+Visual reference: use the supplied quartz for material and cool lighting, but redesign its geometry and orientation.
+Generate ONE continuous, broad tabular quartz crystal with a long chisel-like faceted termination at the LEFT end, a narrower stepped fractured end at the right, one integrated small pointed shoulder above the middle and two deep irregular angular cut-ins on its edges. The object is nearly HORIZONTAL with its long axis descending 18 degrees from left to right. Three-quarter side view showing one broad clear face and several smaller irregular planes. Wide low shape, low-to-medium surface detail, natural fine striations and sparse inclusions. Keep it in the center of a SQUARE canvas with large empty transparent margins above and below. Full contour must remain inside the frame.
+Realistic colorless quartz with luminous silver-white facets, subtle lavender and cool blue reflections, harmonious when pasted onto blue later. Natural mineral photography, not a cut gemstone.
+HARD REQUIREMENT: fully transparent background right outside the clean physical boundary. No glow of any kind outside the crystal. No broad soft alpha haze, no studio backdrop, cast shadow, aura, bloom or vignette. Crisp highlights are confined to the crystal surface. Do not render a solid color or checkerboard background.
+One whole connected object only, no detached chips, no text or watermark. SQUARE image.

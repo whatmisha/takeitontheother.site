@@ -1,0 +1,33 @@
+name: Wander Wall catalog
+
+on:
+  push:
+    paths:
+      - 'js/YF/wander_wall/**'
+      - '.github/workflows/wander-wall-catalog.yml'
+  pull_request:
+    paths:
+      - 'js/YF/wander_wall/**'
+      - '.github/workflows/wander-wall-catalog.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: js/YF/wander_wall/package-lock.json
+      - name: Install artwork tooling
+        run: npm ci --prefix js/YF/wander_wall
+      - name: Discover artwork and prepare silhouettes
+        run: npm --prefix js/YF/wander_wall run build
+      - name: Verify catalog, layout and effects
+        run: npm --prefix js/YF/wander_wall test

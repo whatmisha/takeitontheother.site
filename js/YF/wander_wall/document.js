@@ -1,4 +1,5 @@
 import { ASSETS, alternatives, FORMS } from './assets.js';
+import { effectDefaults, normalizeEffects } from './effects.js';
 
 export const FORMATS = {
     desktop: { width: 3840, height: 2160, label: 'Desktop' },
@@ -8,7 +9,9 @@ export const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 const number = (value, fallback, min, max) => Number.isFinite(Number(value)) ? clamp(Number(value), min, max) : fallback;
 export const cleanText = text => String(text ?? '').toUpperCase().replace(/[^A-Z\s]/g, '').replace(/\s+/g, ' ').trim().split('').reduce((result, char) => (char === ' ' || result.replace(/ /g, '').length < 32) ? result + char : result, '').trim();
 export const lettersOf = text => cleanText(text).replace(/ /g, '');
-export const defaults = { text: 'WANDER', format: 'desktop', width: 3840, height: 2160, seed: 20261009, shuffle: false, formsEnabled: true, formCount: 4, fill: 100, rotationRange: 24, overflow: 0, items: [] };
+export const defaults = { text: 'WANDER', format: 'desktop', width: 3840, height: 2160, seed: 20261009, shuffle: false, formsEnabled: true, formCount: 4, fill: 100, rotationRange: 24, overflow: 0, ...effectDefaults, items: [] };
+// Catalog-dependent initial layouts are never safe defaults for compact links.
+export const shareDefaults = { ...defaults, items: null };
 
 export function normalize(input = {}) {
     const format = input.format === 'phone' ? 'phone' : 'desktop';
@@ -30,7 +33,7 @@ export function normalize(input = {}) {
         seed: number(input.seed, defaults.seed, 0, 4294967295) >>> 0,
         shuffle: input.shuffle === true, formsEnabled: input.formsEnabled !== false,
         formCount: Math.round(number(input.formCount, 4, 0, 16)), fill: number(input.fill, 100, 70, 125),
-        rotationRange: number(input.rotationRange, defaults.rotationRange, 0, 180), overflow: number(input.overflow, defaults.overflow, 0, 50), items };
+        rotationRange: number(input.rotationRange, defaults.rotationRange, 0, 180), overflow: number(input.overflow, defaults.overflow, 0, 50), ...normalizeEffects(input), items };
 }
 
 export function makeDocument(settings) { return { type: 'wander-wall', version: 1, settings: normalize(settings) }; }

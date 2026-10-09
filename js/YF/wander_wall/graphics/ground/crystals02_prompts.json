@@ -1,0 +1,97 @@
+{
+  "root": "/Users/mishaivanov/Yandex.Disk-chesterone.localized/Current projects/_Yandex Factory/Lunnen Misha/260928 gaming mic kv/generations/blob letters",
+  "mode": "built-in image_gen",
+  "transparent_background": true,
+  "jobs": [
+    {
+      "id": "01",
+      "label": "Плато",
+      "ref": "crystals 02/_ref.png",
+      "output": "ground/crystals02_01.png",
+      "prompt": "Use case: stylized-concept.\nAsset type: transparent landscape ground layer for a graphic-design key visual, onto which separate design elements will later be placed.\nInput image 1: the user's new crystal landscape is a MATERIAL, GEOMETRY LANGUAGE, COLOR and RENDERING STYLE reference. Use its milky translucent lavender/ice-blue crystal with soft pearly peach highlights, broad angular glassy planes, subtle internal cloudy refractive variations, slightly irregular reflective surfaces and sharp fractured edges. The terrain is a connected crystalline mass of faceted ramps and slabs, not a scattering of ordinary quartz needle specimens. Design a NEW distribution of shapes and masses, independent of the reference's exact arrangement.\nFraming: wide landscape composition, 3:2 canvas. The ground occupies the lower roughly 60% of the image; the highest few formations can reach 30–35% down from the top. Leave generous empty alpha above the silhouette. The surface extends beyond both side edges and is cut by the bottom edge; fill the full bottom edge with terrain. No visible floating-island base, no lower outline or underside. Camera close to the ground from a low oblique three-quarter viewpoint, enough top surface visible to place design elements later. Include broad usable faceted landing areas.\nMaterial and shape: large, varied, irregular polygonal facets; incisive diagonal edges and an angular serrated skyline appropriate to the reference. Match the reference's translucent, opalescent icy lavender crystal, restrained cool reflections and warm peach gleams, nuanced subtle texture within the faces. Broad planar ramps meet shallow glassy concavities and fractured crests. High-quality clean tactile CGI, soft coherent directional light with clear depth. Maintain delicate light transmission without washing out the facets.\nBackground: true transparent PNG alpha everywhere above the irregular landscape silhouette. Do NOT copy the reference's blue background. No colored sky, external haze or glow, background plane, checkerboard backdrop, text, logo or watermark. No vegetation, products, decorative props or added objects. No smooth fur-like dunes, rounded inflated shapes, solid white snow, ordinary rock or chrome metal.\n\nThis variation's unique composition:\nA low broad crystalline plateau dominates the foreground and central-right region, formed from three or four spacious irregular faceted planes. A compact asymmetric crag occupies the rear LEFT third, with several low jagged broken ridges tapering toward the right. Compose a largely open level landing surface with a diagonal fracture seam. The upper profile slopes down from left to right, rather than forming two matching hills with a central dip. No dense spires.",
+      "generated_source": "/Users/mishaivanov/.codex/generated_images/01a0eeca-0686-7e40-a142-87bd6b526421/exec-55d5f2ca-4ba9-465c-981e-62bcfcccffb1.png",
+      "audit": {
+        "width": 1536,
+        "height": 1024,
+        "mode": "RGBA",
+        "alpha_min": 0,
+        "alpha_max": 254,
+        "transparent_pct": 48.56,
+        "bottom_filled_pct": 100.0
+      },
+      "saved_path": "/Users/mishaivanov/Yandex.Disk-chesterone.localized/Current projects/_Yandex Factory/Lunnen Misha/260928 gaming mic kv/generations/blob letters/ground/crystals02_01.png"
+    },
+    {
+      "id": "02",
+      "label": "Диагональный хребет",
+      "ref": "crystals 02/_ref.png",
+      "output": "ground/crystals02_02.png",
+      "prompt": "Use case: stylized-concept.\nAsset type: transparent landscape ground layer for a graphic-design key visual, onto which separate design elements will later be placed.\nInput image 1: the user's new crystal landscape is a MATERIAL, GEOMETRY LANGUAGE, COLOR and RENDERING STYLE reference. Use its milky translucent lavender/ice-blue crystal with soft pearly peach highlights, broad angular glassy planes, subtle internal cloudy refractive variations, slightly irregular reflective surfaces and sharp fractured edges. The terrain is a connected crystalline mass of faceted ramps and slabs, not a scattering of ordinary quartz needle specimens. Design a NEW distribution of shapes and masses, independent of the reference's exact arrangement.\nFraming: wide landscape composition, 3:2 canvas. The ground occupies the lower roughly 60% of the image; the highest few formations can reach 30–35% down from the top. Leave generous empty alpha above the silhouette. The surface extends beyond both side edges and is cut by the bottom edge; fill the full bottom edge with terrain. No visible floating-island base, no lower outline or underside. Camera close to the ground from a low oblique three-quarter viewpoint, enough top surface visible to place design elements later. Include broad usable faceted landing areas.\nMaterial and shape: large, varied, irregular polygonal facets; incisive diagonal edges and an angular serrated skyline appropriate to the reference. Match the reference's translucent, opalescent icy lavender crystal, restrained cool reflections and warm peach gleams, nuanced subtle texture within the faces. Broad planar ramps meet shallow glassy concavities and fractured crests. High-quality clean tactile CGI, soft coherent directional light with clear depth. Maintain delicate light transmission without washing out the facets.\nBackground: true transparent PNG alpha everywhere above the irregular landscape silhouette. Do NOT copy the reference's blue background. No colored sky, external haze or glow, background plane, checkerboard backdrop, text, logo or watermark. No vegetation, products, decorative props or added objects. No smooth fur-like dunes, rounded inflated shapes, solid white snow, ordinary rock or chrome metal.\n\nThis variation's unique composition:\nOne long sharply faceted crystal ridge runs diagonally from the low front LEFT toward the taller rear RIGHT, with blade-like triangular shoulders and interlocking pale translucent slabs. A wide quieter crystal ramp fills the right/central foreground alongside the ridge. Asymmetric skyline rises toward the right; interrupted angular peaks, not rounded waves. The depth and arrangement should be distinct from a centered valley.",
+      "generated_source": "/Users/mishaivanov/.codex/generated_images/01a0eeca-0686-7e40-a142-87bd6b526421/exec-eecf33a1-bcbb-4c4b-a580-6c3eadc0e15e.png",
+      "audit": {
+        "width": 1536,
+        "height": 1024,
+        "mode": "RGBA",
+        "alpha_min": 0,
+        "alpha_max": 254,
+        "transparent_pct": 48.49,
+        "bottom_filled_pct": 100.0
+      },
+      "saved_path": "/Users/mishaivanov/Yandex.Disk-chesterone.localized/Current projects/_Yandex Factory/Lunnen Misha/260928 gaming mic kv/generations/blob letters/ground/crystals02_02.png"
+    },
+    {
+      "id": "03",
+      "label": "Гранёная долина",
+      "ref": "crystals 02/_ref.png",
+      "output": "ground/crystals02_03.png",
+      "prompt": "Use case: stylized-concept.\nAsset type: transparent landscape ground layer for a graphic-design key visual, onto which separate design elements will later be placed.\nInput image 1: the user's new crystal landscape is a MATERIAL, GEOMETRY LANGUAGE, COLOR and RENDERING STYLE reference. Use its milky translucent lavender/ice-blue crystal with soft pearly peach highlights, broad angular glassy planes, subtle internal cloudy refractive variations, slightly irregular reflective surfaces and sharp fractured edges. The terrain is a connected crystalline mass of faceted ramps and slabs, not a scattering of ordinary quartz needle specimens. Design a NEW distribution of shapes and masses, independent of the reference's exact arrangement.\nFraming: wide landscape composition, 3:2 canvas. The ground occupies the lower roughly 60% of the image; the highest few formations can reach 30–35% down from the top. Leave generous empty alpha above the silhouette. The surface extends beyond both side edges and is cut by the bottom edge; fill the full bottom edge with terrain. No visible floating-island base, no lower outline or underside. Camera close to the ground from a low oblique three-quarter viewpoint, enough top surface visible to place design elements later. Include broad usable faceted landing areas.\nMaterial and shape: large, varied, irregular polygonal facets; incisive diagonal edges and an angular serrated skyline appropriate to the reference. Match the reference's translucent, opalescent icy lavender crystal, restrained cool reflections and warm peach gleams, nuanced subtle texture within the faces. Broad planar ramps meet shallow glassy concavities and fractured crests. High-quality clean tactile CGI, soft coherent directional light with clear depth. Maintain delicate light transmission without washing out the facets.\nBackground: true transparent PNG alpha everywhere above the irregular landscape silhouette. Do NOT copy the reference's blue background. No colored sky, external haze or glow, background plane, checkerboard backdrop, text, logo or watermark. No vegetation, products, decorative props or added objects. No smooth fur-like dunes, rounded inflated shapes, solid white snow, ordinary rock or chrome metal.\n\nThis variation's unique composition:\nAn irregular shallow crystalline valley curves OFF CENTER toward the left, with low overlapping broken plates in the foreground and a larger faceted wall on the right. Make the foreground valley floor a generous broad opalescent crystalline landing surface; crisp angled rims and small irregular angular peaks define the sides. Unequal heights and varied large facet sizes create natural asymmetry. Avoid mirrored banks and avoid repeating the reference's silhouette.",
+      "generated_source": "/Users/mishaivanov/.codex/generated_images/01a0eeca-0686-7e40-a142-87bd6b526421/exec-eb876baa-5aab-4fdf-941c-c74ac6bd5b37.png",
+      "audit": {
+        "width": 1536,
+        "height": 1024,
+        "mode": "RGBA",
+        "alpha_min": 0,
+        "alpha_max": 254,
+        "transparent_pct": 45.87,
+        "bottom_filled_pct": 100.0
+      },
+      "saved_path": "/Users/mishaivanov/Yandex.Disk-chesterone.localized/Current projects/_Yandex Factory/Lunnen Misha/260928 gaming mic kv/generations/blob letters/ground/crystals02_03.png"
+    },
+    {
+      "id": "04",
+      "label": "Каскад уступов",
+      "ref": "crystals 02/_ref.png",
+      "output": "ground/crystals02_04.png",
+      "prompt": "Use case: stylized-concept.\nAsset type: transparent landscape ground layer for a graphic-design key visual, onto which separate design elements will later be placed.\nInput image 1: the user's new crystal landscape is a MATERIAL, GEOMETRY LANGUAGE, COLOR and RENDERING STYLE reference. Use its milky translucent lavender/ice-blue crystal with soft pearly peach highlights, broad angular glassy planes, subtle internal cloudy refractive variations, slightly irregular reflective surfaces and sharp fractured edges. The terrain is a connected crystalline mass of faceted ramps and slabs, not a scattering of ordinary quartz needle specimens. Design a NEW distribution of shapes and masses, independent of the reference's exact arrangement.\nFraming: wide landscape composition, 3:2 canvas. The ground occupies the lower roughly 60% of the image; the highest few formations can reach 30–35% down from the top. Leave generous empty alpha above the silhouette. The surface extends beyond both side edges and is cut by the bottom edge; fill the full bottom edge with terrain. No visible floating-island base, no lower outline or underside. Camera close to the ground from a low oblique three-quarter viewpoint, enough top surface visible to place design elements later. Include broad usable faceted landing areas.\nMaterial and shape: large, varied, irregular polygonal facets; incisive diagonal edges and an angular serrated skyline appropriate to the reference. Match the reference's translucent, opalescent icy lavender crystal, restrained cool reflections and warm peach gleams, nuanced subtle texture within the faces. Broad planar ramps meet shallow glassy concavities and fractured crests. High-quality clean tactile CGI, soft coherent directional light with clear depth. Maintain delicate light transmission without washing out the facets.\nBackground: true transparent PNG alpha everywhere above the irregular landscape silhouette. Do NOT copy the reference's blue background. No colored sky, external haze or glow, background plane, checkerboard backdrop, text, logo or watermark. No vegetation, products, decorative props or added objects. No smooth fur-like dunes, rounded inflated shapes, solid white snow, ordinary rock or chrome metal.\n\nThis variation's unique composition:\nA landscape of irregular staggered crystalline terraces, with broad flat polygonal tops separated by low oblique fractured faces. Terraces descend diagonally from rear CENTER-LEFT to lower RIGHT foreground, like an abstract geologic cascade made of translucent milky crystal. Emphasize clean angular ledges, layered visible thickness and crisp clipped corners. Upper outline is a broken sequence of tilted steps, not pointed quartz clusters or repeated smooth hills. Many usable clear landing surfaces.",
+      "generated_source": "/Users/mishaivanov/.codex/generated_images/01a0eeca-0686-7e40-a142-87bd6b526421/exec-6f9b8164-e38c-4136-b715-0891fcd8d074.png",
+      "audit": {
+        "width": 1536,
+        "height": 1024,
+        "mode": "RGBA",
+        "alpha_min": 0,
+        "alpha_max": 254,
+        "transparent_pct": 42.57,
+        "bottom_filled_pct": 100.0
+      },
+      "saved_path": "/Users/mishaivanov/Yandex.Disk-chesterone.localized/Current projects/_Yandex Factory/Lunnen Misha/260928 gaming mic kv/generations/blob letters/ground/crystals02_04.png"
+    },
+    {
+      "id": "05",
+      "label": "Низкое поле осколков",
+      "ref": "crystals 02/_ref.png",
+      "output": "ground/crystals02_05.png",
+      "prompt": "Use case: stylized-concept.\nAsset type: transparent landscape ground layer for a graphic-design key visual, onto which separate design elements will later be placed.\nInput image 1: the user's new crystal landscape is a MATERIAL, GEOMETRY LANGUAGE, COLOR and RENDERING STYLE reference. Use its milky translucent lavender/ice-blue crystal with soft pearly peach highlights, broad angular glassy planes, subtle internal cloudy refractive variations, slightly irregular reflective surfaces and sharp fractured edges. The terrain is a connected crystalline mass of faceted ramps and slabs, not a scattering of ordinary quartz needle specimens. Design a NEW distribution of shapes and masses, independent of the reference's exact arrangement.\nFraming: wide landscape composition, 3:2 canvas. The ground occupies the lower roughly 60% of the image; the highest few formations can reach 30–35% down from the top. Leave generous empty alpha above the silhouette. The surface extends beyond both side edges and is cut by the bottom edge; fill the full bottom edge with terrain. No visible floating-island base, no lower outline or underside. Camera close to the ground from a low oblique three-quarter viewpoint, enough top surface visible to place design elements later. Include broad usable faceted landing areas.\nMaterial and shape: large, varied, irregular polygonal facets; incisive diagonal edges and an angular serrated skyline appropriate to the reference. Match the reference's translucent, opalescent icy lavender crystal, restrained cool reflections and warm peach gleams, nuanced subtle texture within the faces. Broad planar ramps meet shallow glassy concavities and fractured crests. High-quality clean tactile CGI, soft coherent directional light with clear depth. Maintain delicate light transmission without washing out the facets.\nBackground: true transparent PNG alpha everywhere above the irregular landscape silhouette. Do NOT copy the reference's blue background. No colored sky, external haze or glow, background plane, checkerboard backdrop, text, logo or watermark. No vegetation, products, decorative props or added objects. No smooth fur-like dunes, rounded inflated shapes, solid white snow, ordinary rock or chrome metal.\n\nThis variation's unique composition:\nA restrained, low crystalline field, expansive foreground and relatively low jagged skyline. Interlocking broad flat shards and shallow angular polygonal basins form a mostly level connected ground; a few squat triangular crystalline outcrops are scattered asymmetrically and remain fused with the field. Nearly horizontal broken top profile with irregular small peaks, leaving more transparent space above than other variants. Large opalescent crystal faces with fine lavender internal clouding and delicate peach/ice-blue gleams. No dominant mountain, no dense spikes, no valley flanked by large hills.",
+      "generated_source": "/Users/mishaivanov/.codex/generated_images/01a0eeca-0686-7e40-a142-87bd6b526421/exec-8a93e964-cacd-4a02-b7a9-3bf95a28e38c.png",
+      "audit": {
+        "width": 1536,
+        "height": 1024,
+        "mode": "RGBA",
+        "alpha_min": 0,
+        "alpha_max": 254,
+        "transparent_pct": 47.11,
+        "bottom_filled_pct": 100.0
+      },
+      "saved_path": "/Users/mishaivanov/Yandex.Disk-chesterone.localized/Current projects/_Yandex Factory/Lunnen Misha/260928 gaming mic kv/generations/blob letters/ground/crystals02_05.png"
+    }
+  ]
+}

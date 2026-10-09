@@ -28,6 +28,12 @@
 .wander-wall .toggle-switch { flex-shrink: 0; }
 .wander-wall .seed-details input { width: 100%; }
 .wander-wall .seed-details svg { width: 10px; height: 10px; }
+.wander-wall .effect-content { padding-top: 12px; }
+.wander-wall .effect-details { margin-bottom: 8px; }
+.wander-wall .effect-reset { display: flex; justify-content: flex-end; }
+.wander-wall .effect-details .color-swatch-hex { min-width: 0; }
+.wander-wall .effect-details .color-swatches-compact { margin-bottom: 16px; }
+.wander-wall .effect-details .ui-disclosure__chevron { width: 10px; height: 10px; }
 .wander-wall .icon-button { display: inline-flex; justify-content: center; align-items: center; padding: 0; width: 32px; height: 32px; flex: 0 0 32px; border: 0; border-radius: var(--radius-input); background: transparent; color: var(--ui-foreground); cursor: pointer; }
 .wander-wall .icon-button:hover:not(:disabled) { background: var(--ui-item-hover); }
 .wander-wall .icon-button:focus-visible { outline: 2px solid var(--ui-foreground); outline-offset: 2px; }

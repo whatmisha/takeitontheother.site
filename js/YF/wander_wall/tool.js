@@ -1,6 +1,8 @@
 import { defineTool, ToolUiController, FileIntakeController, PresetMenuKeyboardController, SliderController } from '../infra/framework/src/index.js';
-import { AssetStore, alternatives, FORMS } from './assets.js';
-import { defaults, normalize, cleanText, lettersOf, makeDocument, readDocument } from './document.js';
+import { AssetStore, alternatives, FORMS, installCatalog } from './assets.js';
+import { effectDefaults } from './effects.js';
+import { mountEffects, syncEffects, effectSliders, effectSwatches } from './effects-ui.js';
+import { defaults, shareDefaults, normalize, cleanText, lettersOf, makeDocument, readDocument } from './document.js';
 import { Silhouettes, generate, changeFormat } from './layout.js';
 import { drawArtwork, renderPNG, download } from './render.js';
 import { Editor } from './editor.js';
@@ -75,6 +77,7 @@ function change(next, label = 'Edit composition') {
 function setBusy(value) {
     busy = value;
     byId('compositionFieldset').disabled = value;
+    byId('effectsControls').inert = value;
     byId('canvasContainer').setAttribute('aria-busy', String(value));
     byId('undoBtn').disabled = value || !app?.presets.canUndo(); byId('redoBtn').disabled = value || !app?.presets.canRedo();
     editor?.sync(); refreshAvailability();
@@ -147,6 +150,7 @@ function ensureArtwork(tool) {
 
 function sync(tool) {
     const s = tool.settings;
+    syncEffects(tool);
     if (draftText === null && document.activeElement !== byId('textInput')) byId('textInput').value = s.text;
     byId('letterCount').textContent = lettersOf(byId('textInput').value).length + ' / 32';
     for (const radio of document.querySelectorAll('input[name="format"]')) radio.checked = radio.value === s.format;
@@ -174,6 +178,9 @@ function applyText() {
 
 function bind(tool) {
     editor = new Editor(tool, geometry, { change, nextVariant, isBusy: () => busy, onSelection: selectionChanged, signal: lifecycle.signal });
+    for (const radio of document.querySelectorAll('input[name="backgroundMode"]')) on(radio, 'change', () => change({ ...tool.getSnapshot(), backgroundMode: radio.value }, 'Background'));
+    for (const key of ['shadowEnabled', 'outlineEnabled']) on(byId(key + 'Toggle'), 'change', event => change({ ...tool.getSnapshot(), [key]: event.target.checked }, 'Effects'));
+    on(byId('resetEffectsBtn'), 'click', () => change({ ...tool.getSnapshot(), ...effectDefaults }, 'Reset effects'));
     on(byId('textInput'), 'input', event => {
         const raw = event.target.value, cleaned = cleanText(raw);
         const length = raw.replace(/[^A-Za-z]/g, '').length;
@@ -276,22 +283,24 @@ function bind(tool) {
 }
 
 async function start() {
+    mountEffects();
     mountIcons();
-    const response = await fetch('./asset-metrics.json');
+    const response = await fetch('./asset-catalog.json', { cache: 'no-store' });
     if (!response.ok) throw new Error('Could not load the artwork catalog.');
-    geometry = new Silhouettes(await response.json());
+    geometry = new Silhouettes(installCatalog(await response.json()));
     const initial = generate(defaults, geometry);
     await assets.prepare(initial.items);
     app = defineTool({ renderer: 'canvas',
         dom: { canvas: 'canvasContainer', surface: 'mainCanvas', zoomIndicator: 'zoomIndicator', presetDropdown: 'presetDropdown',
             presetToggle: 'presetDropdownToggle', presetMenu: 'presetDropdownMenu', saveBtn: 'savePresetBtn', shareBtn: 'presetToolbarShareBtn' },
-        settings: initial, controls: { sliders: [], toggles: false },
+        settings: initial, controls: { sliders: effectSliders, toggles: false },
+        colorPickers: { containerId: 'effectsColorPicker', swatches: effectSwatches },
         panels: ['composition', 'elements', 'selection'].map(name => ({ id: name + 'Panel', headerId: name + 'PanelHeader', persistent: true })),
         presets: { seed: false, storageKey: 'upgrade:wander_wall:presets:v1', suggestSaveName: tool => tool.settings.text || 'Shapes' },
-        history: { maxSize: 60, debounceMs: 200 }, share: { quantizableFloatKeys: [] }, shortcuts: false, dialog: {},
+        history: { maxSize: 60, debounceMs: 200 }, share: { pristineDefaults: shareDefaults, quantizableFloatKeys: [] }, shortcuts: false, dialog: {},
         export: { filename: 'wander-wall.svg' }, zoom: { fitPadding: { top: 16, right: 12, bottom: 16, left: 12 } },
         restore: (tool, snapshot) => tool.settingsStore.fromJSON(normalize(snapshot), true),
-        applyPreset: (tool, snapshot) => tool.settingsStore.fromJSON(normalize(snapshot), true),
+        applyPreset: (tool, snapshot) => tool.settingsStore.fromJSON(snapshot.items == null ? generate(snapshot, geometry) : normalize(snapshot), true),
         syncControls: sync,
         render: ({ ctx2d, settings }) => { drawArtwork(ctx2d, settings, assets, geometry, editor?.items()); editor?.draw(ctx2d); },
         renderTo: ({ ctx2d, settings }) => drawArtwork(ctx2d, settings, assets, geometry),

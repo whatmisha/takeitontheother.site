@@ -1,0 +1,7 @@
+Generated with built-in image_gen.
+
+Create a SQUARE RGBA PNG with a genuinely transparent background. Single isolated quartz crystal cutout asset.
+Use the supplied reference ONLY for natural quartz material and cool silver-blue lighting. Create a NEW shape: one double-terminated thick crystalline body, pointed at both ends, with several small angular fused projections along the bottom and one irregular step along the top. The main long axis goes diagonally from lower left toward upper right, 25 degrees ABOVE HORIZONTAL. It floats in three-quarter view, with its entire wide silhouette centered within a SQUARE canvas and plenty of empty transparent space above and below.
+Photorealistic natural clear quartz, pale silver-lavender facets, fine horizontal growth striations, restrained internal fissures, bright crisp white specular reflections and subtle blue tones for later placement on a blue backdrop. Medium complexity, complex asymmetric contour, one dominant connected main body.
+CRITICAL: exterior background is fully transparent alpha=0 right up to the physical object's antialiased boundary. No diffuse aura, haze, bloom, shadow, vignette or glow around the silhouette. Lighting remains entirely INSIDE the physical facets. Do not imitate a studio background. Do not paint a checkerboard. The only visible pixels belong to the mineral itself.
+One whole object, no cropping, no disconnected fragments, no lettering or watermark. Output is square, not landscape.

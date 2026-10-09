@@ -1,15 +1,49 @@
 # Wander Wall
 
 Letter wallpaper generator on the shared YF framework. Open `wander_wall/`
-through the repository's local HTTP server. No build or external runtime
-dependencies are needed.
+through a local HTTP server. The browser has no external runtime dependencies.
+Artwork preparation and tests use Node.js 24+ and Sharp.
+
+## Automatic Library
+
+Run `npm ci --prefix wander_wall` once, then `npm run serve:wall` from the YF
+directory. The local tool opens at `http://127.0.0.1:8020/wander_wall/` (override
+with `PORT`). On each page opening the server scans the library and the browser
+loads one catalog snapshot. There is no polling or live replacement of artwork.
+An ordinary static server can also serve the tool after `npm run build:wall`.
+
+Add letter PNGs to `graphics/alphabet/set_07/A_01.png`, using any numbered set
+and variant. Incomplete sets, gaps and different variant counts are supported.
+All discovered variants participate in generation. At least one variant of
+each letter used in the current text must exist across the library.
+Add decorative PNGs anywhere under `graphics/blobs/`; their filenames supply
+their names. The first four forms retain their original preset IDs. Keep file
+paths stable to preserve references in saved compositions.
+
+`asset-catalog.json` contains stable IDs, content hashes, alpha bounds and
+32 x 32 masks. The builder creates small WebP layer thumbnails under
+`graphics/previews/` and reuses unchanged metrics. Invalid/transparent images
+and duplicate IDs fail the build without publishing a partial catalog.
+Original PNGs remain untouched and load only when needed. Asset hashes invalidate
+the image cache after a replacement; already-open tabs keep their catalog snapshot.
+
+### GitHub
+
+`.github/workflows/wander-wall-catalog.yml` automatically builds and tests the
+catalog after artwork/code pushes and in pull requests. It does not deploy or
+commit generated files. To publish newly discovered artwork, the deployment must
+run `npm ci --prefix js/YF/wander_wall` and
+`npm --prefix js/YF/wander_wall run build`, then publish the generated
+`asset-catalog.json` and `graphics/previews/` alongside the originals and tool.
+Until that deployment integration is enabled, commit the generated catalog and
+previews with the artwork when publishing from a branch.
 
 ## Composition
 
 - Up to 32 Latin letters, with spaces allowed. Text applies automatically after
   a 300 ms pause; Enter applies immediately. Edits made during artwork loading
   remain pending and apply next. Empty text produces a shapes-only canvas.
-- Nine alternatives per letter: three silhouettes and three treatments per set.
+- Alternatives are discovered from the library; currently 18 per letter in six sets.
 - Generate randomizes unpinned letters, forms, and layout. Letter order is
   preserved by default; Shuffle letters changes their spatial order.
 - Fill adjusts packing density. Silhouette masks allow interlocking forms and
@@ -22,11 +56,19 @@ dependencies are needed.
   to the canvas. Centers remain inside the canvas even at the maximum allowance.
 - Include forms and Count control 0-16 extra forms. Forms are sampled without
   repeats until the catalog has been used once.
-- Desktop exports 3840 x 2160; iPhone exports 1290 x 2796. Both use the reference's
-  four-stop vertical blue gradient. Format changes repack free elements and
+- Desktop exports 3840 x 2160; iPhone exports 1290 x 2796. Both initially use the
+  reference's four-stop vertical blue gradient. Format changes repack free elements and
   constrain pinned ones to the new artboard.
 
 ## Editing
+
+Effects are global and never regenerate or move layers. Background supports a
+four-color gradient with direction, or a solid color. Shadow has color, opacity,
+blur, distance and direction; outline has color and width. Width, blur and distance
+are measured in exported image pixels. The original baked lighting is unchanged.
+Effects are disabled by default for backwards compatibility. Reset effects
+restores the reference background and disables both effects in one undo step.
+All settings persist in history, presets, JSON and share links, and render in PNG.
 
 In Change variant mode, click an element to select it and cycle its variant.
 Select and move mode only selects on click. Both modes support dragging to move,
@@ -68,12 +110,10 @@ no selection UI. Storage is scoped to `upgrade:wander_wall:presets:v1`.
 
 ## Assets and Code
 
-- `assets.js`: letter alternatives and the expandable `FORMS` catalog. Add a PNG
-  under `graphics/blobs/` and a unique `{ id, name, src }` entry to add a new form.
-- `scripts/prepare-assets.mjs`: rebuilds `asset-metrics.json` from alpha bounds
-  and 32 x 32 masks, and vendors the used Lucide icons. Requires `sharp` and
-  `lucide`; `WANDER_NODE_MODULES` may point to a directory containing these packages.
-  Existing artwork is not overwritten. The original PNGs provide export detail.
+- `assets.js`: installs the one-time catalog and lazily loads selected originals.
+- `scripts/catalog.mjs`, `prepare-assets.mjs`: discover and prepare actual files;
+  `WANDER_NODE_MODULES` may point to an existing directory containing Sharp.
+- `effects.js`, `effects-ui.js`: normalized effects and shared framework controls.
 - `layout.js`: deterministic row anchors, silhouette coverage optimization, and
   gap filling. Pinned elements are obstacles for the remaining composition.
 - `document.js`: normalized state, format limits, and versioned JSON validation.
@@ -82,7 +122,8 @@ no selection UI. Storage is scoped to `upgrade:wander_wall:presets:v1`.
 
 ## Verification
 
-`node --test wander_wall/tests/layout.test.mjs` checks both formats, 1-32 letters,
+`npm run test:wall` checks discovery, incremental imports, invalid files, effects,
+both formats, 1-32 letters,
 determinism, reading order, bounds/overflow, rotation limits, pins, hidden layers,
 forms, legacy defaults, and JSON round trips.
 

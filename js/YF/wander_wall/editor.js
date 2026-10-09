@@ -248,7 +248,7 @@ export class Editor {
                 const grip = action('reorder', 'Reorder ' + label, 'grip'); grip.classList.add('layer-grip');
                 const button = document.createElement('button'); button.type = 'button'; button.className = 'layer-select ui-list-select'; button.dataset.action = 'select';
                 button.setAttribute('aria-label', 'Select ' + label);
-                const image = document.createElement('img'); image.src = ASSETS[entry.asset].src; image.alt = ''; image.draggable = false;
+                const image = document.createElement('img'); image.src = ASSETS[entry.asset].preview || ASSETS[entry.asset].src; image.alt = ''; image.draggable = false;
                 const text = document.createElement('span'); text.className = 'layer-label';
                 const title = document.createElement('span'); title.className = 'ui-list-title'; title.textContent = label;
                 const state = document.createElement('span'); state.className = 'ui-meta'; state.textContent = entry.visible === false ? (entry.pinned ? 'Hidden, pinned' : 'Hidden') : entry.pinned ? 'Pinned' : 'Auto';

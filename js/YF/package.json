@@ -3,7 +3,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test:wall": "node --test wander_wall/tests/layout.test.mjs",
+    "test:wall": "node --test wander_wall/tests/*.test.mjs",
+    "build:wall": "node wander_wall/scripts/prepare-assets.mjs",
+    "serve:wall": "node wander_wall/scripts/serve.mjs",
     "test:grainy": "node --test grainy_land/tests/*.test.mjs",
     "routes:check": "node --test infra/catalog/tests/public-routes.test.mjs",
     "catalog:sync": "node infra/scripts/sync-tool-catalog.mjs --write",

@@ -1,0 +1,384 @@
+{
+  "generator": "built-in image_gen",
+  "date": "2026-09-29",
+  "assets": [
+    {
+      "reference": "letters/blue/_ref.png",
+      "output": "letters__blue.png",
+      "prompt": "Use case: stylized-concept.\nAsset type: standalone 3D sphere for a design asset library.\nInput image 1 is the material and style reference, not a composition to reproduce.\nGenerate ONE roughly spherical object made from the reference's material. Match its distinctive color, texture, finish, irregularities and visual character. The overall mass must read as a single compact sphere, but it need not be mathematically perfect: let the material influence its silhouette.\nComposition: centered isolated object on a square 1024x1024 canvas, entirely visible with comfortable empty margins (about 12%), consistent studio quality, detailed tactile surface, soft directional lighting and self-shadowing.\nBACKGROUND: truly transparent PNG RGBA with alpha 0 outside the object, including any holes. Preserve fine edge detail. No opaque background, no baked-in checkerboard, no floor, no cast shadow outside the object, no backdrop, no text, no letters, no logo, no watermark, no props.\nSpecific material and shape: Saturated cobalt blue glossy organic resin/clay with subtly wrinkled orange-peel microtexture. A softly lumpy round blob with several shallow rounded bulges, strong blue body color and soft white glints; not a spiky object.",
+      "size": [
+        1254,
+        1254
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "sha256": "a1be7b7cae07be2ae93c35f93b01218fed0ebf616ce36d703915e15c66cebf84"
+    },
+    {
+      "reference": "letters/glass/_ref.png",
+      "output": "letters__glass.png",
+      "prompt": "Use case: stylized-concept.\nAsset type: standalone 3D sphere for a design asset library.\nInput image 1 is the material and style reference, not a composition to reproduce.\nGenerate ONE roughly spherical object made from the reference's material. Match its distinctive color, texture, finish, irregularities and visual character. The overall mass must read as a single compact sphere, but it need not be mathematically perfect: let the material influence its silhouette.\nComposition: centered isolated object on a square 1024x1024 canvas, entirely visible with comfortable empty margins (about 12%), consistent studio quality, detailed tactile surface, soft directional lighting and self-shadowing.\nBACKGROUND: truly transparent PNG RGBA with alpha 0 outside the object, including any holes. Preserve fine edge detail. No opaque background, no baked-in checkerboard, no floor, no cast shadow outside the object, no backdrop, no text, no letters, no logo, no watermark, no props.\nSpecific material and shape: Pearlescent holographic glassy skin with broad flowing iridescent rainbow swathes: silver, cyan, violet, pink and warm yellow. Very fine softly frosted microtexture beneath luminous highlights. A gently wobbly round liquid-glass orb, preserve the reference's pale opalescent translucent appearance, not a flat rainbow graphic.",
+      "size": [
+        1254,
+        1254
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "sha256": "eee6fcea8b91a0778a459ff2521e142b909e206f8114ca601a809423d8e5b736"
+    },
+    {
+      "reference": "letters/glitch/_ref.jpg",
+      "output": "letters__glitch.png",
+      "prompt": "Use case: stylized-concept.\nAsset type: standalone 3D sphere for a design asset library.\nInput image 1 is the material and style reference, not a composition to reproduce.\nGenerate ONE roughly spherical object made from the reference's material. Match its distinctive color, texture, finish, irregularities and visual character. The overall mass must read as a single compact sphere, but it need not be mathematically perfect: let the material influence its silhouette.\nComposition: centered isolated object on a square 1024x1024 canvas, entirely visible with comfortable empty margins (about 12%), consistent studio quality, detailed tactile surface, soft directional lighting and self-shadowing.\nBACKGROUND: truly transparent PNG RGBA with alpha 0 outside the object, including any holes. Preserve fine edge detail. No opaque background, no baked-in checkerboard, no floor, no cast shadow outside the object, no backdrop, no text, no letters, no logo, no watermark, no props.\nSpecific material and shape: A coherent experimental biomechanical glitch sphere combining milky translucent waxy patches, exposed delicate copper wire networks, clusters of tiny silver pearlescent beads, and iridescent RGB scanline displacement bands. All these materials grow together around one roughly spherical volume; match the reference's intricacy and small scale irregularities. No torus or letter.",
+      "size": [
+        1254,
+        1254
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "sha256": "5fb920edc4c969dddc68b41b943cb861841fe72a386c7c28525e7fa0e9fa84ca"
+    },
+    {
+      "reference": "letters/glitchy/_ref.jpg",
+      "output": "letters__glitchy.png",
+      "prompt": "Use case: stylized-concept.\nAsset type: standalone 3D sphere for a design asset library.\nInput image 1 is the material and style reference, not a composition to reproduce.\nGenerate ONE roughly spherical object made from the reference's material. Match its distinctive color, texture, finish, irregularities and visual character. The overall mass must read as a single compact sphere, but it need not be mathematically perfect: let the material influence its silhouette.\nComposition: centered isolated object on a square 1024x1024 canvas, entirely visible with comfortable empty margins (about 12%), consistent studio quality, detailed tactile surface, soft directional lighting and self-shadowing.\nBACKGROUND: truly transparent PNG RGBA with alpha 0 outside the object, including any holes. Preserve fine edge detail. No opaque background, no baked-in checkerboard, no floor, no cast shadow outside the object, no backdrop, no text, no letters, no logo, no watermark, no props.\nSpecific material and shape: A rounded translucent silvery glass orb corrupted by horizontal RGB glitch bands and fine layered scanlines: pale cyan, magenta, yellow-green and dark violet iridescent streaks. Horizontally shifted strips gently disrupt the spherical silhouette. Focus on this cropped reference's glass-and-scanline texture, without adding wires or beads.",
+      "size": [
+        1254,
+        1254
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "sha256": "ecfb97e4144619f7fc8881cc3d2c18961472b0ab05db06109d1823fd98b1e47c"
+    },
+    {
+      "reference": "letters/green balloon/_ref.png",
+      "output": "letters__green-balloon.png",
+      "prompt": "Use case: stylized-concept.\nAsset type: standalone 3D sphere for a design asset library.\nInput image 1 is the material and style reference, not a composition to reproduce.\nGenerate ONE roughly spherical object made from the reference's material. Match its distinctive color, texture, finish, irregularities and visual character. The overall mass must read as a single compact sphere, but it need not be mathematically perfect: let the material influence its silhouette.\nComposition: centered isolated object on a square 1024x1024 canvas, entirely visible with comfortable empty margins (about 12%), consistent studio quality, detailed tactile surface, soft directional lighting and self-shadowing.\nBACKGROUND: truly transparent PNG RGBA with alpha 0 outside the object, including any holes. Preserve fine edge detail. No opaque background, no baked-in checkerboard, no floor, no cast shadow outside the object, no backdrop, no text, no letters, no logo, no watermark, no props.\nSpecific material and shape: A plump near-spherical lime-green inflated vinyl cushion, shiny lacquered PVC with pronounced sewn seams crossing the rounded surface, small tension wrinkles along the seams and vivid white specular reflections. Preserve saturated fresh yellow-green. No balloon string or loose neck.",
+      "size": [
+        1254,
+        1254
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "sha256": "bfb3de2102d0ca579799e6a9a18fc1f15daaffd890db85444271fe327c2f117b"
+    },
+    {
+      "reference": "letters/lime/_ref.png",
+      "output": "letters__lime.png",
+      "prompt": "Use case: stylized-concept.\nAsset type: standalone 3D sphere for a design asset library.\nInput image 1 is the material and style reference, not a composition to reproduce.\nGenerate ONE roughly spherical object made from the reference's material. Match its distinctive color, texture, finish, irregularities and visual character. The overall mass must read as a single compact sphere, but it need not be mathematically perfect: let the material influence its silhouette.\nComposition: centered isolated object on a square 1024x1024 canvas, entirely visible with comfortable empty margins (about 12%), consistent studio quality, detailed tactile surface, soft directional lighting and self-shadowing.\nBACKGROUND: truly transparent PNG RGBA with alpha 0 outside the object, including any holes. Preserve fine edge detail. No opaque background, no baked-in checkerboard, no floor, no cast shadow outside the object, no backdrop, no text, no letters, no logo, no watermark, no props.\nSpecific material and shape: A round biomorphic orb predominantly bright yellow-lime glossy rubbery resin, interrupted by a few integrated liquid chrome-silver patches and a small ivory patch as in the reference. Flowing smooth fused volumes and a few shallow organic depressions, subtle orange-peel skin. Preserve blue-tinged reflections in the chrome.",
+      "size": [
+        1254,
+        1254
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "sha256": "02d90b787f0a133e4bd48d2b5c85a93a0032ae6f81509b1bde022e45108723cd"
+    },
+    {
+      "reference": "letters/lime fur/_ref.jpg",
+      "output": "letters__lime-fur.png",
+      "prompt": "Use case: stylized-concept.\nAsset type: standalone 3D sphere for a design asset library.\nInput image 1 is the material and style reference, not a composition to reproduce.\nGenerate ONE roughly spherical object made from the reference's material. Match its distinctive color, texture, finish, irregularities and visual character. The overall mass must read as a single compact sphere, but it need not be mathematically perfect: let the material influence its silhouette.\nComposition: centered isolated object on a square 1024x1024 canvas, entirely visible with comfortable empty margins (about 12%), consistent studio quality, detailed tactile surface, soft directional lighting and self-shadowing.\nBACKGROUND: truly transparent PNG RGBA with alpha 0 outside the object, including any holes. Preserve fine edge detail. No opaque background, no baked-in checkerboard, no floor, no cast shadow outside the object, no backdrop, no text, no letters, no logo, no watermark, no props.\nSpecific material and shape: A lush shaggy neon yellow-lime fur sphere, composed of soft subtly bulging tufts with long fine hairs combed in flowing directions. Dense richly detailed fur with dark green roots and radiant chartreuse tips, fluffy irregular silhouette. Single compact ball without a central hole.",
+      "size": [
+        1254,
+        1254
+      ],
+      "alpha_range": [
+        0,
+        253
+      ],
+      "sha256": "8017ee1a9df00ac345ce77a3eb9786bf49bf48950d0b2136350b61935001fc81"
+    },
+    {
+      "reference": "letters/metal/_ref.jpg",
+      "output": "letters__metal.png",
+      "prompt": "Use case: stylized-concept.\nAsset type: standalone 3D sphere for a design asset library.\nInput image 1 is the material and style reference, not a composition to reproduce.\nGenerate ONE roughly spherical object made from the reference's material. Match its distinctive color, texture, finish, irregularities and visual character. The overall mass must read as a single compact sphere, but it need not be mathematically perfect: let the material influence its silhouette.\nComposition: centered isolated object on a square 1024x1024 canvas, entirely visible with comfortable empty margins (about 12%), consistent studio quality, detailed tactile surface, soft directional lighting and self-shadowing.\nBACKGROUND: truly transparent PNG RGBA with alpha 0 outside the object, including any holes. Preserve fine edge detail. No opaque background, no baked-in checkerboard, no floor, no cast shadow outside the object, no backdrop, no text, no letters, no logo, no watermark, no props.\nSpecific material and shape: A compact spherical mass of softly crumpled liquid silver chrome, large fluid folds, swollen ripples and soft creases, mirrorlike broad white highlights and dark silver recesses with very subtle warm reflections. Sculptural wrinkled metal ball rather than a smooth polished bearing.",
+      "size": [
+        1254,
+        1254
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "sha256": "10f4ab885b19065d7896481a5ef5628538902e0e637eba1b2bd51eda61e293b7"
+    },
+    {
+      "reference": "letters/orange/_ref.png",
+      "output": "letters__orange.png",
+      "prompt": "Use case: stylized-concept.\nAsset type: standalone 3D sphere for a design asset library.\nInput image 1 is the material and style reference, not a composition to reproduce.\nGenerate ONE roughly spherical object made from the reference's material. Match its distinctive color, texture, finish, irregularities and visual character. The overall mass must read as a single compact sphere, but it need not be mathematically perfect: let the material influence its silhouette.\nComposition: centered isolated object on a square 1024x1024 canvas, entirely visible with comfortable empty margins (about 12%), consistent studio quality, detailed tactile surface, soft directional lighting and self-shadowing.\nBACKGROUND: truly transparent PNG RGBA with alpha 0 outside the object, including any holes. Preserve fine edge detail. No opaque background, no baked-in checkerboard, no floor, no cast shadow outside the object, no backdrop, no text, no letters, no logo, no watermark, no props.\nSpecific material and shape: An organic red-orange glossy resin ball with a few rounded softly melted bulges. Preserve the distinctive saturated vermilion-orange color, rubbery painted finish and clearly visible irregular pebbled orange-peel microtexture; subtle cool shadows and white studio highlights. No fruit features.",
+      "size": [
+        1254,
+        1254
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "sha256": "8c0a6e44afdcb950e6e5cb7035385f4acac1c290cd889a20ddb3bfbc458a7065"
+    },
+    {
+      "reference": "letters/orange coral/_ref.png",
+      "output": "letters__orange-coral.png",
+      "prompt": "Use case: stylized-concept.\nAsset type: standalone 3D sphere for a design asset library.\nInput image 1 is the material and style reference, not a composition to reproduce.\nGenerate ONE roughly spherical object made from the reference's material. Match its distinctive color, texture, finish, irregularities and visual character. The overall mass must read as a single compact sphere, but it need not be mathematically perfect: let the material influence its silhouette.\nComposition: centered isolated object on a square 1024x1024 canvas, entirely visible with comfortable empty margins (about 12%), consistent studio quality, detailed tactile surface, soft directional lighting and self-shadowing.\nBACKGROUND: truly transparent PNG RGBA with alpha 0 outside the object, including any holes. Preserve fine edge detail. No opaque background, no baked-in checkerboard, no floor, no cast shadow outside the object, no backdrop, no text, no letters, no logo, no watermark, no props.\nSpecific material and shape: A rounded coral-like ball formed from densely interconnected thick knobbly peach-orange filaments. Preserve the reference's irregular bumpy velvety porous texture, warm salmon-orange color, small organic open spaces and wiggly surface. Overall a compact round porous mass, not a long branch or a simple smooth sphere.",
+      "size": [
+        1254,
+        1254
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "sha256": "479d4de70aa5ce2791b45260db64eed263dc932de2b54dae5ecab176cbc967dc"
+    },
+    {
+      "reference": "letters/pink/_ref.png",
+      "output": "letters__pink.png",
+      "prompt": "Use case: stylized-concept.\nAsset type: standalone 3D sphere for a design asset library.\nInput image 1 is the material and style reference, not a composition to reproduce.\nGenerate ONE roughly spherical object made from the reference's material. Match its distinctive color, texture, finish, irregularities and visual character. The overall mass must read as a single compact sphere, but it need not be mathematically perfect: let the material influence its silhouette.\nComposition: centered isolated object on a square 1024x1024 canvas, entirely visible with comfortable empty margins (about 12%), consistent studio quality, detailed tactile surface, soft directional lighting and self-shadowing.\nBACKGROUND: truly transparent PNG RGBA with alpha 0 outside the object, including any holes. Preserve fine edge detail. No opaque background, no baked-in checkerboard, no floor, no cast shadow outside the object, no backdrop, no text, no letters, no logo, no watermark, no props.\nSpecific material and shape: A hot-pink/magenta round organic sponge-like blob with softly uneven contours and dense fine mottled porous/fuzzy surface texture. Match the reference's short velvety crystalline flocking and lighter pink raised texture over darker pink recesses. Not long hair or smooth plastic.",
+      "size": [
+        1254,
+        1254
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "sha256": "5c9e313a434f3ea3a0aeb26c266f5f1c6be990c9eb1917b422351bc285d1ba70"
+    },
+    {
+      "reference": "letters/pink patch/_ref.png",
+      "output": "letters__pink-patch.png",
+      "prompt": "Use case: stylized-concept.\nAsset type: standalone 3D sphere for a design asset library.\nInput image 1 is the material and style reference, not a composition to reproduce.\nGenerate ONE roughly spherical object made from the reference's material. Match its distinctive color, texture, finish, irregularities and visual character. The overall mass must read as a single compact sphere, but it need not be mathematically perfect: let the material influence its silhouette.\nComposition: centered isolated object on a square 1024x1024 canvas, entirely visible with comfortable empty margins (about 12%), consistent studio quality, detailed tactile surface, soft directional lighting and self-shadowing.\nBACKGROUND: truly transparent PNG RGBA with alpha 0 outside the object, including any holes. Preserve fine edge detail. No opaque background, no baked-in checkerboard, no floor, no cast shadow outside the object, no backdrop, no text, no letters, no logo, no watermark, no props.\nSpecific material and shape: A softly stuffed round fabric ball with pink and warm off-white checkerboard patchwork curving naturally around the volume. Fine crinkled woven/leathery textile grain, subtle stitch seams and soft cushion-like dents; slightly imperfect outline. Preserve the reference's pink-and-cream scale and tactile surface, no text tag.",
+      "size": [
+        1254,
+        1254
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "sha256": "7d90682fc70d804a8ac2ea522404904aef703b516c7afc6bd9529ea2e0d30b02"
+    },
+    {
+      "reference": "letters/purple fur/_ref.png",
+      "output": "letters__purple-fur.png",
+      "prompt": "Use case: stylized-concept.\nAsset type: standalone 3D sphere for a design asset library.\nInput image 1 is the material and style reference, not a composition to reproduce.\nGenerate ONE roughly spherical object made from the reference's material. Match its distinctive color, texture, finish, irregularities and visual character. The overall mass must read as a single compact sphere, but it need not be mathematically perfect: let the material influence its silhouette.\nComposition: centered isolated object on a square 1024x1024 canvas, entirely visible with comfortable empty margins (about 12%), consistent studio quality, detailed tactile surface, soft directional lighting and self-shadowing.\nBACKGROUND: truly transparent PNG RGBA with alpha 0 outside the object, including any holes. Preserve fine edge detail. No opaque background, no baked-in checkerboard, no floor, no cast shadow outside the object, no backdrop, no text, no letters, no logo, no watermark, no props.\nSpecific material and shape: A shaggy periwinkle-violet fur ball with long fine wispy lavender hairs, irregular hair directions, darker blue-purple roots and pale lilac tips. Preserve the dry soft wild fuzzy texture, individual flyaway hairs, softly uneven rounded silhouette.",
+      "size": [
+        1254,
+        1254
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "sha256": "ea26e2149699c2897b38a95b1c249fdd7aaaac17c7d4df3bae4f80dca1bb6842"
+    },
+    {
+      "reference": "letters/purple glass/_ref.jpg",
+      "output": "letters__purple-glass.png",
+      "prompt": "Use case: stylized-concept.\nAsset type: standalone 3D sphere for a design asset library.\nInput image 1 is the material and style reference, not a composition to reproduce.\nGenerate ONE roughly spherical object made from the reference's material. Match its distinctive color, texture, finish, irregularities and visual character. The overall mass must read as a single compact sphere, but it need not be mathematically perfect: let the material influence its silhouette.\nComposition: centered isolated object on a square 1024x1024 canvas, entirely visible with comfortable empty margins (about 12%), consistent studio quality, detailed tactile surface, soft directional lighting and self-shadowing.\nBACKGROUND: truly transparent PNG RGBA with alpha 0 outside the object, including any holes. Preserve fine edge detail. No opaque background, no baked-in checkerboard, no floor, no cast shadow outside the object, no backdrop, no text, no letters, no logo, no watermark, no props.\nSpecific material and shape: Use specifically the purple object in the reference as the material guide: translucent violet frosted glass/resin with satiny soft highlights and cloudy pale pink-lavender light transmission. One slightly imperfect round solid glass orb, smooth rounded contour. No red or yellow objects, no ring, no hole.",
+      "size": [
+        1254,
+        1254
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "sha256": "0874bc9178fffbd83ccb420f11e54974ce143c725077f5fd94dd958ec38c90f8"
+    },
+    {
+      "reference": "letters/soft/_ref.jpg",
+      "output": "letters__soft.png",
+      "prompt": "Use case: stylized-concept.\nAsset type: standalone 3D sphere for a design asset library.\nInput image 1 is the material and style reference, not a composition to reproduce.\nGenerate ONE roughly spherical object made from the reference's material. Match its distinctive color, texture, finish, irregularities and visual character. The overall mass must read as a single compact sphere, but it need not be mathematically perfect: let the material influence its silhouette.\nComposition: centered isolated object on a square 1024x1024 canvas, entirely visible with comfortable empty margins (about 12%), consistent studio quality, detailed tactile surface, soft directional lighting and self-shadowing.\nBACKGROUND: truly transparent PNG RGBA with alpha 0 outside the object, including any holes. Preserve fine edge detail. No opaque background, no baked-in checkerboard, no floor, no cast shadow outside the object, no backdrop, no text, no letters, no logo, no watermark, no props.\nSpecific material and shape: A softly imperfect round foam/rubber sphere matching the dominant creamy pale-yellow object in the reference. Ultra-matte micrograin, subtle powdery velvety surface, soft bevel-like rounding at gentle deformations, diffuse pastel shading, tactile flexible foam feeling. No gloss, no lettering.",
+      "size": [
+        1254,
+        1254
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "sha256": "56d3a592da8d24fde89393c5e8f80ebb2b45999fad8481b2c6be1f28536bbde4"
+    },
+    {
+      "reference": "letters/white/_ref.png",
+      "output": "letters__white.png",
+      "prompt": "Use case: stylized-concept.\nAsset type: standalone 3D sphere for a design asset library.\nInput image 1 is the material and style reference, not a composition to reproduce.\nGenerate ONE roughly spherical object made from the reference's material. Match its distinctive color, texture, finish, irregularities and visual character. The overall mass must read as a single compact sphere, but it need not be mathematically perfect: let the material influence its silhouette.\nComposition: centered isolated object on a square 1024x1024 canvas, entirely visible with comfortable empty margins (about 12%), consistent studio quality, detailed tactile surface, soft directional lighting and self-shadowing.\nBACKGROUND: truly transparent PNG RGBA with alpha 0 outside the object, including any holes. Preserve fine edge detail. No opaque background, no baked-in checkerboard, no floor, no cast shadow outside the object, no backdrop, no text, no letters, no logo, no watermark, no props.\nSpecific material and shape: A warm ivory glossy organic ball with a few shallow softly swollen bulges, fine dense leather-like pebbled microtexture, satin-white studio highlights and subtle cool violet shading. Preserve the reference's smooth solid rubber/resin body and intimate micrograin, not fluffy or chalky.",
+      "size": [
+        1254,
+        1254
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "sha256": "2dc98479ed66cc926acac881b6759388b39b874634d1705c62931b06de799941"
+    },
+    {
+      "reference": "sticks/blue/_ref.png",
+      "output": "sticks__blue.png",
+      "prompt": "Use case: stylized-concept.\nAsset type: standalone 3D sphere for a design asset library.\nInput image 1 is the material and style reference, not a composition to reproduce.\nGenerate ONE roughly spherical object made from the reference's material. Match its distinctive color, texture, finish, irregularities and visual character. The overall mass must read as a single compact sphere, but it need not be mathematically perfect: let the material influence its silhouette.\nComposition: centered isolated object on a square 1024x1024 canvas, entirely visible with comfortable empty margins (about 12%), consistent studio quality, detailed tactile surface, soft directional lighting and self-shadowing.\nBACKGROUND: truly transparent PNG RGBA with alpha 0 outside the object, including any holes. Preserve fine edge detail. No opaque background, no baked-in checkerboard, no floor, no cast shadow outside the object, no backdrop, no text, no letters, no logo, no watermark, no props.\nSpecific material and shape: A cobalt blue bulbous spherical resin blob, compact and round with a handful of fused rounded protuberances and softly dimpled folds. Match the strong saturated blue, polished semi-gloss wet-looking surface, tiny wrinkled orange-peel grain and bright soft highlights. Create an individual sphere variation.",
+      "size": [
+        1254,
+        1254
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "sha256": "954c1ceee679e6c14e1074b76e7e77ddf9ac96d8a355fae2eb0e09ef139e8848"
+    },
+    {
+      "reference": "sticks/copper/_ref.png",
+      "output": "sticks__copper.png",
+      "prompt": "Use case: stylized-concept.\nAsset type: standalone 3D sphere for a design asset library.\nInput image 1 is the material and style reference, not a composition to reproduce.\nGenerate ONE roughly spherical object made from the reference's material. Match its distinctive color, texture, finish, irregularities and visual character. The overall mass must read as a single compact sphere, but it need not be mathematically perfect: let the material influence its silhouette.\nComposition: centered isolated object on a square 1024x1024 canvas, entirely visible with comfortable empty margins (about 12%), consistent studio quality, detailed tactile surface, soft directional lighting and self-shadowing.\nBACKGROUND: truly transparent PNG RGBA with alpha 0 outside the object, including any holes. Preserve fine edge detail. No opaque background, no baked-in checkerboard, no floor, no cast shadow outside the object, no backdrop, no text, no letters, no logo, no watermark, no props.\nSpecific material and shape: A warm copper-bronze spherical organic metal blob, rounded slightly undulating surface with fine pits, small dark oxidized speckles and worn mottled patina. Preserve bright warm cream reflections and orange-copper shadows, metallic sheen and imperfect aged cast-metal character; no tubular cage.",
+      "size": [
+        1254,
+        1254
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "sha256": "014e34caaf8c903d04e039369810d9e60f17790465815dd27e2a6c913eff5bdc"
+    },
+    {
+      "reference": "sticks/green pixels/_ref.png",
+      "output": "sticks__green-pixels.png",
+      "prompt": "Use case: stylized-concept.\nAsset type: standalone 3D sphere for a design asset library.\nInput image 1 is the material and style reference, not a composition to reproduce.\nGenerate ONE roughly spherical object made from the reference's material. Match its distinctive color, texture, finish, irregularities and visual character. The overall mass must read as a single compact sphere, but it need not be mathematically perfect: let the material influence its silhouette.\nComposition: centered isolated object on a square 1024x1024 canvas, entirely visible with comfortable empty margins (about 12%), consistent studio quality, detailed tactile surface, soft directional lighting and self-shadowing.\nBACKGROUND: truly transparent PNG RGBA with alpha 0 outside the object, including any holes. Preserve fine edge detail. No opaque background, no baked-in checkerboard, no floor, no cast shadow outside the object, no backdrop, no text, no letters, no logo, no watermark, no props.\nSpecific material and shape: Interpret the reference's deliberately coarse noisy digital pixel aesthetic as one spherical volume: neon green dominant, dense red and black pixel flecks, high contrast dithered stippling, stepped jagged pixel edges and slight RGB channel misregistration. Preserve its flat digital rawness while the shading makes a sphere legible. Transparent background and transparent gaps between peripheral pixels. No butterfly, no wings, no smooth glossy material.",
+      "size": [
+        1254,
+        1254
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "sha256": "feff3c696db671fd5b498d1166a6ee677ea5ca70902fef14d7805109add5264e"
+    },
+    {
+      "reference": "sticks/lime/_ref.jpg",
+      "output": "sticks__lime.png",
+      "prompt": "Use case: stylized-concept.\nAsset type: standalone 3D sphere for a design asset library.\nInput image 1 is the material and style reference, not a composition to reproduce.\nGenerate ONE roughly spherical object made from the reference's material. Match its distinctive color, texture, finish, irregularities and visual character. The overall mass must read as a single compact sphere, but it need not be mathematically perfect: let the material influence its silhouette.\nComposition: centered isolated object on a square 1024x1024 canvas, entirely visible with comfortable empty margins (about 12%), consistent studio quality, detailed tactile surface, soft directional lighting and self-shadowing.\nBACKGROUND: truly transparent PNG RGBA with alpha 0 outside the object, including any holes. Preserve fine edge detail. No opaque background, no baked-in checkerboard, no floor, no cast shadow outside the object, no backdrop, no text, no letters, no logo, no watermark, no props.\nSpecific material and shape: A roughly spherical hollow organic shell of neon chartreuse yellow-green glossy molten material, sculpted with many irregular rounded holes and soft stretched web-like bridges. Preserve the reference's slippery reflective fluid finish and asymmetric perforated morphology. Round overall, transparent holes, no black backdrop.",
+      "size": [
+        1254,
+        1254
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "sha256": "2769baf43fe62c8c6649444e60f9609aaa67fd36ecc3d1552b7075a82bc3e1f0"
+    },
+    {
+      "reference": "sticks/metal/_ref.jpg",
+      "output": "sticks__metal.png",
+      "prompt": "Use case: stylized-concept.\nAsset type: standalone 3D sphere for a design asset library.\nInput image 1 is the material and style reference, not a composition to reproduce.\nGenerate ONE roughly spherical object made from the reference's material. Match its distinctive color, texture, finish, irregularities and visual character. The overall mass must read as a single compact sphere, but it need not be mathematically perfect: let the material influence its silhouette.\nComposition: centered isolated object on a square 1024x1024 canvas, entirely visible with comfortable empty margins (about 12%), consistent studio quality, detailed tactile surface, soft directional lighting and self-shadowing.\nBACKGROUND: truly transparent PNG RGBA with alpha 0 outside the object, including any holes. Preserve fine edge detail. No opaque background, no baked-in checkerboard, no floor, no cast shadow outside the object, no backdrop, no text, no letters, no logo, no watermark, no props.\nSpecific material and shape: A chrome-silver spiky sphere: compact rounded central metallic mass with a number of smoothly fused elongated needle-sharp conical spikes radiating in three dimensions. Preserve reference's liquid chrome highlights, mirror-silver finish and sharp starburst character while keeping a spherical core. Entire spike tips visible.",
+      "size": [
+        1254,
+        1254
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "sha256": "e5d078926ced65179a8f373f9344ff871dfe13d74fa1c533d80a63358a61a038"
+    },
+    {
+      "reference": "sticks/orange/_ref.png",
+      "output": "sticks__orange.png",
+      "prompt": "Use case: stylized-concept.\nAsset type: standalone 3D sphere for a design asset library.\nInput image 1 is the material and style reference, not a composition to reproduce.\nGenerate ONE roughly spherical object made from the reference's material. Match its distinctive color, texture, finish, irregularities and visual character. The overall mass must read as a single compact sphere, but it need not be mathematically perfect: let the material influence its silhouette.\nComposition: centered isolated object on a square 1024x1024 canvas, entirely visible with comfortable empty margins (about 12%), consistent studio quality, detailed tactile surface, soft directional lighting and self-shadowing.\nBACKGROUND: truly transparent PNG RGBA with alpha 0 outside the object, including any holes. Preserve fine edge detail. No opaque background, no baked-in checkerboard, no floor, no cast shadow outside the object, no backdrop, no text, no letters, no logo, no watermark, no props.\nSpecific material and shape: A compact roughly spherical peach-orange coral/sponge mass built from thick irregular knobbly filaments, densely wound and organically connected, with small negative-space openings. Match the reference's soft bumpy matte orange texture and warm lighter protrusions. Single rounded form with an irregular lumpy outline.",
+      "size": [
+        1254,
+        1254
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "sha256": "3ad79410532842975f252df02d73b5579253c05be14a94ca097baf3507b8bb6e"
+    },
+    {
+      "reference": "sticks/pink/_ref.png",
+      "output": "sticks__pink.png",
+      "prompt": "Use case: stylized-concept.\nAsset type: standalone 3D sphere for a design asset library.\nInput image 1 is the material and style reference, not a composition to reproduce.\nGenerate ONE roughly spherical object made from the reference's material. Match its distinctive color, texture, finish, irregularities and visual character. The overall mass must read as a single compact sphere, but it need not be mathematically perfect: let the material influence its silhouette.\nComposition: centered isolated object on a square 1024x1024 canvas, entirely visible with comfortable empty margins (about 12%), consistent studio quality, detailed tactile surface, soft directional lighting and self-shadowing.\nBACKGROUND: truly transparent PNG RGBA with alpha 0 outside the object, including any holes. Preserve fine edge detail. No opaque background, no baked-in checkerboard, no floor, no cast shadow outside the object, no backdrop, no text, no letters, no logo, no watermark, no props.\nSpecific material and shape: A bright saturated candy-pink rounded organic porous ball with uneven velvety flocked skin and tiny sponge-like mottling. Soft small bumps and subtle undulation shape the silhouette. Preserve pale pink surface flecks, deeper magenta shading and short fine fuzzy finish; no long fur.",
+      "size": [
+        1254,
+        1254
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "sha256": "2d72c640280384edbae4c45de6f1456809a206bc261ddbb9c0b8294a938016b6"
+    },
+    {
+      "reference": "sticks/soft/_ref.jpg",
+      "output": "sticks__soft.png",
+      "prompt": "Use case: stylized-concept.\nAsset type: standalone 3D sphere for a design asset library.\nInput image 1 is the material and style reference, not a composition to reproduce.\nGenerate ONE roughly spherical object made from the reference's material. Match its distinctive color, texture, finish, irregularities and visual character. The overall mass must read as a single compact sphere, but it need not be mathematically perfect: let the material influence its silhouette.\nComposition: centered isolated object on a square 1024x1024 canvas, entirely visible with comfortable empty margins (about 12%), consistent studio quality, detailed tactile surface, soft directional lighting and self-shadowing.\nBACKGROUND: truly transparent PNG RGBA with alpha 0 outside the object, including any holes. Preserve fine edge detail. No opaque background, no baked-in checkerboard, no floor, no cast shadow outside the object, no backdrop, no text, no letters, no logo, no watermark, no props.\nSpecific material and shape: Use the large pastel cyan-blue object in the reference for this variation: a soft pillowy slightly irregular spherical foam form, muted sky blue, ultra-matte with delicate powdery fine grain and broad gentle lighting. Solid tactile rubber/foam appearance with soft dents, no shine or letters.",
+      "size": [
+        1254,
+        1254
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "sha256": "992c309e05602d15a13cff968063f3ee1d8692e433ba90c80714d916987c21af"
+    },
+    {
+      "reference": "sticks/white/_ref.png",
+      "output": "sticks__white.png",
+      "prompt": "Use case: stylized-concept.\nAsset type: standalone 3D sphere for a design asset library.\nInput image 1 is the material and style reference, not a composition to reproduce.\nGenerate ONE roughly spherical object made from the reference's material. Match its distinctive color, texture, finish, irregularities and visual character. The overall mass must read as a single compact sphere, but it need not be mathematically perfect: let the material influence its silhouette.\nComposition: centered isolated object on a square 1024x1024 canvas, entirely visible with comfortable empty margins (about 12%), consistent studio quality, detailed tactile surface, soft directional lighting and self-shadowing.\nBACKGROUND: truly transparent PNG RGBA with alpha 0 outside the object, including any holes. Preserve fine edge detail. No opaque background, no baked-in checkerboard, no floor, no cast shadow outside the object, no backdrop, no text, no letters, no logo, no watermark, no props.\nSpecific material and shape: A white-to-ivory irregular spherical coral/foam ball with densely bumpy granular surface, small cauliflower-like nodules and porous crevices. Preserve the reference's chalky matte roughness and short fuzzy mineral-like texture. Compact organic round mass with softly lumpy contours, no glossy plastic.",
+      "size": [
+        1254,
+        1254
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "sha256": "7701f8815a89b6a903f9dc650f6a4c66a89442fdd7bb6496c4f677fe627fc87d"
+    },
+    {
+      "reference": "sticks/pixels/_ref.png",
+      "output": "sticks__pixels.png",
+      "prompt": "Use case: stylized-concept.\nAsset type: standalone 3D sphere for a design asset library.\nInput image 1 is the material and style reference, not a composition to reproduce.\nGenerate ONE roughly spherical object made from the reference's material. Match its distinctive color, texture, finish, irregularities and visual character. The overall mass must read as a single compact sphere, but it need not be mathematically perfect: let the material influence its silhouette.\nComposition: centered isolated object on a square 1024x1024 canvas, entirely visible with comfortable empty margins (about 12%), consistent studio quality, detailed tactile surface, soft directional lighting and self-shadowing.\nBACKGROUND: truly transparent PNG RGBA with alpha 0 outside the object, including any holes. Preserve fine edge detail. No opaque background, no baked-in checkerboard, no floor, no cast shadow outside the object, no backdrop, no text, no letters, no logo, no watermark, no props.\nSpecific material and shape: The reference is a graphic arrangement of large alternating pure black and white square pixels. Translate this into one roughly spherical object made of large bold black-and-white square pixel blocks, with a deliberately stepped pixelated round silhouette. Keep its raw minimal high-contrast graphic character and sparse chunky square scale, using faceting or minimal tonal shading only to suggest the spherical volume. The BLACK-AND-WHITE CHECKER PATTERN BELONGS TO THE OBJECT SURFACE ONLY, not the background. Background must be actual alpha transparency, remove the gray backdrop from the reference entirely. No smooth glossy finish, no multicolor speckles, no text.",
+      "size": [
+        1254,
+        1254
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "sha256": "9b907b058d6bd61cdb95ca97e7802b0e26cdb74318a5b82f2d682055bb30a51b"
+    },
+    {
+      "reference": "_temp_refs/blue_blob_01.jpg",
+      "output": "blue_blob_01.png",
+      "prompt": "Use case: stylized-concept.\nInput image 1 is a reference for material, color, lighting and organic style.\nGenerate ONE roughly spherical compact blob made from exactly this reference's distinctive blue fabric-like material. Preserve the very fine visible woven crosshatched mesh surface, satin textile sheen, rich cobalt/royal blue with deep navy recesses, sparse irregular white and silver round speckles and tiny occasional warm gold flecks. It should feel like softly inflated textile with smooth plump merged lobes and gentle depressions, not hard plastic.\nThe overall silhouette is a round spherical mass with a few soft organic bulges, not mathematically perfect; reflect the reference's gently swollen sculptural character. The sphere must be full and solid in overall mass, with no large central hole. No letter shape, no horseshoe or ring.\nOne centered isolated object on a square canvas, completely visible with comfortable transparent margins. High quality detailed 3D render, soft studio highlights that reveal the weave and self-shadowing in the folds. Match the subdued satin finish and blue colors of the reference.\nOutput transparent PNG RGBA: genuinely transparent background, alpha 0 outside the object. Preserve fine edges. No gray or white background, no baked checkerboard, no floor, no external cast shadow, no text, no logos, no watermark, no additional objects.",
+      "size": [
+        1254,
+        1254
+      ],
+      "alpha_range": [
+        0,
+        255
+      ],
+      "sha256": "788f50cc353c35953460d632151f2f2f7d48d4cd0fac3e5f9f0ea10619c4ef1f"
+    }
+  ]
+}

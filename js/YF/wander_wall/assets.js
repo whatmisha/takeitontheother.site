@@ -1,21 +1,29 @@
-export const FORMS = [
-    { id: 'pillow', name: 'Pink pillow', src: './graphics/blobs/blob_01.png' },
-    { id: 'lime', name: 'Lime fur', src: './graphics/blobs/blob_02.png' },
-    { id: 'pearl', name: 'Pearlescent', src: './graphics/blobs/blob_03.png' },
-    { id: 'lilac', name: 'Lilac fur', src: './graphics/blobs/blob_04.png' }
-];
+export const FORMS = [];
+export const ASSETS = Object.create(null);
+const letters = new Map();
 
 export function alternatives(letter) {
-    return Array.from({ length: 9 }, (_, index) => `${letter}-${Math.floor(index / 3) + 1}-${index % 3 + 1}`);
+    return letters.get(letter) ?? [];
 }
 
-export const ASSETS = Object.fromEntries([
-    ...Array.from('ABCDEFGHIJKLMNOPQRSTUVWXYZ').flatMap(letter => alternatives(letter).map(id => {
-        const [, set, variant] = id.split('-');
-        return [id, { id, name: letter, src: `./graphics/alphabet/set_0${set}/${letter}_0${variant}.png` }];
-    })),
-    ...FORMS.map(form => [form.id, form])
-]);
+export function installCatalog(catalog) {
+    if (catalog?.version !== 1 || !Array.isArray(catalog.assets)) throw new Error('Invalid artwork catalog.');
+    const metrics = {}, ids = new Set();
+    for (const asset of catalog.assets) {
+        if (!asset?.id || ids.has(asset.id) || !['letter', 'form'].includes(asset.kind) || !asset.src?.startsWith('./graphics/') ||
+            !Array.isArray(asset.metrics?.bounds) || asset.metrics.bounds.length !== 4 || asset.metrics.rows?.length !== 32 ||
+            (asset.kind === 'letter' && !/^[A-Z]$/.test(asset.letter))) throw new Error('Invalid artwork catalog entry.');
+        ids.add(asset.id);
+    }
+    for (const id of Object.keys(ASSETS)) delete ASSETS[id];
+    FORMS.length = 0; letters.clear();
+    for (const asset of catalog.assets) {
+        ASSETS[asset.id] = asset; metrics[asset.id] = asset.metrics;
+        if (asset.kind === 'form') FORMS.push(asset);
+        else { if (!letters.has(asset.letter)) letters.set(asset.letter, []); letters.get(asset.letter).push(asset.id); }
+    }
+    return metrics;
+}
 
 export class AssetStore {
     constructor() { this.entries = new Map(); this.visible = new Set(); }
@@ -32,7 +40,9 @@ export class AssetStore {
             const image = new Image();
             image.onload = () => { entry.image = image; resolve(image); };
             image.onerror = () => { this.entries.delete(id); reject(new Error('Could not load ' + ASSETS[id].src)); };
-            image.src = new URL(ASSETS[id].src, import.meta.url).href;
+            const url = new URL(ASSETS[id].src, import.meta.url);
+            url.searchParams.set('v', ASSETS[id].hash);
+            image.src = url.href;
         });
         this.entries.set(id, entry);
         return entry.promise;

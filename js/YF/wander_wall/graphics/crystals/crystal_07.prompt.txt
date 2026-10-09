@@ -1,0 +1,9 @@
+Generated with built-in image_gen.
+
+Use case: stylized-concept.
+Input image 1 is the approved crystal reference. Generate a new distinct variation in the SAME visual family, not a duplicate or a simple rotated copy.
+Exactly ONE connected sculptural natural quartz specimen, one dominant crystalline body with integrated angular growths, a varied asymmetric outline and faceted terminations. Keep the realistic clear rock-crystal material, cool pale lavender-silver color, silver-white specular highlights, subtle cobalt-blue environment reflections, natural horizontal growth striations and restrained internal inclusions seen in the reference. High-end natural mineral macro photography, crisp believable optical refraction and detailed facets, not illustration or a cut gemstone.
+This is an asset for later compositing onto a saturated BLUE background: luminous facets and light edges must remain readable on blue, subtle cool blue reflected tones, no opaque black background contamination.
+Background must be genuinely transparent RGBA alpha: fully transparent outside the silhouette, clean antialiased edges, appropriate partial transparency through clearer regions. Do not render a solid background or checkerboard. One complete isolated object only, comfortably framed with roughly 10% transparent padding on all sides. No cropping, no floor, no cast shadow, no detached debris, no glow halo, no text or watermark.
+Specific variation for this image:
+MEDIUM complexity, BROAD PYRAMIDAL silhouette. One chunky quartz body tapering to an off-center peak, an uneven row of short integrated stair-step shoulders on one side and a single deep concave notch on the other. Upright with only a 5-degree LEFT tilt. Dramatic but subtle low camera angle looking upward so the faceted peak and receding side planes feel monumental. Large clear geometric faces, sparse inclusions, polished natural striated texture rather than artificial cut glass. Square composition.
