@@ -1,6 +1,7 @@
 import { SeededRandom } from '../infra/framework/src/index.js';
-import { alternatives, FORMS } from './assets.js';
+import { alternatives, FORMS, GROUNDS } from './assets.js';
 import { clamp, lettersOf, normalize } from './document.js';
+import { groundDimensions, anchorGround } from './ground.js';
 
 const radians = degrees => degrees * Math.PI / 180;
 
@@ -10,6 +11,7 @@ export class Silhouettes {
     }
 
     dimensions(item, scene) {
+        if (item.kind === 'ground') return groundDimensions(item, scene);
         const [, , width, height] = this.metrics[item.asset].bounds;
         const size = item.scale * Math.min(scene.width, scene.height);
         return { width: size * width / Math.max(width, height), height: size * height / Math.max(width, height) };
@@ -22,6 +24,7 @@ export class Silhouettes {
     }
 
     constrain(item, scene) {
+        if (item.kind === 'ground') return anchorGround(item, scene);
         const result = { ...item }, fraction = clamp(scene.overflow ?? 0, 0, 50) / 100;
         const retained = 1 - 2 * fraction, margin = Math.min(scene.width, scene.height) * .008 * retained;
         let box = this.box(result, scene);
@@ -49,7 +52,7 @@ export class Silhouettes {
 class Coverage {
     constructor(scene, geometry) {
         this.scene = scene; this.geometry = geometry;
-        this.unit = Math.min(scene.width, scene.height) / 76;
+        this.unit = Math.max(Math.min(scene.width, scene.height) / 76, Math.sqrt(scene.width * scene.height / 30000));
         this.width = Math.ceil(scene.width / this.unit); this.height = Math.ceil(scene.height / this.unit);
         this.counts = new Uint8Array(this.width * this.height);
     }
@@ -118,6 +121,18 @@ function arrangeLetters(items, scene, geometry, random) {
     return result;
 }
 
+export function updateGround(settings, { reroll = false } = {}) {
+    const scene = normalize(settings), previous = scene.items.find(item => item.kind === 'ground');
+    scene.items = scene.items.filter(item => item.kind !== 'ground');
+    if (scene.groundEnabled && GROUNDS.length) {
+        const keep = previous && (!reroll || previous.pinned || previous.visible === false);
+        const asset = keep ? previous.asset : new SeededRandom(scene.seed).fork('ground').pick(GROUNDS).id;
+        scene.items.unshift({ id: 'ground-0', kind: 'ground', index: 0, letter: '', pinned: false, visible: true,
+            ...previous, asset });
+    }
+    return normalize(scene);
+}
+
 export function generate(settings, geometry, { seed = settings.seed, reroll = true } = {}) {
     const scene = normalize({ ...settings, seed });
     const missing = [...new Set(lettersOf(scene.text))].filter(letter => !alternatives(letter).length);
@@ -128,7 +143,7 @@ export function generate(settings, geometry, { seed = settings.seed, reroll = tr
         const id = 'letter-' + index, previous = old.get(id);
         if (previous?.letter === letter) {
             if (previous.visible === false) return { ...previous };
-            if (previous.pinned) return geometry.constrain(previous, scene);
+            if (previous.pinned) return previous;
             if (!reroll) return { ...previous, rotation: random.float(-scene.rotationRange, scene.rotationRange) };
         }
         return { id, kind: 'letter', letter, index, asset: assetRandom.pick(alternatives(letter)), rotation: random.float(-scene.rotationRange, scene.rotationRange), x: .5, y: .5, scale: .5, pinned: false, visible: true };
@@ -144,7 +159,7 @@ export function generate(settings, geometry, { seed = settings.seed, reroll = tr
     const forms = Array.from({ length: count }, (_, index) => {
         const id = 'form-' + index, previous = old.get(id);
         if (previous?.visible === false) return { ...previous };
-        if (previous?.pinned) return geometry.constrain(previous, scene);
+        if (previous?.pinned) return previous;
         if (previous && !reroll) return { ...previous };
         return { id, kind: 'form', letter: '', index, asset: formPool[index % formPool.length].id,
             rotation: random.float(-scene.rotationRange, scene.rotationRange), x: .5, y: .5, scale: .4, pinned: false, visible: true };
@@ -184,13 +199,18 @@ export function generate(settings, geometry, { seed = settings.seed, reroll = tr
     const byId = new Map(generated.map(item => [item.id, item]));
     const previousOrder = scene.items.flatMap(item => byId.has(item.id) ? [byId.get(item.id)] : []);
     const previousIds = new Set(previousOrder.map(item => item.id));
-    scene.items = [...generated.filter(item => !previousIds.has(item.id) && item.kind === 'form'), ...previousOrder,
+    scene.items = [...scene.items.filter(item => item.kind === 'ground'),
+        ...generated.filter(item => !previousIds.has(item.id) && item.kind === 'form'), ...previousOrder,
         ...generated.filter(item => !previousIds.has(item.id) && item.kind === 'letter')];
-    return normalize(scene);
+    return updateGround(scene, { reroll });
 }
 
 export function changeFormat(settings, format, geometry) {
-    const next = normalize({ ...settings, format });
-    next.items = next.items.map(item => geometry.constrain(item, next));
+    return resizeScene(settings, { format }, geometry);
+}
+
+export function resizeScene(settings, dimensions, geometry) {
+    const next = normalize({ ...settings, ...dimensions });
+    if (settings.width * next.height === next.width * settings.height) return updateGround(next);
     return generate(next, geometry, { reroll: false });
 }

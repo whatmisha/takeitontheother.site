@@ -18,7 +18,7 @@ function color(key) {
 }
 
 function toggle(key, label) {
-    return `<label class="toggle-label"><span class="toggle-switch"><input id="${key}Toggle" type="checkbox"><span class="toggle-slider"></span></span><span>${label}</span></label>`;
+    return `<label class="pill-toggle" for="${key}Toggle"><input id="${key}Toggle" class="sr-only" type="checkbox"><span>${label}</span></label>`;
 }
 
 export function mountEffects() {
@@ -30,15 +30,12 @@ export function mountEffects() {
             <div class="color-swatches-compact">${effectColors.slice(0, 4).map(color).join('')}</div>
             <div id="backgroundDirection">${range('backgroundAngle')}</div></div>
         </details>
-        <details class="ui-disclosure effect-details" id="shadowDetails"><summary>Shadow<span class="ui-disclosure__chevron" data-icon="chevron"></span></summary>
-            <div class="effect-content">${toggle('shadowEnabled', 'Drop shadow')}<div id="shadowOptions" hidden>
-            <div class="color-swatches-compact">${color('shadowColor')}</div>${['shadowOpacity', 'shadowBlur', 'shadowDistance', 'shadowAngle'].map(range).join('')}</div></div>
-        </details>
-        <details class="ui-disclosure effect-details" id="outlineDetails"><summary>Outline<span class="ui-disclosure__chevron" data-icon="chevron"></span></summary>
-            <div class="effect-content">${toggle('outlineEnabled', 'Sticker outline')}<div id="outlineOptions" hidden>
-            <div class="color-swatches-compact">${color('outlineColor')}</div>${range('outlineWidth')}</div></div>
-        </details>
-        <div class="effect-reset"><button id="resetEffectsBtn" type="button" class="ui-icon-button" aria-label="Reset effects and background" data-tooltip="Reset effects and background" data-icon="refresh"></button></div>`;
+        <div class="control-group pill-toggle-row">${toggle('shadowEnabled', 'Drop shadow')}${toggle('outlineEnabled', 'Outline')}</div>
+        <div id="shadowOptions" hidden>
+            ${range('shadowOpacity')}${range('shadowBlur')}
+            <details class="ui-disclosure"><summary>Shadow settings<span class="ui-disclosure__chevron" data-icon="chevron"></span></summary><div class="color-swatches-compact">${color('shadowColor')}</div>${['shadowDistance', 'shadowAngle'].map(range).join('')}</details>
+        </div>
+        <div id="outlineOptions" hidden><div class="color-swatches-compact">${color('outlineColor')}</div>${range('outlineWidth')}</div>`;
 }
 
 export function syncEffects(tool) {

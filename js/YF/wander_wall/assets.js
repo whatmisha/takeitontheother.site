@@ -1,4 +1,5 @@
 export const FORMS = [];
+export const GROUNDS = [];
 export const ASSETS = Object.create(null);
 const letters = new Map();
 
@@ -6,20 +7,25 @@ export function alternatives(letter) {
     return letters.get(letter) ?? [];
 }
 
+export function variantsFor(item) {
+    return item.kind === 'letter' ? alternatives(item.letter) : (item.kind === 'ground' ? GROUNDS : FORMS).map(asset => asset.id);
+}
+
 export function installCatalog(catalog) {
     if (catalog?.version !== 1 || !Array.isArray(catalog.assets)) throw new Error('Invalid artwork catalog.');
     const metrics = {}, ids = new Set();
     for (const asset of catalog.assets) {
-        if (!asset?.id || ids.has(asset.id) || !['letter', 'form'].includes(asset.kind) || !asset.src?.startsWith('./graphics/') ||
+        if (!asset?.id || ids.has(asset.id) || !['letter', 'form', 'ground'].includes(asset.kind) || !asset.src?.startsWith('./graphics/') ||
             !Array.isArray(asset.metrics?.bounds) || asset.metrics.bounds.length !== 4 || asset.metrics.rows?.length !== 32 ||
             (asset.kind === 'letter' && !/^[A-Z]$/.test(asset.letter))) throw new Error('Invalid artwork catalog entry.');
         ids.add(asset.id);
     }
     for (const id of Object.keys(ASSETS)) delete ASSETS[id];
-    FORMS.length = 0; letters.clear();
+    FORMS.length = 0; GROUNDS.length = 0; letters.clear();
     for (const asset of catalog.assets) {
         ASSETS[asset.id] = asset; metrics[asset.id] = asset.metrics;
         if (asset.kind === 'form') FORMS.push(asset);
+        else if (asset.kind === 'ground') GROUNDS.push(asset);
         else { if (!letters.has(asset.letter)) letters.set(asset.letter, []); letters.get(asset.letter).push(asset.id); }
     }
     return metrics;

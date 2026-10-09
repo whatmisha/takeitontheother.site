@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import { createRequire } from 'node:module';
 import { discoverAssets, prepareCatalog } from '../scripts/catalog.mjs';
-import { ASSETS, FORMS, alternatives, installCatalog } from '../assets.js';
+import { ASSETS, FORMS, GROUNDS, variantsFor, alternatives, installCatalog } from '../assets.js';
 import { generate, Silhouettes } from '../layout.js';
 
 const require = createRequire(import.meta.url);
@@ -66,4 +66,26 @@ test('empty alpha images are rejected before publishing', async t => {
     const root = await mkdtemp(resolve(tmpdir(), 'wall-empty-')); t.after(() => rm(root, { recursive: true, force: true }));
     await png(root, 'graphics/alphabet/set_01/A_01.png', '#00000000');
     await assert.rejects(prepareCatalog(root), /fully transparent/);
+});
+
+test('new object folders are recursive, ground is separate, and references/previews are excluded', async t => {
+    const root = await mkdtemp(resolve(tmpdir(), 'wall-objects-')); t.after(() => rm(root, { recursive: true, force: true }));
+    for (const path of ['sticks/green pixels/stick_01.png', 'crystals/crystal_01.png', 'prism/blue.png',
+        'spheres/blue.png', 'future/subfolder/new.png', 'loose.png', 'ground/v3/letters/blue.png', 'ground/orange.png',
+        'sticks/green pixels/_ref.png', 'previews/generated.png', '_references/example.png', '.hidden/private.png']) await png(root, 'graphics/' + path);
+    const catalog = await prepareCatalog(root); installCatalog(catalog);
+    assert.equal(FORMS.length, 6); assert.equal(GROUNDS.length, 2);
+    assert.ok(ASSETS['object:future/subfolder/new.png']);
+    assert.ok(ASSETS['ground:v3/letters/blue.png']);
+    assert.equal(ASSETS['object:sticks/green pixels/stick_01.png'].category, 'sticks');
+    assert.ok(catalog.assets.every(asset => !asset.src.includes('_ref') && !asset.src.includes('/previews/')));
+    assert.deepEqual(variantsFor({ kind: 'ground' }), GROUNDS.map(asset => asset.id));
+    assert.deepEqual(variantsFor({ kind: 'form' }), FORMS.map(asset => asset.id));
+    const previousForms = FORMS.map(asset => asset.id);
+    await png(root, 'graphics/another-category/new.png');
+    await png(root, 'graphics/ground/v4/new.png');
+    const added = await prepareCatalog(root); installCatalog(added);
+    assert.equal(FORMS.length, 7); assert.equal(GROUNDS.length, 3);
+    assert.ok(previousForms.every(id => ASSETS[id]));
+    installCatalog(catalog); assert.equal(GROUNDS.length, 2, 'catalog replacement clears deleted grounds');
 });

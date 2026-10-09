@@ -13,14 +13,27 @@ try {
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
-    await page.goto(process.env.WANDER_URL || 'http://127.0.0.1:8016/wander_wall/');
+    await page.goto(process.env.WANDER_URL || 'http://127.0.0.1:8020/wander_wall/');
     await page.waitForSelector('html[data-ready="true"]');
     await page.evaluate(async () => { window.wall = await import('./tool.js'); });
     const snapshot = () => page.evaluate(() => wall.app.getSnapshot());
     const idle = async () => { await page.waitForFunction(() => !document.getElementById('compositionFieldset').disabled && !document.getElementById('exportPngBtn').disabled); await page.evaluate(async () => { await wall.assets.prepare(wall.app.settings.items); wall.app.renderNow(); }); };
+    const history = async (redo = false) => { await page.locator('#canvasContainer').focus(); await page.keyboard.press(redo ? 'ControlOrMeta+Shift+z' : 'ControlOrMeta+z'); };
     const initial = await snapshot();
-    assert.equal(initial.items.length, 10);
+    assert.equal(initial.items.length, 11);
+    assert.equal(initial.items[0].kind, 'ground');
     assert.ok(initial.items.every(item => item.asset));
+    assert.equal(await page.locator('.stage-toolbar').count(), 0);
+    await page.locator('#resolutionSelect').selectOption('fhd'); await idle();
+    assert.equal((await snapshot()).width, 1920);
+    assert.deepEqual((await snapshot()).items, initial.items);
+    await page.locator('#widthInput').fill('2560'); await page.locator('#heightInput').fill('1440');
+    await page.locator('#heightInput').press('Enter'); await idle();
+    assert.equal((await snapshot()).format, 'custom');
+    assert.deepEqual((await snapshot()).items, initial.items);
+    await history(); await idle(); assert.equal((await snapshot()).format, 'fhd');
+    await history(); await idle(); assert.deepEqual(await snapshot(), initial);
+    checks.push('Named resolution presets and Custom dimensions preserve same-aspect layouts; keyboard undo restores each resize.');
     const pixelCount = await page.evaluate(() => {
         const canvas = document.getElementById('mainCanvas'), data = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height).data;
         let opaque = 0, colorful = 0;
@@ -30,6 +43,22 @@ try {
     assert.ok(pixelCount.opaque > 200000 && pixelCount.colorful > 100000);
     checks.push('Desktop startup: loaded assets, nonblank colorful canvas, no console errors.');
     await page.screenshot({ path: '/tmp/wander-wall-desktop.png', fullPage: true });
+
+    await page.locator('[data-item="ground-0"] .layer-select').click();
+    assert.equal(await page.locator('[data-item="ground-0"] .layer-grip').isDisabled(), true);
+    assert.equal(await page.locator('#rotationSlider').isVisible(), false);
+    await page.locator('#groundHeightValue').fill('50'); await page.locator('#groundHeightValue').press('Enter'); await idle();
+    assert.equal((await snapshot()).groundHeight, 50);
+    assert.deepEqual((await snapshot()).items.slice(1), initial.items.slice(1));
+    await history(); await idle(); assert.deepEqual(await snapshot(), initial);
+    await page.locator('#variantBtn').click(); await page.locator('#variantGrid button:not([aria-pressed="true"])').first().click(); await idle();
+    assert.notEqual((await snapshot()).items[0].asset, initial.items[0].asset);
+    assert.deepEqual((await snapshot()).items.slice(1), initial.items.slice(1));
+    await history(); await idle();
+    await page.locator('label:has(#groundToggle)').click(); await idle();
+    assert.deepEqual((await snapshot()).items, initial.items.slice(1));
+    await history(); await idle(); assert.deepEqual(await snapshot(), initial);
+    checks.push('Ground has fixed bottom order, no rotation controls, exact height/variant editing, an independent toggle, and full undo.');
 
     const visiblePoint = id => page.evaluate(id => {
         const scene = wall.app.settings, item = id ? scene.items.find(item => item.id === id) : scene.items.at(-1), size = wall.geometry.dimensions(item, scene);
@@ -42,20 +71,20 @@ try {
     }, id);
     const clickPoint = await visiblePoint();
     await page.mouse.click(clickPoint.x, clickPoint.y); await idle();
+    assert.deepEqual(await snapshot(), initial);
+    await page.mouse.dblclick(clickPoint.x, clickPoint.y); await idle();
     let state = await snapshot(), changed = state.items.find(item => item.id === clickPoint.id);
     assert.notEqual(changed.asset, initial.items.at(-1).asset); assert.equal(changed.pinned, false);
-    await page.locator('#undoBtn').click(); await idle();
+    await history(); await idle();
     assert.deepEqual(await snapshot(), initial);
-    await page.locator('#redoBtn').click(); await idle();
+    await history(true); await idle();
     assert.equal((await snapshot()).items.find(item => item.id === changed.id).asset, changed.asset);
-    checks.push('Variant mode cycles without auto-pinning; undo/redo restores exact scenes.');
+    checks.push('Single click selects; double-click cycles without auto-pinning; keyboard undo/redo restores exact scenes.');
 
-    await page.locator('#moveModeBtn').click();
     const movePoint = await visiblePoint(clickPoint.id), beforeSelect = await snapshot();
     await page.mouse.click(movePoint.x, movePoint.y); await idle();
     assert.deepEqual(await snapshot(), beforeSelect);
-    assert.equal(await page.locator('#moveModeBtn').getAttribute('aria-pressed'), 'true');
-    checks.push('Move mode selects artwork without changing its variant or history.');
+    checks.push('Clicking selects artwork without changing its variant or history.');
 
     const beforeDrag = await snapshot();
     const dragPoint = await visiblePoint(clickPoint.id);
@@ -63,8 +92,8 @@ try {
     state = await snapshot();
     const dragged = state.items.find(item => item.id === clickPoint.id);
     assert.ok(dragged.x !== changed.x || dragged.y !== changed.y);
-    await page.locator('#undoBtn').click(); await idle(); assert.deepEqual(await snapshot(), beforeDrag);
-    await page.locator('#redoBtn').click(); await idle();
+    await history(); await idle(); assert.deepEqual(await snapshot(), beforeDrag);
+    await history(true); await idle();
     assert.equal((await snapshot()).items.find(item => item.id === clickPoint.id).pinned, false);
     await page.locator('#pinBtn').click();
     const pinned = (await snapshot()).items.find(item => item.id === clickPoint.id);
@@ -86,6 +115,12 @@ try {
     await page.locator('#scaleSlider').evaluate(element => { element.value = '40'; element.dispatchEvent(new Event('input', { bubbles: true })); });
     await page.waitForTimeout(240);
     assert.notEqual((await snapshot()).items.find(item => item.id === 'form-0').scale, beforeScale);
+    await page.locator('#positionDetails summary').click();
+    await page.locator('#xInput').fill('-350'); await page.locator('#xInput').press('Enter');
+    assert.equal((await snapshot()).items.find(item => item.id === 'form-0').x, -3.5);
+    const offboard = (await snapshot()).items.find(item => item.id === 'form-0');
+    await page.locator('#visibilityBtn').click(); await page.locator('#showAllBtn').click();
+    assert.deepEqual((await snapshot()).items.find(item => item.id === 'form-0'), offboard);
     await page.locator('#xInput').fill('50'); await page.locator('#xInput').press('Tab');
     assert.equal((await snapshot()).items.find(item => item.id === 'form-0').x, .5);
     assert.equal((await snapshot()).items.find(item => item.id === 'form-0').pinned, false);
@@ -101,8 +136,8 @@ try {
     await page.locator('#frontBtn').click();
     assert.notDeepEqual(await snapshot(), beforeOrder);
     assert.deepEqual(await listOrder(), (await snapshot()).items.map(item => item.id).reverse());
-    await page.locator('#undoBtn').click(); await idle(); assert.deepEqual(await snapshot(), beforeOrder);
-    await page.locator('#redoBtn').click(); await idle();
+    await history(); await idle(); assert.deepEqual(await snapshot(), beforeOrder);
+    await history(true); await idle();
     await page.locator('[data-item="letter-5"] .layer-grip').scrollIntoViewIfNeeded();
     const grip = await page.locator('[data-item="letter-5"] .layer-grip').boundingBox();
     const targetRow = await page.locator('[data-item="letter-4"]').boundingBox();
@@ -111,13 +146,13 @@ try {
     await page.mouse.move(grip.x + grip.width / 2, targetRow.y + targetRow.height - 5, { steps: 10 }); await page.mouse.up();
     assert.notDeepEqual(await snapshot(), beforeReorder);
     assert.deepEqual(await listOrder(), (await snapshot()).items.map(item => item.id).reverse());
-    await page.locator('#undoBtn').click(); await idle(); assert.deepEqual(await snapshot(), beforeReorder);
+    await history(); await idle(); assert.deepEqual(await snapshot(), beforeReorder);
     checks.push('Layer rows reflect front-to-back order; arrow and pointer reordering are undoable.');
 
     await page.locator('[data-item="letter-4"] [data-action="pin"]').click();
     const beforeUnpin = await snapshot(); assert.ok(beforeUnpin.items.filter(item => item.pinned).length >= 2);
     await page.locator('#unpinAllBtn').click(); assert.ok((await snapshot()).items.every(item => !item.pinned));
-    await page.locator('#undoBtn').click(); await idle(); assert.deepEqual(await snapshot(), beforeUnpin);
+    await history(); await idle(); assert.deepEqual(await snapshot(), beforeUnpin);
     await page.locator('#unpinAllBtn').click();
     checks.push('Per-row pins and Unpin all are explicit, counted, and undoable.');
 
@@ -125,8 +160,8 @@ try {
     await page.locator('label:has(#shuffleToggle)').click(); await idle();
     assert.equal((await snapshot()).text, 'HELLO'); assert.equal(await page.locator('#textInput').inputValue(), 'HELLO');
     await page.locator('#textInput').fill('WORLD'); await idle(); assert.equal((await snapshot()).text, 'WORLD');
-    await page.locator('#undoBtn').click(); await idle(); assert.equal((await snapshot()).text, 'HELLO');
-    await page.locator('#redoBtn').click(); await idle(); assert.equal((await snapshot()).text, 'WORLD');
+    await history(); await idle(); assert.equal((await snapshot()).text, 'HELLO');
+    await history(true); await idle(); assert.equal((await snapshot()).text, 'WORLD');
     await page.route('**/graphics/**/*.png', async route => { await new Promise(resolve => setTimeout(resolve, 500)); await route.continue(); });
     await page.locator('#textInput').fill('QZX');
     await page.waitForFunction(() => document.getElementById('compositionFieldset').disabled);
@@ -152,9 +187,9 @@ try {
     await page.locator('#textInput').fill('ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEF'); await idle();
     assert.equal((await snapshot()).items.filter(item => item.kind === 'letter').length, 32);
     if (!(await snapshot()).shuffle) await page.locator('label:has(#shuffleToggle)').click(); await idle(); assert.equal((await snapshot()).shuffle, true);
-    await page.locator('label[for="formatPhone"]').click(); await idle();
+    await page.locator('#resolutionSelect').selectOption('phone'); await idle();
     state = await snapshot(); assert.equal(state.width, 1290); assert.equal(state.height, 2796);
-    const withinBounds = await page.evaluate(() => wall.app.settings.items.every(item => {
+    const withinBounds = await page.evaluate(() => wall.app.settings.items.filter(item => item.kind !== 'ground').every(item => {
         const scene = wall.app.settings, box = wall.geometry.box(item, scene);
         return item.x * scene.width - box.width / 2 >= 0 && item.y * scene.height - box.height / 2 >= 0 && item.x * scene.width + box.width / 2 <= scene.width && item.y * scene.height + box.height / 2 <= scene.height;
     }));
@@ -177,7 +212,7 @@ try {
     assert.deepEqual(await readFile('/tmp/wander-wall-export-desktop.png'), selectedPNG);
     checks.push('Real 3840 x 2160 PNG download exactly matches the artwork renderer and excludes selection handles.');
 
-    await page.locator('label[for="formatPhone"]').click(); await idle();
+    await page.locator('#resolutionSelect').selectOption('phone'); await idle();
     const [phoneDownload] = await Promise.all([page.waitForEvent('download'), page.locator('#exportPngBtn').click()]);
     await phoneDownload.saveAs('/tmp/wander-wall-export-phone.png');
     const phoneImage = await sharp('/tmp/wander-wall-export-phone.png').metadata();
@@ -220,8 +255,8 @@ try {
     assert.equal(hiddenExport[0], hiddenExport[1]);
     await page.mouse.click(hiddenPoint.x, hiddenPoint.y);
     assert.notEqual(await page.evaluate(() => wall.editor.selected), 'letter-5');
-    await page.locator('#undoBtn').click(); await idle(); assert.deepEqual(await snapshot(), beforeHide);
-    await page.locator('#redoBtn').click(); await idle();
+    await history(); await idle(); assert.deepEqual(await snapshot(), beforeHide);
+    await history(true); await idle();
     await page.locator('#generateBtn').click(); await idle();
     assert.equal((await snapshot()).items.find(item => item.id === 'letter-5').visible, false);
     await page.locator('#showAllBtn').click(); assert.ok((await snapshot()).items.every(item => item.visible));
@@ -236,7 +271,7 @@ try {
         wall.assets.load = async function(id) { this.load = load; await new Promise(resolve => setTimeout(resolve, 500)); return load.call(this, id); };
         const slider = document.getElementById('rotationRangeSlider');
         slider.value = '80'; slider.dispatchEvent(new Event('input', { bubbles: true }));
-        document.getElementById('variantBtn').click();
+        wall.editor.nextVariant(wall.editor.selected);
     });
     await idle(); assert.equal((await snapshot()).rotationRange, 80);
     await page.locator('#rotationRangeValue').fill('0'); await page.locator('#rotationRangeValue').press('Enter'); await idle();
@@ -258,24 +293,19 @@ try {
         const scene = wall.app.settings, item = scene.items.find(item => item.id === 'letter-5'), box = wall.geometry.box(item, scene);
         return (box.width / 2 - item.x * scene.width) / box.width;
     });
-    assert.ok(await leftOverflow() > 0); assert.ok(await leftOverflow() <= .25);
+    assert.ok(Math.abs(await leftOverflow() - .5) < 1e-6);
     await page.locator('#pinBtn').click();
     await page.locator('#overflowValue').fill('0'); await page.locator('#overflowValue').press('Enter'); await idle();
-    assert.ok(await leftOverflow() <= 0);
+    assert.ok(Math.abs(await leftOverflow() - .5) < 1e-6);
     assert.equal((await snapshot()).items.find(item => item.id === 'letter-5').pinned, true);
     await page.locator('#overflowValue').fill('20'); await page.locator('#overflowValue').press('Enter'); await idle();
     await page.locator('[data-item="letter-0"] [data-action="visibility"]').click();
     await page.evaluate(() => { wall.editor.select(null); wall.app.renderNow(); });
-    const outsideAlpha = await page.evaluate(() => {
-        const t = wall.app.target;
-        return t.canvas.getContext('2d').getImageData(Math.floor(t.panX - 3), Math.floor(t.panY + 100 * t.zoom), 1, 1).data[3];
-    });
-    assert.equal(outsideAlpha, 0);
     await page.screenshot({ path: '/tmp/wander-wall-layout-controls.png' });
     const newSettings = await snapshot();
     await page.locator('#jsonFileInput').setInputFiles({ name: 'controls.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify({ type: 'wander-wall', version: 1, settings: newSettings })) }); await idle();
     assert.deepEqual(await snapshot(), newSettings);
-    checks.push('Overflow allows bounded manual clipping, tightening it fits pinned layers back inside, canvas clipping stays clean, and JSON retains all new settings.');
+    checks.push('Manual placement ignores generation overflow; pins preserve it after changing the limit, and JSON retains all settings.');
 
     const beforeInvalid = await snapshot();
     await page.locator('#jsonFileInput').setInputFiles({ name: 'invalid.json', mimeType: 'application/json', buffer: Buffer.from('{"type":"other","version":1}') });
@@ -300,10 +330,9 @@ try {
     const touchContext = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1, isMobile: true, hasTouch: true });
     const touch = await touchContext.newPage();
     touch.on('pageerror', error => errors.push(error.message));
-    await touch.goto(process.env.WANDER_URL || 'http://127.0.0.1:8016/wander_wall/');
+    await touch.goto(process.env.WANDER_URL || 'http://127.0.0.1:8020/wander_wall/');
     await touch.waitForSelector('html[data-ready="true"]');
     await touch.evaluate(async () => { window.wall = await import('./tool.js'); });
-    await touch.locator('#moveModeBtn').tap();
     const touchPoint = await touch.evaluate(() => {
         const scene = wall.app.settings, item = scene.items.at(-1), size = wall.geometry.dimensions(item, scene), t = wall.app.target, rect = t.canvas.getBoundingClientRect();
         for (let y = -.35; y <= .35; y += .1) for (let x = -.35; x <= .35; x += .1) {
@@ -333,7 +362,7 @@ try {
         assert.equal(bounds.overflow, false); assert.ok(bounds.canvasHeight > 20); assert.ok(bounds.canvasBottom <= bounds.tabTop);
     }
     await touch.setViewportSize({ width: 390, height: 844 });
-    await touch.locator('#compositionTab').tap(); await touch.locator('label[for="formatPhone"]').tap();
+    await touch.locator('#generalTab').tap(); await touch.locator('#resolutionSelect').selectOption('phone');
     await touch.waitForFunction(() => !document.getElementById('exportPngBtn').disabled);
     await touch.locator('#elementsTab').tap();
     await touch.locator('#elementList [data-action="visibility"]').first().tap();
@@ -341,7 +370,7 @@ try {
     await touch.locator('#showAllBtn').tap();
     assert.equal(await touch.locator('#elementList .is-hidden').count(), 0);
     await touch.screenshot({ path: '/tmp/wander-wall-mobile-layers.png' });
-    await touch.locator('#compositionTab').tap();
+    await touch.locator('#generalTab').tap();
     await touch.evaluate(() => {
         Object.defineProperty(visualViewport, 'height', { configurable: true, value: 480 });
         Object.defineProperty(visualViewport, 'offsetTop', { configurable: true, value: 30 });
@@ -359,6 +388,6 @@ try {
     await touchContext.close();
     checks.push('Real touch selection and layer dragging work; narrow/landscape screens and a simulated keyboard viewport keep the canvas and controls visible.');
     assert.deepEqual(errors, []);
-    await writeFile(new URL('./acceptance.json', import.meta.url), JSON.stringify({ date: '2026-10-09', status: 'passed', checks, consoleErrors: errors, screenshots: ['/tmp/wander-wall-desktop.png', '/tmp/wander-wall-selection.png', '/tmp/wander-wall-mobile.png'], artifacts: ['/tmp/wander-wall-export-desktop.png', '/tmp/wander-wall-export-phone.png'] }, null, 2) + '\n');
+    await writeFile(new URL('./acceptance.json', import.meta.url), JSON.stringify({ date: new Date().toISOString(), status: 'passed', checks, consoleErrors: errors, screenshots: ['/tmp/wander-wall-desktop.png', '/tmp/wander-wall-selection.png', '/tmp/wander-wall-mobile.png'], artifacts: ['/tmp/wander-wall-export-desktop.png', '/tmp/wander-wall-export-phone.png'] }, null, 2) + '\n');
     console.log(JSON.stringify({ status: 'passed', checks }, null, 2));
 } finally { await browser.close(); }

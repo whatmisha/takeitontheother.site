@@ -28,18 +28,22 @@ export async function discoverAssets(root) {
                 letter, set: Number(set[1]), variant: Number(variant[2]), path, src: urlPath(path) });
         }
     }
-    async function forms(directory = '') {
-        for (const file of await entries(resolve(root, 'graphics/blobs', directory))) {
+    async function objects(directory = '') {
+        for (const file of await entries(resolve(root, 'graphics', directory))) {
+            if (/^[._]/.test(file.name) || (!directory && ['alphabet', 'previews'].includes(file.name))) continue;
             const relative = posix.join(directory, file.name);
-            if (file.isDirectory()) { await forms(relative); continue; }
+            if (file.isDirectory()) { await objects(relative); continue; }
             if (!file.isFile() || !/\.png$/i.test(file.name)) continue;
-            const legacy = legacyForms[relative];
-            const path = 'graphics/blobs/' + relative;
-            assets.push({ id: legacy?.[0] ?? 'form:' + relative, kind: 'form',
-                name: legacy?.[1] ?? file.name.replace(/\.png$/i, '').replace(/[_-]+/g, ' '), path, src: urlPath(path) });
+            const category = relative.includes('/') ? relative.split('/')[0] : 'objects';
+            const local = relative.slice(category.length + 1), ground = category === 'ground';
+            const legacy = category === 'blobs' ? legacyForms[local] : null;
+            const path = 'graphics/' + relative;
+            const id = legacy?.[0] ?? (category === 'blobs' ? 'form:' + local : ground ? 'ground:' + local : 'object:' + relative);
+            const name = legacy?.[1] ?? relative.replace(/\.png$/i, '').replace(/[_-]+/g, ' ').split('/').join(' / ');
+            assets.push({ id, kind: ground ? 'ground' : 'form', category, name, path, src: urlPath(path) });
         }
     }
-    await forms();
+    await objects();
     assets.sort((a, b) => compare(a.kind, b.kind) || compare(a.letter ?? '', b.letter ?? '') || (a.set ?? 0) - (b.set ?? 0) || (a.variant ?? 0) - (b.variant ?? 0) || compare(a.path, b.path));
     const ids = new Set();
     for (const asset of assets) {

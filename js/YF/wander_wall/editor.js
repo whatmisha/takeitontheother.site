@@ -1,17 +1,24 @@
-import { ASSETS, alternatives, FORMS } from './assets.js';
+import { ASSETS, variantsFor } from './assets.js';
 import { clamp } from './document.js';
 import { icon } from './icons.js';
 import { SliderController } from '../infra/framework/src/index.js';
+import { VariantPicker, layerName } from './variant-picker.js';
 
 export class Editor {
     constructor(app, geometry, { change, nextVariant, isBusy, onSelection, signal }) {
         this.app = app; this.geometry = geometry; this.change = change; this.nextVariant = nextVariant; this.isBusy = isBusy;
-        this.selected = null; this.gesture = null; this.space = false; this.mode = 'variant'; this.onSelection = onSelection;
+        this.selected = null; this.gesture = null; this.space = false; this.onSelection = onSelection;
+        this.variants = new VariantPicker(nextVariant, signal);
         this.surface = app.target.canvas; this.container = app.target.container;
         const on = (node, type, callback, options = {}) => node.addEventListener(type, callback, { ...options, signal });
         on(this.surface, 'pointerdown', event => this.down(event));
         on(this.surface, 'pointermove', event => this.move(event));
         on(this.surface, 'pointerup', event => this.up(event));
+        on(this.surface, 'dblclick', event => {
+            if (this.isBusy() || this.space || performance.now() - (this.lastDrag || -Infinity) < 400) return;
+            const item = this.hit(this.coordinates(event));
+            if (item) { event.preventDefault(); this.select(item.id); this.nextVariant(item.id); }
+        });
         on(this.surface, 'pointercancel', () => this.cancel());
         on(this.surface, 'lostpointercapture', () => this.cancel());
         on(window, 'blur', () => { this.space = false; this.cancel(); });
@@ -35,13 +42,12 @@ export class Editor {
         on(list, 'pointerup', () => this.finishReorder(true));
         on(list, 'pointercancel', () => this.finishReorder(false));
         on(list, 'lostpointercapture', () => this.finishReorder(false));
-        on(document.getElementById('variantModeBtn'), 'click', () => this.setMode('variant'));
-        on(document.getElementById('moveModeBtn'), 'click', () => this.setMode('move'));
         on(document.getElementById('pinBtn'), 'click', () => this.pin());
         on(document.getElementById('unpinAllBtn'), 'click', () => this.unpinAll());
         on(document.getElementById('showAllBtn'), 'click', () => this.showAll());
         on(document.getElementById('visibilityBtn'), 'click', () => this.visibility());
-        on(document.getElementById('variantBtn'), 'click', () => this.nextVariant(this.selected));
+        on(document.getElementById('variantBtn'), 'click', () => this.variants.open(this.item()));
+        on(document.getElementById('locateBtn'), 'click', () => this.locate());
         on(document.getElementById('backBtn'), 'click', () => this.reorder(-1));
         on(document.getElementById('frontBtn'), 'click', () => this.reorder(1));
         this.sliders = new SliderController(app.settingsStore);
@@ -49,20 +55,39 @@ export class Editor {
             valueId: key + 'Value', min: key === 'scale' ? 2.5 : -180, max: key === 'scale' ? 300 : 180, baseStep: .1, decimals: 1,
             onUpdate: value => this.transform({ [key]: value / (key === 'scale' ? 100 : 1) }, true)
         });
-        for (const key of ['x', 'y']) on(document.getElementById(key + 'Input'), 'change', event => {
-            if (event.target.value.trim() && Number.isFinite(Number(event.target.value))) this.transform({ [key]: Number(event.target.value) / 100 });
-            else this.sync();
-        });
+        for (const key of ['x', 'y']) {
+            const input = document.getElementById(key + 'Input');
+            let dirty = false;
+            const apply = () => {
+                if (!dirty) return;
+                dirty = false;
+                if (input.value.trim() && Number.isFinite(Number(input.value))) this.transform({ [key]: Number(input.value) / 100 });
+                else this.sync();
+            };
+            on(input, 'input', () => { dirty = true; });
+            on(input, 'change', apply); on(input, 'blur', apply);
+            on(input, 'keydown', event => { if (event.key === 'Enter') { event.preventDefault(); apply(); } });
+        }
     }
 
     item() { return this.app.settings.items.find(item => item.id === this.selected); }
     items() { return this.gesture?.items || this.app.settings.items; }
     select(id) { this.selected = id; this.sync(); this.onSelection?.(this.selected); this.app.render(); }
 
-    setMode(mode) {
-        this.cancel(); this.mode = mode;
-        document.querySelector('.wander-wall').dataset.mode = mode;
-        for (const name of ['variant', 'move']) document.getElementById(name + 'ModeBtn').setAttribute('aria-pressed', String(mode === name));
+    hit(point) {
+        const scene = this.app.settings;
+        return [...scene.items].reverse().find(item => {
+            if (item.kind === 'ground' && (point.x < 0 || point.y < 0 || point.x > scene.width || point.y > scene.height)) return false;
+            return this.geometry.contains(item, scene, point.x, point.y);
+        });
+    }
+
+    locate() {
+        const item = this.item(); if (!item) return;
+        const target = this.app.target, rect = this.container.getBoundingClientRect();
+        target.panX = rect.width / 2 - item.x * this.app.settings.width * target.zoom;
+        target.panY = rect.height / 2 - item.y * this.app.settings.height * target.zoom;
+        this.app.render();
     }
 
     coordinates(event) {
@@ -80,11 +105,11 @@ export class Editor {
         if (event.button !== 0 || this.space || this.isBusy() || this.gesture) return;
         const point = this.coordinates(event), scene = this.app.settings, selected = this.item();
         let mode = 'move', hit;
-        if (selected && selected.visible !== false) {
+        if (selected && selected.visible !== false && selected.kind !== 'ground') {
             const handles = this.handles(selected), radius = (event.pointerType === 'touch' ? 20 : 12) / this.app.target.zoom;
             for (const [name, handle] of Object.entries(handles)) if (Math.hypot(point.x - handle.x, point.y - handle.y) < radius) { mode = name; hit = selected; }
         }
-        if (!hit && point.x >= 0 && point.y >= 0 && point.x <= scene.width && point.y <= scene.height) hit = [...scene.items].reverse().find(item => this.geometry.contains(item, scene, point.x, point.y));
+        if (!hit) hit = this.hit(point);
         if (!hit) { this.select(null); return; }
         event.preventDefault(); this.container.focus({ preventScroll: true });
         this.select(hit.id);
@@ -99,6 +124,7 @@ export class Editor {
         if (!gesture || event.pointerId !== gesture.id) return;
         if (Math.hypot(event.clientX - gesture.clientX, event.clientY - gesture.clientY) < 4 && !gesture.moved) return;
         gesture.moved = true;
+        if (gesture.item.kind === 'ground') return;
         const point = this.coordinates(event), scene = gesture.snapshot, item = gesture.item;
         let changed = { ...item };
         if (gesture.mode === 'move') {
@@ -109,7 +135,6 @@ export class Editor {
             else changed.rotation += (Math.atan2(point.y - cy, point.x - cx) - Math.atan2(gesture.start.y - cy, gesture.start.x - cx)) * 180 / Math.PI;
         }
         changed.scale = clamp(changed.scale, .025, 3); changed.rotation = ((changed.rotation + 540) % 360) - 180;
-        changed = this.geometry.constrain(changed, scene);
         gesture.items = scene.items.map(old => old.id === item.id ? changed : old);
         this.app.render();
     }
@@ -119,16 +144,22 @@ export class Editor {
         if (!gesture || event.pointerId !== gesture.id) return;
         this.gesture = null;
         if (this.surface.hasPointerCapture(event.pointerId)) this.surface.releasePointerCapture(event.pointerId);
-        if (gesture.moved) this.change({ ...gesture.snapshot, items: gesture.items }, 'Transform element');
-        else if (gesture.mode === 'move' && this.mode === 'variant') this.nextVariant(gesture.item.id);
+        if (gesture.moved) { this.lastDrag = performance.now(); this.change({ ...gesture.snapshot, items: gesture.items }, 'Transform element'); }
         this.app.render();
     }
 
-    cancel() { this.finishReorder(false); if (this.gesture) { this.gesture = null; this.app.render(); } }
+    cancel() {
+        this.finishReorder(false);
+        if (this.gesture) {
+            const id = this.gesture.id; this.gesture = null;
+            if (this.surface.hasPointerCapture(id)) this.surface.releasePointerCapture(id);
+            this.app.render();
+        }
+    }
 
     transform(patch, continuous = false) {
-        const item = this.item(); if (!item || this.isBusy()) return;
-        const next = this.geometry.constrain({ ...item, ...patch }, this.app.settings);
+        const item = this.item(); if (!item || item.kind === 'ground' || this.isBusy()) return;
+        const next = { ...item, ...patch };
         const items = this.app.settings.items.map(old => old.id === item.id ? next : old);
         if (continuous) { this.app.settingsStore.set('items', items); this.sync(); }
         else this.change({ ...this.app.getSnapshot(), items }, 'Transform element');
@@ -149,28 +180,27 @@ export class Editor {
         if (!item || this.isBusy()) return;
         this.cancel();
         const next = { ...item, visible: visible ?? item.visible === false };
-        const constrained = next.visible ? this.geometry.constrain(next, this.app.settings) : next;
-        this.change({ ...this.app.getSnapshot(), items: this.app.settings.items.map(old => old.id === id ? constrained : old) }, next.visible ? 'Show layer' : 'Hide layer');
+        this.change({ ...this.app.getSnapshot(), items: this.app.settings.items.map(old => old.id === id ? next : old) }, next.visible ? 'Show layer' : 'Hide layer');
     }
 
     showAll() {
         if (this.isBusy()) return;
         this.cancel();
-        const items = this.app.settings.items.map(item => item.visible === false ? this.geometry.constrain({ ...item, visible: true }, this.app.settings) : item);
+        const items = this.app.settings.items.map(item => item.visible === false ? { ...item, visible: true } : item);
         this.change({ ...this.app.getSnapshot(), items }, 'Show all layers');
     }
 
     reorder(delta) {
         const items = [...this.app.settings.items], index = items.findIndex(item => item.id === this.selected);
-        if (index < 0 || this.isBusy()) return;
-        const target = clamp(index + delta, 0, items.length - 1);
+        if (index < 0 || items[index].kind === 'ground' || this.isBusy()) return;
+        const target = clamp(index + delta, items[0]?.kind === 'ground' ? 1 : 0, items.length - 1);
         [items[index], items[target]] = [items[target], items[index]];
         this.change({ ...this.app.getSnapshot(), items }, 'Layer order');
     }
 
     startReorder(event) {
         const grip = event.target.closest('.layer-grip');
-        if (!grip || event.button !== 0 || this.isBusy()) return;
+        if (!grip || grip.disabled || event.button !== 0 || this.isBusy()) return;
         event.preventDefault();
         this.reorderGesture = { pointerId: event.pointerId, id: grip.closest('[data-item]').dataset.item, x: event.clientX, y: event.clientY, startY: event.clientY, moved: false };
         document.getElementById('elementList').setPointerCapture(event.pointerId);
@@ -194,7 +224,7 @@ export class Editor {
         [...list.children].find(row => row.dataset.item === g.id)?.classList.add('is-dragging');
         if (g.x < rect.left || g.x > rect.right || g.y < rect.top || g.y > rect.bottom) return;
         const row = [...list.children].find(row => { const r = row.getBoundingClientRect(); return g.y >= r.top && g.y < r.bottom; });
-        if (!row || row.dataset.item === g.id) return;
+        if (!row || row.dataset.item === g.id || row.dataset.kind === 'ground') return;
         g.target = row.dataset.item;
         g.placement = g.y < row.getBoundingClientRect().top + row.offsetHeight / 2 ? 'before' : 'after';
         row.classList.add('drop-' + g.placement);
@@ -239,19 +269,19 @@ export class Editor {
             this.listSignature = signature;
             const scroll = list.scrollTop, focused = document.activeElement, focusId = focused?.closest('[data-item]')?.dataset.item, focusAction = focused?.dataset.action;
             list.replaceChildren(...[...scene.items].reverse().map(entry => {
-                const row = document.createElement('div'); row.className = 'layer-row ui-list-row'; row.dataset.item = entry.id; row.setAttribute('role', 'listitem');
+                const row = document.createElement('div'); row.className = 'layer-row ui-list-row'; row.dataset.item = entry.id; row.dataset.kind = entry.kind; row.setAttribute('role', 'listitem');
                 const action = (name, title, glyph) => {
                     const button = document.createElement('button'); button.type = 'button'; button.className = 'ui-icon-button'; button.dataset.action = name;
                     button.setAttribute('aria-label', title); button.title = title; button.append(icon(glyph, 16)); return button;
                 };
-                const label = entry.kind === 'letter' ? 'Letter ' + entry.letter + ' ' + (entry.index + 1) : ASSETS[entry.asset].name + ' ' + (entry.index + 1);
+                const label = layerName(entry);
                 const grip = action('reorder', 'Reorder ' + label, 'grip'); grip.classList.add('layer-grip');
                 const button = document.createElement('button'); button.type = 'button'; button.className = 'layer-select ui-list-select'; button.dataset.action = 'select';
                 button.setAttribute('aria-label', 'Select ' + label);
                 const image = document.createElement('img'); image.src = ASSETS[entry.asset].preview || ASSETS[entry.asset].src; image.alt = ''; image.draggable = false;
                 const text = document.createElement('span'); text.className = 'layer-label';
                 const title = document.createElement('span'); title.className = 'ui-list-title'; title.textContent = label;
-                const state = document.createElement('span'); state.className = 'ui-meta'; state.textContent = entry.visible === false ? (entry.pinned ? 'Hidden, pinned' : 'Hidden') : entry.pinned ? 'Pinned' : 'Auto';
+                const state = document.createElement('span'); state.className = 'ui-meta'; state.textContent = entry.visible === false ? (entry.pinned ? 'Hidden, pinned' : 'Hidden') : entry.pinned ? 'Pinned' : entry.kind === 'ground' ? 'Bottom' : ''; state.hidden = !state.textContent;
                 text.append(title, state); button.append(image, text);
                 const pin = action('pin', (entry.pinned ? 'Unpin ' : 'Pin ') + label, 'pin'); pin.setAttribute('aria-pressed', String(entry.pinned));
                 const eye = action('visibility', (entry.visible === false ? 'Show ' : 'Hide ') + label, entry.visible === false ? 'hidden' : 'eye');
@@ -265,7 +295,7 @@ export class Editor {
         for (const row of list.children) {
             row.classList.toggle('is-selected', row.dataset.item === this.selected);
             row.querySelector('.layer-select').setAttribute('aria-pressed', String(row.dataset.item === this.selected));
-            for (const button of row.querySelectorAll('button')) button.disabled = this.isBusy();
+            for (const button of row.querySelectorAll('button')) button.disabled = this.isBusy() || (row.dataset.kind === 'ground' && button.dataset.action === 'reorder');
         }
         document.getElementById('elementCount').textContent = scene.items.length;
         const pins = scene.items.filter(item => item.pinned).length;
@@ -278,9 +308,11 @@ export class Editor {
         document.querySelector('.wander-wall').dataset.selection = String(!!item);
         if (!item) this.onSelection?.(null);
         if (!item) return;
-        document.getElementById('selectionName').textContent = item.kind === 'letter' ? 'Letter ' + item.letter : ASSETS[item.asset].name;
-        const variants = item.kind === 'letter' ? alternatives(item.letter) : FORMS.map(form => form.id);
+        document.getElementById('selectionName').textContent = layerName(item);
+        const variants = variantsFor(item);
         document.getElementById('variantNumber').textContent = `Variant ${variants.indexOf(item.asset) + 1} / ${variants.length}`;
+        document.getElementById('variantPreview').src = ASSETS[item.asset].preview || ASSETS[item.asset].src;
+        document.getElementById('groundHeightGroup').hidden = item.kind !== 'ground';
         document.getElementById('pinBtn').setAttribute('aria-pressed', String(item.pinned));
         document.getElementById('pinBtn').title = item.pinned ? 'Unpin element' : 'Pin element';
         document.getElementById('pinBtn').setAttribute('aria-label', document.getElementById('pinBtn').title);
@@ -290,8 +322,11 @@ export class Editor {
         visibility.setAttribute('aria-pressed', String(item.visible !== false)); visibility.disabled = this.isBusy();
         visibility.replaceChildren(icon(item.visible === false ? 'hidden' : 'eye'));
         const index = scene.items.indexOf(item);
-        document.getElementById('backBtn').disabled = index === 0;
-        document.getElementById('frontBtn').disabled = index === scene.items.length - 1;
+        document.getElementById('backBtn').disabled = item.kind === 'ground' || index === (scene.items[0]?.kind === 'ground' ? 1 : 0);
+        document.getElementById('frontBtn').disabled = item.kind === 'ground' || index === scene.items.length - 1;
+        for (const key of ['scale', 'rotation']) document.getElementById(key + 'Slider').closest('.control-group').hidden = item.kind === 'ground';
+        document.getElementById('positionDetails').hidden = item.kind === 'ground';
+        document.querySelector('#selectionFieldset .layer-actions').hidden = item.kind === 'ground';
         for (const key of ['scale', 'rotation']) {
             this.sliders.setDisplayValue(key + 'Slider', item[key] * (key === 'scale' ? 100 : 1));
         }
@@ -303,6 +338,11 @@ export class Editor {
         const scene = this.app.settings, item = this.items().find(entry => entry.id === this.selected);
         if (!item || item.visible === false) return;
         const size = this.geometry.dimensions(item, scene), zoom = this.app.target.zoom, angle = item.rotation * Math.PI / 180;
+        if (item.kind === 'ground') {
+            ctx.save(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1 / zoom;
+            ctx.strokeRect(0, scene.height * (1 - scene.groundHeight / 100), scene.width, scene.height * scene.groundHeight / 100);
+            ctx.restore(); return;
+        }
         ctx.save(); ctx.translate(item.x * scene.width, item.y * scene.height); ctx.rotate(angle);
         ctx.lineWidth = 1 / zoom; ctx.strokeStyle = '#fff'; ctx.shadowColor = '#0009'; ctx.shadowBlur = 2 / zoom;
         ctx.strokeRect(-size.width / 2, -size.height / 2, size.width, size.height);

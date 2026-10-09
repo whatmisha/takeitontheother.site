@@ -49,6 +49,11 @@ export function drawArtwork(ctx, scene, assets, geometry, items = scene.items) {
         ctx.fillStyle = gradient;
     }
     ctx.fillRect(0, 0, scene.width, scene.height);
+    drawItems(ctx, scene, assets, geometry, items, effects);
+    ctx.restore();
+}
+
+function drawItems(ctx, scene, assets, geometry, items, effects) {
     ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
     for (const item of items) {
         if (item.visible === false) continue;
@@ -57,7 +62,7 @@ export function drawArtwork(ctx, scene, assets, geometry, items = scene.items) {
         const [x, y, width, height] = geometry.metrics[item.asset].bounds;
         const size = geometry.dimensions(item, scene);
         ctx.save(); ctx.translate(item.x * scene.width, item.y * scene.height); ctx.rotate(item.rotation * Math.PI / 180);
-        if (effects.shadowEnabled && effects.shadowOpacity > 0) {
+        if (item.kind !== 'ground' && effects.shadowEnabled && effects.shadowOpacity > 0) {
             const transform = ctx.getTransform(), zoom = Math.hypot(transform.a, transform.b);
             const angle = effects.shadowAngle * Math.PI / 180;
             ctx.shadowColor = effects.shadowColor + Math.round(effects.shadowOpacity * 2.55).toString(16).padStart(2, '0');
@@ -65,7 +70,7 @@ export function drawArtwork(ctx, scene, assets, geometry, items = scene.items) {
             ctx.shadowOffsetX = Math.cos(angle) * effects.shadowDistance * zoom;
             ctx.shadowOffsetY = Math.sin(angle) * effects.shadowDistance * zoom;
         }
-        if (effects.outlineEnabled && effects.outlineWidth > 0) {
+        if (item.kind !== 'ground' && effects.outlineEnabled && effects.outlineWidth > 0) {
             const outline = outlinedImage(image, [x, y, width, height], size, effects.outlineWidth, effects.outlineColor);
             ctx.drawImage(outline.canvas, -size.width / 2 - outline.padding, -size.height / 2 - outline.padding, outline.width, outline.height);
             ctx.shadowColor = 'transparent';
@@ -73,7 +78,14 @@ export function drawArtwork(ctx, scene, assets, geometry, items = scene.items) {
         ctx.drawImage(image, x, y, width, height, -size.width / 2, -size.height / 2, size.width, size.height);
         ctx.restore();
     }
+}
+
+export function drawWorkspace(ctx, scene, assets, geometry, items = scene.items) {
+    // The opaque artboard covers the editing-only, dimmed overflow preview.
+    ctx.save(); ctx.globalAlpha = .3;
+    drawItems(ctx, scene, assets, geometry, items.filter(item => item.kind !== 'ground'), { ...effectDefaults, ...scene });
     ctx.restore();
+    drawArtwork(ctx, scene, assets, geometry, items);
 }
 
 export async function renderPNG(scene, assets, geometry) {
