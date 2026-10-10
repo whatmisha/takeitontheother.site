@@ -6,6 +6,22 @@ import { shareDefaults } from '../document.js';
 import { normalize, normalizePreset, makeDocument, readDocument } from '../document.js';
 import { drawArtwork } from '../render.js';
 
+test('Solid defaults to lavender without changing the gradient, saved colors or legacy share baseline', async () => {
+    assert.equal(normalizeEffects({ backgroundMode: 'solid' }).backgroundStart, '#DAD5F1');
+    assert.equal(normalizeEffects({}).backgroundStops[0].color, '#D0D2E4');
+    const cached = { seeded: true, createdAt: 1, updatedAt: 1, backgroundStart: '#D0D2E4', backgroundStops: effectDefaults.backgroundStops };
+    assert.equal(normalizePreset(cached).backgroundStart, '#DAD5F1');
+    const legacy = normalizePreset({ ...cached, backgroundStops: undefined, backgroundMidLow: '#9AA0DC', backgroundMidHigh: '#2348B4', backgroundEnd: '#0E257F' });
+    assert.equal(legacy.backgroundStart, '#DAD5F1');
+    assert.deepEqual(legacy.backgroundStops, effectDefaults.backgroundStops);
+    assert.equal(normalizePreset({ ...cached, updatedAt: 2 }).backgroundStart, '#D0D2E4');
+    assert.equal(normalizePreset({ ...cached, seeded: false }).backgroundStart, '#D0D2E4');
+    assert.equal(shareDefaults.backgroundStart, '#D0D2E4');
+    const scene = normalize({ backgroundMode: 'solid' });
+    const codec = new ShareCodec({ pristineDefaults: shareDefaults, quantizableFloatKeys: [] });
+    assert.deepEqual(normalize((await codec.decode(await codec.encode(scene))).full), scene);
+});
+
 test('default shadow matches the reference; legacy colors and explicit effect states survive normalization', () => {
     assert.deepEqual(normalizeEffects({}), effectDefaults);
     assert.deepEqual([effectDefaults.shadowEnabled, effectDefaults.shadowOpacity, effectDefaults.shadowBlur, effectDefaults.shadowColor, effectDefaults.shadowDistance, effectDefaults.shadowAngle], [true, 50, 80, '#000000', 20, 90]);

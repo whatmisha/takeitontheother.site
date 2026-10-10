@@ -4,6 +4,8 @@ import { icon } from './icons.js';
 import { VariantPicker, layerName } from './variant-picker.js';
 import { transformHandles, hitTransformControl, resizeFromHandle, resizeCursor } from './transform-controls.js';
 
+const transformed = (before, after) => ['x', 'y', 'scale', 'rotation'].some(key => before[key] !== after[key]);
+
 let rotationCursor;
 function getRotationCursor() {
     if (!rotationCursor) {
@@ -20,7 +22,7 @@ export class Editor {
     constructor(app, geometry, { change, nextVariant, isBusy, signal }) {
         this.app = app; this.geometry = geometry; this.change = change; this.nextVariant = nextVariant; this.isBusy = isBusy;
         this.selected = null; this.gesture = null; this.space = false;
-        this.variants = new VariantPicker(nextVariant, signal);
+        this.variants = new VariantPicker(nextVariant, signal, () => this.app.settings.items);
         this.surface = app.target.canvas; this.container = app.target.container;
         const on = (node, type, callback, options = {}) => node.addEventListener(type, callback, { ...options, signal });
         on(this.surface, 'pointerdown', event => this.down(event));
@@ -44,31 +46,33 @@ export class Editor {
         const list = document.getElementById('elementList');
         on(list, 'click', event => {
             if (this.suppressLayerClick || this.isBusy()) return;
-            const button = event.target.closest('button'), row = button?.closest('[data-item]');
+            const button = event.target.closest('button'), row = event.target.closest('[data-item]');
             if (!row) return;
-            if (button.dataset.action === 'pin') this.pin(row.dataset.item);
-            else if (button.dataset.action === 'visibility') this.visibility(row.dataset.item);
-            else if (button.dataset.action === 'select') {
-                this.select(row.dataset.item);
-                if (event.detail === 0) this.variants.open(this.item());
-            }
+            if (button?.dataset.action === 'pin') this.pin(row.dataset.item);
+            else if (button?.dataset.action === 'visibility') this.visibility(row.dataset.item);
+            else if (button?.dataset.action === 'edit' || (event.detail === 0 && button?.dataset.action === 'select')) this.edit(row.dataset.item);
+            else this.select(row.dataset.item);
         });
         on(list, 'dblclick', event => {
             if (this.suppressLayerClick || this.isBusy()) return;
-            const button = event.target.closest('[data-action="select"]'), row = button?.closest('[data-item]');
-            if (!row) return;
-            event.preventDefault(); this.select(row.dataset.item); this.variants.open(this.item());
+            const row = event.target.closest('[data-item]');
+            if (!row || event.target.closest('.layer-action')) return;
+            event.preventDefault(); this.edit(row.dataset.item);
         });
         on(list, 'pointerdown', event => this.startReorder(event));
-        on(list, 'pointermove', event => this.moveReorder(event));
-        on(list, 'pointerup', () => this.finishReorder(true));
-        on(list, 'pointercancel', () => this.finishReorder(false));
-        on(list, 'lostpointercapture', () => this.finishReorder(false));
+        on(window, 'pointermove', event => this.moveReorder(event));
+        on(window, 'pointerup', event => { if (event.pointerId === this.reorderGesture?.pointerId) this.finishReorder(true); });
+        on(window, 'pointercancel', event => { if (event.pointerId === this.reorderGesture?.pointerId) this.finishReorder(false); });
+        on(list, 'lostpointercapture', event => { if (event.target === list) this.finishReorder(false); });
     }
 
     item() { return this.app.settings.items.find(item => item.id === this.selected); }
     items() { return this.gesture?.items || this.app.settings.items; }
     select(id) { this.selected = id; this.surface.style.cursor = ''; this.sync(); this.app.render(); }
+    edit(id) {
+        if (this.isBusy()) return;
+        this.select(id); this.variants.open(this.item());
+    }
 
     hit(point) {
         const scene = this.app.settings;
@@ -144,6 +148,7 @@ export class Editor {
             else changed.rotation += (Math.atan2(point.y - cy, point.x - cx) - Math.atan2(gesture.start.y - cy, gesture.start.x - cx)) * 180 / Math.PI;
         }
         changed.scale = clamp(changed.scale, .025, 3); changed.rotation = ((changed.rotation + 540) % 360) - 180;
+        if (transformed(item, changed)) changed.pinned = true;
         gesture.items = scene.items.map(old => old.id === item.id ? changed : old);
         this.app.render();
     }
@@ -153,7 +158,10 @@ export class Editor {
         if (!gesture || event.pointerId !== gesture.id) return;
         this.gesture = null;
         if (this.surface.hasPointerCapture(event.pointerId)) this.surface.releasePointerCapture(event.pointerId);
-        if (gesture.moved) { this.lastDrag = performance.now(); this.change({ ...gesture.snapshot, items: gesture.items }, 'Transform element'); }
+        if (gesture.moved) {
+            this.lastDrag = performance.now();
+            if (transformed(gesture.item, gesture.items.find(item => item.id === gesture.item.id))) this.change({ ...gesture.snapshot, items: gesture.items }, 'Transform element');
+        }
         this.updateCursor(event);
         this.app.render();
     }
@@ -171,6 +179,8 @@ export class Editor {
     transform(patch, continuous = false) {
         const item = this.item(); if (!item || this.isBusy()) return;
         const next = { ...item, ...patch };
+        if (!transformed(item, next)) return;
+        next.pinned = true;
         const items = this.app.settings.items.map(old => old.id === item.id ? next : old);
         if (continuous) { this.app.settingsStore.set('items', items); this.sync(); }
         else this.change({ ...this.app.getSnapshot(), items }, 'Transform element');
@@ -201,25 +211,29 @@ export class Editor {
         if (index < 0 || this.isBusy()) return;
         const target = clamp(index + delta, 0, items.length - 1);
         if (target === index) return;
-        const [item] = items.splice(index, 1); items.splice(target, 0, item);
+        const [item] = items.splice(index, 1); items.splice(target, 0, { ...item, pinned: true });
         this.change({ ...this.app.getSnapshot(), items }, 'Layer order');
     }
 
     startReorder(event) {
-        const grip = event.target.closest('.layer-grip');
-        if (!grip || grip.disabled || event.button !== 0 || this.isBusy()) return;
-        event.preventDefault();
-        this.reorderGesture = { pointerId: event.pointerId, id: grip.closest('[data-item]').dataset.item, x: event.clientX, y: event.clientY, startY: event.clientY, moved: false };
-        document.getElementById('elementList').setPointerCapture(event.pointerId);
+        const row = event.target.closest('[data-item]');
+        if (!row || event.target.closest('button:disabled') || event.button !== 0 || this.isBusy() || this.reorderGesture) return;
+        this.reorderGesture = { pointerId: event.pointerId, id: row.dataset.item, x: event.clientX, y: event.clientY,
+            startX: event.clientX, startY: event.clientY, moved: false };
     }
 
     moveReorder(event) {
         const g = this.reorderGesture;
         if (!g || g.pointerId !== event.pointerId) return;
         g.x = event.clientX; g.y = event.clientY;
-        if (!g.moved && Math.abs(g.y - g.startY) < 5) return;
+        if (!g.moved && Math.hypot(g.x - g.startX, g.y - g.startY) < 5) return;
         event.preventDefault();
-        if (!g.moved) { g.moved = true; this.scrollReorder(); }
+        if (!g.moved) {
+            // Capture only after dragging starts so ordinary row/button clicks keep their target.
+            const list = document.getElementById('elementList');
+            g.moved = true; list.setPointerCapture(event.pointerId); list.classList.add('is-reordering');
+            this.scrollReorder();
+        }
         this.reorderTarget();
     }
 
@@ -251,14 +265,18 @@ export class Editor {
         const g = this.reorderGesture; if (!g) return;
         this.reorderGesture = null; cancelAnimationFrame(this.reorderFrame);
         const list = document.getElementById('elementList');
+        list.classList.remove('is-reordering');
         if (list.hasPointerCapture(g.pointerId)) list.releasePointerCapture(g.pointerId);
         this.reorderTarget();
         if (!g.moved) return;
         this.suppressLayerClick = true; setTimeout(() => { this.suppressLayerClick = false; }, 0);
         if (!commit || !g.target || this.isBusy()) return;
         const frontToBack = [...this.app.settings.items].reverse(), from = frontToBack.findIndex(item => item.id === g.id);
+        if (from < 0 || !frontToBack.some(item => item.id === g.target)) return;
         const [item] = frontToBack.splice(from, 1), to = frontToBack.findIndex(item => item.id === g.target);
-        frontToBack.splice(to + (g.placement === 'after' ? 1 : 0), 0, item);
+        const target = to + (g.placement === 'after' ? 1 : 0);
+        if (target === from) return;
+        frontToBack.splice(target, 0, { ...item, pinned: true });
         this.selected = item.id;
         this.change({ ...this.app.getSnapshot(), items: frontToBack.reverse() }, 'Reorder layers');
     }
@@ -278,11 +296,10 @@ export class Editor {
             list.replaceChildren(...[...scene.items].reverse().map(entry => {
                 const row = document.createElement('div'); row.className = 'layer-row ui-list-row'; row.dataset.item = entry.id; row.dataset.kind = entry.kind; row.setAttribute('role', 'listitem');
                 const action = (name, title, glyph) => {
-                    const button = document.createElement('button'); button.type = 'button'; button.className = 'ui-icon-button'; button.dataset.action = name;
+                    const button = document.createElement('button'); button.type = 'button'; button.className = 'ui-icon-button layer-action'; button.dataset.action = name;
                     button.setAttribute('aria-label', title); button.title = title; button.append(icon(glyph, 16)); return button;
                 };
                 const label = layerName(entry);
-                const grip = action('reorder', 'Reorder ' + label, 'grip'); grip.classList.add('layer-grip');
                 const button = document.createElement('button'); button.type = 'button'; button.className = 'layer-select ui-list-select'; button.dataset.action = 'select';
                 button.setAttribute('aria-label', 'Select ' + label);
                 button.title = 'Double-click to choose variant';
@@ -290,13 +307,13 @@ export class Editor {
                 const image = document.createElement('img'); image.src = ASSETS[entry.asset].preview || ASSETS[entry.asset].src; image.alt = ''; image.draggable = false;
                 const text = document.createElement('span'); text.className = 'layer-label';
                 const title = document.createElement('span'); title.className = 'ui-list-title'; title.textContent = label;
-                const state = document.createElement('span'); state.className = 'ui-meta'; state.textContent = entry.visible === false ? 'Hidden' : ''; state.hidden = !state.textContent;
-                text.append(title, state); button.append(image, text);
+                text.append(title); button.append(image, text);
                 const pin = action('pin', (entry.pinned ? 'Unpin ' : 'Pin ') + label, 'pin'); pin.setAttribute('aria-pressed', String(entry.pinned));
                 const eye = action('visibility', (entry.visible === false ? 'Show ' : 'Hide ') + label, entry.visible === false ? 'hidden' : 'eye');
                 eye.setAttribute('aria-pressed', String(entry.visible !== false));
+                const edit = action('edit', 'Edit ' + label, 'edit'); edit.setAttribute('aria-haspopup', 'dialog');
                 row.classList.toggle('is-hidden', entry.visible === false);
-                row.append(grip, button, eye, pin); return row;
+                row.append(button, edit, eye, pin); return row;
             }));
             list.scrollTop = scroll;
             if (focusId && focusAction) [...list.children].find(row => row.dataset.item === focusId)?.querySelector(`[data-action="${focusAction}"]`)?.focus({ preventScroll: true });
@@ -306,7 +323,6 @@ export class Editor {
             row.querySelector('.layer-select').setAttribute('aria-pressed', String(row.dataset.item === this.selected));
             for (const button of row.querySelectorAll('button')) button.disabled = this.isBusy();
         }
-        document.getElementById('elementCount').textContent = scene.items.length;
         if (list.contains(document.activeElement)) document.activeElement.closest('[data-item]')?.scrollIntoView({ block: 'nearest' });
     }
 

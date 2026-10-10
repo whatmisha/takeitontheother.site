@@ -7,6 +7,7 @@ import { FORMATS, resolutionError, stepResolution } from './resolutions.js';
 import { Silhouettes, generate, resizeScene, updateGround, ensureSurface, preparePreset } from './layout.js';
 import { drawArtwork, drawWorkspace, renderPNG, download } from './render.js';
 import { Editor } from './editor.js';
+import { nextLetterVariant } from './letter-textures.js';
 import { mountIcons } from './icons.js';
 
 const byId = id => document.getElementById(id), assets = new AssetStore();
@@ -119,14 +120,14 @@ async function nextVariant(id, selectedAsset) {
     const item = app.settings.items.find(entry => entry.id === id);
     if (!item || busy) return;
     const choices = variantsFor(item);
-    const asset = selectedAsset ?? choices[(choices.indexOf(item.asset) + 1) % choices.length];
+    const asset = selectedAsset ?? (item.kind === 'letter' ? nextLetterVariant(item, app.settings.items) : choices[(choices.indexOf(item.asset) + 1) % choices.length]);
     if (!choices.includes(asset) || asset === item.asset) return;
     const original = JSON.stringify(app.getSnapshot());
     setBusy(true);
     try {
         await assets.load(asset);
         if (lifecycle.signal.aborted || original !== JSON.stringify(app.getSnapshot())) return;
-        const next = { ...item, asset };
+        const next = { ...item, asset, pinned: true };
         change({ ...app.getSnapshot(), items: app.settings.items.map(entry => entry.id === id ? next : entry) }, 'Change variant');
         status('');
     } catch (error) { status(error.message); }

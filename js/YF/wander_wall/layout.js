@@ -2,6 +2,7 @@ import { SeededRandom } from '../infra/framework/src/index.js';
 import { alternatives, ASSETS, FORMS, GROUNDS } from './assets.js';
 import { clamp, lettersOf, normalize, normalizePreset, isUntouchedShippedPreset } from './document.js';
 import { groundDimensions, anchorGround } from './ground.js';
+import { assignLetterTextures } from './letter-textures.js';
 
 const radians = degrees => degrees * Math.PI / 180;
 
@@ -132,9 +133,8 @@ export function updateGround(settings, { reroll = false } = {}) {
         else scene.items.unshift(surface);
         if (reroll) {
             const movable = scene.items.flatMap((item, index) => !item.pinned && item.visible !== false ? [index] : []);
-            const lowerSlots = movable.filter(index => index <= Math.floor((scene.items.length - 1) / 2));
-            if (lowerSlots.length) {
-                const slot = new SeededRandom(scene.seed).fork('ground-layer').pick(lowerSlots);
+            if (movable.length) {
+                const slot = new SeededRandom(scene.seed).fork('ground-layer').pick(movable);
                 const stack = movable.map(index => scene.items[index]).filter(item => item.kind !== 'ground');
                 stack.splice(movable.indexOf(slot), 0, surface);
                 // Move Surface without shifting pinned or hidden layer slots.
@@ -161,17 +161,22 @@ export function generate(settings, geometry, { seed = settings.seed, reroll = tr
     const scene = normalize({ ...settings, seed });
     const missing = [...new Set(lettersOf(scene.text))].filter(letter => !alternatives(letter).length);
     if (missing.length) throw new Error('No artwork for: ' + missing.join(', ') + '. Add these letters to the library.');
-    const random = new SeededRandom(seed), assetRandom = random.fork('assets');
+    const random = new SeededRandom(seed), preserve = new Set();
     const old = new Map(scene.items.map(item => [item.id, item]));
     const letters = Array.from(lettersOf(scene.text), (letter, index) => {
         const id = 'letter-' + index, previous = old.get(id);
         if (previous?.letter === letter) {
             if (previous.visible === false) return { ...previous };
             if (previous.pinned) return previous;
-            if (!reroll) return { ...previous, rotation: random.float(-scene.rotationRange, scene.rotationRange) };
+            if (!reroll) {
+                preserve.add(id);
+                return { ...previous, rotation: random.float(-scene.rotationRange, scene.rotationRange) };
+            }
         }
-        return { id, kind: 'letter', letter, index, asset: assetRandom.pick(alternatives(letter)), rotation: random.float(-scene.rotationRange, scene.rotationRange), x: .5, y: .5, scale: .5, pinned: false, visible: true };
+        return { id, kind: 'letter', letter, index, rotation: random.float(-scene.rotationRange, scene.rotationRange), x: .5, y: .5, scale: .5, pinned: false, visible: true };
     });
+    const assigned = assignLetterTextures(letters, random.fork('letter-textures'), { preserve });
+    for (const item of letters) if (assigned.has(item.id)) item.asset = assigned.get(item.id);
     if (scene.shuffle) for (let i = letters.length - 1; i > 0; i--) {
         const j = random.int(0, i); [letters[i], letters[j]] = [letters[j], letters[i]];
     }

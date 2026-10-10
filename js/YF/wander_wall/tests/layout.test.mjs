@@ -41,7 +41,7 @@ test('send to back and bring to front preserve all other layer order and transfo
     editor.app = { get settings() { return scene; }, getSnapshot: () => structuredClone(scene) };
     editor.isBusy = () => false; editor.change = next => { scene = next; };
     editor.selected = scene.items[3].id;
-    const selected = structuredClone(scene.items[3]), others = scene.items.filter(item => item.id !== editor.selected);
+    const selected = { ...scene.items[3], pinned: true }, others = scene.items.filter(item => item.id !== editor.selected);
     editor.reorder(Infinity);
     assert.deepEqual(scene.items, [...others, selected]);
     editor.reorder(-Infinity);
@@ -109,7 +109,7 @@ test('dragging a transparent part of the selected frame moves only that object',
     assert.equal(editor.gesture.mode, 'move');
     editor.move({ ...event, clientX: 630, clientY: 510 });
     editor.up(event);
-    assert.deepEqual(scene.items[0], { ...item, x: .55, y: .6 });
+    assert.deepEqual(scene.items[0], { ...item, x: .55, y: .6, pinned: true });
 });
 
 test('layout is repeatable, order is preserved, and every silhouette stays within both formats', () => {
@@ -438,7 +438,7 @@ test('Surface supports the same editor transforms, layer ordering, pinning and v
     const surface = { ...editor.item() };
     assert.equal(surface.rotation, 73); assert.equal(surface.scale, 1.2); assert.equal(surface.x, -7);
     editor.reorder(-Infinity); editor.reorder(1); assert.equal(scene.items[1].id, surface.id);
-    editor.pin(); const pinned = { ...editor.item() };
+    const pinned = { ...editor.item() }; assert.equal(pinned.pinned, true);
     assert.deepEqual(generate({ ...scene, seed: 7 }, geometry).items[1], pinned);
     assert.deepEqual(updateGround(scene).items[1], pinned);
     const codec = new ShareCodec({ pristineDefaults: shareDefaults, quantizableFloatKeys: [] });
@@ -525,22 +525,37 @@ test('ground documents round trip at maximum capacity while old documents remain
     assert.throws(() => readDocument(wrongKind), /unknown or invalid/);
 });
 
-test('Surface randomizes within the lower half while pinned and hidden slots remain fixed', () => {
+test('Surface reaches every free layer slot while pinned and hidden slots remain fixed', () => {
     const scene = generate(initialDefaults, geometry);
     const letter = scene.items.find(item => item.kind === 'letter'); letter.pinned = true;
     const form = scene.items.find(item => item.kind === 'form'); form.visible = false;
     const positions = new Set();
-    for (let seed = 0; seed < 24; seed++) {
+    for (let seed = 0; seed < 256; seed++) {
         const next = updateGround({ ...scene, seed }, { reroll: true });
         const index = next.items.findIndex(item => item.kind === 'ground'); positions.add(index);
-        assert.ok(index >= 0 && index <= Math.floor((next.items.length - 1) / 2));
+        assert.ok(index >= 0 && index < next.items.length);
         for (const fixed of [letter, form]) assert.deepEqual(next.items[scene.items.indexOf(fixed)], fixed);
         assert.deepEqual(next, updateGround({ ...scene, seed }, { reroll: true }));
         assert.deepEqual(updateGround(next).items, next.items);
     }
-    assert.ok(positions.size > 1);
+    const available = scene.items.flatMap((item, index) => !item.pinned && item.visible !== false ? [index] : []);
+    assert.deepEqual([...positions].sort((a, b) => a - b), available);
+    assert.ok([...positions].some(index => index > Math.floor((scene.items.length - 1) / 2)));
+    for (const patch of [{ pinned: true }, { visible: false }]) {
+        const fixed = { ...scene, items: scene.items.map(item => item.kind === 'ground' ? { ...item, ...patch } : item) };
+        assert.deepEqual(updateGround({ ...fixed, seed: 13 }, { reroll: true }).items, fixed.items);
+    }
     const lone = generate({ ...initialDefaults, text: '', formCount: 0 }, geometry);
     assert.equal(lone.items.length, 1); assert.equal(lone.items[0].kind, 'ground');
+});
+
+test('Generate allows Surface at the very front as well as the very back', () => {
+    const positions = new Set();
+    for (let seed = 0; seed < 32; seed++) {
+        const scene = generate({ ...initialDefaults, text: 'A', formCount: 0, seed }, geometry);
+        positions.add(scene.items.findIndex(item => item.kind === 'ground'));
+    }
+    assert.deepEqual([...positions].sort(), [0, 1]);
 });
 
 test('resolution arrow keys step by one or snap to tens and respect pixel limits', () => {

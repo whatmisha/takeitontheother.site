@@ -2,6 +2,7 @@ import { readFile, readdir, mkdir, writeFile, rename } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { createRequire } from 'node:module';
 import { resolve, posix } from 'node:path';
+import { LETTER_TEXTURES } from '../letter-texture-map.js';
 
 const require = createRequire(import.meta.url);
 const sharp = require(process.env.WANDER_NODE_MODULES ? resolve(process.env.WANDER_NODE_MODULES, 'sharp') : 'sharp');
@@ -14,8 +15,22 @@ async function entries(path) {
     catch (error) { if (error.code === 'ENOENT') return []; throw error; }
 }
 
+async function pathAliases(root) {
+    let aliases;
+    try { aliases = JSON.parse(await readFile(resolve(root, 'asset-path-aliases.json'), 'utf8')); }
+    catch (error) { if (error.code === 'ENOENT') return {}; throw error; }
+    const validPath = path => typeof path === 'string' && !path.includes('\\') &&
+        path.split('/').every(part => part && !/^[._]/.test(part)) &&
+        !/^(alphabet|previews)\//.test(path) && /\.png$/i.test(path);
+    if (!aliases || Array.isArray(aliases) || typeof aliases !== 'object' ||
+        Object.entries(aliases).some(([path, original]) => !validPath(path) || !validPath(original))) {
+        throw new Error('Invalid artwork path aliases.');
+    }
+    return aliases;
+}
+
 export async function discoverAssets(root) {
-    const assets = [];
+    const assets = [], aliases = await pathAliases(root), sortPaths = new Map();
     for (const dir of await entries(resolve(root, 'graphics/alphabet'))) {
         const set = /^set_(\d+)$/.exec(dir.name);
         if (!dir.isDirectory() || !set) continue;
@@ -24,7 +39,8 @@ export async function discoverAssets(root) {
             if (!file.isFile() || !variant) continue;
             const letter = variant[1].toUpperCase();
             const path = `graphics/alphabet/${dir.name}/${file.name}`;
-            assets.push({ id: `${letter}-${Number(set[1])}-${Number(variant[2])}`, kind: 'letter', name: letter,
+            const id = `${letter}-${Number(set[1])}-${Number(variant[2])}`;
+            assets.push({ id, kind: 'letter', name: letter, textureId: LETTER_TEXTURES[id] ?? null,
                 letter, set: Number(set[1]), variant: Number(variant[2]), path, src: urlPath(path) });
         }
     }
@@ -35,16 +51,21 @@ export async function discoverAssets(root) {
             if (file.isDirectory()) { await objects(relative); continue; }
             if (!file.isFile() || !/\.png$/i.test(file.name)) continue;
             const category = relative.includes('/') ? relative.split('/')[0] : 'objects';
-            const local = relative.slice(category.length + 1), ground = category === 'ground';
-            const legacy = category === 'blobs' ? legacyForms[local] : null;
+            const ground = category === 'surface' || category === 'ground';
+            // Renamed artwork keeps saved IDs and seeded variant order without retaining old files.
+            const original = aliases[relative] ?? relative;
+            const originalCategory = original.includes('/') ? original.split('/')[0] : 'objects';
+            const local = originalCategory === 'objects' ? original : original.slice(originalCategory.length + 1);
+            const legacy = originalCategory === 'blobs' ? legacyForms[local] : null;
             const path = 'graphics/' + relative;
-            const id = legacy?.[0] ?? (category === 'blobs' ? 'form:' + local : ground ? 'ground:' + local : 'object:' + relative);
+            const id = legacy?.[0] ?? (originalCategory === 'blobs' ? 'form:' + local : ground ? 'ground:' + local : 'object:' + original);
             const name = legacy?.[1] ?? relative.replace(/\.png$/i, '').replace(/[_-]+/g, ' ').split('/').join(' / ');
+            sortPaths.set(path, 'graphics/' + original);
             assets.push({ id, kind: ground ? 'ground' : 'form', category, name, path, src: urlPath(path) });
         }
     }
     await objects();
-    assets.sort((a, b) => compare(a.kind, b.kind) || compare(a.letter ?? '', b.letter ?? '') || (a.set ?? 0) - (b.set ?? 0) || (a.variant ?? 0) - (b.variant ?? 0) || compare(a.path, b.path));
+    assets.sort((a, b) => compare(a.kind, b.kind) || compare(a.letter ?? '', b.letter ?? '') || (a.set ?? 0) - (b.set ?? 0) || (a.variant ?? 0) - (b.variant ?? 0) || compare(sortPaths.get(a.path) ?? a.path, sortPaths.get(b.path) ?? b.path));
     const ids = new Set();
     for (const asset of assets) {
         if (ids.has(asset.id)) throw new Error(`Duplicate artwork ID: ${asset.id} (${asset.path})`);
@@ -60,11 +81,11 @@ export async function prepareCatalog(root) {
     catch (error) { if (error.code !== 'ENOENT' && !(error instanceof SyntaxError)) throw error; }
     const cached = new Map(previous?.version === 1 ? previous.assets.map(asset => [asset.id, asset]) : []);
     const assets = [];
-    await mkdir(resolve(root, 'graphics/previews'), { recursive: true });
+    await mkdir(resolve(root, 'previews'), { recursive: true });
     for (const { path, ...asset } of await discoverAssets(root)) {
         const input = await readFile(resolve(root, path));
         const hash = createHash('sha256').update(input).digest('hex');
-        const old = cached.get(asset.id), preview = `graphics/previews/${hash}.webp`;
+        const old = cached.get(asset.id), preview = `previews/${hash}.webp`;
         if (old?.hash === hash && old.metrics) {
             try {
                 await readFile(resolve(root, preview));

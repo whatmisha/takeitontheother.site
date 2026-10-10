@@ -15,8 +15,8 @@ export function mountEffects() {
             <div class="segmented-control" role="radiogroup" aria-label="Background mode">
                 <input id="backgroundGradient" type="radio" name="backgroundMode" value="gradient" checked><label for="backgroundGradient">Gradient</label>
                 <input id="backgroundSolid" type="radio" name="backgroundMode" value="solid"><label for="backgroundSolid">Solid</label></div>
-            <div class="color-swatches-compact">${swatches.map(color).join('')}</div>
-            <div class="gradient-actions" id="gradientActions"><button id="addGradientColorBtn" class="ui-icon-button" type="button" aria-label="Add gradient color" data-tooltip="Add color" data-icon="plus"></button></div>`;
+            <div class="color-swatches-compact">${swatches.map(color).join('')}
+            <div id="gradientActions"><button id="addGradientColorBtn" class="color-swatch-compact custom-color-add" type="button" aria-label="Add gradient color" title="Add a gradient color"><svg class="custom-color-add-preview" width="30" height="30" viewBox="0 0 30 30" fill="none" aria-hidden="true"><circle cx="15" cy="15" r="8.5" fill="#252525" stroke="currentColor"/><path d="M11.5 15H18.5M15 11.5V18.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg><span class="color-label">Add color</span></button></div></div>`;
     document.getElementById('effectsControls').innerHTML = `
         <div class="control-group pill-toggle-row"><label class="pill-toggle" for="shadowEnabledToggle"><input id="shadowEnabledToggle" class="sr-only" type="checkbox" checked><span>Drop shadow</span></label></div>`;
 }
@@ -39,7 +39,13 @@ export function bindEffects(tool, change, signal) {
     let signature = '';
     const close = () => { picker.picker.close(); document.querySelectorAll('#backgroundControls .active').forEach(node => node.classList.remove('active')); };
     document.getElementById('addGradientColorBtn').addEventListener('click', () => {
-        change({ ...tool.getSnapshot(), backgroundStops: addGradientStop(tool.settings.backgroundStops) }, 'Add gradient color');
+        const previous = tool.settings.backgroundStops, stops = addGradientStop(previous);
+        if (stops === previous) return;
+        const index = stops.findIndex(stop => !previous.includes(stop));
+        change({ ...tool.getSnapshot(), backgroundStops: stops }, 'Add gradient color');
+        const dot = document.getElementById(`gradient${index}ColorPreview`);
+        dot.click(); dot.focus({ preventScroll: true });
+        dot.closest('.color-swatch-row').scrollIntoView({ block: 'nearest' });
     }, { signal });
     for (const button of document.querySelectorAll('[data-remove-stop]')) button.addEventListener('click', () => {
         const index = Number(button.dataset.removeStop);
@@ -61,6 +67,7 @@ export function syncEffects(tool, controller) {
     for (let i = 0; i < 8; i++) document.getElementById(`gradient${i}Row`).hidden = s.backgroundMode === 'solid' || i >= s.backgroundStops.length;
     document.getElementById('gradientActions').hidden = s.backgroundMode === 'solid';
     document.getElementById('addGradientColorBtn').disabled = s.backgroundStops.length >= 8;
+    document.getElementById('addGradientColorBtn').title = s.backgroundStops.length >= 8 ? 'Maximum 8 gradient colors' : 'Add a gradient color';
     for (const button of document.querySelectorAll('[data-remove-stop]')) button.disabled = s.backgroundStops.length <= 2;
     document.getElementById('shadowEnabledToggle').checked = s.shadowEnabled;
     controller?.sync();

@@ -8,8 +8,8 @@ const number = (value, fallback, min, max) => Number.isFinite(Number(value)) ? c
 export const cleanText = text => String(text ?? '').replace(/[^A-Za-z\s]/g, '').replace(/\s+/g, ' ').trim().split('').reduce((result, char) => (char === ' ' || result.replace(/ /g, '').length < 32) ? result + char : result, '').trim();
 export const lettersOf = text => cleanText(text).toUpperCase().replace(/ /g, '');
 export const defaults = { text: 'Wander', format: 'qhd', width: 2560, height: 1440, seed: 20261009, shuffle: false, formsEnabled: true, formCount: 7, groundEnabled: true, groundHeight: 35, fill: 100, rotationRange: 24, sizeRange: 0, overflow: 0, ...effectDefaults, items: [] };
-// Catalog-dependent initial layouts are never safe defaults for compact links.
-export const shareDefaults = { ...defaults, items: null };
+// Keep the original solid-color baseline for old compact links; layouts are always explicit.
+export const shareDefaults = { ...defaults, backgroundStart: '#D0D2E4', items: null };
 
 export function normalize(input = {}) {
     const letters = lettersOf(input.text ?? defaults.text);
@@ -39,11 +39,11 @@ export function normalize(input = {}) {
 }
 
 export function makeDocument(settings) { return { type: 'wander-wall', version: 1, settings: normalize(settings) }; }
-export const shippedPresetDefaults = { text: 'Wander', fill: 100, rotationRange: 30, sizeRange: 50, overflow: 0, formCount: 10, ...shadowDefaults };
+export const shippedPresetDefaults = { text: 'Wander', fill: 100, rotationRange: 30, sizeRange: 50, overflow: 0, formCount: 10, backgroundStart: effectDefaults.backgroundStart, ...shadowDefaults };
 export const isUntouchedShippedPreset = input => input.seeded === true && input.createdAt === input.updatedAt;
 export function normalizePreset(input) {
     // Refresh shipped defaults cached by the framework, without changing personally saved presets.
-    return normalize(isUntouchedShippedPreset(input) ? { ...input, ...shippedPresetDefaults } : input);
+    return normalize(isUntouchedShippedPreset(input) ? { ...normalize(input), ...shippedPresetDefaults } : input);
 }
 export function readDocument(value) {
     if (value?.type !== 'wander-wall' || value.version !== 1 || !value.settings || typeof value.settings !== 'object') throw new Error('Choose a Wander Wall JSON document (version 1).');

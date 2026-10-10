@@ -16,17 +16,25 @@ Add letter PNGs to `graphics/alphabet/set_07/A_01.png`, using any numbered set
 and variant. Incomplete sets, gaps and different variant counts are supported.
 All discovered variants participate in generation. At least one variant of
 each letter used in the current text must exist across the library.
-Add decorative PNGs anywhere under `graphics/`, including nested folders in
-`blobs`, `crystals`, `prism`, `sparky`, `spheres`, `sticks`, or new categories. All categories
-mix in the random object pool. PNGs under `graphics/ground/` are surfaces instead
-of free objects. `alphabet` and generated `previews` have their own handling;
+Add decorative PNGs to `graphics/blobs`, `crystals`, `prism`, `sparky`, `spheres`,
+`sticks`, or a new category. Use `<type>_<texture>_<NN>.png`, for example
+`blobs/blob_pink_patch_01.png` or `spheres/sphere_glass_02.png`, with sequential
+numbers for each type/texture pair. Keep each category flat; nested folders are
+still supported for imports. All categories mix in the random object pool.
+PNGs under `graphics/surface/` are surfaces instead of free objects, named
+`surface_<texture>_<NN>.png`. Legacy `ground` folders remain supported.
+`alphabet` and legacy `previews` have their own handling;
 files/folders starting with `.` or `_` (such as `_ref.png`) and non-PNG files
 are excluded from object discovery. Existing letter and blob IDs stay stable.
-Keep file paths stable to preserve references in saved compositions.
+Keep file paths stable to preserve references in saved compositions. The one-time
+texture rename is recorded in `asset-path-aliases.json` outside `graphics` so old
+presets, documents, links, and seeded variant order keep working. New artwork
+is discovered automatically without adding an alias. Do not put reference
+images, generation metadata, or documentation in `graphics`.
 
 `asset-catalog.json` contains stable IDs, content hashes, alpha bounds and
 32 x 32 masks. The builder creates small WebP layer thumbnails under
-`graphics/previews/` and reuses unchanged metrics. Invalid/transparent images
+`previews/` outside the original-artwork tree and reuses unchanged metrics. Invalid/transparent images
 and duplicate IDs fail the build without publishing a partial catalog.
 Original PNGs remain untouched and load only when needed. Asset hashes invalidate
 the image cache after a replacement; already-open tabs keep their catalog snapshot.
@@ -38,7 +46,7 @@ catalog after artwork/code pushes and in pull requests. It does not deploy or
 commit generated files. To publish newly discovered artwork, the deployment must
 run `npm ci --prefix js/YF/wander_wall` and
 `npm --prefix js/YF/wander_wall run build`, then publish the generated
-`asset-catalog.json` and `graphics/previews/` alongside the originals and tool.
+`asset-catalog.json` and `previews/` alongside the originals and tool.
 Until that deployment integration is enabled, commit the generated catalog and
 previews with the artwork when publishing from a branch.
 
@@ -48,6 +56,21 @@ previews with the artwork when publishing from a branch.
   a 300 ms pause; Enter applies immediately. Edits made during artwork loading
   remain pending and apply next. Empty text produces a shapes-only canvas.
 - Alternatives are discovered from the library; currently 18 per letter in six sets.
+- Letter textures are annotated in `letter-texture-map.js` without renaming the
+  originals. Generate reserves visible pinned letters' materials, maximizes the
+  number of distinct textures, then balances unavoidable repeats. Objects and
+  Surface do not participate. Hidden letters keep their variants but do not
+  reserve a material. Layout-only changes keep existing variants.
+- The letter chooser marks textures used by other visible letters; the tooltip
+  names those letters and their text positions. Explicit choices remain allowed
+  and pin the edited letter, even when they create a repeat. Canvas double-click
+  and Shift+V prefer the least-used available texture. Existing saved compositions
+  are not changed until Generate or a manual variant change.
+- When adding alphabet artwork, annotate its `<letter>-<set>-<variant>` ID in
+  `LETTER_TEXTURES`. Unclassified variants still import automatically, appear
+  with a `?` in the chooser, and share one conservative fallback group until
+  annotated. Their real material uniqueness cannot be guaranteed without this
+  annotation. Objects and Surface need no material annotation for this feature.
 - Generate randomizes unpinned letters, forms, and layout. Letter order is
   preserved by default. Seed remains internal, not a visible control.
 - Fill adjusts packing density. Silhouette masks allow interlocking forms and
@@ -67,8 +90,8 @@ previews with the artwork when publishing from a branch.
   Sticks use twice the original scale range; other categories use the original
   range, limited by frame constraints. Generate randomly interleaves objects between letters while keeping
   pinned and hidden layer slots fixed. Saved compositions are not migrated.
-- Surface is always included. Generate randomly places its layer between the
-  back and the middle of the stack, unless pinned or hidden. It starts in the
+- Surface is always included. Generate randomly places its layer anywhere in
+  the stack, unless pinned or hidden; other pinned/hidden slots stay fixed. It starts in the
   bottom band of the canvas. The image covers the width without
   stretching; excess foreground is cropped below the frame (and on the sides
   when needed in portrait). Position, scale, rotation and layer order are freely
@@ -113,14 +136,22 @@ F centers the view on a selected element without moving it.
 Click a layer row once to select it; double-click to open the variant chooser, with thumbnails and
 object-category filtering; Enter on a focused row also opens it. The popup closes
 with its framework close icon or Escape. There is no Selection panel.
+The pencil button opens the same chooser with one click. Edit, visibility and pin
+buttons appear on row hover or keyboard focus; active pins and hidden-layer eye
+icons remain visible at rest. Touch devices always show these actions. Their
+space stays reserved, so layer labels do not shift when actions appear.
 The Layers panel selects without changing artwork. Its front-to-back order
-matches the canvas; drag a grip to reorder, or use Cmd/Ctrl+[ and Cmd/Ctrl+] for
+matches the canvas; drag anywhere on a row to reorder, or use Cmd/Ctrl+[ and Cmd/Ctrl+] for
 one-step changes. Plain [ sends the selection to the very back; ] brings it to
 the very front, preserving all other layer order. These keys do not act in inputs
-or open dialogs.
+or open dialogs. On touch screens, drag the thumbnail to reorder; the rest of the
+row remains available for native scrolling. Layer names use just the letter or
+object type; popup titles use `W alternates`, `Stick alternates`, etc.
 
-Pins are explicit: moving, resizing, rotating, and changing variants preserve
-the current pin state. Each layer has a pin button. Pinned icons are filled;
+Moving, resizing, rotating, nudging, changing variants, and changing layer order
+automatically pin the edited object, including Surface, in the same undo step.
+Selection, unchanged or cancelled gestures, and visibility changes do not pin.
+Each layer has a pin button to release it for the next Generate. Pinned icons are filled;
 there is no pinned subtitle, counter, or bulk unpin command.
 
 Eye buttons hide or show individual layers; Delete/Backspace hides the selected
@@ -171,6 +202,7 @@ defaults when opened; personally saved or modified presets retain their settings
 - `document.js`: normalized state, format limits, and versioned JSON validation.
 - `resolutions.js`: named pixel presets and custom-dimension validation.
 - `variant-picker.js`: thumbnail chooser and concise layer labels.
+- `letter-textures.js`: letter-only material allocation and usage tracking.
 - `editor.js`, `render.js`, `tool.js`: pointer editing, rendering/export, and shared
   framework integration. Selection and gesture previews are transient.
 

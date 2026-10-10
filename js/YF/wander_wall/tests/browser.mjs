@@ -30,7 +30,7 @@ try {
     assert.equal(await page.locator('#textInput').getAttribute('rows'), '2');
     assert.ok(await page.locator('#backgroundPanel').evaluate(node => node.classList.contains('panel-collapsed')));
     const surfaceIndex = initial.items.findIndex(item => item.kind === 'ground');
-    assert.ok(surfaceIndex >= 0 && surfaceIndex <= Math.floor((initial.items.length - 1) / 2));
+    assert.ok(surfaceIndex >= 0 && surfaceIndex < initial.items.length);
     const withoutSurface = scene => scene.items.filter(item => item.kind !== 'ground');
     assert.ok(initial.items.every(item => item.asset));
     assert.equal(await page.locator('.stage-toolbar').count(), 0);
@@ -72,16 +72,21 @@ try {
     await page.screenshot({ path: '/tmp/wander-wall-desktop.png', fullPage: true });
 
     await selectLayer('ground-0');
-    assert.equal(await page.locator('[data-item="ground-0"] .layer-grip').isDisabled(), false);
+    assert.equal(await page.locator('.layer-grip').count(), 0);
+    assert.ok(Math.abs((await page.locator('.layer-row').first().boundingBox()).height - 41.6) < .1);
+    assert.equal(await page.locator('[data-item="letter-5"] .ui-list-title').textContent(), 'R');
+    assert.equal(await page.locator('[data-item="ground-0"] .ui-list-title').textContent(), 'Surface');
     await page.evaluate(() => wall.editor.transform({ scale: .5, rotation: 25, x: .4 })); await idle();
     assert.equal((await snapshot()).items[surfaceIndex].scale, .5);
     assert.equal((await snapshot()).items[surfaceIndex].rotation, 25);
     assert.deepEqual(withoutSurface(await snapshot()), withoutSurface(initial));
     await history(); await idle(); assert.deepEqual(await snapshot(), initial);
     await page.locator('[data-item="ground-0"] .layer-select').dblclick();
+    assert.equal(await page.locator('#variantDialogTitle').textContent(), 'Surface alternates');
     assert.ok(await page.locator('#closeVariantsBtn').evaluate(node => node.classList.contains('modal-close')));
     await page.locator('#variantGrid button:not([aria-pressed="true"])').first().click(); await idle();
     assert.notEqual((await snapshot()).items[surfaceIndex].asset, initial.items[surfaceIndex].asset);
+    assert.equal((await snapshot()).items[surfaceIndex].pinned, true);
     assert.deepEqual(withoutSurface(await snapshot()), withoutSurface(initial));
     await history(); await idle();
     await page.locator('[data-item="ground-0"] [data-action="visibility"]').click(); await idle();
@@ -104,18 +109,19 @@ try {
     assert.deepEqual(await snapshot(), initial);
     await page.mouse.dblclick(clickPoint.x, clickPoint.y); await idle();
     let state = await snapshot(), changed = state.items.find(item => item.id === clickPoint.id);
-    assert.notEqual(changed.asset, initial.items.at(-1).asset); assert.equal(changed.pinned, false);
+    assert.notEqual(changed.asset, initial.items.at(-1).asset); assert.equal(changed.pinned, true);
     await history(); await idle();
     assert.deepEqual(await snapshot(), initial);
     await history(true); await idle();
     assert.equal((await snapshot()).items.find(item => item.id === changed.id).asset, changed.asset);
-    checks.push('Single click selects; double-click cycles without auto-pinning; keyboard undo/redo restores exact scenes.');
+    checks.push('Single click selects; double-click cycles and pins in one undo step; keyboard undo/redo restores exact scenes.');
 
     const movePoint = await visiblePoint(clickPoint.id), beforeSelect = await snapshot();
     await page.mouse.click(movePoint.x, movePoint.y); await idle();
     assert.deepEqual(await snapshot(), beforeSelect);
     checks.push('Clicking selects artwork without changing its variant or history.');
 
+    await page.locator('#elementList .is-selected [data-action="pin"]').click();
     const beforeDrag = await snapshot();
     const dragPoint = await visiblePoint(clickPoint.id);
     await page.mouse.move(dragPoint.x, dragPoint.y); await page.mouse.down(); await page.mouse.move(dragPoint.x - 22, dragPoint.y - 16, { steps: 8 }); await page.mouse.up();
@@ -124,12 +130,11 @@ try {
     assert.ok(dragged.x !== changed.x || dragged.y !== changed.y);
     await history(); await idle(); assert.deepEqual(await snapshot(), beforeDrag);
     await history(true); await idle();
-    assert.equal((await snapshot()).items.find(item => item.id === clickPoint.id).pinned, false);
-    await page.locator('#elementList .is-selected [data-action="pin"]').click();
+    assert.equal((await snapshot()).items.find(item => item.id === clickPoint.id).pinned, true);
     const pinned = (await snapshot()).items.find(item => item.id === clickPoint.id);
     await page.locator('#generateBtn').click(); await idle();
     assert.deepEqual((await snapshot()).items.find(item => item.id === pinned.id), pinned);
-    checks.push('Dragging is one undo step and does not pin; explicit pins survive Generate.');
+    checks.push('Dragging and automatic pinning are one undo step; edited objects survive Generate.');
 
     await selectLayer('form-0');
     const handle = await page.evaluate(() => {
@@ -154,12 +159,12 @@ try {
     assert.deepEqual((await snapshot()).items.find(item => item.id === 'form-0'), offboard);
     await page.evaluate(() => wall.editor.transform({ x: .5 }));
     assert.equal((await snapshot()).items.find(item => item.id === 'form-0').x, .5);
-    assert.equal((await snapshot()).items.find(item => item.id === 'form-0').pinned, false);
+    assert.equal((await snapshot()).items.find(item => item.id === 'form-0').pinned, true);
     await page.evaluate(() => wall.editor.transform({ rotation: 12.5 }));
     assert.equal((await snapshot()).items.find(item => item.id === 'form-0').rotation, 12.5);
     await page.evaluate(() => wall.editor.transform({ scale: .285 }));
     assert.equal((await snapshot()).items.find(item => item.id === 'form-0').scale, .285);
-    checks.push('Rotation zones and editor transforms preserve free positions, size and angle without auto-pinning.');
+    checks.push('Rotation zones and editor transforms preserve free positions, size and angle and automatically pin.');
 
     const listOrder = () => page.locator('#elementList [data-item]').evaluateAll(rows => rows.map(row => row.dataset.item));
     assert.deepEqual(await listOrder(), (await snapshot()).items.map(item => item.id).reverse());
@@ -174,8 +179,8 @@ try {
     assert.deepEqual(await listOrder(), (await snapshot()).items.map(item => item.id).reverse());
     await history(); await idle(); assert.deepEqual(await snapshot(), beforeOrder);
     await history(true); await idle();
-    await page.locator('[data-item="letter-5"] .layer-grip').scrollIntoViewIfNeeded();
-    const grip = await page.locator('[data-item="letter-5"] .layer-grip').boundingBox();
+    await page.locator('[data-item="letter-5"] .layer-select').scrollIntoViewIfNeeded();
+    const grip = await page.locator('[data-item="letter-5"] .layer-select').boundingBox();
     const targetRow = await page.locator('[data-item="letter-4"]').boundingBox();
     const beforeReorder = await snapshot();
     await page.mouse.move(grip.x + grip.width / 2, grip.y + grip.height / 2); await page.mouse.down();
@@ -314,10 +319,10 @@ try {
     });
     await idle(); assert.equal((await snapshot()).rotationRange, 80);
     await page.locator('#rotationRangeValue').fill('0'); await page.locator('#rotationRangeValue').press('Enter'); await idle();
-    assert.ok((await snapshot()).items.every(item => item.rotation === 0));
+    assert.ok((await snapshot()).items.filter(item => !item.pinned).every(item => item.rotation === 0));
     await selectLayer('letter-0');
     await page.evaluate(() => wall.editor.transform({ rotation: 43 }));
-    await page.locator('#elementList .is-selected [data-action="pin"]').click();
+    assert.equal((await snapshot()).items.find(item => item.id === 'letter-0').pinned, true);
     await page.locator('#rotationRangeValue').fill('65'); await page.locator('#rotationRangeValue').press('Enter'); await idle();
     await page.locator('#generateBtn').click(); await idle();
     assert.equal((await snapshot()).items.find(item => item.id === 'letter-0').rotation, 43);
@@ -333,7 +338,7 @@ try {
         return (box.width / 2 - item.x * scene.width) / box.width;
     });
     assert.ok(Math.abs(await leftOverflow() - .5) < 1e-6);
-    await page.locator('#elementList .is-selected [data-action="pin"]').click();
+    assert.equal((await snapshot()).items.find(item => item.id === 'letter-5').pinned, true);
     await page.locator('#overflowValue').fill('0'); await page.locator('#overflowValue').press('Enter'); await idle();
     assert.ok(Math.abs(await leftOverflow() - .5) < 1e-6);
     assert.equal((await snapshot()).items.find(item => item.id === 'letter-5').pinned, true);
@@ -385,7 +390,7 @@ try {
     await touch.locator('#elementsTab').tap();
     const touchOrder = () => touch.locator('#elementList [data-item]').evaluateAll(rows => rows.map(row => row.dataset.item));
     const oldTouchOrder = await touchOrder();
-    const touchGrip = await touch.locator('#elementList .layer-grip').first().boundingBox(), touchTarget = await touch.locator('#elementList .layer-row').nth(1).boundingBox();
+    const touchGrip = await touch.locator('#elementList .layer-select img').first().boundingBox(), touchTarget = await touch.locator('#elementList .layer-row').nth(1).boundingBox();
     const cdp = await touchContext.newCDPSession(touch), tx = touchGrip.x + touchGrip.width / 2, ty = touchGrip.y + touchGrip.height / 2;
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: tx, y: ty }] });
     for (let step = 1; step <= 8; step++) await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: tx, y: ty + (touchTarget.y + touchTarget.height - 5 - ty) * step / 8 }] });

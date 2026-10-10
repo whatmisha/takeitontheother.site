@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, writeFile, readFile, rm, stat } from 'node:fs/promises';
+import { mkdtemp, mkdir, writeFile, readFile, rm, stat, rename } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import { createRequire } from 'node:module';
@@ -26,11 +26,14 @@ test('discovery accepts incomplete sets, gaps, extra variants and nested forms w
     await writeFile(resolve(root, 'graphics/alphabet/set_09/.DS_Store'), 'ignored');
     const catalog = await prepareCatalog(root), metrics = installCatalog(catalog);
     assert.deepEqual(alternatives('A'), ['A-1-1', 'A-9-17']); assert.deepEqual(alternatives('B'), []);
+    assert.equal(ASSETS['A-1-1'].textureId, 'blue');
+    assert.equal(ASSETS['A-9-17'].textureId, null, 'new unclassified artwork must still import');
     assert.equal(FORMS.length, 2); assert.ok(ASSETS.pillow); assert.ok(ASSETS['form:more/my form.png']);
     assert.match(ASSETS['form:more/my form.png'].src, /my%20form\.png$/);
     for (const asset of catalog.assets) {
         assert.equal(asset.metrics.rows.length, 32);
         assert.deepEqual(asset.metrics.bounds, [0, 0, 12, 16]);
+        assert.match(asset.preview, /^\.\/previews\/[a-f0-9]{64}\.webp$/);
         assert.ok((await stat(resolve(root, decodeURIComponent(asset.preview)))).size > 0);
     }
     const geometry = new Silhouettes(metrics);
@@ -54,6 +57,51 @@ test('discovery accepts incomplete sets, gaps, extra variants and nested forms w
     await writeFile(resolve(root, 'graphics/alphabet/set_10/Z_01.png'), 'not a PNG');
     await assert.rejects(prepareCatalog(root));
     assert.equal(await readFile(path, 'utf8'), before, 'incomplete import cannot replace a working catalog');
+});
+
+test('texture renames preserve saved IDs, seeded order, metrics and thumbnail cache', async t => {
+    const root = await mkdtemp(resolve(tmpdir(), 'wall-renamed-')); t.after(() => rm(root, { recursive: true, force: true }));
+    const aliases = {
+        'blobs/blob_pink_patch_01.png': 'blobs/blob_01.png',
+        'blobs/blob_lime_fur_01.png': 'blobs/blob_02.png',
+        'sticks/stick_glass_01.png': 'sticks/glass/stick_01.png',
+        'surface/surface_glass_01.png': 'ground/v3/letters/glass.png'
+    };
+    for (const original of Object.values(aliases)) await png(root, 'graphics/' + original);
+    await png(root, 'graphics/alphabet/set_01/A_01.png');
+    const before = await prepareCatalog(root);
+    const scene = generate({ text: 'A', formCount: 3, groundEnabled: true }, new Silhouettes(installCatalog(before)));
+    const preview = resolve(root, before.assets[0].preview), modified = (await stat(preview)).mtimeMs;
+    for (const [path, original] of Object.entries(aliases)) {
+        await mkdir(resolve(root, 'graphics', path, '..'), { recursive: true });
+        await rename(resolve(root, 'graphics', original), resolve(root, 'graphics', path));
+    }
+    await writeFile(resolve(root, 'asset-path-aliases.json'), JSON.stringify(aliases));
+    const after = await prepareCatalog(root);
+    assert.deepEqual(after.assets.map(a => [a.id, a.hash, a.metrics]), before.assets.map(a => [a.id, a.hash, a.metrics]));
+    assert.deepEqual(generate({ text: 'A', formCount: 3, groundEnabled: true }, new Silhouettes(installCatalog(after))), scene);
+    assert.equal((await stat(preview)).mtimeMs, modified, 'rename reuses the existing preview');
+    assert.equal(GROUNDS[0].category, 'surface');
+    assert.equal(GROUNDS[0].src, './graphics/surface/surface_glass_01.png');
+    for (const asset of after.assets) assert.ok((await stat(resolve(root, asset.src))).size);
+    assert.deepEqual(await prepareCatalog(root), after);
+    await png(root, 'graphics/surface/surface_glass_02.png');
+    const added = await prepareCatalog(root); installCatalog(added);
+    assert.equal(GROUNDS.length, 2);
+    assert.ok(ASSETS['ground:surface_glass_02.png'], 'new artwork needs no alias');
+    await png(root, 'graphics/sticks/glass/stick_01.png');
+    await assert.rejects(discoverAssets(root), /Duplicate artwork ID/);
+});
+
+test('malformed path aliases cannot replace a working catalog', async t => {
+    const root = await mkdtemp(resolve(tmpdir(), 'wall-aliases-')); t.after(() => rm(root, { recursive: true, force: true }));
+    await png(root, 'graphics/surface/surface_glass_01.png');
+    const before = await prepareCatalog(root);
+    for (const aliases of [[], null, { 'surface/surface_glass_01.png': '../outside.png' }, { 'alphabet/set_01/A_01.png': 'blobs/old.png' }]) {
+        await writeFile(resolve(root, 'asset-path-aliases.json'), JSON.stringify(aliases));
+        await assert.rejects(prepareCatalog(root), /Invalid artwork path aliases/);
+        assert.deepEqual(JSON.parse(await readFile(resolve(root, 'asset-catalog.json'), 'utf8')), before);
+    }
 });
 
 test('duplicate IDs are rejected instead of silently replacing a variant', async t => {

@@ -1,7 +1,7 @@
 export const shadowDefaults = { shadowEnabled: true, shadowColor: '#000000', shadowOpacity: 50, shadowBlur: 80, shadowDistance: 20, shadowAngle: 90 };
 export const effectDefaults = {
     backgroundMode: 'gradient', backgroundAngle: 0,
-    backgroundStart: '#D0D2E4',
+    backgroundStart: '#DAD5F1',
     backgroundStops: [{ color: '#D0D2E4', offset: 0 }, { color: '#9AA0DC', offset: .302885 }, { color: '#2348B4', offset: .649038 }, { color: '#0E257F', offset: 1 }],
     ...shadowDefaults
 };
