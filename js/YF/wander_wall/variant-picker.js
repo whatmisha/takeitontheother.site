@@ -1,7 +1,7 @@
 import { ASSETS, variantsFor } from './assets.js';
 
 export const categoryName = category => (category || 'Object').replace(/[-_]/g, ' ').replace(/\b\w/g, letter => letter.toUpperCase());
-export const layerName = item => item.kind === 'ground' ? 'Ground' : item.kind === 'letter' ? 'Letter ' + item.letter + ' ' + (item.index + 1) : categoryName(ASSETS[item.asset].category) + ' ' + (item.index + 1);
+export const layerName = item => item.kind === 'ground' ? 'Surface' : item.kind === 'letter' ? 'Letter ' + item.letter + ' ' + (item.index + 1) : categoryName(ASSETS[item.asset].category) + ' ' + (item.index + 1);
 
 export class VariantPicker {
     constructor(choose, signal) {
@@ -39,7 +39,7 @@ export class VariantPicker {
             if (this.category.value && asset.category !== this.category.value) return [];
             const button = document.createElement('button');
             button.type = 'button'; button.className = 'variant-option'; button.dataset.asset = id;
-            button.setAttribute('aria-label', (this.item.kind === 'letter' ? this.item.letter : categoryName(asset.category)) + ' variant ' + (index + 1));
+            button.setAttribute('aria-label', (this.item.kind === 'letter' ? this.item.letter : this.item.kind === 'ground' ? 'Surface' : categoryName(asset.category)) + ' variant ' + (index + 1));
             button.setAttribute('aria-pressed', String(id === this.item.asset));
             button.title = button.getAttribute('aria-label');
             const image = document.createElement('img'); image.src = asset.preview || asset.src; image.alt = ''; image.loading = 'lazy'; image.draggable = false;

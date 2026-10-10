@@ -71,10 +71,13 @@ test('empty alpha images are rejected before publishing', async t => {
 test('new object folders are recursive, ground is separate, and references/previews are excluded', async t => {
     const root = await mkdtemp(resolve(tmpdir(), 'wall-objects-')); t.after(() => rm(root, { recursive: true, force: true }));
     for (const path of ['sticks/green pixels/stick_01.png', 'crystals/crystal_01.png', 'prism/blue.png',
-        'spheres/blue.png', 'future/subfolder/new.png', 'loose.png', 'ground/v3/letters/blue.png', 'ground/orange.png',
+        'spheres/blue.png', 'sparky/rays/spark_01.png', 'future/subfolder/new.png', 'loose.png', 'ground/v3/letters/blue.png', 'ground/orange.png',
         'sticks/green pixels/_ref.png', 'previews/generated.png', '_references/example.png', '.hidden/private.png']) await png(root, 'graphics/' + path);
     const catalog = await prepareCatalog(root); installCatalog(catalog);
-    assert.equal(FORMS.length, 6); assert.equal(GROUNDS.length, 2);
+    assert.equal(FORMS.length, 7); assert.equal(GROUNDS.length, 2);
+    assert.equal(ASSETS['object:sparky/rays/spark_01.png'].category, 'sparky');
+    const shapes = generate({ text: '', formCount: 7 }, new Silhouettes(installCatalog(catalog)));
+    assert.ok(shapes.items.some(item => ASSETS[item.asset].category === 'sparky'));
     assert.ok(ASSETS['object:future/subfolder/new.png']);
     assert.ok(ASSETS['ground:v3/letters/blue.png']);
     assert.equal(ASSETS['object:sticks/green pixels/stick_01.png'].category, 'sticks');
@@ -85,7 +88,7 @@ test('new object folders are recursive, ground is separate, and references/previ
     await png(root, 'graphics/another-category/new.png');
     await png(root, 'graphics/ground/v4/new.png');
     const added = await prepareCatalog(root); installCatalog(added);
-    assert.equal(FORMS.length, 7); assert.equal(GROUNDS.length, 3);
+    assert.equal(FORMS.length, 8); assert.equal(GROUNDS.length, 3);
     assert.ok(previousForms.every(id => ASSETS[id]));
     installCatalog(catalog); assert.equal(GROUNDS.length, 2, 'catalog replacement clears deleted grounds');
 });

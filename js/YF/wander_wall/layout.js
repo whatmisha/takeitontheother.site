@@ -1,6 +1,6 @@
 import { SeededRandom } from '../infra/framework/src/index.js';
-import { alternatives, FORMS, GROUNDS } from './assets.js';
-import { clamp, lettersOf, normalize } from './document.js';
+import { alternatives, ASSETS, FORMS, GROUNDS } from './assets.js';
+import { clamp, lettersOf, normalize, normalizePreset, isUntouchedShippedPreset } from './document.js';
 import { groundDimensions, anchorGround } from './ground.js';
 
 const radians = degrees => degrees * Math.PI / 180;
@@ -123,14 +123,38 @@ function arrangeLetters(items, scene, geometry, random) {
 
 export function updateGround(settings, { reroll = false } = {}) {
     const scene = normalize(settings), previous = scene.items.find(item => item.kind === 'ground');
-    scene.items = scene.items.filter(item => item.kind !== 'ground');
     if (scene.groundEnabled && GROUNDS.length) {
         const keep = previous && (!reroll || previous.pinned || previous.visible === false);
-        const asset = keep ? previous.asset : new SeededRandom(scene.seed).fork('ground').pick(GROUNDS).id;
-        scene.items.unshift({ id: 'ground-0', kind: 'ground', index: 0, letter: '', pinned: false, visible: true,
-            ...previous, asset });
+        if (keep) return scene;
+        const asset = new SeededRandom(scene.seed).fork('ground').pick(GROUNDS).id;
+        const surface = anchorGround({ id: 'ground-0', kind: 'ground', index: 0, letter: '', pinned: false, visible: true, ...previous, asset }, scene);
+        if (previous) scene.items = scene.items.map(item => item.id === previous.id ? surface : item);
+        else scene.items.unshift(surface);
+        if (reroll) {
+            const movable = scene.items.flatMap((item, index) => !item.pinned && item.visible !== false ? [index] : []);
+            const lowerSlots = movable.filter(index => index <= Math.floor((scene.items.length - 1) / 2));
+            if (lowerSlots.length) {
+                const slot = new SeededRandom(scene.seed).fork('ground-layer').pick(lowerSlots);
+                const stack = movable.map(index => scene.items[index]).filter(item => item.kind !== 'ground');
+                stack.splice(movable.indexOf(slot), 0, surface);
+                // Move Surface without shifting pinned or hidden layer slots.
+                movable.forEach((index, i) => { scene.items[index] = stack[i]; });
+            }
+        }
     }
     return normalize(scene);
+}
+
+export function ensureSurface(settings) {
+    return updateGround({ ...settings, groundEnabled: true });
+}
+
+export function preparePreset(snapshot, geometry) {
+    const normalized = normalizePreset(snapshot);
+    if (snapshot.items == null || isUntouchedShippedPreset(snapshot)) {
+        return generate({ ...normalized, items: [], groundEnabled: true }, geometry);
+    }
+    return ensureSurface(normalized);
 }
 
 export function generate(settings, geometry, { seed = settings.seed, reroll = true } = {}) {
@@ -186,22 +210,44 @@ export function generate(settings, geometry, { seed = settings.seed, reroll = tr
     const meanScale = placed.length ? placed.reduce((sum, entry) => sum + entry.item.scale, 0) / placed.length : .7;
     const packedForms = forms.map(form => {
         if (form.pinned || form.visible === false) return form;
+        const scaleMultiplier = ASSETS[form.asset]?.category === 'sticks' ? 2 : 1;
         let best, bestCells, bestScore = -Infinity;
         for (let trial = 0; trial < 320; trial++) {
             const candidate = geometry.constrain({ ...form, x: random.next(), y: random.next(),
-                rotation: random.float(-scene.rotationRange, scene.rotationRange), scale: meanScale * random.float(.35, 1.02) * scene.fill / 100 }, scene);
+                rotation: random.float(-scene.rotationRange, scene.rotationRange), scale: meanScale * random.float(.35, 1.02) * scaleMultiplier * scene.fill / 100 }, scene);
             const cells = field.cells(candidate), score = field.score(cells, 2.5);
             if (score > bestScore) { best = candidate; bestCells = cells; bestScore = score; }
         }
         field.add(bestCells, 1); return best;
     });
-    const generated = [...packedForms, ...placed.map(entry => entry.item), ...letters.filter(item => item.visible === false)];
-    const byId = new Map(generated.map(item => [item.id, item]));
+    const sizeRandom = random.fork('size'), sizeSpread = scene.sizeRange / 200;
+    const generated = [...packedForms, ...placed.map(entry => entry.item), ...letters.filter(item => item.visible === false)].map(item => {
+        if (!sizeSpread || item.pinned || item.visible === false) return item;
+        // Vary the finished base layout once per item; packing must not favor larger samples.
+        const scale = clamp(item.scale * sizeRandom.fork(item.id).float(1 - sizeSpread, 1 + sizeSpread), .025, 3);
+        return geometry.constrain({ ...item, scale }, scene);
+    });
+    const byId = new Map([...scene.items.filter(item => item.kind === 'ground'), ...generated].map(item => [item.id, item]));
     const previousOrder = scene.items.flatMap(item => byId.has(item.id) ? [byId.get(item.id)] : []);
     const previousIds = new Set(previousOrder.map(item => item.id));
-    scene.items = [...scene.items.filter(item => item.kind === 'ground'),
-        ...generated.filter(item => !previousIds.has(item.id) && item.kind === 'form'), ...previousOrder,
-        ...generated.filter(item => !previousIds.has(item.id) && item.kind === 'letter')];
+    scene.items = [...previousOrder];
+    scene.items.splice(scene.items[0]?.kind === 'ground' ? 1 : 0, 0, ...generated.filter(item => !previousIds.has(item.id) && item.kind === 'form'));
+    scene.items.push(...generated.filter(item => !previousIds.has(item.id) && item.kind === 'letter'));
+    if (reroll || packedForms.some(item => !previousIds.has(item.id))) {
+        const fixed = item => item.pinned || item.visible === false || item.kind === 'ground';
+        const movable = scene.items.filter(item => !fixed(item));
+        const stack = movable.filter(item => item.kind === 'letter');
+        const layersRandom = random.fork('layers');
+        for (const form of movable.filter(item => item.kind === 'form')) {
+            const first = stack.findIndex(item => item.kind === 'letter');
+            const last = stack.findLastIndex(item => item.kind === 'letter');
+            const index = last > first ? layersRandom.int(first + 1, last) : layersRandom.int(0, stack.length);
+            stack.splice(index, 0, form);
+        }
+        // Keep pinned, hidden and Surface slots fixed while interleaving movable objects.
+        let index = 0;
+        scene.items = scene.items.map(item => fixed(item) ? item : stack[index++]);
+    }
     return updateGround(scene, { reroll });
 }
 

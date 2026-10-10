@@ -1,14 +1,13 @@
 import { ASSETS, alternatives } from './assets.js';
-import { effectDefaults, normalizeEffects } from './effects.js';
-import { anchorGround } from './ground.js';
+import { effectDefaults, shadowDefaults, normalizeEffects } from './effects.js';
 import { normalizeResolution, resolutionError } from './resolutions.js';
 export { FORMATS } from './resolutions.js';
 
 export const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 const number = (value, fallback, min, max) => Number.isFinite(Number(value)) ? clamp(Number(value), min, max) : fallback;
-export const cleanText = text => String(text ?? '').toUpperCase().replace(/[^A-Z\s]/g, '').replace(/\s+/g, ' ').trim().split('').reduce((result, char) => (char === ' ' || result.replace(/ /g, '').length < 32) ? result + char : result, '').trim();
-export const lettersOf = text => cleanText(text).replace(/ /g, '');
-export const defaults = { text: 'WANDER', format: 'desktop', width: 3840, height: 2160, seed: 20261009, shuffle: false, formsEnabled: true, formCount: 4, groundEnabled: true, groundHeight: 35, fill: 100, rotationRange: 24, overflow: 0, ...effectDefaults, items: [] };
+export const cleanText = text => String(text ?? '').replace(/[^A-Za-z\s]/g, '').replace(/\s+/g, ' ').trim().split('').reduce((result, char) => (char === ' ' || result.replace(/ /g, '').length < 32) ? result + char : result, '').trim();
+export const lettersOf = text => cleanText(text).toUpperCase().replace(/ /g, '');
+export const defaults = { text: 'Wander', format: 'qhd', width: 2560, height: 1440, seed: 20261009, shuffle: false, formsEnabled: true, formCount: 7, groundEnabled: true, groundHeight: 35, fill: 100, rotationRange: 24, sizeRange: 0, overflow: 0, ...effectDefaults, items: [] };
 // Catalog-dependent initial layouts are never safe defaults for compact links.
 export const shareDefaults = { ...defaults, items: null };
 
@@ -31,16 +30,21 @@ export function normalize(input = {}) {
     });
     const scene = { text: cleanText(input.text ?? defaults.text), ...normalizeResolution(input),
         seed: number(input.seed, defaults.seed, 0, 4294967295) >>> 0,
-        shuffle: input.shuffle === true, formsEnabled: input.formsEnabled !== false,
-        formCount: Math.round(number(input.formCount, 4, 0, 16)), fill: number(input.fill, 100, 70, 125),
+        shuffle: input.shuffle === true, formsEnabled: true,
+        formCount: input.formsEnabled === false ? 0 : Math.round(number(input.formCount, defaults.formCount, 0, 16)), fill: number(input.fill, 100, 70, 125),
         groundEnabled: input.groundEnabled === true, groundHeight: number(input.groundHeight, defaults.groundHeight, 10, 60),
-        rotationRange: number(input.rotationRange, defaults.rotationRange, 0, 180), overflow: number(input.overflow, defaults.overflow, 0, 50), ...normalizeEffects(input), items };
-    scene.items = [...items.filter(item => item.kind === 'ground' && scene.groundEnabled).map(item => anchorGround(item, scene)),
-        ...items.filter(item => item.kind !== 'ground')];
+        rotationRange: number(input.rotationRange, defaults.rotationRange, 0, 180), sizeRange: number(input.sizeRange, defaults.sizeRange, 0, 100), overflow: number(input.overflow, defaults.overflow, 0, 50), ...normalizeEffects(input), items };
+    scene.items = items.filter(item => item.kind !== 'ground' || scene.groundEnabled);
     return scene;
 }
 
 export function makeDocument(settings) { return { type: 'wander-wall', version: 1, settings: normalize(settings) }; }
+export const shippedPresetDefaults = { text: 'Wander', fill: 100, rotationRange: 30, sizeRange: 50, overflow: 0, formCount: 10, ...shadowDefaults };
+export const isUntouchedShippedPreset = input => input.seeded === true && input.createdAt === input.updatedAt;
+export function normalizePreset(input) {
+    // Refresh shipped defaults cached by the framework, without changing personally saved presets.
+    return normalize(isUntouchedShippedPreset(input) ? { ...input, ...shippedPresetDefaults } : input);
+}
 export function readDocument(value) {
     if (value?.type !== 'wander-wall' || value.version !== 1 || !value.settings || typeof value.settings !== 'object') throw new Error('Choose a Wander Wall JSON document (version 1).');
     if (!Array.isArray(value.settings.items) || value.settings.items.length > 49) throw new Error('This composition has too many elements.');

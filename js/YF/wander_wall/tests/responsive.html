@@ -1,0 +1,11 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><title>Wander Wall responsive QA</title>
+<style>body{margin:0;background:#333;color:#fff;font:14px sans-serif}nav{padding:8px}iframe{display:block;border:0}button{margin-right:8px}</style>
+<nav><button data-width="1180" data-height="820">Laptop 1180</button><button data-width="390" data-height="844">Phone 390</button><button data-width="320" data-height="568">Phone 320</button><button data-width="844" data-height="390">Landscape</button><output id="viewport">1180 x 820</output></nav>
+<iframe src="../" title="Wander Wall test viewport" width="1180" height="820"></iframe>
+<script>
+document.querySelectorAll('button').forEach(button => button.addEventListener('click', () => {
+    const frame = document.querySelector('iframe'); frame.width = button.dataset.width; frame.height = button.dataset.height;
+    document.getElementById('viewport').textContent = frame.width + ' x ' + frame.height;
+}));
+</script></html>

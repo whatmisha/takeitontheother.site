@@ -1,51 +1,67 @@
-import { effectDefaults, effectRanges, effectColors } from './effects.js';
+import { UnifiedColorPicker } from '../infra/framework/src/index.js';
+import { addGradientStop, removeGradientStop } from './effects.js';
 
-const labels = { backgroundAngle: 'Direction', shadowOpacity: 'Opacity', shadowBlur: 'Blur', shadowDistance: 'Distance', shadowAngle: 'Direction', outlineWidth: 'Width',
-    backgroundStart: 'Start', backgroundMidLow: 'Stop 2', backgroundMidHigh: 'Stop 3', backgroundEnd: 'End', shadowColor: 'Color', outlineColor: 'Color' };
-const colorNames = { backgroundStart: 'Background start', backgroundMidLow: 'Gradient stop 2', backgroundMidHigh: 'Gradient stop 3', backgroundEnd: 'Background end', shadowColor: 'Shadow', outlineColor: 'Outline' };
-
-export const effectSwatches = effectColors.map(setting => ({ type: setting, setting,
+const swatches = ['backgroundStart', ...Array.from({ length: 8 }, (_, i) => 'gradient' + i)].map((setting, i) => ({ type: setting, setting, index: i - 1,
     itemId: setting + 'ColorItem', dotId: setting + 'ColorPreview', hexId: setting + 'ColorHex', hsbSlotId: setting + 'ColorHsbSlot' }));
-export const effectSliders = Object.entries(effectRanges).map(([setting, [min, max]]) => ({ id: setting + 'Slider', valueId: setting + 'Value', setting, min, max, decimals: 0, baseStep: 1 }));
 
-function range(key) {
-    const unit = key.endsWith('Angle') ? '&deg;' : key === 'shadowOpacity' ? '%' : 'px';
-    return `<div class="control-group"><label for="${key}Slider"><span>${labels[key]} <span class="unit">${unit}</span></span><input id="${key}Value" class="value-display" value="${effectDefaults[key]}" inputmode="decimal" aria-label="${key.startsWith('background') ? 'Background' : key.startsWith('shadow') ? 'Shadow' : 'Outline'} ${labels[key].toLowerCase()}"></label><input id="${key}Slider" type="range" min="${effectRanges[key][0]}" max="${effectRanges[key][1]}" step="1" value="${effectDefaults[key]}"></div>`;
-}
-
-function color(key) {
-    return `<div class="color-swatch-row" id="${key}Row"><div class="color-swatch-compact" id="${key}ColorItem"><button class="color-dot color-dot--expandable" id="${key}ColorPreview" type="button" aria-label="Open ${colorNames[key].toLowerCase()} color"></button><span class="color-label">${labels[key]}</span><input class="color-swatch-hex" id="${key}ColorHex" aria-label="${colorNames[key]} color hex" spellcheck="false" maxlength="7"></div><div class="color-hsb-slot" id="${key}ColorHsbSlot">${key === 'backgroundStart' ? '<div id="effectsColorPicker"></div>' : ''}</div></div>`;
-}
-
-function toggle(key, label) {
-    return `<label class="pill-toggle" for="${key}Toggle"><input id="${key}Toggle" class="sr-only" type="checkbox"><span>${label}</span></label>`;
+function color(swatch) {
+    const { setting: key, index } = swatch, name = index < 0 ? 'Background color' : `Gradient color ${index + 1}`;
+    const compact = `<div class="color-swatch-compact" id="${key}ColorItem"><button class="color-dot color-dot--expandable" id="${key}ColorPreview" type="button" aria-label="Open ${name.toLowerCase()}"></button><span class="color-label">${index < 0 ? 'Color' : index + 1}</span><input class="color-swatch-hex" id="${key}ColorHex" aria-label="${name} hex" spellcheck="false" maxlength="7"></div>`;
+    return `<div class="color-swatch-row" id="${key}Row">${index < 0 ? compact : `<div class="gradient-stop-main">${compact}<button type="button" class="ui-icon-button" data-remove-stop="${index}" aria-label="Remove gradient color ${index + 1}" data-tooltip="Remove color" data-icon="minus"></button></div>`}<div class="color-hsb-slot" id="${key}ColorHsbSlot">${index < 0 ? '<div id="effectsColorPicker"></div>' : ''}</div></div>`;
 }
 
 export function mountEffects() {
-    document.getElementById('effectsControls').innerHTML = `
-        <details class="ui-disclosure effect-details" id="backgroundDetails"><summary>Background<span class="ui-disclosure__chevron" data-icon="chevron"></span></summary>
-            <div class="effect-content"><div class="segmented-control" role="radiogroup" aria-label="Background mode">
+    document.getElementById('backgroundControls').innerHTML = `
+            <div class="segmented-control" role="radiogroup" aria-label="Background mode">
                 <input id="backgroundGradient" type="radio" name="backgroundMode" value="gradient" checked><label for="backgroundGradient">Gradient</label>
                 <input id="backgroundSolid" type="radio" name="backgroundMode" value="solid"><label for="backgroundSolid">Solid</label></div>
-            <div class="color-swatches-compact">${effectColors.slice(0, 4).map(color).join('')}</div>
-            <div id="backgroundDirection">${range('backgroundAngle')}</div></div>
-        </details>
-        <div class="control-group pill-toggle-row">${toggle('shadowEnabled', 'Drop shadow')}${toggle('outlineEnabled', 'Outline')}</div>
-        <div id="shadowOptions" hidden>
-            ${range('shadowOpacity')}${range('shadowBlur')}
-            <details class="ui-disclosure"><summary>Shadow settings<span class="ui-disclosure__chevron" data-icon="chevron"></span></summary><div class="color-swatches-compact">${color('shadowColor')}</div>${['shadowDistance', 'shadowAngle'].map(range).join('')}</details>
-        </div>
-        <div id="outlineOptions" hidden><div class="color-swatches-compact">${color('outlineColor')}</div>${range('outlineWidth')}</div>`;
+            <div class="color-swatches-compact">${swatches.map(color).join('')}</div>
+            <div class="gradient-actions" id="gradientActions"><button id="addGradientColorBtn" class="ui-icon-button" type="button" aria-label="Add gradient color" data-tooltip="Add color" data-icon="plus"></button></div>`;
+    document.getElementById('effectsControls').innerHTML = `
+        <div class="control-group pill-toggle-row"><label class="pill-toggle" for="shadowEnabledToggle"><input id="shadowEnabledToggle" class="sr-only" type="checkbox" checked><span>Drop shadow</span></label></div>`;
 }
 
-export function syncEffects(tool) {
+export function bindEffects(tool, change, signal) {
+    const bySetting = new Map(swatches.map(swatch => [swatch.setting, swatch]));
+    const settings = {
+        get: key => key === 'backgroundStart' ? tool.settings.backgroundStart : tool.settings.backgroundStops[bySetting.get(key).index]?.color || '#000000',
+        set: (key, color) => {
+            if (key === 'backgroundStart') tool.settingsStore.set(key, color);
+            else {
+                const index = bySetting.get(key).index;
+                if (index >= tool.settings.backgroundStops.length) return;
+                tool.settingsStore.set('backgroundStops', tool.settings.backgroundStops.map((stop, i) => i === index ? { ...stop, color } : stop));
+            }
+        }
+    };
+    const picker = new UnifiedColorPicker({ settings, containerId: 'effectsColorPicker', swatches });
+    picker.init();
+    let signature = '';
+    const close = () => { picker.picker.close(); document.querySelectorAll('#backgroundControls .active').forEach(node => node.classList.remove('active')); };
+    document.getElementById('addGradientColorBtn').addEventListener('click', () => {
+        change({ ...tool.getSnapshot(), backgroundStops: addGradientStop(tool.settings.backgroundStops) }, 'Add gradient color');
+    }, { signal });
+    for (const button of document.querySelectorAll('[data-remove-stop]')) button.addEventListener('click', () => {
+        const index = Number(button.dataset.removeStop);
+        change({ ...tool.getSnapshot(), backgroundStops: removeGradientStop(tool.settings.backgroundStops, index) }, 'Remove gradient color');
+        const nextIndex = Math.min(index, tool.settings.backgroundStops.length - 1);
+        document.getElementById(`gradient${nextIndex}ColorPreview`).focus();
+    }, { signal });
+    return { sync() {
+        const next = tool.settings.backgroundMode + ':' + tool.settings.backgroundStops.length;
+        if (signature !== next) { close(); signature = next; }
+        picker.sync();
+    }, destroy: close };
+}
+
+export function syncEffects(tool, controller) {
     const s = tool.settings;
     for (const radio of document.querySelectorAll('input[name="backgroundMode"]')) radio.checked = radio.value === s.backgroundMode;
-    for (const key of ['backgroundMidLow', 'backgroundMidHigh', 'backgroundEnd']) document.getElementById(key + 'Row').hidden = s.backgroundMode === 'solid';
-    document.getElementById('backgroundDirection').hidden = s.backgroundMode === 'solid';
-    for (const name of ['shadow', 'outline']) {
-        document.getElementById(name + 'EnabledToggle').checked = s[name + 'Enabled'];
-        document.getElementById(name + 'Options').hidden = !s[name + 'Enabled'];
-    }
-    for (const key of Object.keys(effectRanges)) if (document.activeElement !== document.getElementById(key + 'Value')) tool.sliders?.setDisplayValue(key + 'Slider', s[key]);
+    document.getElementById('backgroundStartRow').hidden = s.backgroundMode !== 'solid';
+    for (let i = 0; i < 8; i++) document.getElementById(`gradient${i}Row`).hidden = s.backgroundMode === 'solid' || i >= s.backgroundStops.length;
+    document.getElementById('gradientActions').hidden = s.backgroundMode === 'solid';
+    document.getElementById('addGradientColorBtn').disabled = s.backgroundStops.length >= 8;
+    for (const button of document.querySelectorAll('[data-remove-stop]')) button.disabled = s.backgroundStops.length <= 2;
+    document.getElementById('shadowEnabledToggle').checked = s.shadowEnabled;
+    controller?.sync();
 }

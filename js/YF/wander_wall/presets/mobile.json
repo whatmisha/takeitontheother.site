@@ -1,0 +1,14 @@
+{
+  "text": "Wander",
+  "format": "iphone17max",
+  "width": 1320,
+  "height": 2868,
+  "seed": 20261010,
+  "fill": 100,
+  "rotationRange": 30,
+  "sizeRange": 50,
+  "overflow": 0,
+  "formCount": 10,
+  "shadowEnabled": true,
+  "groundEnabled": true
+}

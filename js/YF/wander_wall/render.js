@@ -1,41 +1,27 @@
 import { effectDefaults, gradientLine } from './effects.js';
 
-const outlines = new Map();
-let outlinePixels = 0;
-function outlinedImage(image, bounds, size, width, color) {
-    const resolution = Math.min(1, 1024 / Math.max(size.width, size.height));
-    const w = Math.max(1, Math.round(size.width * resolution)), h = Math.max(1, Math.round(size.height * resolution));
-    const radius = width * resolution, padding = Math.ceil(radius) + 2;
-    const key = [image.src, w, h, radius.toFixed(2), color].join('|');
-    if (outlines.has(key)) {
-        const cached = outlines.get(key); outlines.delete(key); outlines.set(key, cached); return cached;
+const buffers = new WeakMap();
+function shadowBuffers(ctx) {
+    let pair = buffers.get(ctx);
+    if (!pair) {
+        pair = ['stack', 'shadow', 'surfaces'].map(() => document.createElement('canvas').getContext('2d'));
+        buffers.set(ctx, pair);
     }
-    const canvas = document.createElement('canvas');
-    canvas.width = w + padding * 2; canvas.height = h + padding * 2;
-    const ctx = canvas.getContext('2d');
-    // Faint alpha residue in PNGs must not turn into rings after repeated stamps.
-    const stamp = document.createElement('canvas'); stamp.width = w; stamp.height = h;
-    const mask = stamp.getContext('2d'); mask.drawImage(image, ...bounds, 0, 0, w, h);
-    const pixels = mask.getImageData(0, 0, w, h);
-    for (let i = 3; i < pixels.data.length; i += 4) pixels.data[i] = pixels.data[i] >= 32 ? 255 : 0;
-    mask.putImageData(pixels, 0, 0);
-    const steps = Math.max(32, Math.ceil(radius * Math.PI * 2));
-    for (let i = 0; i < steps; i++) {
-        const angle = i * Math.PI * 2 / steps;
-        ctx.drawImage(stamp, padding + Math.cos(angle) * radius, padding + Math.sin(angle) * radius);
+    for (const buffer of pair) {
+        if (buffer.canvas.width !== ctx.canvas.width || buffer.canvas.height !== ctx.canvas.height) {
+            buffer.canvas.width = ctx.canvas.width; buffer.canvas.height = ctx.canvas.height;
+        }
+        buffer.resetTransform(); buffer.globalCompositeOperation = 'source-over'; buffer.shadowColor = 'transparent';
+        buffer.clearRect(0, 0, buffer.canvas.width, buffer.canvas.height);
     }
-    ctx.drawImage(stamp, padding, padding);
-    stamp.width = stamp.height = 1;
-    ctx.globalCompositeOperation = 'source-in'; ctx.fillStyle = color; ctx.fillRect(0, 0, canvas.width, canvas.height);
-    const result = { canvas, padding: padding / resolution, width: canvas.width / resolution, height: canvas.height / resolution };
-    outlines.set(key, result);
-    outlinePixels += canvas.width * canvas.height;
-    while (outlinePixels > 16 * 1024 * 1024 && outlines.size > 1) {
-        const first = outlines.keys().next().value, old = outlines.get(first);
-        outlinePixels -= old.canvas.width * old.canvas.height;
-        old.canvas.width = old.canvas.height = 1; outlines.delete(first);
-    }
-    return result;
+    return pair;
+}
+
+function paintItem(ctx, item, scene, image, geometry) {
+    const bounds = geometry.metrics[item.asset].bounds, size = geometry.dimensions(item, scene);
+    ctx.save(); ctx.translate(item.x * scene.width, item.y * scene.height); ctx.rotate(item.rotation * Math.PI / 180);
+    ctx.drawImage(image, ...bounds, -size.width / 2, -size.height / 2, size.width, size.height);
+    ctx.restore();
 }
 
 export function drawArtwork(ctx, scene, assets, geometry, items = scene.items) {
@@ -45,7 +31,7 @@ export function drawArtwork(ctx, scene, assets, geometry, items = scene.items) {
     if (effects.backgroundMode === 'solid') ctx.fillStyle = effects.backgroundStart;
     else {
         const gradient = ctx.createLinearGradient(...gradientLine(scene.width, scene.height, effects.backgroundAngle));
-        [[0, effects.backgroundStart], [.302885, effects.backgroundMidLow], [.649038, effects.backgroundMidHigh], [1, effects.backgroundEnd]].forEach(([offset, color]) => gradient.addColorStop(offset, color));
+        effects.backgroundStops.forEach(({ offset, color }) => gradient.addColorStop(offset, color));
         ctx.fillStyle = gradient;
     }
     ctx.fillRect(0, 0, scene.width, scene.height);
@@ -55,35 +41,53 @@ export function drawArtwork(ctx, scene, assets, geometry, items = scene.items) {
 
 function drawItems(ctx, scene, assets, geometry, items, effects) {
     ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+    const shadows = effects.shadowEnabled && effects.shadowOpacity > 0;
+    const [stack, shadow, surfaces] = shadows ? shadowBuffers(ctx) : [ctx];
+    const transform = ctx.getTransform(), zoom = Math.hypot(transform.a, transform.b);
+    const angle = effects.shadowAngle * Math.PI / 180;
+    stack.imageSmoothingEnabled = true; stack.imageSmoothingQuality = 'high';
     for (const item of items) {
         if (item.visible === false) continue;
         const image = assets.get(item.asset);
         if (!image) continue;
-        const [x, y, width, height] = geometry.metrics[item.asset].bounds;
-        const size = geometry.dimensions(item, scene);
-        ctx.save(); ctx.translate(item.x * scene.width, item.y * scene.height); ctx.rotate(item.rotation * Math.PI / 180);
-        if (item.kind !== 'ground' && effects.shadowEnabled && effects.shadowOpacity > 0) {
-            const transform = ctx.getTransform(), zoom = Math.hypot(transform.a, transform.b);
-            const angle = effects.shadowAngle * Math.PI / 180;
-            ctx.shadowColor = effects.shadowColor + Math.round(effects.shadowOpacity * 2.55).toString(16).padStart(2, '0');
-            ctx.shadowBlur = effects.shadowBlur * zoom;
-            ctx.shadowOffsetX = Math.cos(angle) * effects.shadowDistance * zoom;
-            ctx.shadowOffsetY = Math.sin(angle) * effects.shadowDistance * zoom;
+        if (shadows) {
+            const size = geometry.dimensions(item, scene);
+            const centerX = transform.a * item.x * scene.width + transform.c * item.y * scene.height + transform.e;
+            const shift = Math.max(0, centerX) + Math.hypot(size.width, size.height) * zoom + ctx.canvas.width + 1;
+            shadow.resetTransform(); shadow.clearRect(0, 0, shadow.canvas.width, shadow.canvas.height);
+            shadow.setTransform(transform.a, transform.b, transform.c, transform.d, transform.e - shift, transform.f);
+            // Put the caster offscreen and shift only its shadow back into the viewport.
+            shadow.shadowColor = effects.shadowColor + Math.round(effects.shadowOpacity * 2.55).toString(16).padStart(2, '0');
+            shadow.shadowBlur = effects.shadowBlur * zoom;
+            shadow.shadowOffsetX = shift + Math.cos(angle) * effects.shadowDistance * zoom;
+            shadow.shadowOffsetY = Math.sin(angle) * effects.shadowDistance * zoom;
+            paintItem(shadow, item, scene, image, geometry);
+            // Only ordinary objects receive shadows. Surface pixels live in a separate stack.
+            stack.resetTransform(); stack.globalCompositeOperation = 'source-atop';
+            stack.drawImage(shadow.canvas, 0, 0);
+            stack.globalCompositeOperation = 'source-over'; stack.setTransform(transform);
+            surfaces.setTransform(transform);
+            const covered = item.kind === 'ground' ? stack : surfaces;
+            covered.globalCompositeOperation = 'destination-out';
+            paintItem(covered, item, scene, image, geometry);
+            covered.globalCompositeOperation = 'source-over';
         }
-        if (item.kind !== 'ground' && effects.outlineEnabled && effects.outlineWidth > 0) {
-            const outline = outlinedImage(image, [x, y, width, height], size, effects.outlineWidth, effects.outlineColor);
-            ctx.drawImage(outline.canvas, -size.width / 2 - outline.padding, -size.height / 2 - outline.padding, outline.width, outline.height);
-            ctx.shadowColor = 'transparent';
-        }
-        ctx.drawImage(image, x, y, width, height, -size.width / 2, -size.height / 2, size.width, size.height);
-        ctx.restore();
+        paintItem(shadows && item.kind === 'ground' ? surfaces : stack, item, scene, image, geometry);
+    }
+    if (shadows) {
+        // The stacks partition the original alpha; add them before compositing onto the background.
+        shadow.resetTransform(); shadow.shadowColor = 'transparent'; shadow.clearRect(0, 0, shadow.canvas.width, shadow.canvas.height);
+        shadow.drawImage(surfaces.canvas, 0, 0);
+        shadow.globalCompositeOperation = 'lighter'; shadow.drawImage(stack.canvas, 0, 0);
+        shadow.globalCompositeOperation = 'source-over';
+        ctx.save(); ctx.resetTransform(); ctx.drawImage(shadow.canvas, 0, 0); ctx.restore();
     }
 }
 
-export function drawWorkspace(ctx, scene, assets, geometry, items = scene.items) {
-    // The opaque artboard covers the editing-only, dimmed overflow preview.
+export function drawWorkspace(ctx, scene, assets, geometry, items = scene.items, selectedId = null) {
+    // Only the selected layer has an editing-only, dimmed overflow preview.
     ctx.save(); ctx.globalAlpha = .3;
-    drawItems(ctx, scene, assets, geometry, items.filter(item => item.kind !== 'ground'), { ...effectDefaults, ...scene });
+    drawItems(ctx, scene, assets, geometry, items.filter(item => item.id === selectedId), { ...effectDefaults, ...scene, shadowEnabled: false });
     ctx.restore();
     drawArtwork(ctx, scene, assets, geometry, items);
 }

@@ -1,17 +1,18 @@
 import { defineTool, ToolUiController, FileIntakeController, PresetMenuKeyboardController, SliderController } from '../infra/framework/src/index.js';
-import { AssetStore, GROUNDS, variantsFor, installCatalog } from './assets.js';
-import { mountEffects, syncEffects, effectSliders, effectSwatches } from './effects-ui.js';
-import { defaults, shareDefaults, normalize, cleanText, lettersOf, makeDocument, readDocument } from './document.js';
-import { FORMATS, resolutionError } from './resolutions.js';
-import { Silhouettes, generate, resizeScene, updateGround } from './layout.js';
+import { AssetStore, variantsFor, installCatalog } from './assets.js';
+import { mountEffects, bindEffects, syncEffects } from './effects-ui.js';
+import { normalizeEffects } from './effects.js';
+import { defaults, shareDefaults, cleanText, lettersOf, makeDocument, readDocument } from './document.js';
+import { FORMATS, resolutionError, stepResolution } from './resolutions.js';
+import { Silhouettes, generate, resizeScene, updateGround, ensureSurface, preparePreset } from './layout.js';
 import { drawArtwork, drawWorkspace, renderPNG, download } from './render.js';
 import { Editor } from './editor.js';
 import { mountIcons } from './icons.js';
 
 const byId = id => document.getElementById(id), assets = new AssetStore();
-let geometry, app, editor, ui, intake, presetKeyboard, resizeObserver, panelObserver, unsubscribe, sliders;
+let geometry, app, editor, ui, intake, presetKeyboard, resizeObserver, panelObserver, unsubscribe, sliders, effectsController;
 let busy = false, revision = 0, lastSize = '', loadSignature = '', pendingLoad = Promise.resolve();
-let draftText = null, draftDimensions = null, draftVersion = 0, textTimer, layoutTimer, pendingControls = {}, mobilePanel = 'general';
+let draftText = null, draftDimensions = null, draftVersion = 0, textTimer, layoutTimer, resolutionTimer, pendingControls = {};
 const lifecycle = new AbortController();
 const status = message => { byId('operationStatus').textContent = message; };
 const newSeed = () => crypto.getRandomValues(new Uint32Array(1))[0];
@@ -19,8 +20,7 @@ const on = (node, type, callback, options = {}) => node.addEventListener(type, c
 const hasPending = () => draftText !== null || draftDimensions !== null || Object.keys(pendingControls).length > 0;
 const layoutControls = {
     fill: { min: 70, max: 125, label: 'Fill' }, formCount: { min: 0, max: 16, label: 'Form count' },
-    rotationRange: { min: 0, max: 180, label: 'Rotation range' }, overflow: { min: 0, max: 50, label: 'Edge overflow' },
-    groundHeight: { min: 10, max: 60, label: 'Ground height' }
+    rotationRange: { min: 0, max: 180, label: 'Rotation range' }, sizeRange: { min: 0, max: 100, label: 'Size range' }, overflow: { min: 0, max: 50, label: 'Edge overflow' }
 };
 
 function refreshAvailability() {
@@ -29,19 +29,12 @@ function refreshAvailability() {
 }
 
 function showPanel(name, expand = true) {
-    if (name === 'selection' && !editor?.item()) name = 'elements';
-    mobilePanel = name;
     const root = document.querySelector('.wander-wall');
     root.dataset.mobilePanel = name;
     if (expand) { root.dataset.sheetCollapsed = 'false'; byId('sheetToggleBtn').setAttribute('aria-expanded', 'true'); byId('sheetToggleBtn').setAttribute('aria-label', 'Collapse panels'); }
     for (const tab of document.querySelectorAll('[data-panel]')) {
         tab.setAttribute('aria-selected', String(tab.dataset.panel === name)); tab.tabIndex = tab.dataset.panel === name ? 0 : -1;
     }
-}
-
-function selectionChanged(id) {
-    if (id && matchMedia('(max-width: 1200px)').matches) showPanel('selection', false);
-    else if (!id && mobilePanel === 'selection') showPanel('elements', false);
 }
 
 function syncViewport() {
@@ -56,6 +49,7 @@ function syncViewport() {
 }
 
 function cancelPending() {
+    clearTimeout(resolutionTimer);
     clearTimeout(textTimer); clearTimeout(layoutTimer); draftText = null; draftDimensions = null; pendingControls = {}; draftVersion++;
     byId('resolutionError').textContent = '';
 }
@@ -68,7 +62,7 @@ function undoRedo(redo = false) {
 }
 
 function change(next, label = 'Edit composition') {
-    const normalized = normalize(next);
+    const normalized = ensureSurface(next);
     if (JSON.stringify(normalized) === JSON.stringify(app.getSnapshot())) { sync(app); return; }
     app.history.flush(); app.history.beginTransaction(label);
     try { app.applySnapshot(normalized); app.presets.markDirty(); }
@@ -81,6 +75,7 @@ function setBusy(value) {
     byId('compositionFieldset').disabled = value;
     byId('resolutionFieldset').disabled = value;
     byId('effectsControls').inert = value;
+    byId('backgroundControls').inert = value;
     byId('canvasContainer').setAttribute('aria-busy', String(value));
     editor?.sync(); refreshAvailability();
 }
@@ -89,12 +84,14 @@ async function generated(patch = {}, { reroll = true, label = 'Generate', resize
     if (busy) return;
     if (draftDimensions && resolutionError(draftDimensions.width, draftDimensions.height)) return;
     editor?.cancel();
+    clearTimeout(resolutionTimer);
     clearTimeout(textTimer); clearTimeout(layoutTimer);
     // Loading assets must not overwrite text typed after this generation began.
     const inputVersion = draftVersion, text = draftText ?? patch.text ?? app.settings.text;
     resize ||= !!draftDimensions;
     patch = { ...pendingControls, ...draftDimensions, ...patch, text }; pendingControls = {};
     const token = ++revision, original = JSON.stringify(app.getSnapshot());
+    const dimensionFocus = ['widthInput', 'heightInput'].includes(document.activeElement?.id) ? document.activeElement : null;
     let completed = false;
     setBusy(true); status('Composing...');
     try {
@@ -112,6 +109,7 @@ async function generated(patch = {}, { reroll = true, label = 'Generate', resize
     finally {
         if (token === revision) {
             setBusy(false); sync(app);
+            if (dimensionFocus && document.activeElement === document.body && !dimensionFocus.disabled && !byId('customDimensions').hidden) dimensionFocus.focus({ preventScroll: true });
             if (draftText !== null && (completed || draftVersion !== inputVersion)) textTimer = setTimeout(applyText, 250);
         }
     }
@@ -128,7 +126,7 @@ async function nextVariant(id, selectedAsset) {
     try {
         await assets.load(asset);
         if (lifecycle.signal.aborted || original !== JSON.stringify(app.getSnapshot())) return;
-        const next = item.kind === 'ground' ? geometry.constrain({ ...item, asset }, app.settings) : { ...item, asset };
+        const next = { ...item, asset };
         change({ ...app.getSnapshot(), items: app.settings.items.map(entry => entry.id === id ? next : entry) }, 'Change variant');
         status('');
     } catch (error) { status(error.message); }
@@ -156,22 +154,25 @@ function ensureArtwork(tool) {
     });
 }
 
+function syncResolutionVisibility(format) {
+    const custom = format === 'custom';
+    byId('customDimensions').hidden = !custom;
+    for (const key of ['width', 'height']) byId(key + 'Input').disabled = !custom;
+}
+
 function sync(tool) {
     const s = tool.settings;
-    syncEffects(tool);
+    syncEffects(tool, effectsController);
     if (draftText === null && document.activeElement !== byId('textInput')) byId('textInput').value = s.text;
     byId('letterCount').textContent = lettersOf(byId('textInput').value).length + ' / 32';
     if (!draftDimensions) {
         byId('resolutionSelect').value = s.format;
         for (const key of ['width', 'height']) byId(key + 'Input').value = s[key];
     }
+    syncResolutionVisibility(draftDimensions?.format ?? s.format);
     for (const key of Object.keys(layoutControls)) {
         if (!(key in pendingControls) && document.activeElement !== byId(key + 'Value')) sliders?.setDisplayValue(key + 'Slider', s[key]);
     }
-    byId('shuffleToggle').checked = s.shuffle; byId('formsToggle').checked = s.formsEnabled;
-    byId('formsCountGroup').hidden = !s.formsEnabled; byId('seedInput').value = s.seed;
-    byId('groundToggle').checked = s.groundEnabled;
-    byId('groundToggle').disabled = !GROUNDS.length;
     byId('mainCanvas').setAttribute('aria-label', s.text ? s.text + ' letter wallpaper' : 'Abstract shape wallpaper');
     if (lastSize !== s.width + ':' + s.height) {
         lastSize = s.width + ':' + s.height;
@@ -187,9 +188,10 @@ function applyText() {
 }
 
 function bind(tool) {
-    editor = new Editor(tool, geometry, { change, nextVariant, isBusy: () => busy, onSelection: selectionChanged, signal: lifecycle.signal });
+    effectsController = bindEffects(tool, change, lifecycle.signal);
+    editor = new Editor(tool, geometry, { change, nextVariant, isBusy: () => busy, signal: lifecycle.signal });
     for (const radio of document.querySelectorAll('input[name="backgroundMode"]')) on(radio, 'change', () => change({ ...tool.getSnapshot(), backgroundMode: radio.value }, 'Background'));
-    for (const key of ['shadowEnabled', 'outlineEnabled']) on(byId(key + 'Toggle'), 'change', event => change({ ...tool.getSnapshot(), [key]: event.target.checked }, 'Effects'));
+    on(byId('shadowEnabledToggle'), 'change', event => change({ ...tool.getSnapshot(), shadowEnabled: event.target.checked }, 'Drop shadow'));
     on(byId('textInput'), 'input', event => {
         const raw = event.target.value, cleaned = cleanText(raw);
         const length = raw.replace(/[^A-Za-z]/g, '').length;
@@ -202,22 +204,33 @@ function bind(tool) {
     });
     on(byId('textInput'), 'compositionend', () => { clearTimeout(textTimer); textTimer = setTimeout(applyText, 300); });
     on(byId('textInput'), 'blur', () => { if (draftText === null) byId('textInput').value = tool.settings.text; });
-    on(byId('textInput'), 'keydown', event => { if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) { event.preventDefault(); applyText(); } });
     on(byId('resolutionSelect'), 'change', event => {
+        clearTimeout(resolutionTimer);
         draftDimensions = null; byId('resolutionError').textContent = '';
+        syncResolutionVisibility(event.target.value);
         generated({ format: event.target.value }, { reroll: false, resize: true, label: 'Resolution' });
     });
     const applyResolution = () => { if (draftDimensions) generated({}, { reroll: false, resize: true, label: 'Resolution' }); };
+    const editDimensions = () => {
+        clearTimeout(resolutionTimer);
+        draftDimensions = { format: 'custom', width: byId('widthInput').value.trim(), height: byId('heightInput').value.trim() };
+        byId('resolutionSelect').value = 'custom';
+        byId('resolutionError').textContent = resolutionError(draftDimensions.width, draftDimensions.height);
+        refreshAvailability();
+    };
     for (const key of ['width', 'height']) {
-        on(byId(key + 'Input'), 'input', () => {
-            draftDimensions = { format: 'custom', width: byId('widthInput').value.trim(), height: byId('heightInput').value.trim() };
-            byId('resolutionSelect').value = 'custom';
-            byId('resolutionError').textContent = resolutionError(draftDimensions.width, draftDimensions.height);
-            refreshAvailability();
-        });
+        on(byId(key + 'Input'), 'input', editDimensions);
         on(byId(key + 'Input'), 'keydown', event => {
+            if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+                event.preventDefault();
+                const next = stepResolution(event.target.value, event.key === 'ArrowUp' ? 1 : -1, event.shiftKey);
+                if (next !== null) {
+                    event.target.value = next; editDimensions();
+                    resolutionTimer = setTimeout(applyResolution, 180);
+                }
+            }
             if (event.key === 'Enter') { event.preventDefault(); applyResolution(); }
-            if (event.key === 'Escape') { draftDimensions = null; byId('resolutionError').textContent = ''; sync(tool); }
+            if (event.key === 'Escape') { clearTimeout(resolutionTimer); draftDimensions = null; byId('resolutionError').textContent = ''; sync(tool); }
         });
     }
     on(byId('resolutionFieldset'), 'focusout', event => {
@@ -235,14 +248,6 @@ function bind(tool) {
             }
         });
     }
-    on(byId('shuffleToggle'), 'change', event => generated({ shuffle: event.target.checked }, { reroll: false, label: 'Letter order' }));
-    on(byId('formsToggle'), 'change', event => generated({ formsEnabled: event.target.checked }, { reroll: false, label: 'Extra forms' }));
-    on(byId('groundToggle'), 'change', event => generated({ groundEnabled: event.target.checked }, { reroll: false, label: 'Ground' }));
-    on(byId('seedInput'), 'change', event => {
-        const seed = Number(event.target.value);
-        if (!event.target.value.trim() || !Number.isInteger(seed) || seed < 0 || seed > 4294967295) { sync(tool); return; }
-        generated({ seed }, { label: 'Seed' });
-    });
     for (const tab of document.querySelectorAll('[data-panel]')) {
         on(tab, 'click', () => showPanel(tab.dataset.panel));
         on(tab, 'keydown', event => {
@@ -276,7 +281,7 @@ function bind(tool) {
         }, onError: error => status(error.message), onReject: result => status(result.message) }).init();
     presetKeyboard = new PresetMenuKeyboardController().init();
     ui = new ToolUiController({ id: 'wander_wall', title: 'Wander Wall',
-        summaries: { generalPanel: () => tool.settings.width + ' \u00d7 ' + tool.settings.height, compositionPanel: () => tool.settings.text || 'Shapes', elementsPanel: () => tool.settings.items.length + ' layers', selectionPanel: () => editor.item()?.letter || (editor.item()?.kind === 'ground' ? 'Ground' : 'Object') },
+        summaries: { generalPanel: () => tool.settings.width + ' \u00d7 ' + tool.settings.height, compositionPanel: () => tool.settings.text || 'Shapes', elementsPanel: () => tool.settings.items.length + ' layers', backgroundPanel: () => tool.settings.backgroundMode === 'solid' ? 'Solid' : 'Gradient' },
         actions: [
             { id: 'generate', button: 'generateBtn', label: 'Generate', kind: 'command', group: 'utility', shortcut: 'r', enabled: () => !busy && (!draftDimensions || !resolutionError(draftDimensions.width, draftDimensions.height)),
                 run: () => generated({ text: cleanText(byId('textInput').value), seed: newSeed() }) },
@@ -291,21 +296,22 @@ function bind(tool) {
             ...['delete', 'backspace'].map(shortcut => ({ id: 'hide-' + shortcut, label: 'Hide selected layer', kind: 'command', group: 'keyboard', shortcut,
                 enabled: () => !busy && !!editor.item() && editor.item().visible !== false, run: () => editor.visibility(editor.selected, false) })),
             { id: 'variant', label: 'Next variant', kind: 'command', group: 'keyboard', shortcut: 'shift+v', enabled: () => !busy && !!editor.item(), run: () => nextVariant(editor.selected) },
+            { id: 'locate', label: 'Locate selected layer', kind: 'command', group: 'keyboard', shortcut: 'f', enabled: () => !busy && !!editor.item(), run: () => editor.locate() },
             ...[['left', -1, 0], ['right', 1, 0], ['up', 0, -1], ['down', 0, 1]].flatMap(([key, x, y]) => [false, true].map(shift => ({
                 id: 'nudge-' + key + (shift ? '-fast' : ''), label: shift ? 'Move element 10 px' : 'Move element 1 px', kind: 'command', group: 'keyboard',
                 shortcut: (shift ? 'shift+' : '') + 'arrow' + key, repeat: true, enabled: () => !busy && !!editor.item() && !editor.gesture,
                 run: () => editor.nudge(x * (shift ? 10 : 1), y * (shift ? 10 : 1))
             }))),
-            ...[[-1, 'mod+[', 'Send backward'], [1, 'mod+]', 'Bring forward']].map(([delta, shortcut, label]) => ({ id: 'order-' + delta, label, kind: 'command', group: 'keyboard', shortcut, enabled: () => !busy && !!editor.item(), run: () => editor.reorder(delta) }))
+            ...[[-1, 'mod+[', 'Send backward'], [1, 'mod+]', 'Bring forward'], [-Infinity, '[', 'Send to back'], [Infinity, ']', 'Bring to front']].map(([delta, shortcut, label]) => ({ id: 'order-' + delta, label, kind: 'command', group: 'keyboard', shortcut, enabled: () => !busy && !!editor.item() && !editor.gesture, run: () => editor.reorder(delta) }))
         ], onError: error => status(error.message || 'Operation failed.')
     }).init();
     unsubscribe = tool.settingsStore.subscribe('*', () => sync(tool));
     resizeObserver = new ResizeObserver(() => { tool.renderNow(); tool.target.fitToScreen(); });
     resizeObserver.observe(byId('canvasContainer'));
     panelObserver = new ResizeObserver(entries => {
-        for (const entry of entries) document.querySelector('.wander-wall').style.setProperty(entry.target.id === 'generalPanel' ? '--general-height' : '--selection-height', entry.target.getBoundingClientRect().height + 'px');
+        for (const entry of entries) document.querySelector('.wander-wall').style.setProperty(entry.target.id === 'generalPanel' ? '--general-height' : '--background-height', entry.target.getBoundingClientRect().height + 'px');
     });
-    for (const name of ['general', 'selection']) panelObserver.observe(byId(name + 'Panel'));
+    for (const name of ['general', 'background']) panelObserver.observe(byId(name + 'Panel'));
     sync(tool); setBusy(false); status(''); document.documentElement.dataset.ready = 'true';
 }
 
@@ -313,12 +319,12 @@ async function start() {
     mountEffects();
     mountIcons();
     const select = byId('resolutionSelect');
-    select.add(new Option('Custom', 'custom'));
     for (const group of ['Desktop', 'iPhone']) {
         const options = document.createElement('optgroup'); options.label = group;
         for (const [id, preset] of Object.entries(FORMATS).filter(([, preset]) => preset.group === group)) options.append(new Option(`${preset.label} \u00b7 ${preset.width} \u00d7 ${preset.height}`, id));
         select.append(options);
     }
+    select.add(new Option('Custom', 'custom'));
     const response = await fetch('./asset-catalog.json', { cache: 'no-store' });
     if (!response.ok) throw new Error('Could not load the artwork catalog.');
     geometry = new Silhouettes(installCatalog(await response.json()));
@@ -327,19 +333,21 @@ async function start() {
     app = defineTool({ renderer: 'canvas',
         dom: { canvas: 'canvasContainer', surface: 'mainCanvas', zoomIndicator: 'zoomIndicator', presetDropdown: 'presetDropdown',
             presetToggle: 'presetDropdownToggle', presetMenu: 'presetDropdownMenu', saveBtn: 'savePresetBtn', shareBtn: 'presetToolbarShareBtn' },
-        settings: initial, controls: { sliders: effectSliders, toggles: false },
-        colorPickers: { containerId: 'effectsColorPicker', swatches: effectSwatches },
-        panels: ['general', 'composition', 'elements', 'selection'].map(name => ({ id: name + 'Panel', headerId: name + 'PanelHeader', persistent: true })),
-        presets: { seed: false, storageKey: 'upgrade:wander_wall:presets:v1', suggestSaveName: tool => tool.settings.text || 'Shapes' },
+        settings: initial, controls: { sliders: [], toggles: false },
+        panels: ['general', 'composition', 'elements', 'background'].map(name => ({ id: name + 'Panel', headerId: name + 'PanelHeader', persistent: true })),
+        presets: { basePath: './presets', defaultName: 'Desktop', storageKey: 'upgrade:wander_wall:presets:v1',
+            transform: preset => generate({ ...defaults, ...preset, ...normalizeEffects(preset), groundEnabled: true }, geometry), suggestSaveName: tool => tool.settings.text || 'Shapes' },
         history: { maxSize: 60, debounceMs: 200 }, share: { pristineDefaults: shareDefaults, quantizableFloatKeys: [] }, shortcuts: false, dialog: {},
         export: { filename: 'wander-wall.svg' }, zoom: { fitPadding: { top: 16, right: 12, bottom: 16, left: 12 } },
-        restore: (tool, snapshot) => tool.settingsStore.fromJSON(normalize(snapshot), true),
-        applyPreset: (tool, snapshot) => tool.settingsStore.fromJSON(snapshot.items == null ? generate(snapshot, geometry) : normalize(snapshot), true),
+        restore: (tool, snapshot) => tool.settingsStore.fromJSON(ensureSurface(snapshot), true),
+        applyPreset: (tool, snapshot) => {
+            tool.settingsStore.fromJSON(preparePreset(snapshot, geometry), true);
+        },
         syncControls: sync,
-        render: ({ ctx2d, settings }) => { drawWorkspace(ctx2d, settings, assets, geometry, editor?.items()); editor?.draw(ctx2d); },
+        render: ({ ctx2d, settings }) => { drawWorkspace(ctx2d, settings, assets, geometry, editor?.items(), editor?.selected); editor?.draw(ctx2d); },
         renderTo: ({ ctx2d, settings }) => drawArtwork(ctx2d, settings, assets, geometry),
         onReady: bind,
-        onDestroy: () => { lifecycle.abort(); cancelPending(); editor?.cancel(); unsubscribe?.(); resizeObserver?.disconnect(); panelObserver?.disconnect(); intake?.destroy(); presetKeyboard?.destroy(); ui?.destroy(); delete document.documentElement.dataset.ready; }
+        onDestroy: () => { lifecycle.abort(); cancelPending(); editor?.cancel(); effectsController?.destroy(); unsubscribe?.(); resizeObserver?.disconnect(); panelObserver?.disconnect(); intake?.destroy(); presetKeyboard?.destroy(); ui?.destroy(); delete document.documentElement.dataset.ready; }
     });
     await app.init();
 }

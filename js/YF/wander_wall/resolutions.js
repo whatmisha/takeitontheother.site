@@ -20,6 +20,13 @@ export function resolutionError(width, height) {
     return '';
 }
 
+export function stepResolution(value, direction, shift = false) {
+    if (String(value).trim() === '' || !Number.isFinite(Number(value))) return null;
+    const current = Math.round(Number(value));
+    const next = shift ? (direction > 0 ? Math.floor(current / 10) + 1 : Math.ceil(current / 10) - 1) * 10 : current + direction;
+    return Math.max(1, Math.min(16384, next));
+}
+
 export function normalizeResolution(input) {
     const preset = Object.hasOwn(FORMATS, input.format) ? FORMATS[input.format] : null;
     if (preset) return { format: input.format, width: preset.width, height: preset.height };

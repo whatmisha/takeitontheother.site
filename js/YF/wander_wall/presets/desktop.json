@@ -1,0 +1,14 @@
+{
+  "text": "Wander",
+  "format": "qhd",
+  "width": 2560,
+  "height": 1440,
+  "seed": 20261009,
+  "fill": 100,
+  "rotationRange": 30,
+  "sizeRange": 50,
+  "overflow": 0,
+  "formCount": 10,
+  "shadowEnabled": true,
+  "groundEnabled": true
+}
