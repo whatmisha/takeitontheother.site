@@ -16,10 +16,9 @@ const applied = (items, assigned) => items.map(item => ({ ...item, asset: assign
 
 test('all existing letters have material metadata; object and Surface catalogs remain outside tracking', () => {
     const artwork = catalog.assets.filter(asset => asset.kind === 'letter');
-    assert.equal(artwork.length, 450);
-    assert.equal(new Set(artwork.map(asset => asset.textureId)).size, 24);
-    assert.ok(catalog.assets.every(asset => asset.textureId !== 'glitch' && !/_glitch_/.test(asset.src)));
-    assert.ok(artwork.some(asset => asset.textureId === 'glitchy'));
+    assert.equal(artwork.length, 431);
+    assert.equal(new Set(artwork.map(asset => asset.textureId)).size, 23);
+    assert.ok(catalog.assets.every(asset => !['glitch', 'glitchy'].includes(asset.textureId) && !/_glitchy?_/.test(asset.src)));
     for (const asset of artwork) {
         assert.ok(asset.textureId, asset.id);
         assert.equal(asset.textureId, LETTER_TEXTURES[asset.id]);
