@@ -3,7 +3,8 @@
 .wander-wall .top-links { flex-wrap: nowrap; }
 .wander-wall .preset-toolbar-cluster { display: flex; align-items: center; gap: 8px; }
 .wander-wall .preset-dropdown-menu { max-width: calc(100vw - 24px); }
-.wander-wall .canvas-container { position: fixed !important; inset: 70px var(--wall-gutter) 88px; width: auto; height: auto; touch-action: none; outline: none; }
+.wander-wall :is(.canvas-container, .canvas-feedback) { position: fixed !important; inset: 70px var(--wall-gutter) 88px; width: auto; height: auto; }
+.wander-wall .canvas-container { touch-action: none; outline: none; }
 .wander-wall #mainCanvas { display: block; }
 .wander-wall .controls-panel { top: var(--panel-top); width: var(--panel-width); max-height: calc(100dvh - var(--panel-top) - 20px); }
 .wander-wall #generalPanel { left: 20px; right: auto; max-height: min(380px, calc(100dvh - 160px)); }
@@ -67,22 +68,24 @@
 .wander-wall .variant-option:focus-visible { outline: 2px solid var(--ui-foreground); outline-offset: -2px; }
 .wander-wall .variant-option img { width: 100%; height: 100%; object-fit: contain; display: block; }
 .wander-wall .variant-texture-badge { position: absolute; right: 3px; bottom: 3px; padding: 2px 4px; border-radius: 3px; background: var(--ui-foreground); color: var(--color-bg); font-size: 10px; line-height: 12px; pointer-events: none; }
-.wander-wall .operation-status { position: fixed; left: 50%; bottom: 76px; transform: translateX(-50%); max-width: min(520px, 80vw); margin: 0; padding: 6px 12px; border-radius: var(--radius-input); font-size: 12px; line-height: 1.4; text-align: center; background: var(--color-bg-panel); z-index: 1001; }
+.wander-wall .canvas-feedback { display: grid; place-items: center; padding: 12px; box-sizing: border-box; pointer-events: none; z-index: 1001; }
+.wander-wall .canvas-feedback-content { display: flex; flex-direction: column; align-items: center; gap: 12px; max-width: 100%; min-width: 0; }
+.wander-wall .operation-status { max-width: min(520px, 100%); box-sizing: border-box; margin: 0; padding: 6px 12px; border-radius: var(--radius-input); font-size: 12px; line-height: 1.4; text-align: center; overflow-wrap: anywhere; background: var(--color-bg-panel); }
 .wander-wall .operation-status:empty { display: none; }
-.wander-wall .retry-button { position: fixed; bottom: 120px; left: 50%; transform: translateX(-50%); z-index: 1002; }
+.wander-wall .retry-button { pointer-events: auto; }
 .wander-wall .action-dock__slot--options:empty { display: none; }
 .wander-wall .controls-panel .collapse-icon svg { width: 10px; height: 6px; }
 .wander-wall .mobile-panel-tabs { display: none; }
 @media (max-width: 1200px) {
     .wander-wall { --panel-width: 240px; --wall-gutter: 280px; --panel-top: 76px; }
-    .wander-wall .canvas-container { top: 76px; }
+    .wander-wall :is(.canvas-container, .canvas-feedback) { top: 76px; }
 }
 @media (max-width: 768px), (max-width: 1000px) and (max-height: 600px) {
     body { overflow: hidden; }
     .wander-wall { --view-height: 100dvh; --visual-top: 0px; --keyboard-inset: 0px; --dock-height: calc(70px + env(safe-area-inset-bottom, 0px)); --sheet-height: min(calc(var(--view-height) * .38), 340px); --tab-height: 44px; height: 100dvh; }
     .wander-wall[data-sheet-collapsed="true"] { --sheet-height: 0px; }
     .wander-wall .top-links { top: calc(var(--visual-top) + 10px + env(safe-area-inset-top, 0px)); gap: 6px; max-width: calc(100vw - 20px); }
-    .wander-wall .canvas-container { inset: calc(var(--visual-top) + 64px + env(safe-area-inset-top, 0px)) 12px calc(var(--keyboard-inset) + var(--dock-height) + var(--sheet-height) + var(--tab-height) + 8px); }
+    .wander-wall :is(.canvas-container, .canvas-feedback) { inset: calc(var(--visual-top) + 64px + env(safe-area-inset-top, 0px)) 12px calc(var(--keyboard-inset) + var(--dock-height) + var(--sheet-height) + var(--tab-height) + 8px); }
     .wander-wall .controls-panel { display: none !important; position: fixed !important; left: 0 !important; right: 0 !important; top: auto !important; bottom: calc(var(--keyboard-inset) + var(--dock-height)) !important; width: 100% !important; height: var(--sheet-height) !important; min-height: 0 !important; max-height: var(--sheet-height) !important; border-radius: 0; box-shadow: none; }
     .wander-wall .controls-panel.panel-collapsed { height: var(--sheet-height) !important; min-height: 0 !important; max-height: var(--sheet-height) !important; }
     .wander-wall:not([data-sheet-collapsed="true"])[data-mobile-panel="general"] #generalPanel,
@@ -105,12 +108,10 @@
     .wander-wall:has(.action-dock[data-extras-expanded="true"]) { --dock-height: calc(116px + env(safe-area-inset-bottom, 0px)); }
     .wander-wall .action-dock__slot { gap: 6px; }
     .wander-wall .action-dock button { font-size: 14px; padding-left: 15px; padding-right: 15px; }
-    .wander-wall .operation-status { bottom: calc(var(--keyboard-inset) + var(--dock-height) + var(--sheet-height) + var(--tab-height) + 8px); }
-    .wander-wall .retry-button { bottom: calc(var(--keyboard-inset) + var(--dock-height) + var(--sheet-height) + var(--tab-height) + 48px); }
     .wander-wall .layer-row { height: 38.4px; min-height: 38.4px; }
     .wander-wall .ui-icon-button { min-width: 36px; min-height: 36px; }
     .wander-wall :is(.text-input, .value-display) { font-size: 16px; }
-    .wander-wall[data-keyboard="true"] .canvas-container { top: calc(var(--visual-top) + 62px + env(safe-area-inset-top, 0px)); }
+    .wander-wall[data-keyboard="true"] :is(.canvas-container, .canvas-feedback) { top: calc(var(--visual-top) + 62px + env(safe-area-inset-top, 0px)); }
 }
 @media (max-width: 480px) {
     .wander-wall .top-links { width: calc(100vw - 20px); gap: 4px; }
@@ -129,5 +130,8 @@
 }
 @media (max-width: 1000px) and (max-height: 600px) {
     .wander-wall { --sheet-height: calc(var(--view-height) * .32); }
-    .wander-wall .canvas-container { top: calc(var(--visual-top) + 60px); }
+    .wander-wall :is(.canvas-container, .canvas-feedback) { top: calc(var(--visual-top) + 60px); }
+    .wander-wall .canvas-feedback { padding: 4px 12px; }
+    .wander-wall .canvas-feedback-content { gap: 4px; }
+    .wander-wall .operation-status { max-width: 100%; }
 }

@@ -1,6 +1,6 @@
 # Grainy Land
 
-Static landscape and abstract field generator using the shared YF framework.
+Landscape, abstract field and procedural flora generator using the shared YF framework.
 Open `grainy_land/` through the YF development server. No build step or remote
 runtime dependencies are needed. Rendering requires WebGL.
 
@@ -9,9 +9,79 @@ The default preset is **Ember**, based on `grainy-land-1565559100.json`: seed
 The shipped list is Ember, Drift and Quiet dunes; all three use Depth #FF5900
 and start with eight layers: six original forms above two blue background coats.
 
+## Flora
+
+Choose **Flora** in Composition. It starts from the current preset palette, including
+editable Background #2353DB and Depth #FF5900. No additional preset is installed.
+The starting direction is references 5–6: broad, asymmetric petals, branching stems,
+merged silhouettes and spray transitions. Radiant neighboring tones in this mode
+lean toward warm pink highlights, derived from the current anchors; manual tone
+endpoints still override them.
+
+- **Arrangement:** Single, Cluster or Field. **Plants** changes the generated plant
+  count (1–12); **+ Plant** adds an independent plant to the current layer stack.
+  Up to 16 total layers can include drawn and vector additions. Reducing the count
+  or choosing Single removes excess plant layers; Undo restores them and their edits.
+- Cluster uses four seeded asymmetric arrangements, mirrored growth directions and
+  a dominant bloom with smaller cropped neighbors. Curved stems, unequal paddles,
+  hooked lobes and elongated petals replace the repeated row of equal flower heads.
+  Five stable petal slots per blossom retain editable attachment points.
+  Branches attach at unequal heights and can grow from earlier branches; their
+  orientation follows the parent curve. Low Recognizability also distributes some
+  petals along the stem. Increasing Blossoms preserves all existing parts, and
+  moving/hiding a branch carries its nested descendants unless they are detached.
+- Flora color is built from broad pigment washes shared across stems and petals.
+  Patch size and Character still control them; the material no longer uses dark
+  per-petal cavities or a continuous pale contour. Colored spray is strongest where
+  pigments meet and along partially covered edges. Grain 0 remains completely clean.
+- **Plant size**, **Recognizability**, **Blossoms**, **Opening** and **Bend** control
+  the scale, botanical clarity, branch/head count, petal spread and stem curvature.
+  Low recognizability gives broader, more irregular growth. It remains plant-derived.
+- **Merge parts** rounds and joins the contours within a plant. **Merge plants**
+  bridges small gaps between neighboring plants. Plants remain separate editable
+  layers and separate PNGs in Layers export, even when they visually join.
+- Each layer expands into **Stem / Branch / Petal** entries. Select a part, use
+  **Edit parts**, or double-click a plant on the canvas to edit its Bézier contour.
+  Drag anchors and handles; Alt-drag a handle independently. Double-click a contour
+  to insert a point. Delete removes an eligible point; junction anchors are protected.
+  Arrow keys nudge the selected anchor (Shift ×10). Escape cancels a drag or finishes
+  editing. Each drag is one undo step.
+- Parts have palette swatches, rotation and size actions, Hide, Reset and Detach.
+  The filled attachment anchor follows its parent; edited local contours stay
+  attached when a stem changes. Detach makes the part's origin independent; Attach
+  connects it again. Moving a junction moves its descendants. Hidden branches hide
+  attached descendants; detached parts stay independent.
+- **Regenerate plant** rerolls just that plant. Global Generate replaces Auto plants.
+  Both preserve manually edited part contours and palette assignments. Pinned plants
+  retain their seed on global Generate. Convert to drawn freezes the plant's generated
+  parameters and retains its shape for Brush / Erase; parts are no longer editable.
+- Flora starts with Grain **49**, Grain size **1**, Softness **50**, Edge variation
+  **80**, Contrast **120**, Glow **10**, Glow coverage **10**, and Halo width **100**.
+  Its surface settings are remembered independently from Land/Abstract, including
+  JSON, personal presets, share links and undo/redo. Changing modes keeps the palette.
+- Flora edges use a locally varying directional exposure. **Softness** controls
+  its reach; **Edge variation** varies the sharp/soft patches and directional trail.
+  At zero Edge variation the transition is uniform. Spray grain is applied after
+  coverage filtering, so individual pigment flecks are not blurred. Picking follows
+  the original contour, and the effect uses artwork coordinates for PNG/ZIP/tiles.
+- Flora uses the existing colors, advanced tones, surface controls, layer transforms,
+  history, JSON, presets, share links, transparent PNG and Layers ZIP export. A plant
+  is one PNG in the archive, keeping its parts together.
+
+Implementation: `flora.js` produces deterministic attached Bézier parts;
+`flora-field.js` combines their masks into cached signed-distance fields and smooth
+color fields; the shared WebGL renderer adds broad color washes and spray.
+`flora-editor.js` handles part selection and editing. The distance fields have a
+bounded internal resolution; very large, unusually sharp print edges may reveal
+more approximation than soft spray edges.
+
+Validation: `node --test grainy_land/tests/*.test.mjs`; browser gallery and GPU/PNG/
+ZIP checks at `grainy_land/tests/flora.html`. The postponed general UX audit remains
+in [UX_AUDIT_PLAN.md](UX_AUDIT_PLAN.md).
+
 ## Controls
 
-- **Composition:** Landscape / Abstract, scale, complexity, flow, horizon,
+- **Composition:** Land / Flora / Abstract, scale, complexity, flow, horizon,
   relief, folds and seed. Landscape layouts vary reproducibly with the seed.
   **Folds** adds local curls, pockets and pinched passages; 0 gives simpler forms.
   Generate (R) replaces Auto layers and preserves Pinned and Drawn layers.
@@ -24,7 +94,7 @@ and start with eight layers: six original forms above two blue background coats.
   Brush. **Shift+D** duplicates the selection and preserves its shape (an Auto copy
   starts Pinned); **Delete / Backspace** removes the selected unlocked layer. Each
   command is undoable and stays inactive during text input, dialogs or gestures. Background opens the existing background color picker.
-  There are up to 16 layers in each mode, with separate Landscape and Abstract stacks.
+  There are up to 16 layers in each mode, with separate Landscape, Flora and Abstract stacks.
 - **Blue 1 / Blue 2:** two large seeded blue forms above Background and below the
   original artwork. They are ordinary Auto layers: move, paint/erase, Pin, Lock,
   opacity, reorder, duplicate, delete and conversion to Drawn work normally.
@@ -227,6 +297,8 @@ from previous scene versions. The
 original 20-image review is preserved in `tests/reviews/pigment-20`.
 
 ## Verification
+
+Deferred UX audit: [detailed plan](UX_AUDIT_PLAN.md), saved on 2026-10-11.
 
 `npm run test:grainy` checks reference colors, round trips, sanitization,
 geometry independence, deterministic seeds, automatic half-tones and export limits.

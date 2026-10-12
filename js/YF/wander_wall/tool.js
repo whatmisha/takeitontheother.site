@@ -193,6 +193,7 @@ function bind(tool) {
     editor = new Editor(tool, geometry, { change, nextVariant, isBusy: () => busy, signal: lifecycle.signal });
     for (const radio of document.querySelectorAll('input[name="backgroundMode"]')) on(radio, 'change', () => change({ ...tool.getSnapshot(), backgroundMode: radio.value }, 'Background'));
     on(byId('shadowEnabledToggle'), 'change', event => change({ ...tool.getSnapshot(), shadowEnabled: event.target.checked }, 'Drop shadow'));
+    on(byId('rimLightEnabledToggle'), 'change', event => change({ ...tool.getSnapshot(), rimLightEnabled: event.target.checked }, 'Rim light'));
     on(byId('textInput'), 'input', event => {
         const raw = event.target.value, cleaned = cleanText(raw);
         const length = raw.replace(/[^A-Za-z]/g, '').length;

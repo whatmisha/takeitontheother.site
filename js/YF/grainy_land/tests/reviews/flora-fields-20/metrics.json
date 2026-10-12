@@ -1,0 +1,252 @@
+{
+  "date": "2026-10-12",
+  "mode": "flora",
+  "palette": "Ember",
+  "count": 20,
+  "width": 1920,
+  "height": 1080,
+  "seeds": [
+    152274286,
+    3124604871,
+    949521042,
+    230997082,
+    3350086222,
+    2973545222,
+    1111927890,
+    617675128,
+    4102372144,
+    932392132,
+    3569339633,
+    3787673882,
+    3173651501,
+    308144753,
+    4157456611,
+    3897090572,
+    582077047,
+    3988648916,
+    3536220750,
+    2967518400
+  ],
+  "settings": {
+    "floraLayout": "cluster",
+    "floraCount": 4,
+    "floraScale": 112,
+    "floraRecognition": 55,
+    "floraBranches": 3,
+    "floraOpening": 76,
+    "floraBend": 60,
+    "floraMerge": 65,
+    "floraFusion": 35,
+    "floraLayers": null,
+    "surfaceMemory": {
+      "other": {
+        "grain": 55,
+        "grainSize": 1,
+        "softness": 38,
+        "edgeVariation": 70,
+        "contrast": 118,
+        "glow": 0,
+        "glowCoverage": 35,
+        "halo": 65
+      }
+    },
+    "schemaVersion": 1,
+    "width": 1920,
+    "height": 1080,
+    "seed": 1565559100,
+    "mode": "flora",
+    "layout": "auto",
+    "scale": 100,
+    "complexity": 2,
+    "flow": 48,
+    "folds": 65,
+    "horizon": 53,
+    "relief": 62,
+    "softness": 50,
+    "edgeVariation": 80,
+    "glowCoverage": 10,
+    "glow": 10,
+    "halo": 100,
+    "contrast": 120,
+    "grain": 49,
+    "grainSize": 1,
+    "toneCharacter": "radiant",
+    "skyToneAmount": 0,
+    "toneAmount": 100,
+    "toneSpread": 65,
+    "toneScale": 110,
+    "toneBleed": 50,
+    "previewTransparent": false,
+    "softProof": false,
+    "printIntent": 1,
+    "motionAmount": 3,
+    "motionDuration": 6,
+    "customColors": [],
+    "blueLayers": true,
+    "exportScale": 1,
+    "transparentBackground": false,
+    "exportLayers": false,
+    "canvasUnit": "px",
+    "dpi": 300,
+    "printWidthMM": null,
+    "printHeightMM": null,
+    "sky": "#2353DB",
+    "terrain": "#FF9306",
+    "depth": "#FF5900",
+    "light": "#FFF0D8",
+    "terrainLow": null,
+    "depthLow": null,
+    "lightLow": null,
+    "terrainHigh": null,
+    "depthHigh": null,
+    "lightHigh": null,
+    "skyLow": null,
+    "skyHigh": null,
+    "landscapeForms": null,
+    "abstractForms": null,
+    "landscapeLayers": null,
+    "abstractLayers": null
+  },
+  "stats": [
+    {
+      "number": 1,
+      "seed": 152274286,
+      "blueFraction": 0.5103587962962963,
+      "lightFraction": 0.0496556712962963,
+      "pngBytes": 4645945
+    },
+    {
+      "number": 2,
+      "seed": 3124604871,
+      "blueFraction": 0.41621672453703706,
+      "lightFraction": 0.03280430169753087,
+      "pngBytes": 4658226
+    },
+    {
+      "number": 3,
+      "seed": 949521042,
+      "blueFraction": 0.3255164930555556,
+      "lightFraction": 0.025695408950617282,
+      "pngBytes": 4624701
+    },
+    {
+      "number": 4,
+      "seed": 230997082,
+      "blueFraction": 0.4810378086419753,
+      "lightFraction": 0.0021870177469135803,
+      "pngBytes": 4576981
+    },
+    {
+      "number": 5,
+      "seed": 3350086222,
+      "blueFraction": 0.2030787037037037,
+      "lightFraction": 0.10369550540123457,
+      "pngBytes": 4765131
+    },
+    {
+      "number": 6,
+      "seed": 2973545222,
+      "blueFraction": 0.3435720486111111,
+      "lightFraction": 0.018822820216049384,
+      "pngBytes": 4789318
+    },
+    {
+      "number": 7,
+      "seed": 1111927890,
+      "blueFraction": 0.40330439814814817,
+      "lightFraction": 0.016375385802469136,
+      "pngBytes": 4634427
+    },
+    {
+      "number": 8,
+      "seed": 617675128,
+      "blueFraction": 0.3152165316358025,
+      "lightFraction": 0.05994116512345679,
+      "pngBytes": 4766548
+    },
+    {
+      "number": 9,
+      "seed": 4102372144,
+      "blueFraction": 0.3810493827160494,
+      "lightFraction": 0.020690104166666667,
+      "pngBytes": 4670619
+    },
+    {
+      "number": 10,
+      "seed": 932392132,
+      "blueFraction": 0.3292158564814815,
+      "lightFraction": 0.014859182098765432,
+      "pngBytes": 4541494
+    },
+    {
+      "number": 11,
+      "seed": 3569339633,
+      "blueFraction": 0.38598524305555554,
+      "lightFraction": 0.017039930555555555,
+      "pngBytes": 4611552
+    },
+    {
+      "number": 12,
+      "seed": 3787673882,
+      "blueFraction": 0.38243344907407406,
+      "lightFraction": 0.04861352237654321,
+      "pngBytes": 4819661
+    },
+    {
+      "number": 13,
+      "seed": 3173651501,
+      "blueFraction": 0.4146363811728395,
+      "lightFraction": 0.04308738425925926,
+      "pngBytes": 4480908
+    },
+    {
+      "number": 14,
+      "seed": 308144753,
+      "blueFraction": 0.37438802083333333,
+      "lightFraction": 0.022543885030864196,
+      "pngBytes": 4680839
+    },
+    {
+      "number": 15,
+      "seed": 4157456611,
+      "blueFraction": 0.3654856288580247,
+      "lightFraction": 0.00580102237654321,
+      "pngBytes": 4738364
+    },
+    {
+      "number": 16,
+      "seed": 3897090572,
+      "blueFraction": 0.3548172260802469,
+      "lightFraction": 0.021681134259259258,
+      "pngBytes": 4526267
+    },
+    {
+      "number": 17,
+      "seed": 582077047,
+      "blueFraction": 0.27271122685185184,
+      "lightFraction": 0.022771508487654323,
+      "pngBytes": 4683160
+    },
+    {
+      "number": 18,
+      "seed": 3988648916,
+      "blueFraction": 0.3988493441358025,
+      "lightFraction": 0.027611400462962964,
+      "pngBytes": 4571264
+    },
+    {
+      "number": 19,
+      "seed": 3536220750,
+      "blueFraction": 0.3813006365740741,
+      "lightFraction": 0.026569251543209875,
+      "pngBytes": 4689835
+    },
+    {
+      "number": 20,
+      "seed": 2967518400,
+      "blueFraction": 0.44058015046296295,
+      "lightFraction": 0.026594810956790123,
+      "pngBytes": 4439007
+    }
+  ]
+}

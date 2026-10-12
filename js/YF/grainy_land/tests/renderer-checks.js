@@ -3,7 +3,7 @@ import { editCanvas } from '../canvas-size.js?v=studio-1';
 import { renderPNG } from '../png-export.js?v=studio-1';
 import {getLayers,withLayers,editLayer,addLayer,duplicateLayer,removeLayer,reorderLayer,convertLayer,MAX_LAYERS} from '../layers.js?v=studio-1';
 import { ShareCodec } from '../../infra/framework/src/preset/ShareCodec.js';
-import { LandscapeRenderer } from '../render.js?v=studio-1';
+import { LandscapeRenderer } from '../render.js?v=flora-growth-1';
 import { defaults as currentDefaults, palettes, toneKeys, makeDocument, readDocument, editForm, regenerate, normalizeSettings } from '../document.js?v=studio-1';
 import { adjacentColors } from '../scene.js?v=studio-1';
 const defaults={...currentDefaults,blueLayers:false};

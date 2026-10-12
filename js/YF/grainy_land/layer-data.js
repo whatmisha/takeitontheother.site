@@ -1,9 +1,10 @@
-import { normalizeMaterial } from './transforms.js?v=studio-1';
-import { normalizeVectorPath, defaultVectorPath } from './vector-path.js?v=studio-1';
-import { normalizeStrokes } from './paint.js?v=studio-1';
+import { normalizeFlora, floraTemplate } from './flora.js?v=flora-growth-1';
+import { normalizeMaterial } from './transforms.js?v=flora-growth-1';
+import { normalizeVectorPath, defaultVectorPath } from './vector-path.js?v=flora-growth-1';
+import { normalizeStrokes } from './paint.js?v=flora-growth-1';
 
 export const MAX_LAYERS=16;
-export const layerSettingsKey=mode=>mode==='abstract'?'abstractLayers':'landscapeLayers';
+export const layerSettingsKey=mode=>mode==='flora'?'floraLayers':mode==='abstract'?'abstractLayers':'landscapeLayers';
 export const layerNames=['Terrain','Bank 1','Basin','Bank 2','Fold','Foreground'];
 export const layerGroups=['terrain','depth','light','sky'];
 export const sourceGroup=i=>i>=6?'sky':i===0?'terrain':(i===2||i===5?'light':'depth');
@@ -20,7 +21,7 @@ export function normalizeLayerStack(value,settings) {
         const source=Math.round(number(item.source,0,0,7));
         const mode=['auto','pinned','drawn','vector'].includes(item.mode)?item.mode:'auto';
         return [{id,name:typeof item.name==='string'&&item.name.trim()?item.name.trim().slice(0,64):'Layer '+(i+1),
-            source,mode,seed:number(item.seed,settings.seed,0,4294967295)>>>0,salt:number(item.salt,0,0,4294967295)>>>0,
+            ...(item.flora?{flora:normalizeFlora(item.flora)}:{}),source,mode,seed:number(item.seed,settings.seed,0,4294967295)>>>0,salt:number(item.salt,0,0,4294967295)>>>0,
             layout:['auto','basin','ridge','valley','fold'].includes(item.layout)?item.layout:'auto',
             x:number(item.x,0,-1,1),y:number(item.y,0,-1,1),scaleX:number(item.scaleX,1,.25,3),scaleY:number(item.scaleY,1,.25,3),
             ...(item.rotation?{rotation:number(item.rotation,0,-3600,3600)}:{}),...(item.flipX?{flipX:true}:{}),...(item.flipY?{flipY:true}:{}),
@@ -38,6 +39,7 @@ export function normalizeLayerStack(value,settings) {
 export function getLayers(settings) {
     const explicit=settings[layerSettingsKey(settings.mode)];
     if(Array.isArray(explicit))return explicit;
+    if(settings.mode==='flora')return floraTemplate(settings);
     const legacy=settings[settings.mode==='abstract'?'abstractForms':'landscapeForms'];
     const original=Array.from({length:6},(_,i)=>{
         const edit=legacy?.[i];

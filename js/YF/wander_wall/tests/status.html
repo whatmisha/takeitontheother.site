@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><title>Wander Wall status tests</title>
+<h1>Canvas status checks</h1><pre id="results">Running...</pre>
+<iframe id="preview" title="Status layout preview" style="border:0"></iframe>
+<script type="module">
+const results = document.getElementById('results'), frame = document.getElementById('preview'), checks = [];
+const assert = (condition, label) => { if (!condition) throw new Error(label); checks.push(label); };
+const tick = () => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+try {
+    // Use the real shell and styles, but hold startup so each transient message can be tested.
+    const response = await fetch('../index.html');
+    const shell = new DOMParser().parseFromString(await response.text(), 'text/html');
+    shell.querySelector('script[src="./tool.js"]').remove();
+    const base = shell.createElement('base'); base.href = new URL('../', location.href).href; shell.head.prepend(base);
+    const loaded = new Promise(resolve => frame.addEventListener('load', resolve, { once: true }));
+    frame.srcdoc = '<!doctype html>' + shell.documentElement.outerHTML;
+    await loaded;
+    const doc = frame.contentDocument, view = frame.contentWindow, root = doc.querySelector('.wander-wall');
+    const status = doc.getElementById('operationStatus'), retry = doc.getElementById('retryBtn');
+    root.dataset.mobilePanel = 'general';
+    assert(status.getAttribute('role') === 'status' && status.getAttribute('aria-live') === 'polite', 'Messages remain accessible live announcements');
+    assert(!status.closest('[aria-busy], #canvasContainer'), 'Canvas busy state does not suppress live announcements');
+    for (const [width, height, collapsed] of [[1280, 720, false], [1000, 800, false], [390, 844, false], [390, 844, true], [844, 390, false]]) {
+        frame.style.width = width + 'px'; frame.style.height = height + 'px'; root.dataset.sheetCollapsed = String(collapsed);
+        for (const message of ['Loading artwork...', 'Composing...', 'Could not load artwork. ' + 'long-file-name-'.repeat(12)]) {
+            status.textContent = message; retry.hidden = !message.startsWith('Could not');
+            await tick();
+            const canvas = doc.getElementById('canvasContainer').getBoundingClientRect();
+            const feedback = doc.querySelector('.canvas-feedback-content').getBoundingClientRect();
+            const label = `${width}x${height}${collapsed ? ' collapsed' : ''}: ${message.slice(0, 22)}`;
+            assert(Math.abs(feedback.x + feedback.width / 2 - canvas.x - canvas.width / 2) < 1 &&
+                Math.abs(feedback.y + feedback.height / 2 - canvas.y - canvas.height / 2) < 1, label + ' is centered');
+            assert(feedback.left >= canvas.left && feedback.right <= canvas.right && feedback.top >= canvas.top && feedback.bottom <= canvas.bottom,
+                label + ' fits inside the workspace');
+            assert(view.getComputedStyle(status).pointerEvents === 'none', label + ' does not intercept canvas input');
+            if (!retry.hidden) {
+                const button = retry.getBoundingClientRect();
+                assert(button.top >= status.getBoundingClientRect().bottom && view.getComputedStyle(retry).pointerEvents === 'auto', label + ' keeps Retry reachable');
+            }
+        }
+    }
+    status.textContent = ''; retry.hidden = true; await tick();
+    assert(view.getComputedStyle(status).display === 'none' && view.getComputedStyle(retry).display === 'none', 'Feedback disappears after completion');
+    results.textContent = `PASS: ${checks.length} checks\n` + checks.join('\n');
+    document.documentElement.dataset.result = 'passed';
+} catch (error) {
+    results.textContent = `FAIL: ${error.message}\n` + checks.join('\n');
+    document.documentElement.dataset.result = 'failed';
+}
+</script></html>

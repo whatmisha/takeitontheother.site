@@ -81,8 +81,10 @@
         <div class="action-dock__slot action-dock__slot--options"></div>
     </nav>
     <dialog id="variantDialog" class="modal variant-dialog" aria-labelledby="variantDialogTitle"><div class="modal-content"><button id="closeVariantsBtn" type="button" class="modal-close" aria-label="Close variants">&times;</button><h2 id="variantDialogTitle" class="modal-title">Variants</h2><label class="stacked-select-label" for="variantCategory">Category<select id="variantCategory" class="style-select"></select></label><div id="variantGrid" class="variant-grid" role="group" aria-label="Artwork variants"></div></div></dialog>
-    <p id="operationStatus" class="operation-status" role="status" aria-live="polite">Loading artwork...</p>
-    <button id="retryBtn" class="panel-action retry-button" type="button" hidden>Retry</button>
+    <div class="canvas-feedback"><div class="canvas-feedback-content">
+        <p id="operationStatus" class="operation-status" role="status" aria-live="polite">Loading artwork...</p>
+        <button id="retryBtn" class="panel-action retry-button" type="button" hidden>Retry</button>
+    </div></div>
     <input id="jsonFileInput" type="file" accept=".json,application/json" hidden><button id="jsonPickerTrigger" type="button" hidden>Choose JSON</button>
     <dialog id="dialog" class="modal" aria-labelledby="dialogTitle"><div class="modal-content"><h2 id="dialogTitle" class="modal-title"></h2><div id="dialogText" class="modal-text"></div><input id="dialogInput" class="modal-input" type="text" style="display:none"><div id="dialogButtons" class="modal-buttons"></div></div></dialog>
 </div>

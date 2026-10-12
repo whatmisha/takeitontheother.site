@@ -2,6 +2,7 @@ export const shadowDefaults = { shadowEnabled: true, shadowColor: '#000000', sha
 export const effectDefaults = {
     backgroundMode: 'gradient', backgroundAngle: 0,
     backgroundStart: '#DAD5F1',
+    rimLightEnabled: false,
     backgroundStops: [{ color: '#D0D2E4', offset: 0 }, { color: '#9AA0DC', offset: .302885 }, { color: '#2348B4', offset: .649038 }, { color: '#0E257F', offset: 1 }],
     ...shadowDefaults
 };
@@ -38,7 +39,8 @@ export function removeGradientStop(stops, index) {
 
 export function normalizeEffects(input) {
     const result = { ...effectDefaults, backgroundMode: input.backgroundMode === 'solid' ? 'solid' : 'gradient',
-        shadowEnabled: input.shadowEnabled !== false, backgroundStops: normalizeGradientStops(input) };
+        shadowEnabled: input.shadowEnabled !== false, rimLightEnabled: input.rimLightEnabled === true,
+        backgroundStops: normalizeGradientStops(input) };
     for (const [key, [min, max]] of Object.entries(effectRanges)) {
         const value = Number(input[key]);
         if (Number.isFinite(value)) result[key] = Math.min(max, Math.max(min, value));

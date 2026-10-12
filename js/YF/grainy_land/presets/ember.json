@@ -54,5 +54,16 @@
   "softProof": false,
   "printIntent": 1,
   "motionAmount": 3,
-  "motionDuration": 6
+  "motionDuration": 6,
+  "floraLayout": "cluster",
+  "floraCount": 4,
+  "floraScale": 112,
+  "floraRecognition": 55,
+  "floraBranches": 3,
+  "floraOpening": 76,
+  "floraBend": 60,
+  "floraMerge": 65,
+  "floraFusion": 35,
+  "floraLayers": null,
+  "surfaceMemory": null
 }

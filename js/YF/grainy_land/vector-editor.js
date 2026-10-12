@@ -1,8 +1,8 @@
-import { PenDraft } from './pen-draft.js?v=pen-ux-1';
-import { localToCanvas } from './transforms.js?v=studio-1';
-import { localPaintPoint } from './paint.js?v=studio-1';
-import { getLayers, addLayer, editLayer, layerSettingsKey, MAX_LAYERS } from './layers.js?v=studio-1';
-import { moveVectorNode, setVectorNodesSmooth, splitVectorSegment, vectorSegment, cubicPoint, MAX_VECTOR_NODES } from './vector-path.js?v=pen-ux-1';
+import { PenDraft } from './pen-draft.js?v=flora-growth-1';
+import { localToCanvas } from './transforms.js?v=flora-growth-1';
+import { localPaintPoint } from './paint.js?v=flora-growth-1';
+import { getLayers, addLayer, editLayer, layerSettingsKey, MAX_LAYERS } from './layers.js?v=flora-growth-1';
+import { moveVectorNode, setVectorNodesSmooth, splitVectorSegment, vectorSegment, cubicPoint, MAX_VECTOR_NODES } from './vector-path.js?v=flora-growth-1';
 const byId=id=>document.getElementById(id),NS='http://www.w3.org/2000/svg';
 const svgNode=(name,attrs)=>{const n=document.createElementNS(NS,name);for(const [k,v]of Object.entries(attrs))n.setAttribute(k,String(v));return n;};
 export class VectorEditor {
@@ -111,7 +111,7 @@ export class VectorEditor {
         return this.drafts.get(this.editor.tool.settings.mode)?.points.length?'Unfinished path saved. Press P to resume.':'';
     }
     startPen(){
-        const e=this.editor;if(this.pen){e.container.focus({preventScroll:true});return;}
+        const e=this.editor;e.flora?.deactivate();if(this.pen){e.container.focus({preventScroll:true});return;}
         if(getLayers(e.tool.settings).length>=MAX_LAYERS){e.report('Maximum '+MAX_LAYERS+' layers. Delete a layer before using Pen.');return;}
         this.setEditing(false);e.select(null);e.paintTool='move';this.draftMode=e.tool.settings.mode;
         if(!this.drafts.has(this.draftMode))this.drafts.set(this.draftMode,new PenDraft());

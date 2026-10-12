@@ -91,6 +91,45 @@ try {
         const actualGradient = output.getImageData(0, 0, 128, 96).data;
         assert(expectedGradient.every((value, i) => value === actualGradient[i]), `${count}-color gradient survives PNG export exactly`);
     }
+    const bytes = canvas => canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height).data;
+    images.neutral = stamp('#303030'); geometry.metrics.neutral = { bounds: [0, 0, 20, 20] };
+    const rimObject = { ...caster, asset: 'neutral', x: .5, y: .5, w: 40, h: 40 };
+    const rimScene = { ...scene, shadowEnabled: false, backgroundStart: '#102030', items: [rimObject], rimLightEnabled: true };
+    const rim = render(rimScene), noRim = render({ ...rimScene, rimLightEnabled: false });
+    const rimPixels = bytes(rim.canvas), noRimPixels = bytes(noRim.canvas);
+    assert(bytes(render({ ...rimScene, rimLightIntensity: 0 }).canvas).every((v, i) => v === rimPixels[i]), 'Legacy intensity cannot change the fixed Rim light');
+    const facing = rim.pixel(45, 48), shaded = rim.pixel(82, 48);
+    assert(facing[0] > facing[1] && facing[1] > facing[2] && facing[0] > shaded[0], 'Rim light is warm and directional, not a uniform outline');
+    assert(rim.pixel(42, 48)[0] > noRim.pixel(42, 48)[0], 'Rim has a soft outward glow');
+    assert(rim.pixel(64, 48).join() === noRim.pixel(64, 48).join(), 'Rim does not recolor object interiors');
+    assert(rim.pixel(2, 2).join() === noRim.pixel(2, 2).join(), 'Rim does not tint distant background pixels');
+    const hiddenRim = render({ ...rimScene, items: [{ ...rimObject, visible: false }] });
+    const emptyRimPixels = bytes(render({ ...rimScene, items: [] }).canvas);
+    assert(bytes(hiddenRim.canvas).every((v, i) => v === emptyRimPixels[i]), 'Hidden layers emit no rim light');
+    for (const kind of ['form', 'ground']) {
+        const cover = { ...rimObject, id: 'cover', kind, x: 50 / 128, w: 20 };
+        const occluded = render({ ...rimScene, items: [rimObject, cover] });
+        const coverOnly = render({ ...rimScene, items: [cover] });
+        assert(occluded.pixel(45, 48).join() === coverOnly.pixel(45, 48).join(), `${kind} layers occlude rim light behind them`);
+    }
+    const rotatedRim = render({ ...rimScene, items: [{ ...rimObject, rotation: 180 }] });
+    assert(rotatedRim.pixel(45, 48)[0] > rotatedRim.pixel(82, 48)[0], 'Light direction remains fixed when an object rotates');
+    for (const scale of [.5, 2]) {
+        const zoomed = render(rimScene, scale, 12);
+        assert(zoomed.pixel(45, 48)[0] > zoomed.pixel(82, 48)[0], `Rim survives zoom and pan at ${scale}x`);
+        assert(zoomed.canvas.getContext('2d').getImageData(0, 0, 1, 1).data[3] === 0, 'Rim stays clipped to the artwork frame');
+    }
+    drawArtwork(rim.canvas.getContext('2d'), rimScene, assets, geometry);
+    assert(bytes(rim.canvas).every((v, i) => v === rimPixels[i]), 'Cached Rim light does not accumulate on redraw');
+    drawArtwork(rim.canvas.getContext('2d'), { ...rimScene, rimLightEnabled: false }, assets, geometry);
+    assert(bytes(rim.canvas).every((v, i) => v === noRimPixels[i]), 'Turning Rim light off restores the original pixels');
+    for (const shadowEnabled of [false, true]) {
+        const settings = { ...rimScene, shadowEnabled };
+        const expected = bytes(render(settings).canvas);
+        const image = await createImageBitmap(await renderPNG(settings, assets, geometry));
+        output.clearRect(0, 0, 128, 96); output.drawImage(image, 0, 0); image.close();
+        assert(bytes(exported).every((v, i) => v === expected[i]), `Rim preview and PNG match with shadows ${shadowEnabled ? 'on' : 'off'}`);
+    }
     document.getElementById('results').textContent = `PASS: ${checks.length} checks\n` + checks.join('\n');
     document.documentElement.dataset.result = 'passed';
 } catch (error) {

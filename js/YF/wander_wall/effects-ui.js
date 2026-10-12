@@ -18,7 +18,8 @@ export function mountEffects() {
             <div class="color-swatches-compact">${swatches.map(color).join('')}
             <div id="gradientActions"><button id="addGradientColorBtn" class="color-swatch-compact custom-color-add" type="button" aria-label="Add gradient color" title="Add a gradient color"><svg class="custom-color-add-preview" width="30" height="30" viewBox="0 0 30 30" fill="none" aria-hidden="true"><circle cx="15" cy="15" r="8.5" fill="#252525" stroke="currentColor"/><path d="M11.5 15H18.5M15 11.5V18.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg><span class="color-label">Add color</span></button></div></div>`;
     document.getElementById('effectsControls').innerHTML = `
-        <div class="control-group pill-toggle-row"><label class="pill-toggle" for="shadowEnabledToggle"><input id="shadowEnabledToggle" class="sr-only" type="checkbox" checked><span>Drop shadow</span></label></div>`;
+        <div class="control-group pill-toggle-row"><label class="pill-toggle" for="shadowEnabledToggle"><input id="shadowEnabledToggle" class="sr-only" type="checkbox" checked><span>Drop shadow</span></label>
+        <label class="pill-toggle" for="rimLightEnabledToggle"><input id="rimLightEnabledToggle" class="sr-only" type="checkbox"><span>Rim light</span></label></div>`;
 }
 
 export function bindEffects(tool, change, signal) {
@@ -70,5 +71,6 @@ export function syncEffects(tool, controller) {
     document.getElementById('addGradientColorBtn').title = s.backgroundStops.length >= 8 ? 'Maximum 8 gradient colors' : 'Add a gradient color';
     for (const button of document.querySelectorAll('[data-remove-stop]')) button.disabled = s.backgroundStops.length <= 2;
     document.getElementById('shadowEnabledToggle').checked = s.shadowEnabled;
+    document.getElementById('rimLightEnabledToggle').checked = s.rimLightEnabled;
     controller?.sync();
 }

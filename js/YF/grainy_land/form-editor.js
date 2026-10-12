@@ -1,11 +1,13 @@
-import { editSelection, duplicateSelection, reorderSelection, resizeSelection } from './selection.js?v=studio-1';
-import { localToCanvas, canvasToLocal, materialRanges } from './transforms.js?v=studio-1';
-import { VectorEditor } from './vector-editor.js?v=pen-ux-1';
-import { groupColor } from './custom-colors.js?v=studio-1';
-import { brushStroke, localPaintPoint, strokePointCount, MAX_STROKES, MAX_STROKE_POINTS, MAX_FORM_POINTS } from './paint.js?v=studio-1';
-import { getLayers, withLayers, layerSettingsKey, MAX_LAYERS, editLayer, addLayer, addBlueLayers, duplicateLayer, removeLayer, reorderLayer, convertLayer } from './layers.js?v=studio-1';
-import { createLayerScene } from './scene.js?v=studio-1';
-import { LandscapeRenderer } from './render.js?v=studio-1';
+import {normalizeFloraParams} from './flora.js?v=flora-growth-1';
+import { FloraEditor } from './flora-editor.js?v=flora-growth-1';
+import { editSelection, duplicateSelection, reorderSelection, resizeSelection } from './selection.js?v=flora-growth-1';
+import { localToCanvas, canvasToLocal, materialRanges } from './transforms.js?v=flora-growth-1';
+import { VectorEditor } from './vector-editor.js?v=flora-growth-1';
+import { groupColor } from './custom-colors.js?v=flora-growth-1';
+import { brushStroke, localPaintPoint, strokePointCount, MAX_STROKES, MAX_STROKE_POINTS, MAX_FORM_POINTS } from './paint.js?v=flora-growth-1';
+import { getLayers, withLayers, layerSettingsKey, MAX_LAYERS, editLayer, addLayer, addBlueLayers, duplicateLayer, removeLayer, reorderLayer, convertLayer } from './layers.js?v=flora-growth-1';
+import { createLayerScene } from './scene.js?v=flora-growth-1';
+import { LandscapeRenderer } from './render.js?v=flora-growth-1';
 
 export function visibleBounds(map, selected) {
     let left=map.width,top=map.height,right=-1,bottom=-1;
@@ -42,7 +44,7 @@ export class FormEditor {
     commit(patch,label,manual=false){this.change(this.tool,editSelection(this.tool.settings,this.selection(),patch,this.selected),label);}
     report(message=''){byId('paintStatus').textContent=message||this.vector?.draftHint()||'';}
     init() {
-        this.selectedIds=new Set();this.vector=new VectorEditor(this).init();
+        this.selectedIds=new Set();this.flora=new FloraEditor(this).init();this.vector=new VectorEditor(this).init();
         const on=(target,event,handler,opts={})=>target.addEventListener(event,handler,{...opts,signal:this.abort.signal});
         for(const mode of ['drawn','auto'])on(byId(mode==='drawn'?'newDrawnLayer':'newAutoLayer'),'click',()=>{
             try {const result=addLayer(this.tool.settings,mode);this.change(this.tool,result.settings,'Add layer');this.select(result.id);this.setTool(mode==='drawn'?'paint':'move');}
@@ -105,7 +107,7 @@ export class FormEditor {
         const list=byId('layerList');
         on(list,'pointerdown',e=>{
             const row=e.target.closest('.layer-row');
-            if(e.button!==0||!row||row.dataset.locked==='true'||e.target.closest('.layer-icon'))return;
+            if(e.button!==0||!row||row.dataset.locked==='true'||e.target.closest('.layer-icon,.flora-expand'))return;
             this.reorderGesture={id:row.dataset.layerId,pointerId:e.pointerId,startX:e.clientX,startY:e.clientY,x:e.clientX,y:e.clientY,moved:false};
         });
         on(document,'pointermove',e=>this.moveReorder(e));
@@ -153,7 +155,7 @@ export class FormEditor {
         this.sync();return this;
     }
     endOpacity(){if(this.opacityEditing){this.opacityEditing=false;this.tool.history.endTransaction();}}
-    canChangeLayer(){return !!this.layer()&&!this.gesture&&!this.vector?.drag&&!this.reorderGesture;}
+    canChangeLayer(){return !!this.layer()&&!this.gesture&&!this.vector?.drag&&!this.flora?.drag&&!this.reorderGesture;}
     duplicateSelected(){
         if(!this.canChangeLayer())return;this.endOpacity();
         try {const result=duplicateSelection(this.tool.settings,this.selection());this.change(this.tool,result.settings,'Duplicate layer');this.select(result.id);this.selectedIds=new Set(result.ids);this.sync();this.tool.render();this.container.focus({preventScroll:true});}
@@ -184,12 +186,12 @@ export class FormEditor {
         if(this.lastPointer)this.cursorAt(this.lastPointer);
     }
     setTool(name){
-        this.vector?.deactivate();this.cancel();this.paintTool=name;
+        this.flora?.deactivate();this.vector?.deactivate();this.cancel();this.paintTool=name;
         const fallback=name==='move'?null:getLayers(this.tool.settings).findLast(l=>l.visible&&!l.locked)?.id??null;
         this.select(this.layer()?.id??fallback);this.container.focus({preventScroll:true});
     }
     select(id,{toggle=false,range=false,individual=false}={}){
-        this.vector?.pausePen();this.vector?.cancel();this.cancel();this.endOpacity();const stack=getLayers(this.tool.settings);let ids=new Set(this.selection());
+        if(id!==this.selected)this.flora?.deactivate();this.vector?.pausePen();this.vector?.cancel();this.cancel();this.endOpacity();const stack=getLayers(this.tool.settings);let ids=new Set(this.selection());
         if(range&&id&&this.selected){const a=stack.findIndex(l=>l.id===this.selected),b=stack.findIndex(l=>l.id===id);ids=new Set(stack.slice(Math.min(a,b),Math.max(a,b)+1).map(l=>l.id));}
         else if(toggle&&id){if(ids.has(id))ids.delete(id);else ids.add(id);}
         else {const l=stack.find(l=>l.id===id);ids=new Set(!id?[]:!individual&&l?.collection?stack.filter(x=>x.collection===l.collection).map(x=>x.id):[id]);}
@@ -200,7 +202,7 @@ export class FormEditor {
         const ids=this.selection(),used=new Set(getLayers(this.tool.settings).filter(l=>!ids.includes(l.id)).map(l=>l.collection));let unique=name.trim().slice(0,40),suffix=2;while(used.has(unique))unique=name.trim().slice(0,40)+' '+suffix++;this.commit({collection:unique},'Group layers');
     }
     renderList(stack) {
-        const key=JSON.stringify(stack.map(l=>[l.id,l.name,l.mode,l.visible,l.locked,l.group,l.collection]));
+        const key=JSON.stringify([this.tool.settings.floraBranches,stack.map(l=>[l.id,l.name,l.mode,l.visible,l.locked,l.group,l.collection,l.flora])]);
         if(key===this.listKey)return;this.listKey=key;const list=byId('layerList'),scroll=list.scrollTop;list.replaceChildren();
         for(const layer of [...stack].reverse()) {
             const row=document.createElement('div');row.className='layer-row ui-list-row';row.dataset.layerId=layer.id;row.setAttribute('role','listitem');row.dataset.locked=String(layer.locked);
@@ -217,7 +219,7 @@ export class FormEditor {
             const pin=action('pin',layer.mode==='pinned'?'Unpin':'Pin',layer.mode==='pinned',()=>this.pin(layer.id));pin.disabled=['drawn','vector'].includes(layer.mode)||layer.locked;
             if(['drawn','vector'].includes(layer.mode))pin.title='Drawn and vector layers are always kept by Generate';
             const lock=action('lock',layer.locked?'Unlock':'Lock',layer.locked,()=>this.lock(layer.id));row.append(eye,select,pin,lock);
-            list.append(row);
+            list.append(row);this.flora?.appendRows(list,layer);
         }
         list.scrollTop=scroll;
     }
@@ -234,7 +236,7 @@ export class FormEditor {
         const list=byId('layerList'),rect=list.getBoundingClientRect();this.clearDrops();g.target=null;
         list.querySelector('[data-layer-id="'+g.id+'"]')?.classList.add('is-dragging');
         if(g.x<rect.left||g.x>rect.right||g.y<rect.top||g.y>rect.bottom)return;
-        const row=[...list.children].find(el=>{const r=el.getBoundingClientRect();return g.y>=r.top&&g.y<r.bottom;});
+        const row=[...list.querySelectorAll('.layer-row')].find(el=>{const r=el.getBoundingClientRect();return g.y>=r.top&&g.y<r.bottom;});
         if(!row||row.dataset.layerId===g.id)return;
         g.target=row.dataset.layerId;g.placement=g.y<row.getBoundingClientRect().top+row.offsetHeight/2?'before':'after';
         row.classList.add('drop-'+g.placement);
@@ -301,7 +303,7 @@ export class FormEditor {
         byId('layerDuplicate').disabled=!layer||stack.length+this.selection().length>MAX_LAYERS;byId('layerDelete').disabled=!layer||layer.locked;
         byId('backgroundThumb').style.background=s.sky;
         byId('layerPanel').hidden=!layer;byId('brushControls').hidden=this.paintTool==='move';
-        this.vector?.sync();
+        this.vector?.sync();this.flora?.sync();
         document.querySelectorAll('[data-form-tool]').forEach(button=>button.setAttribute('aria-pressed',String(!this.vector?.pen&&button.dataset.formTool===this.paintTool)));
         if(!layer)return;
         byId('selectedLayerName').textContent=this.selection().length>1?this.selection().length+' selected':layer.name;
@@ -316,7 +318,7 @@ export class FormEditor {
         if(layer.locked||!layer.visible)this.cursor.hidden=true;
     }
     point(event){const rect=this.container.getBoundingClientRect(),t=this.tool.target,s=this.tool.settings;return [(event.clientX-rect.left-t.panX)/(t.zoom*s.width),(event.clientY-rect.top-t.panY)/(t.zoom*s.height)];}
-    refreshMap(){const s=this.tool.settings,key=JSON.stringify([createLayerScene(s),s.width,s.height,s.softness,s.edgeVariation]);if(key===this.mapKey)return;this.picker ||=new LandscapeRenderer();const width=Math.max(64,Math.round(400*Math.min(1,s.width/s.height))),height=Math.max(64,Math.round(400*Math.min(1,s.height/s.width)));this.map=this.picker.formMap(s,width,height);this.mapKey=key;}
+    refreshMap(){const s=this.tool.settings,key=JSON.stringify([createLayerScene(s),normalizeFloraParams(s),s.width,s.height,s.softness,s.edgeVariation]);if(key===this.mapKey)return;this.picker ||=new LandscapeRenderer();const width=Math.max(64,Math.round(400*Math.min(1,s.width/s.height))),height=Math.max(64,Math.round(400*Math.min(1,s.height/s.width)));this.map=this.picker.formMap(s,width,height);this.mapKey=key;}
     hit(point) {
         const [x,y]=point;if(x<0||y<0||x>=1||y>=1)return null;
         this.refreshMap();const index=this.map.ids[Math.floor(y*this.map.height)*this.map.width+Math.floor(x*this.map.width)]-1;
@@ -383,7 +385,7 @@ export class FormEditor {
         if(byId('layersPanel').classList.contains('panel-collapsed'))return;
         const s=this.tool.settings,scene=createLayerScene(s);this.picker ||=new LandscapeRenderer();
         scene.forEach((l,i)=>{const canvas=byId('layerList').querySelector('[data-thumb-id="'+l.id+'"]');if(!canvas)return;
-            const key=JSON.stringify([l.phases,l.transform,l.field,l.shape,l.style,l.foldField,l.crest,l.pocket,l.geometryA,l.geometryB,l.strokes,l.vectorPath,l.affine,l.materialA,l.materialB,groupColor(s,l.group),s.width/s.height]);
+            const key=JSON.stringify([l.phases,l.transform,l.field,l.shape,l.style,l.foldField,l.crest,l.pocket,l.geometryA,l.geometryB,l.strokes,l.vectorPath,l.flora,l.flora?normalizeFloraParams(s):null,l.affine,l.materialA,l.materialB,groupColor(s,l.group),s.width/s.height]);
             let cached=this.thumbs.get(l.id);
             if(cached?.key!==key){const map=this.picker.formMap(s,48,30,i),ctx=canvas.getContext('2d'),data=ctx.createImageData(48,30),rgb=groupColor(s,l.group).slice(1).match(/../g).map(v=>parseInt(v,16));for(let n=0;n<map.ids.length;n++)if(map.ids[n])data.data.set([...rgb,230],n*4);cached={key,data};this.thumbs.set(l.id,cached);}
             canvas.getContext('2d').putImageData(cached.data,0,0);
@@ -392,7 +394,7 @@ export class FormEditor {
     }
     selectionBounds(){const stack=getLayers(this.tool.settings),boxes=this.selection().map(id=>visibleBounds(this.map,stack.findIndex(l=>l.id===id))).filter(Boolean);return boxes.length?{left:Math.min(...boxes.map(b=>b.left)),right:Math.max(...boxes.map(b=>b.right)),top:Math.min(...boxes.map(b=>b.top)),bottom:Math.max(...boxes.map(b=>b.bottom))}:null;}
     draw(){
-        this.drawThumbs();this.vector?.draw();if(this.vector?.editing||!this.active)return;this.refreshMap();const t=this.tool.target,s=this.tool.settings,dpr=t.dpr,rect=this.container.getBoundingClientRect();
+        this.drawThumbs();this.vector?.draw();this.flora?.draw();if(this.vector?.editing||this.flora?.editing||!this.active)return;this.refreshMap();const t=this.tool.target,s=this.tool.settings,dpr=t.dpr,rect=this.container.getBoundingClientRect();
         this.overlay.width=Math.round(rect.width*dpr);this.overlay.height=Math.round(rect.height*dpr);const ctx=this.overlay.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);this.handle=null;
         const layer=this.layer();if(!layer)return;const selected=this.index(),map=this.map,indices=this.selection().map(id=>getLayers(s).findIndex(l=>l.id===id));
         const bounds=this.selectionBounds();
@@ -403,5 +405,5 @@ export class FormEditor {
         const x=t.panX+bounds.left*w,y=t.panY+bounds.top*h,bw=(bounds.right-bounds.left)*w,bh=(bounds.bottom-bounds.top)*h;ctx.strokeStyle='rgba(255,255,255,.85)';ctx.lineWidth=1;ctx.setLineDash([4,4]);ctx.strokeRect(x,y,bw,bh);ctx.setLineDash([]);
         const hx=clamp(x+bw-7,7,rect.width-7),hy=clamp(y+bh-7,7,rect.height-7);ctx.fillStyle='#FFF';ctx.fillRect(hx-5,hy-5,10,10);ctx.strokeStyle='#111';ctx.strokeRect(hx-5,hy-5,10,10);this.handle=[(hx-t.panX)/w,(hy-t.panY)/h];
     }
-    destroy(){this.vector?.cancel();this.cancel();this.finishReorder(false);this.endOpacity();this.abort.abort();this.picker?.destroy();}
+    destroy(){this.flora?.cancel();this.vector?.cancel();this.cancel();this.finishReorder(false);this.endOpacity();this.abort.abort();this.picker?.destroy();}
 }

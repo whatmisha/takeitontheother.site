@@ -99,6 +99,12 @@ previews with the artwork when publishing from a branch.
   layers untouched. Generate resets an unpinned visible
   surface; pin, hide/show, undo, presets, JSON, links and PNG work normally.
   Opening an older ground-free document adds a Surface without moving other layers.
+- Rim light is an opt-in Composition pill with fixed 50% intensity and no slider.
+  Warm peach light follows the alpha contours facing above-left, with a soft
+  highlight and faint outward halo. The direction stays fixed as objects rotate.
+  Foreground layers, including Surface, occlude lights behind them; hidden layers
+  emit no light. Cached alpha masks are bounded in size. The toggle persists in
+  history, presets, JSON and share links, and PNG uses the same renderer.
 - General contains a two-line text field with an inset character counter,
   named desktop/iPhone resolution presets. Custom is the last option and reveals
   width/height fields initialized with the current resolution. Arrow Up/Down

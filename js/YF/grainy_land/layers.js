@@ -1,11 +1,12 @@
-import { defaultVectorPath } from './vector-path.js?v=studio-1';
-import { normalizeSettings, formSettingsKey } from './document.js?v=studio-1';
-import { MAX_LAYERS, getLayers, layerSettingsKey, normalizeLayerStack, geometrySnapshot, sourceGroup, blueLayerPair } from './layer-data.js?v=studio-1';
-export { MAX_LAYERS, getLayers, layerSettingsKey } from './layer-data.js?v=studio-1';
+import { normalizeFloraParams } from './flora.js?v=flora-growth-1';
+import { defaultVectorPath } from './vector-path.js?v=flora-growth-1';
+import { normalizeSettings, formSettingsKey } from './document.js?v=flora-growth-1';
+import { MAX_LAYERS, getLayers, layerSettingsKey, normalizeLayerStack, geometrySnapshot, sourceGroup, blueLayerPair } from './layer-data.js?v=flora-growth-1';
+export { MAX_LAYERS, getLayers, layerSettingsKey } from './layer-data.js?v=flora-growth-1';
 
 export function withLayers(settings,layers) {
     const s=normalizeSettings(settings);
-    return {...s,[layerSettingsKey(s.mode)]:normalizeLayerStack(layers,s),[formSettingsKey(s.mode)]:null};
+    return {...s,[layerSettingsKey(s.mode)]:normalizeLayerStack(layers,s),...(s.mode==='flora'?{}:{[formSettingsKey(s.mode)]:null})};
 }
 export function editLayer(settings,id,patch,{manual=false}={}) {
     const s=normalizeSettings(settings),stack=getLayers(s),layer=stack.find(l=>l.id===id);
@@ -20,8 +21,9 @@ export function addLayer(settings,mode='drawn') {
     const s=normalizeSettings(settings),stack=getLayers(s);
     if(stack.length>=MAX_LAYERS)throw new Error('Maximum '+MAX_LAYERS+' layers per composition.');
     const id=uniqueId(stack),salt=Number(id.slice(6))*2654435761>>>0,source=stack.length%6;
+    const plant=s.mode==='flora'&&mode==='auto';
     const vector=mode==='vector',drawn=mode==='drawn'||vector;
-    const layer={id,name:vector?'Vector shape':drawn?'Drawn layer':'Generated layer',source,mode:vector?'vector':drawn?'drawn':'auto',seed:(s.seed+salt)>>>0,salt,
+    const layer={...(plant?{flora:{index:Math.max(-1,...stack.map(l=>l.flora?.index??-1))+1,variant:0,edits:{}}}:{}),id,name:plant?'Plant '+(stack.length+1):vector?'Vector shape':drawn?'Drawn layer':'Generated layer',source,mode:vector?'vector':drawn?'drawn':'auto',seed:(s.seed+salt)>>>0,salt,
         layout:s.layout,group:drawn?'terrain':sourceGroup(source),geometry:drawn?geometrySnapshot(s):null,hasBase:!drawn,...(vector?{vectorPath:defaultVectorPath()}: {})};
     return {settings:withLayers(s,[...stack,layer]),id};
 }
@@ -51,7 +53,7 @@ export function convertLayer(settings,id) {
     if(!layer||layer.locked||layer.mode==='drawn')return s;
     // Freeze the analytic silhouette instead of rasterizing it. It is now an
     // immutable base for paint/erase, independent of every generation control.
-    return editLayer(s,id,{mode:'drawn',hasBase:!layer.vectorPath,geometry:layer.geometry??geometrySnapshot(s)});
+    return editLayer(s,id,{mode:'drawn',...(layer.flora?{flora:{...layer.flora,frozen:normalizeFloraParams(s)}}:{}),hasBase:!layer.vectorPath&&!layer.flora,geometry:layer.geometry??geometrySnapshot(s)});
 }
 
 export function addBlueLayers(settings) {

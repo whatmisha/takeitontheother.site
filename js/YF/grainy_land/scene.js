@@ -1,6 +1,6 @@
-import { getLayers, layerGroups } from './layer-data.js?v=studio-1';
+import { getLayers, layerGroups } from './layer-data.js?v=flora-growth-1';
 import { SeededRandom } from '../infra/framework/src/index.js';
-import { normalizeSettings, layouts, toneKeys, formSettingsKey } from './document.js?v=studio-1';
+import { normalizeSettings, layouts, toneKeys, formSettingsKey } from './document.js?v=flora-growth-1';
 
 // Geometry is independent of the palette, texture and raster resolution.
 // Coordinates are normalized; this is the extension point for future painted fields.
@@ -117,7 +117,7 @@ export function createLayerScene(settings) {
             field:blue?.field??source.fields[i],shape:blue?.shape??source.layers[i],style:blue?.style??source.layerStyles[i],foldField:blue?.foldField??source.foldFields[i],
             crest:source.secondCrest,pocket:source.pocketStyle,
             geometryA:[source.scale,source.complexity,source.flow,source.folds],
-            geometryB:[source.horizon,source.relief,source.mode,layer.hasBase?1:0],
+            geometryB:[source.horizon,source.relief,layer.flora?2:source.mode,layer.hasBase?1:0],
             info:[i,layerGroups.includes(layer.group)?layerGroups.indexOf(layer.group):4+s.customColors.findIndex(color=>color.id===layer.group),layer.visible?layer.opacity/100:0,layer.seed%16381]};
     });
 }
@@ -224,6 +224,7 @@ function deriveNeighbors(settings) {
             highC=C*(1-spread*.35);
             highL=L+profile.light*.6;
         }
+        if(s.mode==='flora'&&i<2){highHue=h-spread*profile.hue*1.25;highL=L+profile.light*.8;lowL=L-profile.light;}
         low.push(encode(lowL,lowC,lowHue));
         high.push(encode(highL,highC,highHue));
     }

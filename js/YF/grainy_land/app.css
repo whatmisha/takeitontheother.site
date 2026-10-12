@@ -235,3 +235,21 @@
 .grainy-land .rotation-controls { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:14px; }
 .grainy-land .rotation-controls > label { grid-column:1 / -1; display:flex; align-items:center; justify-content:space-between; }
 .grainy-land .rotation-controls input { width:80px; }
+
+.grainy-land #floraComposition > select { margin-bottom: 20px; }
+.grainy-land #floraControls > .vector-point-actions { margin: 12px 0; flex-wrap: wrap; }
+.grainy-land #floraPartControls .vector-point-actions { flex-wrap: wrap; margin: 10px 0; }
+.grainy-land #floraOverlay { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; overflow:hidden; }
+.grainy-land .flora-part-path { fill:none; stroke:#b6ffce; stroke-width:1.1; pointer-events:none; }
+.grainy-land .flora-part-hit { fill:none; stroke:transparent; stroke-width:12; pointer-events:stroke; cursor:pointer; }
+.grainy-land .flora-attachment { fill:#b6ffce; cursor:default; }
+.grainy-land .flora-children { margin:0 0 8px 24px; border-left:1px solid var(--color-border); padding-left:10px; display:grid; gap:2px; }
+.grainy-land .flora-child { padding:7px 8px; text-align:left; border-radius:6px; font:inherit; font-size:var(--ui-font-meta); display:flex; justify-content:space-between; cursor:pointer; }
+.grainy-land .flora-child[aria-pressed="true"] { background:var(--color-bg-input); }
+.grainy-land .flora-child span { color:var(--color-text-muted); }
+.grainy-land .flora-expand { padding:4px; flex:0 0 18px; font-size:var(--ui-font-meta); }
+
+.grainy-land #floraControls .btn-add-object { flex:0 0 auto; padding:4px 10px; white-space:nowrap; font-size:var(--ui-font-meta); }
+.grainy-land .flora-child:disabled { opacity:.45; cursor:default; }
+
+@media (min-width:1001px) { .grainy-land #layerPanel:has(#floraPartControls:not([hidden])) { top:clamp(var(--spacing-3xl),var(--layers-panel-top),calc(100dvh - var(--layer-panel-height) - 88px)); max-height:min(520px,calc(100dvh - 120px)); } }

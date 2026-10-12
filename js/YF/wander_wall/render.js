@@ -1,4 +1,5 @@
 import { effectDefaults, gradientLine } from './effects.js';
+import { drawRimLights } from './rim-light.js';
 
 const buffers = new WeakMap();
 function shadowBuffers(ctx) {
@@ -36,6 +37,7 @@ export function drawArtwork(ctx, scene, assets, geometry, items = scene.items) {
     }
     ctx.fillRect(0, 0, scene.width, scene.height);
     drawItems(ctx, scene, assets, geometry, items, effects);
+    drawRimLights(ctx, effects, assets, geometry, items, paintItem);
     ctx.restore();
 }
 
