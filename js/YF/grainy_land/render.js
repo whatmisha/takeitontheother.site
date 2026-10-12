@@ -1,9 +1,9 @@
-import { bakeFlora } from './flora-field.js?v=flora-growth-1';
-import { MAX_CUSTOM_COLORS } from './custom-colors.js?v=flora-growth-1';
-import { createLayerScene, materialColors, adjacentColors, customMaterialColors, hexRGB } from './scene.js?v=flora-growth-1';
-import { bakePaint } from './paint.js?v=flora-growth-1';
-import { MAX_LAYERS } from './layer-data.js?v=flora-growth-1';
-import { normalizeSettings } from './document.js?v=flora-growth-1';
+import { bakeFlora } from './flora-field.js?v=flower-f-2';
+import { MAX_CUSTOM_COLORS } from './custom-colors.js?v=flower-f-2';
+import { createLayerScene, materialColors, adjacentColors, customMaterialColors, hexRGB } from './scene.js?v=flower-f-2';
+import { bakePaint } from './paint.js?v=flower-f-2';
+import { MAX_LAYERS } from './layer-data.js?v=flower-f-2';
+import { normalizeSettings } from './document.js?v=flower-f-2';
 
 const vertexSource = `
 attribute vec2 position;
@@ -480,7 +480,7 @@ export class LandscapeRenderer {
         const scene = createLayerScene(s);
         this.uploadPaint(scene);
         this.uploadFlora(scene,s);
-        gl.uniform1f(this.location('floraMode'),s.mode==='flora'?1:0);
+        gl.uniform1f(this.location('floraMode'),['flora','f'].includes(s.mode)?1:0);
         this.uploadCustomColors(s);
         const values = { softness: s.softness/100, glow: s.glow/100, halo: s.halo/100,
             contrast: s.contrast/100, grain: s.grain/100, grainSize: s.grainSize, seed: s.seed % 16381,
@@ -538,7 +538,7 @@ export class LandscapeRenderer {
         this.floraKeys=fields.map(f=>f?.key);this.floraAtlasShape=shape;
         gl.uniform2f(this.location('floraAtlasSize'),width,height);gl.uniform2f(this.location('floraCellSize'),cellW,cellH);gl.uniform1f(this.location('floraColumns'),columns);
         gl.uniform4fv(this.location('floraBounds[0]'),Array.from({length:16},(_,i)=>fields[i]?.bounds??[0,0,1,1]).flat());
-        gl.uniform4fv(this.location('floraMeta[0]'),Array.from({length:16},(_,i)=>[fields[i]?.width??1,fields[i]?.height??1,(scene[i]?.flora?.index??0)*17.31+(scene[i]?.flora?.variant??0)*.057,(scene[i]?.flora?.frozen?.floraFusion??settings.floraFusion)/100]).flat());
+        gl.uniform4fv(this.location('floraMeta[0]'),Array.from({length:16},(_,i)=>[fields[i]?.width??1,fields[i]?.height??1,(scene[i]?.flora?.index??0)*17.31+(scene[i]?.flora?.variant??0)*.057,scene[i]?.flora?.generator==='flower'?0:(scene[i]?.flora?.frozen?.floraFusion??settings.floraFusion)/100]).flat());
     }
     uploadPaint(scene) {
         const gl=this.gl,fields=scene.map(layer=>layer.strokes.length||layer.vectorPath?bakePaint(layer.strokes,layer.vectorPath):null);

@@ -1,5 +1,5 @@
-import {localToCanvas,canvasToLocal} from './transforms.js?v=flora-growth-1';
-import {getLayers,withLayers,duplicateLayer,MAX_LAYERS} from './layers.js?v=flora-growth-1';
+import {localToCanvas,canvasToLocal} from './transforms.js?v=flower-f-2';
+import {getLayers,withLayers,duplicateLayer,MAX_LAYERS} from './layers.js?v=flower-f-2';
 export function editSelection(settings,ids,patch,primary=ids[0]){
  const stack=getLayers(settings),chosen=stack.filter(l=>ids.includes(l.id)&&!l.locked),base=chosen.find(l=>l.id===primary)??chosen[0];if(!base)return settings;
  const center=[chosen.reduce((v,l)=>v+l.x,0)/chosen.length,chosen.reduce((v,l)=>v+l.y,0)/chosen.length],aspect=settings.width/settings.height;

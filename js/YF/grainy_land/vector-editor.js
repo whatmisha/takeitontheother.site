@@ -1,8 +1,8 @@
-import { PenDraft } from './pen-draft.js?v=flora-growth-1';
-import { localToCanvas } from './transforms.js?v=flora-growth-1';
-import { localPaintPoint } from './paint.js?v=flora-growth-1';
-import { getLayers, addLayer, editLayer, layerSettingsKey, MAX_LAYERS } from './layers.js?v=flora-growth-1';
-import { moveVectorNode, setVectorNodesSmooth, splitVectorSegment, vectorSegment, cubicPoint, MAX_VECTOR_NODES } from './vector-path.js?v=flora-growth-1';
+import { PenDraft } from './pen-draft.js?v=flower-f-2';
+import { localToCanvas } from './transforms.js?v=flower-f-2';
+import { localPaintPoint } from './paint.js?v=flower-f-2';
+import { getLayers, addLayer, editLayer, layerSettingsKey, MAX_LAYERS } from './layers.js?v=flower-f-2';
+import { moveVectorNode, setVectorNodesSmooth, splitVectorSegment, vectorSegment, cubicPoint, MAX_VECTOR_NODES } from './vector-path.js?v=flower-f-2';
 const byId=id=>document.getElementById(id),NS='http://www.w3.org/2000/svg';
 const svgNode=(name,attrs)=>{const n=document.createElementNS(NS,name);for(const [k,v]of Object.entries(attrs))n.setAttribute(k,String(v));return n;};
 export class VectorEditor {

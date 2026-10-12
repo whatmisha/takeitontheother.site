@@ -15,7 +15,7 @@ export function groupColor(settings, group) {
     return settings.customColors?.find(color => color.id === group)?.color ?? settings[group] ?? settings.terrain;
 }
 export function colorIsUsed(settings, id) {
-    return ['landscapeLayers', 'abstractLayers', 'floraLayers'].some(key => settings[key]?.some(layer => layer.group === id || Object.values(layer.flora?.edits??{}).some(part=>part.group===id)));
+    return ['landscapeLayers', 'abstractLayers', 'floraLayers', 'fLayers'].some(key => settings[key]?.some(layer => layer.group === id || Object.values(layer.flora?.edits??{}).some(part=>part.group===id)));
 }
 export function addCustomColor(settings) {
     const colors = normalizeCustomColors(settings.customColors);

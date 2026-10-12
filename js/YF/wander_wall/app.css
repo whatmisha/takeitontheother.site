@@ -74,6 +74,9 @@
 .wander-wall .operation-status:empty { display: none; }
 .wander-wall .retry-button { pointer-events: auto; }
 .wander-wall .action-dock__slot--options:empty { display: none; }
+.wander-wall .action-dock__slot--options .toggle-label { white-space: nowrap; }
+.wander-wall .action-dock__slot--options .toggle-switch { flex-shrink: 0; }
+.wander-wall .action-dock__slot--options .toggle-label:has(input:disabled) { opacity: .5; cursor: default; }
 .wander-wall .controls-panel .collapse-icon svg { width: 10px; height: 6px; }
 .wander-wall .mobile-panel-tabs { display: none; }
 @media (max-width: 1200px) {
@@ -112,6 +115,12 @@
     .wander-wall .ui-icon-button { min-width: 36px; min-height: 36px; }
     .wander-wall :is(.text-input, .value-display) { font-size: 16px; }
     .wander-wall[data-keyboard="true"] :is(.canvas-container, .canvas-feedback) { top: calc(var(--visual-top) + 62px + env(safe-area-inset-top, 0px)); }
+}
+@media (max-width: 600px) {
+    .wander-wall { --dock-height: calc(106px + env(safe-area-inset-bottom, 0px)); }
+    .wander-wall:has(.action-dock[data-extras-expanded="true"]) { --dock-height: calc(152px + env(safe-area-inset-bottom, 0px)); }
+    .wander-wall .bottom-buttons.action-dock { flex-wrap: wrap; }
+    .wander-wall .action-dock__slot--options { flex-basis: 100%; justify-content: center; }
 }
 @media (max-width: 480px) {
     .wander-wall .top-links { width: calc(100vw - 20px); gap: 4px; }

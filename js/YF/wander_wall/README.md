@@ -132,6 +132,16 @@ presets receive the new shadow defaults; personally saved presets retain their s
 Outline has been removed; older documents ignore its settings.
 All settings persist in history, presets, JSON and share links, and render in PNG.
 
+Assets pack is an off-by-default export toggle beside PNG. When enabled, the
+button switches to ZIP: the archive contains the full rendered composition plus
+the original PNG files used by visible layers (letters, objects and Surface).
+Repeated sources are included once, hidden layers are excluded, and filename
+collisions receive numeric suffixes. Originals retain their full resolution,
+transparency and exact bytes; transforms and effects apply only to the composition.
+Packing uses the shared framework ZIP writer, reports progress, and fails without
+downloading a partial archive if an asset cannot be loaded. Cmd/Ctrl+E respects
+the toggle, which persists in history, presets, JSON and share links.
+
 Click selects an element; double-click cycles its variant. Drag to move freely,
 including far outside the canvas. All four corners and four side midpoints resize
 proportionally with the opposite point fixed. Just outside each handle is a rotation

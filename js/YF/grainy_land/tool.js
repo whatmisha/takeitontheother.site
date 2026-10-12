@@ -1,19 +1,20 @@
-import { resizeFloraStack } from './flora.js?v=flora-growth-1';
-import { addLayer } from './layers.js?v=flora-growth-1';
-import { PrintColor } from './print-color.js?v=flora-growth-1';
-import { motionFrame, renderVideo } from './motion.js?v=flora-growth-1';
-import { CustomColorEditor } from './custom-color-editor.js?v=flora-growth-1';
-import { editCanvas } from './canvas-size.js?v=flora-growth-1';
-import { renderPNG } from './png-export.js?v=flora-growth-1';
-import { renderLayersZIP } from './layers-export.js?v=flora-growth-1';
+import {flowerType,flowerTypes} from './flower.js?v=flower-f-2';
+import { resizeFloraStack } from './flora.js?v=flower-f-2';
+import { addLayer } from './layers.js?v=flower-f-2';
+import { PrintColor } from './print-color.js?v=flower-f-2';
+import { motionFrame, renderVideo } from './motion.js?v=flower-f-2';
+import { CustomColorEditor } from './custom-color-editor.js?v=flower-f-2';
+import { editCanvas } from './canvas-size.js?v=flower-f-2';
+import { renderPNG } from './png-export.js?v=flower-f-2';
+import { renderLayersZIP } from './layers-export.js?v=flower-f-2';
 import { downloadBlob } from '../infra/framework/src/ui/GeneratorHost.js?v=7';
 import { defineTool, UnifiedColorPicker, ToolUiController, FileIntakeController, PresetMenuKeyboardController } from '../infra/framework/src/index.js?v=tool-ui-4';
-import { defaults, ranges, switchMode, regenerate, toneKeys, migratePresets, normalizeSettings, makeDocument, readDocument, exportDimensions } from './document.js?v=flora-growth-1';
-import { adjacentColors, hexRGB } from './scene.js?v=flora-growth-1';
-import { LandscapeRenderer } from './render.js?v=flora-growth-1';
+import { defaults, ranges, switchMode, regenerate, toneKeys, migratePresets, normalizeSettings, makeDocument, readDocument, exportDimensions } from './document.js?v=flower-f-2';
+import { adjacentColors, hexRGB } from './scene.js?v=flower-f-2';
+import { LandscapeRenderer } from './render.js?v=flower-f-2';
 
-import { getLayers } from './layer-data.js?v=flora-growth-1';
-import { FormEditor } from './form-editor.js?v=flora-growth-1';
+import { getLayers } from './layer-data.js?v=flower-f-2';
+import { FormEditor } from './form-editor.js?v=flower-f-2';
 
 const printColor=new PrintColor();
 let motionStart=null,motionRAF=0;
@@ -63,11 +64,13 @@ function sync(tool) {
         byId(key+'Slider').disabled = s.mode !== 'landscape'; byId(key+'Value').disabled = s.mode !== 'landscape';
         byId(key+'Slider').closest('.control-group').hidden=s.mode!=='landscape';
     }
+    byId('flowerComposition').hidden=s.mode!=='f';byId('fType').value=s.fType;
+    const flower=getLayers(s).find(l=>l.flora?.generator==='flower');byId('fTypeName').textContent=s.mode==='f'&&s.fType==='random'&&flower?flowerTypes[flowerType(flower,s)]:'';
     byId('floraComposition').hidden=s.mode!=='flora';byId('floraLayout').value=s.floraLayout;
-    for(const key of ['scale','complexity','flow','folds'])byId(key+'Slider').closest('.control-group').hidden=s.mode==='flora';
+    for(const key of ['scale','complexity','flow','folds'])byId(key+'Slider').closest('.control-group').hidden=['flora','f'].includes(s.mode);
     byId('floraCountSlider').closest('.control-group').hidden=s.floraLayout==='single';
-    byId('newPlantLayer').hidden=s.mode!=='flora';byId('newAutoLayer').hidden=s.mode==='flora';byId('newBlueLayers').hidden=s.mode==='flora';
-    byId('newPlantLayer').disabled=getLayers(s).length>=16;
+    byId('newPlantLayer').hidden=!['flora','f'].includes(s.mode);byId('newPlantLayer').textContent=s.mode==='f'?'+ Flower':'+ Plant';byId('newAutoLayer').hidden=['flora','f'].includes(s.mode);byId('newBlueLayers').hidden=['flora','f'].includes(s.mode);
+    byId('newPlantLayer').disabled=getLayers(s).length>=16||s.mode==='f'&&getLayers(s).some(l=>l.flora);
     byId('toneCharacterSelect').value = s.toneCharacter;
     const neighbors=adjacentColors(s), strength=s.toneAmount/100;
     ['sky','terrain','depth','light'].forEach(key => {
@@ -114,7 +117,7 @@ function sync(tool) {
     byId('transparentBackground').checked=s.transparentBackground;
     const exportAction=ui?.actions.find(action=>action.id==='png');
     if(exportAction)exportAction.label=s.exportLayers?'Export ZIP':'Export PNG';
-    byId('mainCanvas').setAttribute('aria-label', s.mode === 'flora' ? 'Generated grainy flora' : s.mode === 'abstract' ? 'Generated grainy abstract artwork' : 'Generated grainy landscape');
+    byId('mainCanvas').setAttribute('aria-label', s.mode === 'f' ? 'Generated grainy flower' : s.mode === 'flora' ? 'Generated grainy flora' : s.mode === 'abstract' ? 'Generated grainy abstract artwork' : 'Generated grainy landscape');
     formEditor?.sync();
     ui?.refresh();
 }
@@ -141,6 +144,7 @@ function bind(tool) {
     tonePicker.init();
     for (const key of toneKeys) on(byId(key+'Auto'), 'click', () => change(tool, {[key]:null}, 'Automatic tone'));
     for (const radio of document.querySelectorAll('input[name="mode"]')) on(radio, 'change', () => change(tool,switchMode(tool.settings,radio.value),'Mode'));
+    on(byId('fType'),'change',()=>change(tool,{fType:byId('fType').value},'Flower type'));
     on(byId('floraLayout'),'change',()=>change(tool,resizeFloraStack({...tool.settings,floraLayout:byId('floraLayout').value}),'Flora arrangement'));
     unsubscribeFloraCount=tool.settingsStore.subscribe('floraCount',()=>{const next=resizeFloraStack(tool.settings);if(JSON.stringify(next.floraLayers)!==JSON.stringify(tool.settings.floraLayers))tool.settingsStore.set('floraLayers',next.floraLayers);});
     on(byId('newPlantLayer'),'click',()=>{try{const result=addLayer(tool.settings,'auto');change(tool,result.settings,'Add plant');formEditor.select(result.id);}catch(error){status(error.message);}});
@@ -289,7 +293,7 @@ const app = defineTool({
     })) },
     presets: { migrate:migratePresets, storageKey:'upgrade:grainy_land:presets:v1',basePath:'./presets',defaultName:'Ember',
         colorDots: s => [s.sky,s.terrain,s.depth,s.light].map(value => ({kind:'solid',value})),
-        suggestSaveName: tool => (tool.settings.mode==='flora'?'Flora':tool.settings.mode==='abstract'?'Abstract':'Landscape')+' '+tool.settings.seed },
+        suggestSaveName: tool => (tool.settings.mode==='f'?'F':tool.settings.mode==='flora'?'Flora':tool.settings.mode==='abstract'?'Abstract':'Landscape')+' '+tool.settings.seed },
     history: { maxSize:60,debounceMs:150 },
     share: {}, shortcuts: false, dialog: {},
     export: { filename:'grainy-land.svg' },

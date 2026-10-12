@@ -1,8 +1,9 @@
-import { floraDefaults, floraRanges, normalizeFloraParams } from './flora.js?v=flora-growth-1';
-import { normalizeCustomColors } from './custom-colors.js?v=flora-growth-1';
-import { canvasDefaults, normalizeCanvas, assertExportSize } from './canvas-size.js?v=flora-growth-1';
-import { normalizeLayerStack, layerSettingsKey } from './layer-data.js?v=flora-growth-1';
-import { normalizeStrokes } from './paint.js?v=flora-growth-1';
+import {flowerDefaults,flowerRanges} from './flower.js?v=flower-f-2';
+import { floraDefaults, floraRanges, normalizeFloraParams } from './flora.js?v=flower-f-2';
+import { normalizeCustomColors } from './custom-colors.js?v=flower-f-2';
+import { canvasDefaults, normalizeCanvas, assertExportSize } from './canvas-size.js?v=flower-f-2';
+import { normalizeLayerStack, layerSettingsKey } from './layer-data.js?v=flower-f-2';
+import { normalizeStrokes } from './paint.js?v=flower-f-2';
 export const TOOL_ID = 'grainy_land';
 export const VERSION = 1;
 export const palettes = {
@@ -15,7 +16,7 @@ export const toneCharacters = { pigment: 'Pigment', pearlescent: 'Pearlescent', 
 export const toneKeys = ['terrainLow', 'depthLow', 'lightLow', 'terrainHigh', 'depthHigh', 'lightHigh', 'skyLow', 'skyHigh'];
 export const automaticTones = Object.fromEntries(toneKeys.map(key => [key, null]));
 export const ranges = {
-    ...floraRanges,
+    ...floraRanges,...flowerRanges,
     scale: [40, 220, 1], complexity: [1, 6, 1], flow: [0, 100, 1], folds: [0, 100, 1],
     horizon: [15, 80, 1], relief: [0, 100, 1], softness: [0, 100, 1],
     edgeVariation: [0, 100, 1], glowCoverage: [0, 100, 1], glow: [0, 100, 1], halo: [0, 100, 1], contrast: [50, 180, 1],
@@ -27,7 +28,7 @@ export const floraSurfaceDefaults = Object.freeze({grain:49,grainSize:1,softness
     edgeVariation:80,contrast:120,glow:10,glowCoverage:10,halo:100});
 const surfaceKeys = Object.keys(floraSurfaceDefaults);
 export const defaults = {
-    ...floraDefaults, surfaceMemory:null, schemaVersion: VERSION, width: 1920, height: 1080, seed: 1565559100, mode: 'landscape', layout:'auto',
+    ...floraDefaults,...flowerDefaults, surfaceMemory:null, schemaVersion: VERSION, width: 1920, height: 1080, seed: 1565559100, mode: 'landscape', layout:'auto',
     scale: 100, complexity: 2, flow: 48, folds: 65, horizon: 53, relief: 62,
     softness: 38, edgeVariation: 70, glowCoverage: 35, glow: 0, halo: 65, contrast: 118, grain: 55, grainSize: 1,
     toneCharacter: 'radiant', skyToneAmount: 0, toneAmount: 100, toneSpread: 65, toneScale: 110, toneBleed: 50,
@@ -54,7 +55,7 @@ export const formSettingsKey = mode => mode === 'abstract' ? 'abstractForms' : '
 export function normalizeSettings(value = {}) {
     if (!value || typeof value !== 'object' || Array.isArray(value)) throw new TypeError('Invalid settings.');
     if (value.schemaVersion != null && value.schemaVersion !== VERSION) throw new Error('Unsupported document version.');
-    const out = { ...defaults, ...(value.mode==='flora'?floraSurfaceDefaults:{}) };
+    const out = { ...defaults, ...(['flora','f'].includes(value.mode)?floraSurfaceDefaults:{}) };
     for (const [key, [min, max, step]] of Object.entries(ranges)) {
         const n = Number(value[key]);
         if (Number.isFinite(n) && value[key] != null) out[key] = Number((Math.round(clamp(n, min, max) / step) * step).toFixed(2));
@@ -75,11 +76,11 @@ export function normalizeSettings(value = {}) {
     if (Number.isFinite(Number(value.seed)) && value.seed != null) out.seed = Number(value.seed) >>> 0;
     if (Object.hasOwn(toneCharacters, value.toneCharacter)) out.toneCharacter = value.toneCharacter;
     if (Object.hasOwn(layouts,value.layout)) out.layout=value.layout;
-    if (['landscape', 'abstract', 'flora'].includes(value.mode)) out.mode = value.mode;
+    if (['landscape', 'abstract', 'flora', 'f'].includes(value.mode)) out.mode = value.mode;
     Object.assign(out,normalizeFloraParams({...out,...value}));
     if(value.surfaceMemory && typeof value.surfaceMemory==='object' && !Array.isArray(value.surfaceMemory)) {
         const memory={};
-        for(const mode of ['flora','other']) {
+        for(const mode of ['flora','f','other']) {
             const entry=value.surfaceMemory[mode];
             if(!entry || typeof entry!=='object' || Array.isArray(entry))continue;
             memory[mode]={};
@@ -87,13 +88,14 @@ export function normalizeSettings(value = {}) {
                 const [min,max,step]=ranges[key],n=entry[key];
                 memory[mode][key]=typeof n==='number'&&Number.isFinite(n)
                     ? Number((Math.round(clamp(n,min,max)/step)*step).toFixed(2))
-                    : (mode==='flora'?floraSurfaceDefaults:defaults)[key];
+                    : (mode!=='other'?floraSurfaceDefaults:defaults)[key];
             }
         }
         if(Object.keys(memory).length)out.surfaceMemory=memory;
     }
     out.customColors = normalizeCustomColors(value.customColors);
     out.floraLayers=normalizeLayerStack(value.floraLayers,out);
+    out.fLayers=normalizeLayerStack(value.fLayers,out);
     out.landscapeForms = normalizeForms(value.landscapeForms);
     out.abstractForms = normalizeForms(value.abstractForms);
     out.landscapeLayers = normalizeLayerStack(value.landscapeLayers,out);
@@ -107,11 +109,11 @@ export function normalizeSettings(value = {}) {
 // edited values; palette and the existing Land/Abstract surface sharing stay intact.
 export function switchMode(settings, mode) {
     const s=normalizeSettings(settings);
-    if(!['landscape','abstract','flora'].includes(mode)||mode===s.mode)return s;
-    const from=s.mode==='flora'?'flora':'other',to=mode==='flora'?'flora':'other';
+    if(!['landscape','abstract','flora','f'].includes(mode)||mode===s.mode)return s;
+    const from=['flora','f'].includes(s.mode)?s.mode:'other',to=['flora','f'].includes(mode)?mode:'other';
     if(from===to)return {...s,mode};
     const memory={...s.surfaceMemory,[from]:Object.fromEntries(surfaceKeys.map(key=>[key,s[key]]))};
-    const target=memory[to]??Object.fromEntries(surfaceKeys.map(key=>[key,(to==='flora'?floraSurfaceDefaults:defaults)[key]]));
+    const target=memory[to]??Object.fromEntries(surfaceKeys.map(key=>[key,(to!=='other'?floraSurfaceDefaults:defaults)[key]]));
     return {...s,...target,mode,surfaceMemory:memory};
 }
 export function makeDocument(settings) {
@@ -183,7 +185,7 @@ export function editForm(settings, index, patch) {
 export function regenerate(settings, seed) {
     const s = normalizeSettings({...settings,seed});
     for (const key of ['landscapeForms','abstractForms']) s[key] = normalizeForms(s[key]?.map(form => form?.locked ? form : null));
-    for(const mode of ['landscape','abstract','flora']) {
+    for(const mode of ['landscape','abstract','flora','f']) {
         const key=layerSettingsKey(mode);
         if(s[key])s[key]=s[key].map(layer=>layer.mode==='auto'?{
             ...layer,seed:(s.seed+layer.salt)>>>0,layout:s.layout,x:0,y:0,scaleX:1,scaleY:1,strokes:[]

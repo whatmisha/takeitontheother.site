@@ -1,6 +1,6 @@
-import { getLayers, layerGroups } from './layer-data.js?v=flora-growth-1';
+import { getLayers, layerGroups } from './layer-data.js?v=flower-f-2';
 import { SeededRandom } from '../infra/framework/src/index.js';
-import { normalizeSettings, layouts, toneKeys, formSettingsKey } from './document.js?v=flora-growth-1';
+import { normalizeSettings, layouts, toneKeys, formSettingsKey } from './document.js?v=flower-f-2';
 
 // Geometry is independent of the palette, texture and raster resolution.
 // Coordinates are normalized; this is the extension point for future painted fields.
@@ -224,7 +224,7 @@ function deriveNeighbors(settings) {
             highC=C*(1-spread*.35);
             highL=L+profile.light*.6;
         }
-        if(s.mode==='flora'&&i<2){highHue=h-spread*profile.hue*1.25;highL=L+profile.light*.8;lowL=L-profile.light;}
+        if(['flora','f'].includes(s.mode)&&i<2){highHue=h-spread*profile.hue*1.25;highL=L+profile.light*.8;lowL=L-profile.light;}
         low.push(encode(lowL,lowC,lowHue));
         high.push(encode(highL,highC,highHue));
     }

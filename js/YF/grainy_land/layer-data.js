@@ -1,10 +1,10 @@
-import { normalizeFlora, floraTemplate } from './flora.js?v=flora-growth-1';
-import { normalizeMaterial } from './transforms.js?v=flora-growth-1';
-import { normalizeVectorPath, defaultVectorPath } from './vector-path.js?v=flora-growth-1';
-import { normalizeStrokes } from './paint.js?v=flora-growth-1';
+import { normalizeFlora, floraTemplate } from './flora.js?v=flower-f-2';
+import { normalizeMaterial } from './transforms.js?v=flower-f-2';
+import { normalizeVectorPath, defaultVectorPath } from './vector-path.js?v=flower-f-2';
+import { normalizeStrokes } from './paint.js?v=flower-f-2';
 
 export const MAX_LAYERS=16;
-export const layerSettingsKey=mode=>mode==='flora'?'floraLayers':mode==='abstract'?'abstractLayers':'landscapeLayers';
+export const layerSettingsKey=mode=>mode==='f'?'fLayers':mode==='flora'?'floraLayers':mode==='abstract'?'abstractLayers':'landscapeLayers';
 export const layerNames=['Terrain','Bank 1','Basin','Bank 2','Fold','Foreground'];
 export const layerGroups=['terrain','depth','light','sky'];
 export const sourceGroup=i=>i>=6?'sky':i===0?'terrain':(i===2||i===5?'light':'depth');
@@ -39,6 +39,7 @@ export function normalizeLayerStack(value,settings) {
 export function getLayers(settings) {
     const explicit=settings[layerSettingsKey(settings.mode)];
     if(Array.isArray(explicit))return explicit;
+    if(settings.mode==='f')return floraTemplate({...settings,floraLayout:'single'}).map(l=>({...l,id:'flower-1',name:'Flower',flora:{...l.flora,generator:'flower'}}));
     if(settings.mode==='flora')return floraTemplate(settings);
     const legacy=settings[settings.mode==='abstract'?'abstractForms':'landscapeForms'];
     const original=Array.from({length:6},(_,i)=>{

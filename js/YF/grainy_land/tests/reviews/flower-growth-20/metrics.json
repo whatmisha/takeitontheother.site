@@ -1,0 +1,182 @@
+{
+  "date": "2026-10-12",
+  "count": 20,
+  "settings": {
+    "floraLayout": "cluster",
+    "floraCount": 4,
+    "floraScale": 112,
+    "floraRecognition": 55,
+    "floraBranches": 3,
+    "floraOpening": 76,
+    "floraBend": 60,
+    "floraMerge": 65,
+    "floraFusion": 35,
+    "floraLayers": null,
+    "fType": "random",
+    "fScale": 110,
+    "fPetals": 6,
+    "fOpening": 75,
+    "fWidth": 55,
+    "fCurl": 35,
+    "fAsymmetry": 40,
+    "fRecognition": 60,
+    "fTilt": 35,
+    "fRotation": 0,
+    "fCenterX": 50,
+    "fCenterY": 53,
+    "fStem": 65,
+    "fBend": 35,
+    "fMerge": 30,
+    "fLayers": null,
+    "surfaceMemory": {
+      "other": {
+        "grain": 55,
+        "grainSize": 1,
+        "softness": 38,
+        "edgeVariation": 70,
+        "contrast": 118,
+        "glow": 0,
+        "glowCoverage": 35,
+        "halo": 65
+      }
+    },
+    "schemaVersion": 1,
+    "width": 1920,
+    "height": 1080,
+    "seed": 1565559100,
+    "mode": "f",
+    "layout": "auto",
+    "scale": 100,
+    "complexity": 2,
+    "flow": 48,
+    "folds": 65,
+    "horizon": 53,
+    "relief": 62,
+    "softness": 50,
+    "edgeVariation": 80,
+    "glowCoverage": 10,
+    "glow": 10,
+    "halo": 100,
+    "contrast": 120,
+    "grain": 49,
+    "grainSize": 1,
+    "toneCharacter": "radiant",
+    "skyToneAmount": 0,
+    "toneAmount": 100,
+    "toneSpread": 65,
+    "toneScale": 110,
+    "toneBleed": 50,
+    "previewTransparent": false,
+    "softProof": false,
+    "printIntent": 1,
+    "motionAmount": 3,
+    "motionDuration": 6,
+    "customColors": [],
+    "blueLayers": true,
+    "exportScale": 1,
+    "transparentBackground": false,
+    "exportLayers": false,
+    "canvasUnit": "px",
+    "dpi": 300,
+    "printWidthMM": null,
+    "printHeightMM": null,
+    "sky": "#2353DB",
+    "terrain": "#FF9306",
+    "depth": "#FF5900",
+    "light": "#FFF0D8",
+    "terrainLow": null,
+    "depthLow": null,
+    "lightLow": null,
+    "terrainHigh": null,
+    "depthHigh": null,
+    "lightHigh": null,
+    "skyLow": null,
+    "skyHigh": null,
+    "landscapeForms": null,
+    "abstractForms": null,
+    "landscapeLayers": null,
+    "abstractLayers": null
+  },
+  "stats": [
+    {
+      "seed": 152274286,
+      "type": "radial"
+    },
+    {
+      "seed": 3124604871,
+      "type": "fan"
+    },
+    {
+      "seed": 949521042,
+      "type": "cup"
+    },
+    {
+      "seed": 230997082,
+      "type": "fan"
+    },
+    {
+      "seed": 3350086222,
+      "type": "fan"
+    },
+    {
+      "seed": 2973545222,
+      "type": "cup"
+    },
+    {
+      "seed": 1111927890,
+      "type": "fan"
+    },
+    {
+      "seed": 617675128,
+      "type": "lobed"
+    },
+    {
+      "seed": 4102372144,
+      "type": "cup"
+    },
+    {
+      "seed": 932392132,
+      "type": "radial"
+    },
+    {
+      "seed": 3569339633,
+      "type": "radial"
+    },
+    {
+      "seed": 3787673882,
+      "type": "cup"
+    },
+    {
+      "seed": 3173651501,
+      "type": "lobed"
+    },
+    {
+      "seed": 308144753,
+      "type": "lobed"
+    },
+    {
+      "seed": 4157456611,
+      "type": "radial"
+    },
+    {
+      "seed": 3897090572,
+      "type": "fan"
+    },
+    {
+      "seed": 582077047,
+      "type": "cup"
+    },
+    {
+      "seed": 3988648916,
+      "type": "radial"
+    },
+    {
+      "seed": 3536220750,
+      "type": "fan"
+    },
+    {
+      "seed": 2967518400,
+      "type": "lobed"
+    }
+  ]
+}

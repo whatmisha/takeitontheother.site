@@ -1,6 +1,6 @@
-import { floraParts } from './flora.js?v=flora-growth-1';
-import { flattenVectorPath } from './vector-path.js?v=flora-growth-1';
-import { groupColor } from './custom-colors.js?v=flora-growth-1';
+import { floraParts } from './flora.js?v=flower-f-2';
+import { flattenVectorPath } from './vector-path.js?v=flower-f-2';
+import { groupColor } from './custom-colors.js?v=flower-f-2';
 const cache=new Map();
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 // Linear-time separable squared Euclidean distance transform.
@@ -12,7 +12,8 @@ function edt(input,w,h){const out=new Float32Array(input),n=Math.max(w,h),f=new 
 export function signedField(mask,w,h,step){const a=new Float32Array(mask.length),b=new Float32Array(mask.length);for(let i=0;i<a.length;i++){a[i]=mask[i]?1e9:0;b[i]=mask[i]?0:1e9;}const inside=edt(a,w,h),outside=edt(b,w,h);return Float32Array.from(inside,(d,i)=>(Math.sqrt(d)-Math.sqrt(outside[i]))*step);}
 function blur(data,w,h,r){if(r<1)return data;const a=new Float32Array(data.length),b=new Float32Array(data.length),den=2*r+1;for(let y=0;y<h;y++){let sum=0;for(let k=-r;k<=r;k++)sum+=data[y*w+clamp(k,0,w-1)];for(let x=0;x<w;x++){a[y*w+x]=sum/den;sum+=data[y*w+clamp(x+r+1,0,w-1)]-data[y*w+clamp(x-r,0,w-1)];}}for(let x=0;x<w;x++){let sum=0;for(let k=-r;k<=r;k++)sum+=a[clamp(k,0,h-1)*w+x];for(let y=0;y<h;y++){b[y*w+x]=sum/den;sum+=a[clamp(y+r+1,0,h-1)*w+x]-a[clamp(y-r,0,h-1)*w+x];}}return b;}
 export function bakeFlora(layer,settings){
- const parts=floraParts(layer,settings).filter(p=>!p.hidden),key=JSON.stringify([parts,layer.group,settings.floraMerge,settings.sky,settings.terrain,settings.depth,settings.light,settings.customColors,settings.width/settings.height]);
+ const mergeKey=layer.flora.generator==='flower'?'fMerge':'floraMerge',merge=layer.flora.frozen?.[mergeKey]??settings[mergeKey];
+ const parts=floraParts(layer,settings).filter(p=>!p.hidden),key=JSON.stringify([parts,layer.group,merge,settings.sky,settings.terrain,settings.depth,settings.light,settings.customColors,settings.width/settings.height]);
  if(cache.has(key))return cache.get(key);
  const aspect=settings.width/settings.height,polys=parts.map(p=>flattenVectorPath(p.path));
  let left=0,top=0,right=1,bottom=1;for(const poly of polys)for(const [x,y]of poly){left=Math.min(left,x);top=Math.min(top,y);right=Math.max(right,x);bottom=Math.max(bottom,y);}
@@ -26,7 +27,7 @@ export function bakeFlora(layer,settings){
    cross.sort((a,b)=>a-b);for(let c=0;c+1<cross.length;c+=2)for(let x=clamp(Math.ceil(cross[c]),0,w-1);x<=Math.min(w-1,Math.floor(cross[c+1]));x++){const at=y*w+x;mask[at]=1;tone[at]=part.kind==='petal'?Math.min(1,part.shade*.65+.52*((x-cross[c])/Math.max(1,cross[c+1]-cross[c]))**2):part.shade;for(let k=0;k<3;k++)rgb[k][at]=color[k];}
   }
  });
- const fusion=(layer.flora.frozen?.floraMerge??settings.floraMerge)/100,radius=Math.round(fusion*.026/step);
+ const fusion=merge/100,radius=Math.round(fusion*.026/step);
  const merged=radius?blur(blur(mask,w,h,radius),w,h,radius):mask;
  const binary=Uint8Array.from(merged,x=>x>(radius?.30:.5)?1:0),distance=signedField(binary,w,h,step);
  const shadingRadius=Math.max(2,Math.round(.048/step)),coverage=blur(mask,w,h,shadingRadius),shade=blur(tone,w,h,shadingRadius),color=rgb.map(c=>blur(c,w,h,shadingRadius));

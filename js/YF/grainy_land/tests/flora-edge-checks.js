@@ -1,6 +1,6 @@
-import { defaults, normalizeSettings } from '../document.js?v=flora-growth-1';
-import { getLayers, withLayers } from '../layers.js?v=flora-growth-1';
-import { floraParts } from '../flora.js?v=flora-growth-1';
+import { defaults, normalizeSettings } from '../document.js?v=flower-f-2';
+import { getLayers, withLayers } from '../layers.js?v=flower-f-2';
+import { floraParts } from '../flora.js?v=flower-f-2';
 
 // Inspect actual GPU alpha, independent of palette, illumination, and spray noise.
 export function checkFloraEdges(renderer, check) {

@@ -65,5 +65,21 @@
   "floraMerge": 65,
   "floraFusion": 35,
   "floraLayers": null,
-  "surfaceMemory": null
+  "surfaceMemory": null,
+  "fType": "random",
+  "fScale": 110,
+  "fPetals": 6,
+  "fOpening": 75,
+  "fWidth": 55,
+  "fCurl": 35,
+  "fAsymmetry": 40,
+  "fRecognition": 60,
+  "fTilt": 35,
+  "fRotation": 0,
+  "fCenterX": 50,
+  "fCenterY": 53,
+  "fStem": 65,
+  "fBend": 35,
+  "fMerge": 30,
+  "fLayers": null
 }

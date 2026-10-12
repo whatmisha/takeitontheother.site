@@ -253,3 +253,9 @@
 .grainy-land .flora-child:disabled { opacity:.45; cursor:default; }
 
 @media (min-width:1001px) { .grainy-land #layerPanel:has(#floraPartControls:not([hidden])) { top:clamp(var(--spacing-3xl),var(--layers-panel-top),calc(100dvh - var(--layer-panel-height) - 88px)); max-height:min(520px,calc(100dvh - 120px)); } }
+
+.grainy-land #flowerComposition > select { margin-bottom:20px; }
+.grainy-land #flowerComposition .stacked-select-label { display:flex; flex-direction:row; align-items:center; justify-content:space-between; }
+
+.grainy-land .flower-center { fill:var(--color-bg-panel,#191919); stroke:#b6ffce; stroke-width:1.5; pointer-events:all; cursor:move; }
+.grainy-land .flower-center-cross { fill:none; stroke:#b6ffce; stroke-width:1; pointer-events:none; }

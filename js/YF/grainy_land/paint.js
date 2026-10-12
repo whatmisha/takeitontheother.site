@@ -1,5 +1,5 @@
-import { canvasToLocal } from './transforms.js?v=flora-growth-1';
-import { flattenVectorPath, vectorDistance } from './vector-path.js?v=flora-growth-1';
+import { canvasToLocal } from './transforms.js?v=flower-f-2';
+import { flattenVectorPath, vectorDistance } from './vector-path.js?v=flower-f-2';
 // Strokes live in a form's local coordinates, independent of preview/export size.
 export const MAX_STROKES = 64;
 export const MAX_STROKE_POINTS = 192;

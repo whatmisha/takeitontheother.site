@@ -1,10 +1,10 @@
 import {checkFloraEdges} from './flora-edge-checks.js';
-import {defaults,switchMode,normalizeSettings,makeDocument,readDocument} from '../document.js?v=flora-growth-1';
-import {LandscapeRenderer} from '../render.js?v=flora-growth-1';
-import {withLayers,getLayers,editLayer} from '../layers.js?v=flora-growth-1';
-import {editFloraPart,floraParts} from '../flora.js?v=flora-growth-1';
-import {renderPNG} from '../png-export.js?v=flora-growth-1';
-import {renderLayersZIP} from '../layers-export.js?v=flora-growth-1';
+import {defaults,switchMode,normalizeSettings,makeDocument,readDocument} from '../document.js?v=flower-f-2';
+import {LandscapeRenderer} from '../render.js?v=flower-f-2';
+import {withLayers,getLayers,editLayer} from '../layers.js?v=flower-f-2';
+import {editFloraPart,floraParts} from '../flora.js?v=flower-f-2';
+import {renderPNG} from '../png-export.js?v=flower-f-2';
+import {renderLayersZIP} from '../layers-export.js?v=flower-f-2';
 import {readStoredZip} from './zip-reader.js';
 const r=new LandscapeRenderer(),log=[],output=document.querySelector('#results');
 const check=(name,ok)=>{log.push((ok?'PASS ':'FAIL ')+name);output.textContent=log.join('\n');if(!ok)throw Error(name);};

@@ -1,4 +1,5 @@
-import { normalizeVectorPath } from './vector-path.js?v=flora-growth-1';
+import {buildFlowerParts,normalizeFlowerParams} from './flower.js?v=flower-f-2';
+import { normalizeVectorPath } from './vector-path.js?v=flower-f-2';
 export const floraDefaults={floraLayout:'cluster',floraCount:4,floraScale:112,floraRecognition:55,floraBranches:3,floraOpening:76,floraBend:60,floraMerge:65,floraFusion:35,floraLayers:null};
 export const floraRanges={floraCount:[1,12,1],floraScale:[50,180,1],floraRecognition:[0,100,1],floraBranches:[1,5,1],floraOpening:[0,100,1],floraBend:[0,100,1],floraMerge:[0,100,1],floraFusion:[0,100,1]};
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -13,16 +14,17 @@ export function normalizeFlora(value){
   if(!/^p\d+$/.test(id)||!v||typeof v!=='object')continue;const path=normalizeVectorPath(v.path);
   edits[id]={...(path?{path}:{}),...(v.hidden===true?{hidden:true}:{}),...(v.sockets&&typeof v.sockets==='object'?{sockets:Object.fromEntries(Object.entries(v.sockets).filter(([id,n])=>/^p\d+$/.test(id)&&Number.isInteger(n)&&n>=0&&n<48))}:{}),...(typeof v.group==='string'&&/^(terrain|depth|light|sky|custom-[a-zA-Z0-9_-]+)$/.test(v.group)?{group:v.group}:{}),...(v.detached===true?{detached:true,origin:Array.isArray(v.origin)&&v.origin.length===2?v.origin.map(x=>clamp(Number(x)||0,-2,3)):[0,0]}:{})};
  }
- return {index:clamp(Math.round(Number(value.index)||0),0,31),variant:(Number(value.variant)||0)>>>0,edits,
+ return {...(value.generator==='flower'?{generator:'flower'}:{}),index:clamp(Math.round(Number(value.index)||0),0,31),variant:(Number(value.variant)||0)>>>0,edits,
  ...(value.frozen&&typeof value.frozen==='object'?{frozen:normalizeFloraParams(value.frozen)}:{})};
 }
-export function normalizeFloraParams(s){const out={};for(const [k,[a,b,step]]of Object.entries(floraRanges))out[k]=Math.round(clamp(s[k]!=null&&Number.isFinite(Number(s[k]))?Number(s[k]):floraDefaults[k],a,b)/step)*step;out.floraLayout=['single','cluster','field'].includes(s.floraLayout)?s.floraLayout:'cluster';return out;}
+export function normalizeFloraParams(s){const out={...normalizeFlowerParams(s)};for(const [k,[a,b,step]]of Object.entries(floraRanges))out[k]=Math.round(clamp(s[k]!=null&&Number.isFinite(Number(s[k]))?Number(s[k]):floraDefaults[k],a,b)/step)*step;out.floraLayout=['single','cluster','field'].includes(s.floraLayout)?s.floraLayout:'cluster';return out;}
 export function floraTemplate(settings){const count=settings.floraLayout==='single'?1:settings.floraCount??4;return Array.from({length:count},(_,i)=>({id:'flora-'+(i+1),name:'Plant '+(i+1),source:0,mode:'auto',seed:settings.seed,salt:0,layout:'auto',group:i>0&&rng((settings.seed+i*1597334677)>>>0)()<.24?'terrain':'depth',x:0,y:0,scaleX:1,scaleY:1,visible:true,locked:false,opacity:100,strokes:[],hasBase:false,geometry:null,flora:{index:i,variant:0,edits:{}}}));}
 const geometryCache=new Map();
 export function floraParts(layer,settings){
  if(!layer.flora)return [];
- const s={...floraDefaults,...settings,...layer.flora.frozen},f=layer.flora,key=JSON.stringify([layer.seed,f,s.width/s.height,...Object.keys(floraDefaults).filter(k=>k!=='floraLayers').map(k=>s[k])]);
+ const s={...floraDefaults,...settings,...layer.flora.frozen},f=layer.flora,key=JSON.stringify([layer.seed,f,s.width/s.height,normalizeFloraParams(s)]);
  if(geometryCache.has(key))return geometryCache.get(key);
+ if(f.generator==='flower'){const resolved=resolveParts(buildFlowerParts(layer,s),f,s.width/s.height);geometryCache.set(key,resolved);while(geometryCache.size>96)geometryCache.delete(geometryCache.keys().next().value);return resolved;}
  const r=rng((layer.seed+f.index*2654435761+f.variant*1013904223)>>>0),aspect=s.width/s.height;
  const size=s.floraScale/100,recognition=s.floraRecognition/100,abstract=1-recognition,opening=s.floraOpening/100,bend=s.floraBend/100;
  const single=s.floraLayout==='single',field=s.floraLayout==='field',count=single?1:s.floraCount;
@@ -112,15 +114,19 @@ export function floraParts(layer,settings){
    add('petal',rotate(outline(points,.85),petalAngle,(form===2?.8:1)*(along?.72:1),(form===2?1.2:1)*(along?.72:1)),parent,socket,[0,0],.5,'p'+(b*10+j+1));
   }
  }
+ const resolved=resolveParts(parts,f,aspect);
+ geometryCache.set(key,resolved);while(geometryCache.size>96)geometryCache.delete(geometryCache.keys().next().value);return resolved;
+}
+function resolveParts(parts,f,aspect){
  // Local coordinates use isotropic canvas units before aspect correction.
  const resolved=[];
  for(const p of parts){const edit=f.edits?.[p.id]??{},parent=resolved.find(q=>q.id===p.parent),parentNode=f.edits?.[p.parent]?.sockets?.[p.id]??p.parentNode,socket=parent?parent.path[Math.min(parentNode,parent.path.length-1)]:null;
   const at=edit.detached?edit.origin:socket?[socket.x,socket.y]:p.origin;
   const local=edit.path??p.path.map(n=>({...n,x:n.x/aspect,in:[n.in[0]/aspect,n.in[1]],out:[n.out[0]/aspect,n.out[1]]}));
   const path=local.map(n=>({...n,x:n.x+at[0],y:n.y+at[1],in:[n.in[0]+at[0],n.in[1]+at[1]],out:[n.out[0]+at[0],n.out[1]+at[1]]}));
-  resolved.push({...p,parentNode,local,path,origin:at,hidden:!!edit.hidden||!edit.detached&&!!parent?.hidden,manual:!!edit.path,group:edit.group??null,detached:!!edit.detached});
+  resolved.push({...p,parentNode,local,path,origin:at,hiddenStem:!!p.hidden&&!edit.hidden,hidden:!!edit.hidden||!!p.hidden||!edit.detached&&!!parent?.hidden&&!parent?.hiddenStem,manual:!!edit.path,group:edit.group??null,detached:!!edit.detached});
  }
- geometryCache.set(key,resolved);while(geometryCache.size>96)geometryCache.delete(geometryCache.keys().next().value);return resolved;
+ return resolved;
 }
 export function editFloraPart(layer,settings,id,patch){
  const part=floraParts(layer,settings).find(p=>p.id===id);if(!part||layer.locked)return layer;

@@ -1,4 +1,4 @@
-import {getLayers,layerSettingsKey} from './layer-data.js?v=flora-growth-1';
+import {getLayers,layerSettingsKey} from './layer-data.js?v=flower-f-2';
 export function motionFrame(settings,phase){
  const angle=((phase%1)+1)%1*Math.PI*2,amount=(settings.motionAmount??3)/100,stack=getLayers(settings),aspect=settings.width/settings.height;
  const groups=new Map();stack.forEach((l,i)=>{if(!l.collection||l.locked)return;const g=groups.get(l.collection)??{members:[],first:i};g.members.push(l);groups.set(l.collection,g);});

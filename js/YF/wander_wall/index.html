@@ -78,7 +78,12 @@
             <button id="importJsonBtn" class="btn-fixed btn-fixed--muted" type="button" data-action-dock-extra hidden>Import JSON</button>
         </div>
         <div class="action-dock__slot action-dock__slot--primary"><button id="exportPngBtn" class="btn-fixed" type="button" disabled>PNG</button></div>
-        <div class="action-dock__slot action-dock__slot--options"></div>
+        <div class="action-dock__slot action-dock__slot--options">
+            <label class="toggle-label" title="Export the composition and original PNGs from visible layers in one ZIP.">
+                <div class="toggle-switch"><input type="checkbox" id="exportAssetsPack" aria-label="Assets pack" disabled><span class="toggle-slider"></span></div>
+                <span class="toggle-label-text">Assets pack</span>
+            </label>
+        </div>
     </nav>
     <dialog id="variantDialog" class="modal variant-dialog" aria-labelledby="variantDialogTitle"><div class="modal-content"><button id="closeVariantsBtn" type="button" class="modal-close" aria-label="Close variants">&times;</button><h2 id="variantDialogTitle" class="modal-title">Variants</h2><label class="stacked-select-label" for="variantCategory">Category<select id="variantCategory" class="style-select"></select></label><div id="variantGrid" class="variant-grid" role="group" aria-label="Artwork variants"></div></div></dialog>
     <div class="canvas-feedback"><div class="canvas-feedback-content">

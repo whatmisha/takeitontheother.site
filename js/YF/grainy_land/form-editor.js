@@ -1,13 +1,13 @@
-import {normalizeFloraParams} from './flora.js?v=flora-growth-1';
-import { FloraEditor } from './flora-editor.js?v=flora-growth-1';
-import { editSelection, duplicateSelection, reorderSelection, resizeSelection } from './selection.js?v=flora-growth-1';
-import { localToCanvas, canvasToLocal, materialRanges } from './transforms.js?v=flora-growth-1';
-import { VectorEditor } from './vector-editor.js?v=flora-growth-1';
-import { groupColor } from './custom-colors.js?v=flora-growth-1';
-import { brushStroke, localPaintPoint, strokePointCount, MAX_STROKES, MAX_STROKE_POINTS, MAX_FORM_POINTS } from './paint.js?v=flora-growth-1';
-import { getLayers, withLayers, layerSettingsKey, MAX_LAYERS, editLayer, addLayer, addBlueLayers, duplicateLayer, removeLayer, reorderLayer, convertLayer } from './layers.js?v=flora-growth-1';
-import { createLayerScene } from './scene.js?v=flora-growth-1';
-import { LandscapeRenderer } from './render.js?v=flora-growth-1';
+import {normalizeFloraParams} from './flora.js?v=flower-f-2';
+import { FloraEditor } from './flora-editor.js?v=flower-f-2';
+import { editSelection, duplicateSelection, reorderSelection, resizeSelection } from './selection.js?v=flower-f-2';
+import { localToCanvas, canvasToLocal, materialRanges } from './transforms.js?v=flower-f-2';
+import { VectorEditor } from './vector-editor.js?v=flower-f-2';
+import { groupColor } from './custom-colors.js?v=flower-f-2';
+import { brushStroke, localPaintPoint, strokePointCount, MAX_STROKES, MAX_STROKE_POINTS, MAX_FORM_POINTS } from './paint.js?v=flower-f-2';
+import { getLayers, withLayers, layerSettingsKey, MAX_LAYERS, editLayer, addLayer, addBlueLayers, duplicateLayer, removeLayer, reorderLayer, convertLayer } from './layers.js?v=flower-f-2';
+import { createLayerScene } from './scene.js?v=flower-f-2';
+import { LandscapeRenderer } from './render.js?v=flower-f-2';
 
 export function visibleBounds(map, selected) {
     let left=map.width,top=map.height,right=-1,bottom=-1;
@@ -202,7 +202,7 @@ export class FormEditor {
         const ids=this.selection(),used=new Set(getLayers(this.tool.settings).filter(l=>!ids.includes(l.id)).map(l=>l.collection));let unique=name.trim().slice(0,40),suffix=2;while(used.has(unique))unique=name.trim().slice(0,40)+' '+suffix++;this.commit({collection:unique},'Group layers');
     }
     renderList(stack) {
-        const key=JSON.stringify([this.tool.settings.floraBranches,stack.map(l=>[l.id,l.name,l.mode,l.visible,l.locked,l.group,l.collection,l.flora])]);
+        const key=JSON.stringify([this.tool.settings.floraBranches,this.tool.settings.fPetals,this.tool.settings.fType,this.tool.settings.fTilt,stack.map(l=>[l.id,l.name,l.mode,l.visible,l.locked,l.group,l.collection,l.flora])]);
         if(key===this.listKey)return;this.listKey=key;const list=byId('layerList'),scroll=list.scrollTop;list.replaceChildren();
         for(const layer of [...stack].reverse()) {
             const row=document.createElement('div');row.className='layer-row ui-list-row';row.dataset.layerId=layer.id;row.setAttribute('role','listitem');row.dataset.locked=String(layer.locked);

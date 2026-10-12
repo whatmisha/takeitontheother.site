@@ -1,12 +1,12 @@
-import { normalizeFloraParams } from './flora.js?v=flora-growth-1';
-import { defaultVectorPath } from './vector-path.js?v=flora-growth-1';
-import { normalizeSettings, formSettingsKey } from './document.js?v=flora-growth-1';
-import { MAX_LAYERS, getLayers, layerSettingsKey, normalizeLayerStack, geometrySnapshot, sourceGroup, blueLayerPair } from './layer-data.js?v=flora-growth-1';
-export { MAX_LAYERS, getLayers, layerSettingsKey } from './layer-data.js?v=flora-growth-1';
+import { normalizeFloraParams } from './flora.js?v=flower-f-2';
+import { defaultVectorPath } from './vector-path.js?v=flower-f-2';
+import { normalizeSettings, formSettingsKey } from './document.js?v=flower-f-2';
+import { MAX_LAYERS, getLayers, layerSettingsKey, normalizeLayerStack, geometrySnapshot, sourceGroup, blueLayerPair } from './layer-data.js?v=flower-f-2';
+export { MAX_LAYERS, getLayers, layerSettingsKey } from './layer-data.js?v=flower-f-2';
 
 export function withLayers(settings,layers) {
     const s=normalizeSettings(settings);
-    return {...s,[layerSettingsKey(s.mode)]:normalizeLayerStack(layers,s),...(s.mode==='flora'?{}:{[formSettingsKey(s.mode)]:null})};
+    return {...s,[layerSettingsKey(s.mode)]:normalizeLayerStack(layers,s),...(['flora','f'].includes(s.mode)?{}:{[formSettingsKey(s.mode)]:null})};
 }
 export function editLayer(settings,id,patch,{manual=false}={}) {
     const s=normalizeSettings(settings),stack=getLayers(s),layer=stack.find(l=>l.id===id);
@@ -21,10 +21,10 @@ export function addLayer(settings,mode='drawn') {
     const s=normalizeSettings(settings),stack=getLayers(s);
     if(stack.length>=MAX_LAYERS)throw new Error('Maximum '+MAX_LAYERS+' layers per composition.');
     const id=uniqueId(stack),salt=Number(id.slice(6))*2654435761>>>0,source=stack.length%6;
-    const plant=s.mode==='flora'&&mode==='auto';
+    const plant=['flora','f'].includes(s.mode)&&mode==='auto';
     const vector=mode==='vector',drawn=mode==='drawn'||vector;
-    const layer={...(plant?{flora:{index:Math.max(-1,...stack.map(l=>l.flora?.index??-1))+1,variant:0,edits:{}}}:{}),id,name:plant?'Plant '+(stack.length+1):vector?'Vector shape':drawn?'Drawn layer':'Generated layer',source,mode:vector?'vector':drawn?'drawn':'auto',seed:(s.seed+salt)>>>0,salt,
-        layout:s.layout,group:drawn?'terrain':sourceGroup(source),geometry:drawn?geometrySnapshot(s):null,hasBase:!drawn,...(vector?{vectorPath:defaultVectorPath()}: {})};
+    const layer={...(plant?{flora:{...(s.mode==='f'?{generator:'flower'}:{}),index:Math.max(-1,...stack.map(l=>l.flora?.index??-1))+1,variant:0,edits:{}}}:{}),id,name:plant?(s.mode==='f'?'Flower':'Plant '+(stack.length+1)):vector?'Vector shape':drawn?'Drawn layer':'Generated layer',source,mode:vector?'vector':drawn?'drawn':'auto',seed:(s.seed+salt)>>>0,salt,
+        layout:s.layout,group:plant&&s.mode==='f'?'depth':drawn?'terrain':sourceGroup(source),geometry:drawn?geometrySnapshot(s):null,hasBase:!drawn,...(vector?{vectorPath:defaultVectorPath()}: {})};
     return {settings:withLayers(s,[...stack,layer]),id};
 }
 export function duplicateLayer(settings,id) {

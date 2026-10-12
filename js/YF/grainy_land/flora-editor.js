@@ -1,8 +1,8 @@
-import {floraParts,editFloraPart} from './flora.js?v=flora-growth-1';
-import {getLayers,editLayer,layerSettingsKey} from './layers.js?v=flora-growth-1';
-import {localToCanvas,canvasToLocal} from './transforms.js?v=flora-growth-1';
-import {moveVectorNode,setVectorNodesSmooth,splitVectorSegment,vectorSegment,cubicPoint,flattenVectorPath,vectorDistance} from './vector-path.js?v=flora-growth-1';
-import {groupColor} from './custom-colors.js?v=flora-growth-1';
+import {floraParts,editFloraPart} from './flora.js?v=flower-f-2';
+import {getLayers,editLayer,layerSettingsKey} from './layers.js?v=flower-f-2';
+import {localToCanvas,canvasToLocal} from './transforms.js?v=flower-f-2';
+import {moveVectorNode,setVectorNodesSmooth,splitVectorSegment,vectorSegment,cubicPoint,flattenVectorPath,vectorDistance} from './vector-path.js?v=flower-f-2';
+import {groupColor} from './custom-colors.js?v=flower-f-2';
 const byId=id=>document.getElementById(id),NS='http://www.w3.org/2000/svg';
 function svg(tag,attrs){const el=document.createElementNS(NS,tag);for(const [k,v]of Object.entries(attrs))el.setAttribute(k,String(v));return el;}
 export class FloraEditor{
@@ -26,10 +26,10 @@ export class FloraEditor{
   on(e.container,'pointerup',event=>{if(this.drag?.pointerId===event.pointerId){this.stop(event);this.finish();}},true);
   on(e.container,'pointercancel',()=>this.cancel(),true);on(e.container,'lostpointercapture',()=>this.cancel(),true);on(window,'blur',()=>this.cancel());
   on(document,'keydown',event=>{
-   if(!this.editing||event.target.closest('input,select,textarea,[contenteditable="true"],dialog,[role="dialog"],.modal-overlay'))return;
+   if((!this.editing&&!this.drag)||event.target.closest('input,select,textarea,[contenteditable="true"],dialog,[role="dialog"],.modal-overlay'))return;
    if(event.key==='Escape'){this.stop(event);if(this.drag)this.cancel();else this.open(false);return;}
    if((event.metaKey||event.ctrlKey)&&event.key.toLowerCase()==='z'&&this.drag){this.stop(event);this.cancel();return;}
-   if(event.metaKey||event.ctrlKey||event.altKey)return;
+   if(!this.editing||event.metaKey||event.ctrlKey||event.altKey)return;
    if(['Delete','Backspace'].includes(event.key)){this.stop(event);this.deletePoint();return;}
    if(e.container.contains(event.target)&&['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key)){this.stop(event);const p=this.part();if(!p)return;const n=p.local[this.node],step=event.shiftKey?10:1;if(this.node===0&&p.parent&&!p.detached)return;this.patch({path:moveVectorNode(p.local,this.node,[n.x+(event.key==='ArrowLeft'?-step:event.key==='ArrowRight'?step:0)/e.tool.settings.width,n.y+(event.key==='ArrowUp'?-step:event.key==='ArrowDown'?step:0)/e.tool.settings.height])},'Move plant point');}
   },true);return this;
@@ -48,21 +48,31 @@ export class FloraEditor{
  protectedPoint(){const p=this.part();return !!p&&(this.node===0&&p.parent&&!p.detached||this.parts().some(child=>child.parent===p.id&&!child.detached&&child.parentNode===this.node));}
  deletePoint(){const p=this.part();if(!p)return;if(p.local.length<=3||this.protectedPoint()){this.e.report('Keep the attachment and at least three points.');return;}const at=this.node,path=p.local.filter((_,i)=>i!==at);this.node=Math.min(at,path.length-1);this.patch({path,reindex:{at,delta:-1}},'Delete plant point');}
  transform(angle,scale){const p=this.part();if(!p)return;const a=angle*Math.PI/180,c=Math.cos(a),s=Math.sin(a),aspect=this.e.tool.settings.width/this.e.tool.settings.height,at=([x,y])=>[(x*aspect*c-y*s)*scale/aspect,(x*aspect*s+y*c)*scale];this.patch({path:p.local.map(n=>{const [x,y]=at([n.x,n.y]);return {...n,x,y,in:at(n.in),out:at(n.out)};})},'Transform plant part');}
- down(event){const e=this.e;if(!this.editing||event.button!==0||e.space||e.layer()?.locked)return;const control=event.target.closest('[data-flora-node]');if(!control){if(event.target.closest('[data-flora-segment]')){this.stop(event);return;}const hit=e.hit(e.point(event));if(hit!==e.selected){this.open(false);return;}this.stop(event);this.chooseAt(this.point(event));return;}
+ center(){const parts=this.parts(),part=parts.find(p=>p.id==='p0'),node=parts.find(p=>p.parent==='p0')?.parentNode??2;return {part,node};}
+ centerEditable(){const l=this.e.layer();return l?.flora?.generator==='flower'&&l.mode!=='drawn'&&!l.locked&&l.visible&&this.e.paintTool==='move'&&!this.e.vector?.pen;}
+ down(event){const e=this.e;
+  if(!this.editing&&this.centerEditable()&&event.button===0&&!e.space&&event.target.closest('[data-flower-center]')){
+   this.stop(event);e.container.focus({preventScroll:true});this.layerId=e.selected;
+   const {part,node}=this.center();
+   this.drag={center:true,pointerId:event.pointerId,part,side:'anchor',node,layer:e.layer(),snapshot:e.tool.getSnapshot(),origin:this.point(event),started:false};
+   e.container.setPointerCapture(event.pointerId);return;
+  }
+  if(!this.editing||event.button!==0||e.space||e.layer()?.locked)return;const control=event.target.closest('[data-flora-node]');if(!control){if(event.target.closest('[data-flora-segment]')){this.stop(event);return;}const hit=e.hit(e.point(event));if(hit!==e.selected){this.open(false);return;}this.stop(event);this.chooseAt(this.point(event));return;}
   this.stop(event);e.container.focus({preventScroll:true});this.node=Number(control.dataset.floraNode);const part=this.part(),side=control.dataset.floraSide;e.sync();
   if(this.node===0&&side==='anchor'&&part.parent&&!part.detached){this.e.report('This point stays connected. Move the stem or use Detach.');return;}
   this.drag={pointerId:event.pointerId,part,side,node:this.node,layer:e.layer(),snapshot:e.tool.getSnapshot(),origin:this.point(event),started:false};e.container.setPointerCapture(event.pointerId);e.tool.render();
  }
  move(event){const g=this.drag,e=this.e;if(!g||g.pointerId!==event.pointerId)return;this.stop(event);const point=this.point(event);if(!g.started&&Math.hypot(point[0]-g.origin[0],point[1]-g.origin[1])<.001)return;
-  if(!g.started){e.tool.history.flush();e.tool.history.beginTransaction('Edit plant part');g.started=true;}
-  const at=[point[0]-g.part.origin[0],point[1]-g.part.origin[1]],path=moveVectorNode(g.part.local,g.node,at,g.side,event.altKey),updated=editFloraPart(g.layer,g.snapshot,g.part.id,{path});
+  if(!g.started){e.tool.history.flush();e.tool.history.beginTransaction(g.center?'Move flower center':'Edit plant part');g.started=true;}
+  const at=g.center?[g.part.local[g.node].x+point[0]-g.origin[0],g.part.local[g.node].y+point[1]-g.origin[1]]:[point[0]-g.part.origin[0],point[1]-g.part.origin[1]],path=moveVectorNode(g.part.local,g.node,at,g.side,event.altKey),updated=editFloraPart(g.layer,g.snapshot,g.part.id,{path});
   const next=editLayer(g.snapshot,g.layer.id,{flora:updated.flora});e.tool.settingsStore.set(layerSettingsKey(g.snapshot.mode),next[layerSettingsKey(g.snapshot.mode)]);
  }
  finish(){const g=this.drag;if(!g)return;this.drag=null;if(g.started)this.e.tool.history.endTransaction();if(this.e.container.hasPointerCapture(g.pointerId))this.e.container.releasePointerCapture(g.pointerId);}
  cancel(){const g=this.drag;if(!g)return;this.drag=null;if(g.started){this.e.tool.applySnapshot(g.snapshot);this.e.tool.history.endTransaction();}if(this.e.container.hasPointerCapture(g.pointerId))this.e.container.releasePointerCapture(g.pointerId);}
  sync(){const e=this.e,l=e.layer(),editable=!!l?.flora&&l.mode!=='drawn';if(!editable||l.locked||!l.visible||e.selected!==this.layerId)this.deactivate();
+  byId('regeneratePlant').textContent=l?.flora?.generator==='flower'?'Regenerate flower':'Regenerate plant';
   byId('floraControls').hidden=!editable;byId('floraPartControls').hidden=!this.editing;byId('editFloraParts').textContent=this.editing?'Done editing':'Edit parts';byId('editFloraParts').setAttribute('aria-pressed',String(this.editing));
-  this.svg.toggleAttribute('hidden',!this.editing);if(!this.editing){this.svg.replaceChildren();return;}e.overlay.hidden=true;
+  this.svg.toggleAttribute('hidden',!this.editing&&!this.centerEditable());if(!this.editing){this.svg.replaceChildren();return;}e.overlay.hidden=true;
   const p=this.part();if(!p){this.partId=this.parts()[0]?.id;return;}this.node=Math.min(this.node,p.local.length-1);
   byId('floraPartName').textContent=p.name+' · '+(p.manual?'Edited':'Auto')+' · Point '+(this.node+1)+' / '+p.local.length;
   byId('floraDetach').hidden=!p.parent;byId('floraDetach').textContent=p.detached?'Attach':'Detach';byId('floraHidePart').textContent=l.flora.edits?.[p.id]?.hidden?'Show part':'Hide part';byId('floraHidePart').title=p.hidden&&!l.flora.edits?.[p.id]?.hidden?'Hidden with its parent. Show the parent or detach this part.':'';
@@ -74,7 +84,13 @@ export class FloraEditor{
  appendRows(list,layer){if(!layer.flora)return;const row=list.lastElementChild,b=document.createElement('button');b.className='flora-expand ui-icon-button';b.type='button';b.textContent=this.expanded.has(layer.id)?'▾':'▸';b.setAttribute('aria-label','Parts of '+layer.name);b.setAttribute('aria-expanded',String(this.expanded.has(layer.id)));b.addEventListener('click',()=>{if(this.expanded.has(layer.id))this.expanded.delete(layer.id);else this.expanded.add(layer.id);this.e.listKey='';this.e.sync();});row.prepend(b);
   if(!this.expanded.has(layer.id))return;const children=document.createElement('div');children.className='flora-children';for(const part of floraParts(layer,this.e.tool.settings)){const child=document.createElement('button');child.type='button';child.className='flora-child ui-list-row ui-list-select';child.dataset.partId=part.id;child.dataset.plantId=layer.id;child.setAttribute('aria-label','Edit '+part.name+' of '+layer.name);child.disabled=layer.locked||!layer.visible||layer.mode==='drawn';child.textContent=part.name;const state=document.createElement('span');state.textContent=part.hidden?'Hidden':part.manual?'Edited':'Auto';child.append(state);child.addEventListener('click',()=>this.select(layer.id,part.id));children.append(child);}list.append(children);
  }
- draw(){if(!this.editing)return;this.e.overlay.hidden=true;const e=this.e,l=e.layer(),p=this.part();if(!p)return;const t=e.tool.target,s=e.tool.settings,r=e.container.getBoundingClientRect();this.svg.setAttribute('viewBox','0 0 '+r.width+' '+r.height);this.svg.replaceChildren();
+ drawCenter(){
+  if(!this.centerEditable())return;const e=this.e,l=e.layer(),s=e.tool.settings,t=e.tool.target,r=e.container.getBoundingClientRect(),center=this.center(),tip=center.part?.path[center.node];if(!tip)return;
+  const p=localToCanvas([tip.x,tip.y],l,s.width/s.height),x=t.panX+p[0]*s.width*t.zoom,y=t.panY+p[1]*s.height*t.zoom;
+  this.svg.removeAttribute('hidden');this.svg.setAttribute('viewBox','0 0 '+r.width+' '+r.height);this.svg.replaceChildren();
+  const handle=svg('circle',{cx:x,cy:y,r:7,class:'flower-center','data-flower-center':'true','aria-label':'Move flower center'}),title=svg('title',{});title.textContent='Drag flower center';handle.append(title);this.svg.append(handle,svg('path',{d:'M'+(x-3)+' '+y+'h6 M'+x+' '+(y-3)+'v6',class:'flower-center-cross'}));
+ }
+ draw(){if(!this.editing){this.drawCenter();return;}this.e.overlay.hidden=true;const e=this.e,l=e.layer(),p=this.part();if(!p)return;const t=e.tool.target,s=e.tool.settings,r=e.container.getBoundingClientRect();this.svg.setAttribute('viewBox','0 0 '+r.width+' '+r.height);this.svg.replaceChildren();
   const at=q=>{const v=localToCanvas(q,l,s.width/s.height);return [t.panX+v[0]*s.width*t.zoom,t.panY+v[1]*s.height*t.zoom];};
   for(let i=0;i<p.path.length;i++){const [a,b,c,d]=vectorSegment(p.path,i).map(at),path='M'+a.join(' ')+' C'+b.join(' ')+' '+c.join(' ')+' '+d.join(' ');this.svg.append(svg('path',{d:path,class:'flora-part-path'}),svg('path',{d:path,class:'flora-part-hit','data-flora-segment':i}));}
   p.path.forEach((n,i)=>{const a=at([n.x,n.y]);if(i===this.node)for(const side of ['in','out']){const h=at(n[side]);this.svg.append(svg('line',{x1:a[0],y1:a[1],x2:h[0],y2:h[1],class:'vector-handle-line'}),svg('circle',{cx:h[0],cy:h[1],r:4,class:'vector-handle','data-flora-node':i,'data-flora-side':side}));}this.svg.append(svg('rect',{x:a[0]-5,y:a[1]-5,width:10,height:10,rx:n.smooth?3:0,class:'vector-anchor'+(i===this.node?' is-selected':'')+(i===0&&p.parent&&!p.detached?' flora-attachment':''),'data-flora-node':i,'data-flora-side':'anchor','aria-label':p.name+' point '+(i+1)}));});

@@ -79,10 +79,45 @@ Validation: `node --test grainy_land/tests/*.test.mjs`; browser gallery and GPU/
 ZIP checks at `grainy_land/tests/flora.html`. The postponed general UX audit remains
 in [UX_AUDIT_PLAN.md](UX_AUDIT_PLAN.md).
 
+## F — one procedural flower
+
+Choose **F** in Composition. It has its own layer stack and surface memory, starting
+with the current palette and the same spray defaults as Flora. Generate initially
+creates one flower. **Random** chooses Fan, Cup, Lobed or Radial; selecting a family
+keeps it while Generate varies the individual petals.
+
+- **Flower size**, **Petals** (3–12), **Opening** and **View angle** are the main controls.
+  Each petal has a curved profile in a tilted local plane. View angle changes
+  foreshortening; Cup depth and Curl remain visible in side views.
+- Fan uses flared rims, Cup turned lips, Lobed unequal paddles, and Radial elongated
+  petals. A shared growth bias gives the bloom a dominant side; per-petal variation
+  changes individual length, width and curl. The stem follows a smooth centerline.
+- **Shape** contains Petal width, Curl, Asymmetry, Recognizability and Merge parts.
+  Recognizability changes petal necks, proportions and the overall bend continuously:
+  high values separate the petals; low values broaden and merge them into a mass.
+  **Position & stem** contains Center X/Y, Rotation, Stem length and Stem bend.
+  Stem length 0 hides the stem while keeping the flower head.
+- Select the flower with Move and drag its center marker to move the junction and
+  attached petals. Their manual contours stay intact. Double-click the flower or
+  use **Edit parts** for individual Bézier contours and color assignments.
+- F uses the existing Pin, Lock, Drawn conversion, history, JSON, presets and exports.
+  The whole flower is one layer and one PNG in Layers ZIP. **+ Flower** restores a
+  deleted flower; it is disabled while a flower is present. Drawn/vector additions
+  and duplication remain available.
+- The **Generation** section is hidden in Composition for every mode. Generate and
+  its shortcut still work; the seed remains part of saved documents.
+
+Implementation: `flower.js` supplies the parts to the existing Flora editor and
+renderer. Tests: `tests/flower.test.mjs` and `tests/flower.html` (12 family/view
+combinations, JSON pixel roundtrip, transparent PNG and Layers ZIP).
+The saved visual review in `tests/reviews/flower-growth-20/` includes 20 seeds,
+identical-settings before/after comparisons and a recognition matrix. Regenerate
+with `python3 grainy_land/tests/review-server.py --review flower-growth-20 --port 8022`.
+
 ## Controls
 
-- **Composition:** Land / Flora / Abstract, scale, complexity, flow, horizon,
-  relief, folds and seed. Landscape layouts vary reproducibly with the seed.
+- **Composition:** Land / Flora / F / Abstract, scale, complexity, flow, horizon,
+  relief and folds. Landscape layouts vary reproducibly with the seed.
   **Folds** adds local curls, pockets and pinched passages; 0 gives simpler forms.
   Generate (R) replaces Auto layers and preserves Pinned and Drawn layers.
   Color, texture, names, order, visibility, opacity and editing locks survive Generate.
@@ -94,7 +129,7 @@ in [UX_AUDIT_PLAN.md](UX_AUDIT_PLAN.md).
   Brush. **Shift+D** duplicates the selection and preserves its shape (an Auto copy
   starts Pinned); **Delete / Backspace** removes the selected unlocked layer. Each
   command is undoable and stays inactive during text input, dialogs or gestures. Background opens the existing background color picker.
-  There are up to 16 layers in each mode, with separate Landscape, Flora and Abstract stacks.
+  There are up to 16 layers in each mode, with separate Land, Flora, F and Abstract stacks.
 - **Blue 1 / Blue 2:** two large seeded blue forms above Background and below the
   original artwork. They are ordinary Auto layers: move, paint/erase, Pin, Lock,
   opacity, reorder, duplicate, delete and conversion to Drawn work normally.
@@ -119,7 +154,7 @@ in [UX_AUDIT_PLAN.md](UX_AUDIT_PLAN.md).
   not pin an Auto layer: Generate can still replace it. Visibility can be toggled
   while locked; duplicating a locked layer makes an unlocked copy.
 - **Workspace:** Canvas starts collapsed at the top left; Composition is below
-  it, with Seed inside Generation. Layer properties appears immediately to the left of Layers
+  it; Generation is hidden. Layer properties appears immediately to the left of Layers
   only for the current selection. It follows Layers until dragged independently;
   its position is constrained to the viewport. Default panels keep a 20px window margin and
   make room for neighboring panels; dragging overrides their default position.

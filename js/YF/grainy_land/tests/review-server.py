@@ -6,11 +6,11 @@ import argparse
 
 ROOT = Path(__file__).resolve().parents[2]
 parser = argparse.ArgumentParser()
-parser.add_argument('--review', choices=['pigment-20','pigment-v2','tones-v1','forms-v3','spray-v1','composition-v4','studio-20','flora-20','flora-fields-20','flora-growth-20'], default='pigment-20')
+parser.add_argument('--review', choices=['pigment-20','pigment-v2','tones-v1','forms-v3','spray-v1','composition-v4','studio-20','flora-20','flora-fields-20','flora-growth-20','flower-growth-20'], default='pigment-20')
 parser.add_argument('--port', type=int, default=8020)
 args = parser.parse_args()
 OUTPUT = ROOT / 'grainy_land/tests/reviews' / args.review
-PREFIX = {'pigment-20':'/__grainy_save/','pigment-v2':'/__grainy_v2_save/','tones-v1':'/__grainy_tones_save/','forms-v3':'/__grainy_forms_save/','spray-v1':'/__grainy_spray_save/','composition-v4':'/__grainy_composition_save/','studio-20':'/__grainy_studio_save/','flora-20':'/__grainy_flora_save/','flora-fields-20':'/__grainy_flora_fields_save/','flora-growth-20':'/__grainy_flora_growth_save/'}[args.review]
+PREFIX = {'pigment-20':'/__grainy_save/','pigment-v2':'/__grainy_v2_save/','tones-v1':'/__grainy_tones_save/','forms-v3':'/__grainy_forms_save/','spray-v1':'/__grainy_spray_save/','composition-v4':'/__grainy_composition_save/','studio-20':'/__grainy_studio_save/','flora-20':'/__grainy_flora_save/','flora-fields-20':'/__grainy_flora_fields_save/','flora-growth-20':'/__grainy_flora_growth_save/','flower-growth-20':'/__grainy_flower_growth_save/'}[args.review]
 class Handler(SimpleHTTPRequestHandler):
     def end_headers(self):
         self.send_header('Cache-Control', 'no-store')
@@ -18,6 +18,7 @@ class Handler(SimpleHTTPRequestHandler):
     def do_POST(self):
         name = self.path.removeprefix(PREFIX)
         pattern=r'(?:0[1-9]|1[0-9]|20|contact-sheet|detail-sheet|before-after|materials|default|ember|abstract)\.png|metrics\.json'
+        if args.review=='flower-growth-20': pattern=r'(?:0[1-9]|1[0-9]|20|contact-sheet|before-after|recognizability)\.png|metrics\.json'
         if args.review=='composition-v4': pattern=r'(?:before|after)-[0-3][0-9]\.webp|(?:before|after)-sheet-[0-3]\.png|before-after\.png|metrics\.json'
         if not self.path.startswith(PREFIX) or not re.fullmatch(pattern, name):
             self.send_error(404); return

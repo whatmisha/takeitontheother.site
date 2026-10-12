@@ -6,6 +6,7 @@ import { defaults, shareDefaults, cleanText, lettersOf, makeDocument, readDocume
 import { FORMATS, resolutionError, stepResolution } from './resolutions.js';
 import { Silhouettes, generate, resizeScene, updateGround, ensureSurface, preparePreset } from './layout.js';
 import { drawArtwork, drawWorkspace, renderPNG, download } from './render.js';
+import { createAssetsPack } from './assets-export.js';
 import { Editor } from './editor.js';
 import { nextLetterVariant } from './letter-textures.js';
 import { mountIcons } from './icons.js';
@@ -26,6 +27,7 @@ const layoutControls = {
 
 function refreshAvailability() {
     ui?.refresh();
+    byId('exportAssetsPack').disabled = busy || hasPending();
     for (const id of ['presetDropdownToggle', 'presetToolbarShareBtn', 'savePresetBtn']) byId(id).disabled = busy || hasPending();
 }
 
@@ -163,6 +165,9 @@ function syncResolutionVisibility(format) {
 
 function sync(tool) {
     const s = tool.settings;
+    byId('exportAssetsPack').checked = s.exportAssetsPack;
+    const exportAction = ui?.actions.find(action => action.id === 'png');
+    if (exportAction) exportAction.label = s.exportAssetsPack ? 'ZIP' : 'PNG';
     syncEffects(tool, effectsController);
     if (draftText === null && document.activeElement !== byId('textInput')) byId('textInput').value = s.text;
     byId('letterCount').textContent = lettersOf(byId('textInput').value).length + ' / 32';
@@ -194,6 +199,7 @@ function bind(tool) {
     for (const radio of document.querySelectorAll('input[name="backgroundMode"]')) on(radio, 'change', () => change({ ...tool.getSnapshot(), backgroundMode: radio.value }, 'Background'));
     on(byId('shadowEnabledToggle'), 'change', event => change({ ...tool.getSnapshot(), shadowEnabled: event.target.checked }, 'Drop shadow'));
     on(byId('rimLightEnabledToggle'), 'change', event => change({ ...tool.getSnapshot(), rimLightEnabled: event.target.checked }, 'Rim light'));
+    on(byId('exportAssetsPack'), 'change', event => change({ ...tool.getSnapshot(), exportAssetsPack: event.target.checked }, 'Assets pack'));
     on(byId('textInput'), 'input', event => {
         const raw = event.target.value, cleaned = cleanText(raw);
         const length = raw.replace(/[^A-Za-z]/g, '').length;
@@ -288,7 +294,20 @@ function bind(tool) {
             { id: 'generate', button: 'generateBtn', label: 'Generate', kind: 'command', group: 'utility', shortcut: 'r', enabled: () => !busy && (!draftDimensions || !resolutionError(draftDimensions.width, draftDimensions.height)),
                 run: () => generated({ text: cleanText(byId('textInput').value), seed: newSeed() }) },
             { id: 'png', button: 'exportPngBtn', label: 'PNG', kind: 'export', group: 'primary', shortcut: 'mod+e', enabled: () => !busy && !hasPending(),
-                run: async () => { const snapshot = tool.getSnapshot(); const blob = await renderPNG(snapshot, assets, geometry); download(blob, 'wander-wall-' + snapshot.seed + '.png'); } },
+                run: async ({ signal }) => {
+                    const snapshot = tool.getSnapshot();
+                    setBusy(true); status('Preparing export...');
+                    try {
+                        await new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 0)));
+                        signal.throwIfAborted();
+                        let blob = await renderPNG(snapshot, assets, geometry);
+                        if (snapshot.exportAssetsPack) blob = await createAssetsPack(snapshot, blob, { signal,
+                            onProgress: ({ current, total }) => status(`Packing assets ${current}/${total}...`) });
+                        signal.throwIfAborted();
+                        download(blob, 'wander-wall-' + snapshot.seed + (snapshot.exportAssetsPack ? '.zip' : '.png'));
+                        status('');
+                    } finally { setBusy(false); }
+                } },
             { id: 'json-export', button: 'exportJsonBtn', label: 'Export JSON', kind: 'export', group: 'extra', shortcut: 'mod+j', enabled: () => !busy && !hasPending(),
                 run: () => download(new Blob([JSON.stringify(makeDocument(tool.getSnapshot()), null, 2)], { type: 'application/json' }), 'wander-wall-' + tool.settings.seed + '.json') },
             { id: 'json-import', button: 'importJsonBtn', label: 'Import JSON', kind: 'import', group: 'extra', shortcut: 'mod+shift+j', enabled: () => !busy, run: () => intake.open() },

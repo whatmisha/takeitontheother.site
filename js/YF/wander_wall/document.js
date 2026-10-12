@@ -7,7 +7,7 @@ export const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 const number = (value, fallback, min, max) => Number.isFinite(Number(value)) ? clamp(Number(value), min, max) : fallback;
 export const cleanText = text => String(text ?? '').replace(/[^A-Za-z\s]/g, '').replace(/\s+/g, ' ').trim().split('').reduce((result, char) => (char === ' ' || result.replace(/ /g, '').length < 32) ? result + char : result, '').trim();
 export const lettersOf = text => cleanText(text).toUpperCase().replace(/ /g, '');
-export const defaults = { text: 'Wander', format: 'qhd', width: 2560, height: 1440, seed: 20261009, shuffle: false, formsEnabled: true, formCount: 7, groundEnabled: true, groundHeight: 35, fill: 100, rotationRange: 24, sizeRange: 0, overflow: 0, ...effectDefaults, items: [] };
+export const defaults = { text: 'Wander', format: 'qhd', width: 2560, height: 1440, seed: 20261009, shuffle: false, formsEnabled: true, formCount: 7, groundEnabled: true, groundHeight: 35, fill: 100, rotationRange: 24, sizeRange: 0, overflow: 0, exportAssetsPack: false, ...effectDefaults, items: [] };
 // Keep the original solid-color baseline for old compact links; layouts are always explicit.
 export const shareDefaults = { ...defaults, backgroundStart: '#D0D2E4', items: null };
 
@@ -29,6 +29,7 @@ export function normalize(input = {}) {
             scale: number(raw.scale, .4, .025, 3), rotation: number(raw.rotation, 0, -180, 180), pinned: raw.pinned === true, visible: raw.visible !== false }];
     });
     const scene = { text: cleanText(input.text ?? defaults.text), ...normalizeResolution(input),
+        exportAssetsPack: input.exportAssetsPack === true,
         seed: number(input.seed, defaults.seed, 0, 4294967295) >>> 0,
         shuffle: input.shuffle === true, formsEnabled: true,
         formCount: input.formsEnabled === false ? 0 : Math.round(number(input.formCount, defaults.formCount, 0, 16)), fill: number(input.fill, 100, 70, 125),
