@@ -1,8 +1,8 @@
-import { normalizeFloraParams } from './flora.js?v=flower-f-2';
-import { defaultVectorPath } from './vector-path.js?v=flower-f-2';
-import { normalizeSettings, formSettingsKey } from './document.js?v=flower-f-2';
-import { MAX_LAYERS, getLayers, layerSettingsKey, normalizeLayerStack, geometrySnapshot, sourceGroup, blueLayerPair } from './layer-data.js?v=flower-f-2';
-export { MAX_LAYERS, getLayers, layerSettingsKey } from './layer-data.js?v=flower-f-2';
+import { normalizeFloraParams } from './flora.js?v=flower-f-5';
+import { defaultVectorPath } from './vector-path.js?v=flower-f-5';
+import { normalizeSettings, formSettingsKey } from './document.js?v=flower-f-5';
+import { MAX_LAYERS, getLayers, layerSettingsKey, normalizeLayerStack, geometrySnapshot, sourceGroup, blueLayerPair } from './layer-data.js?v=flower-f-5';
+export { MAX_LAYERS, getLayers, layerSettingsKey } from './layer-data.js?v=flower-f-5';
 
 export function withLayers(settings,layers) {
     const s=normalizeSettings(settings);

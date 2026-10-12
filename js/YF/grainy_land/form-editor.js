@@ -1,13 +1,13 @@
-import {normalizeFloraParams} from './flora.js?v=flower-f-2';
-import { FloraEditor } from './flora-editor.js?v=flower-f-2';
-import { editSelection, duplicateSelection, reorderSelection, resizeSelection } from './selection.js?v=flower-f-2';
-import { localToCanvas, canvasToLocal, materialRanges } from './transforms.js?v=flower-f-2';
-import { VectorEditor } from './vector-editor.js?v=flower-f-2';
-import { groupColor } from './custom-colors.js?v=flower-f-2';
-import { brushStroke, localPaintPoint, strokePointCount, MAX_STROKES, MAX_STROKE_POINTS, MAX_FORM_POINTS } from './paint.js?v=flower-f-2';
-import { getLayers, withLayers, layerSettingsKey, MAX_LAYERS, editLayer, addLayer, addBlueLayers, duplicateLayer, removeLayer, reorderLayer, convertLayer } from './layers.js?v=flower-f-2';
-import { createLayerScene } from './scene.js?v=flower-f-2';
-import { LandscapeRenderer } from './render.js?v=flower-f-2';
+import {normalizeFloraParams} from './flora.js?v=flower-f-5';
+import { FloraEditor } from './flora-editor.js?v=flower-f-5';
+import { editSelection, duplicateSelection, reorderSelection, resizeSelection } from './selection.js?v=flower-f-5';
+import { localToCanvas, canvasToLocal, materialRanges } from './transforms.js?v=flower-f-5';
+import { VectorEditor } from './vector-editor.js?v=flower-f-5';
+import { groupColor } from './custom-colors.js?v=flower-f-5';
+import { brushStroke, localPaintPoint, strokePointCount, MAX_STROKES, MAX_STROKE_POINTS, MAX_FORM_POINTS } from './paint.js?v=flower-f-5';
+import { getLayers, withLayers, layerSettingsKey, MAX_LAYERS, editLayer, addLayer, addBlueLayers, duplicateLayer, removeLayer, reorderLayer, convertLayer } from './layers.js?v=flower-f-5';
+import { createLayerScene } from './scene.js?v=flower-f-5';
+import { LandscapeRenderer } from './render.js?v=flower-f-5';
 
 export function visibleBounds(map, selected) {
     let left=map.width,top=map.height,right=-1,bottom=-1;

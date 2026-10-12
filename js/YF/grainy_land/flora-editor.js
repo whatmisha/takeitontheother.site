@@ -1,8 +1,8 @@
-import {floraParts,editFloraPart} from './flora.js?v=flower-f-2';
-import {getLayers,editLayer,layerSettingsKey} from './layers.js?v=flower-f-2';
-import {localToCanvas,canvasToLocal} from './transforms.js?v=flower-f-2';
-import {moveVectorNode,setVectorNodesSmooth,splitVectorSegment,vectorSegment,cubicPoint,flattenVectorPath,vectorDistance} from './vector-path.js?v=flower-f-2';
-import {groupColor} from './custom-colors.js?v=flower-f-2';
+import {floraParts,editFloraPart} from './flora.js?v=flower-f-5';
+import {getLayers,editLayer,layerSettingsKey} from './layers.js?v=flower-f-5';
+import {localToCanvas,canvasToLocal} from './transforms.js?v=flower-f-5';
+import {moveVectorNode,setVectorNodesSmooth,splitVectorSegment,vectorSegment,cubicPoint,flattenVectorPath,vectorDistance} from './vector-path.js?v=flower-f-5';
+import {groupColor} from './custom-colors.js?v=flower-f-5';
 const byId=id=>document.getElementById(id),NS='http://www.w3.org/2000/svg';
 function svg(tag,attrs){const el=document.createElementNS(NS,tag);for(const [k,v]of Object.entries(attrs))el.setAttribute(k,String(v));return el;}
 export class FloraEditor{

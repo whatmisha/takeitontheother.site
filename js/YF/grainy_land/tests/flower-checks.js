@@ -1,7 +1,7 @@
-import {defaults,switchMode,makeDocument,readDocument} from '../document.js?v=flower-f-2';
-import {LandscapeRenderer} from '../render.js?v=flower-f-2';
-import {renderPNG} from '../png-export.js?v=flower-f-2';
-import {renderLayersZIP} from '../layers-export.js?v=flower-f-2';
+import {defaults,switchMode,makeDocument,readDocument} from '../document.js?v=flower-f-5';
+import {LandscapeRenderer} from '../render.js?v=flower-f-5';
+import {renderPNG} from '../png-export.js?v=flower-f-5';
+import {renderLayersZIP} from '../layers-export.js?v=flower-f-5';
 import {readStoredZip} from './zip-reader.js';
 const renderer=new LandscapeRenderer(),base=switchMode(defaults,'f'),output=document.querySelector('#results'),log=[];
 const make=(w=640,h=360)=>Object.assign(document.createElement('canvas'),{width:w,height:h});

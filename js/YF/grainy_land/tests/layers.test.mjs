@@ -127,3 +127,14 @@ test('adding blue pairs is atomic, preserves existing layers and uses independen
     let full=again.settings;while(getLayers(full).length<MAX_LAYERS-1)full=addLayer(full).settings;
     const snapshot=structuredClone(full);assert.throws(()=>addBlueLayers(full),/Two free/);assert.deepEqual(full,snapshot);
 });
+
+test('Ember blue coats start hidden; explicit eye states and newly added pairs stay independent',()=>{
+    const blues=s=>getLayers(s).filter(l=>l.source>=6);
+    assert.deepEqual(blues(currentDefaults).map(l=>l.visible),[false,false]);
+    assert.deepEqual(blues(regenerate(currentDefaults,98)).map(l=>l.visible),[false,false]);
+    const enabled=editLayer(currentDefaults,'blue-1',{visible:true});
+    assert.deepEqual(blues(readDocument(makeDocument(regenerate(enabled,99)))).map(l=>l.visible),[true,false]);
+    assert.deepEqual(blues(addBlueLayers(currentDefaults).settings).map(l=>l.visible),[true,true,false,false]);
+    const legacy={...currentDefaults};delete legacy.blueLayersVisible;
+    assert.deepEqual(blues(readDocument(makeDocument(legacy))).map(l=>l.visible),[true,true]);
+});

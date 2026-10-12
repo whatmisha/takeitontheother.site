@@ -1,7 +1,7 @@
-import { normalizeFlora, floraTemplate } from './flora.js?v=flower-f-2';
-import { normalizeMaterial } from './transforms.js?v=flower-f-2';
-import { normalizeVectorPath, defaultVectorPath } from './vector-path.js?v=flower-f-2';
-import { normalizeStrokes } from './paint.js?v=flower-f-2';
+import { normalizeFlora, floraTemplate } from './flora.js?v=flower-f-5';
+import { normalizeMaterial } from './transforms.js?v=flower-f-5';
+import { normalizeVectorPath, defaultVectorPath } from './vector-path.js?v=flower-f-5';
+import { normalizeStrokes } from './paint.js?v=flower-f-5';
 
 export const MAX_LAYERS=16;
 export const layerSettingsKey=mode=>mode==='f'?'fLayers':mode==='flora'?'floraLayers':mode==='abstract'?'abstractLayers':'landscapeLayers';
@@ -49,7 +49,7 @@ export function getLayers(settings) {
             x:edit?.x??0,y:edit?.y??0,scaleX:edit?.scaleX??1,scaleY:edit?.scaleY??1,
             group:sourceGroup(i),opacity:100,visible:true,locked:false,strokes:edit?.strokes??[],geometry:null,hasBase:true};
     });
-    return settings.blueLayers?[...blueLayerPair(settings),...original]:original;
+    return settings.blueLayers?[...blueLayerPair(settings).map(layer=>({...layer,visible:settings.blueLayersVisible!==false})),...original]:original;
 }
 
 export function blueLayerPair(settings,start=1) {

@@ -8,7 +8,6 @@
 .grainy-land #materialPanel { right: var(--spacing-3xl); left: auto; }
 .grainy-land .preset-toolbar-cluster { display: flex; align-items: center; gap: 8px; }
 .grainy-land .segmented-control { margin: 0 0 20px; }
-.grainy-land .stacked-select-label { display: flex; gap: 8px; font-size: .9rem; margin-bottom: 16px; }
 .grainy-land select { width: 100%; }
 .grainy-land .color-swatch-compact { padding-left: 0; padding-right: 0; }
 .grainy-land .color-swatch-hex { width: 84px; flex-shrink: 0; }
@@ -236,7 +235,6 @@
 .grainy-land .rotation-controls > label { grid-column:1 / -1; display:flex; align-items:center; justify-content:space-between; }
 .grainy-land .rotation-controls input { width:80px; }
 
-.grainy-land #floraComposition > select { margin-bottom: 20px; }
 .grainy-land #floraControls > .vector-point-actions { margin: 12px 0; flex-wrap: wrap; }
 .grainy-land #floraPartControls .vector-point-actions { flex-wrap: wrap; margin: 10px 0; }
 .grainy-land #floraOverlay { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; overflow:hidden; }
@@ -254,8 +252,6 @@
 
 @media (min-width:1001px) { .grainy-land #layerPanel:has(#floraPartControls:not([hidden])) { top:clamp(var(--spacing-3xl),var(--layers-panel-top),calc(100dvh - var(--layer-panel-height) - 88px)); max-height:min(520px,calc(100dvh - 120px)); } }
 
-.grainy-land #flowerComposition > select { margin-bottom:20px; }
-.grainy-land #flowerComposition .stacked-select-label { display:flex; flex-direction:row; align-items:center; justify-content:space-between; }
 
 .grainy-land .flower-center { fill:var(--color-bg-panel,#191919); stroke:#b6ffce; stroke-width:1.5; pointer-events:all; cursor:move; }
 .grainy-land .flower-center-cross { fill:none; stroke:#b6ffce; stroke-width:1; pointer-events:none; }

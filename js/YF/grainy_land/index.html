@@ -6,8 +6,8 @@
     <title>Grainy Land — YF Tools</title>
     <link rel="icon" href="data:,">
     <link rel="stylesheet" href="../infra/framework/css/othersite-styles.css">
-    <link rel="stylesheet" href="./app.css?v=flower-f-2">
-    <link rel="stylesheet" href="../infra/framework/css/ui-contract.css?v=uiq-6">
+    <link rel="stylesheet" href="./app.css?v=flower-f-5">
+    <link rel="stylesheet" href="../infra/framework/css/ui-contract.css?v=stacked-select-2">
 </head>
 <body>
 <div class="container grainy-land">
@@ -59,9 +59,9 @@
                         <input type="radio" id="modeLandscape" name="mode" value="landscape" checked><label for="modeLandscape">Land</label>
                         <input type="radio" id="modeFlora" name="mode" value="flora"><label for="modeFlora">Flora</label>
                         <input type="radio" id="modeFlower" name="mode" value="f"><label for="modeFlower">F</label>
-                        <input type="radio" id="modeAbstract" name="mode" value="abstract"><label for="modeAbstract">Abstract</label>
+                        <input type="radio" id="modeAbstract" name="mode" value="abstract"><label for="modeAbstract">Spot</label>
                     </div>
-                    <div id="flowerComposition" hidden><label class="stacked-select-label" for="fType">Flower type <span id="fTypeName" class="ui-meta"></span></label><select id="fType" class="style-select"><option value="random">Random</option><option value="fan">Fan</option><option value="cup">Cup</option><option value="lobed">Lobed</option><option value="radial">Radial</option></select>
+                    <div id="flowerComposition" hidden><label class="stacked-select-label" for="fType">Flower type</label><select id="fType" class="style-select"><option value="fan">Fan</option><option value="cup">Cup</option><option value="lobed">Lobed</option><option value="radial">Radial</option></select>
 <div class="control-group" data-control="fScale"><label for="fScaleSlider"><span>Flower size</span><input id="fScaleValue" class="value-display" value="110" aria-label="Flower size value" inputmode="decimal"></label><input id="fScaleSlider" type="range" min="40" max="180" step="1" value="110"></div>
 <div class="control-group" data-control="fPetals"><label for="fPetalsSlider"><span>Petals</span><input id="fPetalsValue" class="value-display" value="6" aria-label="Petals value" inputmode="decimal"></label><input id="fPetalsSlider" type="range" min="3" max="12" step="1" value="6"></div>
 <div class="control-group" data-control="fOpening"><label for="fOpeningSlider"><span>Opening</span><input id="fOpeningValue" class="value-display" value="75" aria-label="Opening value" inputmode="decimal"></label><input id="fOpeningSlider" type="range" min="0" max="100" step="1" value="75"></div>
@@ -245,6 +245,6 @@
     <input id="jsonFileInput" type="file" accept=".json,application/json" hidden><button id="jsonPickerTrigger" type="button" hidden>Choose JSON</button>
     <dialog id="dialog" class="modal" aria-labelledby="dialogTitle"><div class="modal-content"><h2 id="dialogTitle" class="modal-title"></h2><div id="dialogText" class="modal-text"></div><input id="dialogInput" class="modal-input" type="text" style="display:none"><div id="dialogButtons" class="modal-buttons"></div></div></dialog>
 </div>
-<script type="module" src="./tool.js?v=flower-f-2"></script>
+<script type="module" src="./tool.js?v=flower-f-5"></script>
 </body>
 </html>

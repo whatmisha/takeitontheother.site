@@ -1,5 +1,5 @@
-import {buildFlowerParts,normalizeFlowerParams} from './flower.js?v=flower-f-2';
-import { normalizeVectorPath } from './vector-path.js?v=flower-f-2';
+import {buildFlowerParts,normalizeFlowerParams} from './flower.js?v=flower-f-5';
+import { normalizeVectorPath } from './vector-path.js?v=flower-f-5';
 export const floraDefaults={floraLayout:'cluster',floraCount:4,floraScale:112,floraRecognition:55,floraBranches:3,floraOpening:76,floraBend:60,floraMerge:65,floraFusion:35,floraLayers:null};
 export const floraRanges={floraCount:[1,12,1],floraScale:[50,180,1],floraRecognition:[0,100,1],floraBranches:[1,5,1],floraOpening:[0,100,1],floraBend:[0,100,1],floraMerge:[0,100,1],floraFusion:[0,100,1]};
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));

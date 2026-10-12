@@ -1,9 +1,9 @@
-import {flowerDefaults,flowerRanges} from './flower.js?v=flower-f-2';
-import { floraDefaults, floraRanges, normalizeFloraParams } from './flora.js?v=flower-f-2';
-import { normalizeCustomColors } from './custom-colors.js?v=flower-f-2';
-import { canvasDefaults, normalizeCanvas, assertExportSize } from './canvas-size.js?v=flower-f-2';
-import { normalizeLayerStack, layerSettingsKey } from './layer-data.js?v=flower-f-2';
-import { normalizeStrokes } from './paint.js?v=flower-f-2';
+import {flowerDefaults,flowerRanges} from './flower.js?v=flower-f-5';
+import { floraDefaults, floraRanges, normalizeFloraParams } from './flora.js?v=flower-f-5';
+import { normalizeCustomColors } from './custom-colors.js?v=flower-f-5';
+import { canvasDefaults, normalizeCanvas, assertExportSize } from './canvas-size.js?v=flower-f-5';
+import { normalizeLayerStack, layerSettingsKey } from './layer-data.js?v=flower-f-5';
+import { normalizeStrokes } from './paint.js?v=flower-f-5';
 export const TOOL_ID = 'grainy_land';
 export const VERSION = 1;
 export const palettes = {
@@ -32,7 +32,7 @@ export const defaults = {
     scale: 100, complexity: 2, flow: 48, folds: 65, horizon: 53, relief: 62,
     softness: 38, edgeVariation: 70, glowCoverage: 35, glow: 0, halo: 65, contrast: 118, grain: 55, grainSize: 1,
     toneCharacter: 'radiant', skyToneAmount: 0, toneAmount: 100, toneSpread: 65, toneScale: 110, toneBleed: 50,
-    previewTransparent:false,softProof:false,printIntent:1,motionAmount:3,motionDuration:6,customColors: [], blueLayers: true, exportScale: 1, transparentBackground: false, exportLayers: false, ...canvasDefaults, ...palettes.ember, ...automaticTones, landscapeForms: null, abstractForms: null, landscapeLayers: null, abstractLayers: null
+    previewTransparent:false,softProof:false,printIntent:1,motionAmount:3,motionDuration:6,customColors: [], blueLayers: true, blueLayersVisible: false, exportScale: 1, transparentBackground: false, exportLayers: false, ...canvasDefaults, ...palettes.ember, ...automaticTones, landscapeForms: null, abstractForms: null, landscapeLayers: null, abstractLayers: null
 };
 const clamp = (n, a, b) => Math.min(b, Math.max(a, n));
 const formNumber = (value, fallback, min, max) => typeof value === 'number' && Number.isFinite(value)
@@ -73,6 +73,8 @@ export function normalizeSettings(value = {}) {
     out.motionAmount=formNumber(value.motionAmount,3,0,20);out.motionDuration=formNumber(value.motionDuration,6,2,30);
     // Older documents keep their six original layers until blue layers are explicitly added.
     out.blueLayers=value.blueLayers===true;
+    // This is template visibility only; explicit layer stacks retain their eye state.
+    out.blueLayersVisible=value.blueLayersVisible!==false;
     if (Number.isFinite(Number(value.seed)) && value.seed != null) out.seed = Number(value.seed) >>> 0;
     if (Object.hasOwn(toneCharacters, value.toneCharacter)) out.toneCharacter = value.toneCharacter;
     if (Object.hasOwn(layouts,value.layout)) out.layout=value.layout;
@@ -153,16 +155,16 @@ export function migrateTonePresets(store) {
 
 // Refresh shipped presets cached by returning users. Saving a personal preset
 // removes the seeded marker, so personal colors and imported JSON stay intact.
-export function migratePresets(store) {
+export function migratePresets(store, shipped = {}) {
     migrateTonePresets(store);
     const all=store.loadAll();
     if(!all || typeof all!=='object' || Array.isArray(all)) return;
     let changed=false;
     if(all.Pigment?.seeded===true){delete all.Pigment;changed=true;}
-    for(const name of Object.keys(presetTones)) {
+    for(const name of new Set([...Object.keys(presetTones),...Object.keys(shipped)])) {
         const preset=all[name];
         if(!preset || preset.seeded!==true) continue;
-        const updates=name==='Ember' ? defaults : name==='Drift' ? {...defaults,mode:'abstract'} : {depth:'#FF5900',blueLayers:true};
+        const updates=shipped[name] ?? (name==='Ember' ? defaults : {depth:'#FF5900',blueLayers:true,blueLayersVisible:true});
         if(Object.entries(updates).every(([key,value])=>JSON.stringify(preset[key])===JSON.stringify(value))) continue;
         all[name]={...preset,...updates};changed=true;
     }

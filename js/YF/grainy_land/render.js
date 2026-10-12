@@ -1,9 +1,9 @@
-import { bakeFlora } from './flora-field.js?v=flower-f-2';
-import { MAX_CUSTOM_COLORS } from './custom-colors.js?v=flower-f-2';
-import { createLayerScene, materialColors, adjacentColors, customMaterialColors, hexRGB } from './scene.js?v=flower-f-2';
-import { bakePaint } from './paint.js?v=flower-f-2';
-import { MAX_LAYERS } from './layer-data.js?v=flower-f-2';
-import { normalizeSettings } from './document.js?v=flower-f-2';
+import { bakeFlora } from './flora-field.js?v=flower-f-5';
+import { MAX_CUSTOM_COLORS } from './custom-colors.js?v=flower-f-5';
+import { createLayerScene, materialColors, adjacentColors, customMaterialColors, hexRGB } from './scene.js?v=flower-f-5';
+import { bakePaint } from './paint.js?v=flower-f-5';
+import { MAX_LAYERS } from './layer-data.js?v=flower-f-5';
+import { normalizeSettings } from './document.js?v=flower-f-5';
 
 const vertexSource = `
 attribute vec2 position;

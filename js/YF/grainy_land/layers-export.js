@@ -1,6 +1,6 @@
-import { normalizeSettings, exportDimensions } from './document.js?v=flower-f-2';
-import { getLayers, layerSettingsKey } from './layer-data.js?v=flower-f-2';
-import { renderPNG } from './png-export.js?v=flower-f-2';
+import { normalizeSettings, exportDimensions } from './document.js?v=flower-f-5';
+import { getLayers, layerSettingsKey } from './layer-data.js?v=flower-f-5';
+import { renderPNG } from './png-export.js?v=flower-f-5';
 import { StoredZipWriter } from '../infra/framework/src/export/StoredZipWriter.js?v=1';
 
 export function layerExportPlan(raw) {

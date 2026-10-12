@@ -5,9 +5,17 @@ Open `grainy_land/` through the YF development server. No build step or remote
 runtime dependencies are needed. Rendering requires WebGL.
 
 The default preset is **Ember**, based on `grainy-land-1565559100.json`: seed
-1565559100, Glow 0, Grain 55 and Radiant tones at 100. Drift has exactly the same settings as Ember, including the seed, with mode set to Abstract.
-The shipped list is Ember, Drift and Quiet dunes; all three use Depth #FF5900
+1565559100, Glow 0, Grain 55 and Radiant tones at 100. Drift uses the supplied `Drift.json` settings in Spot mode: seed 256455718 and eight layers with individually assigned color groups. Its cached built-in copy refreshes from the shipped JSON; personal presets remain intact.
+The original presets Ember, Drift and Quiet dunes use Depth #FF5900
 and start with eight layers: six original forms above two blue background coats.
+In Ember, Blue 1 and Blue 2 start hidden; their eye buttons can enable them.
+Drift and Quiet dunes keep both blue coats visible. Explicit layer visibility is
+preserved by Generate, JSON and personal presets; newly added blue coats are visible.
+
+The built-in list also includes **Six cup** (F) and **Field** (Flora), retaining
+the supplied layer edits and custom colors. Startup merges missing built-ins into
+the saved list without replacing personal presets. **Spot** is the displayed name
+for the mode stored as `abstract`.
 
 ## Flora
 
@@ -83,18 +91,19 @@ in [UX_AUDIT_PLAN.md](UX_AUDIT_PLAN.md).
 
 Choose **F** in Composition. It has its own layer stack and surface memory, starting
 with the current palette and the same spray defaults as Flora. Generate initially
-creates one flower. **Random** chooses Fan, Cup, Lobed or Radial; selecting a family
-keeps it while Generate varies the individual petals.
+creates one flower. **Radial** is the default; Fan, Cup and Lobed are also available. Generate
+keeps the chosen family while varying the individual petals. Six cup explicitly
+uses Cup to retain its original shape.
 
 - **Flower size**, **Petals** (3–12), **Opening** and **View angle** are the main controls.
   Each petal has a curved profile in a tilted local plane. View angle changes
   foreshortening; Cup depth and Curl remain visible in side views.
-- Fan uses flared rims, Cup turned lips, Lobed unequal paddles, and Radial elongated
-  petals. A shared growth bias gives the bloom a dominant side; per-petal variation
-  changes individual length, width and curl. The stem follows a smooth centerline.
+- Fan uses flared rims and Lobed unequal paddles with a dominant side. Cup and
+  Radial retain the original rounded, more separated petal profiles selected in
+  the BEFORE comparison. All four families keep the smooth centerline stem.
 - **Shape** contains Petal width, Curl, Asymmetry, Recognizability and Merge parts.
-  Recognizability changes petal necks, proportions and the overall bend continuously:
-  high values separate the petals; low values broaden and merge them into a mass.
+  Recognizability changes petal necks continuously. For Fan and Lobed it also changes
+  proportions and the overall bend, broadening low values into an abstract mass.
   **Position & stem** contains Center X/Y, Rotation, Stem length and Stem bend.
   Stem length 0 hides the stem while keeping the flower head.
 - Select the flower with Move and drag its center marker to move the junction and
@@ -107,8 +116,17 @@ keeps it while Generate varies the individual petals.
 - The **Generation** section is hidden in Composition for every mode. Generate and
   its shortcut still work; the seed remains part of saved documents.
 
-Implementation: `flower.js` supplies the parts to the existing Flora editor and
-renderer. Tests: `tests/flower.test.mjs` and `tests/flower.html` (12 family/view
+Implementation: `flower-profiles.js` contains data-only recipes: angular layout,
+petal contour, proportions, growth bias, curl and depth. `flower.js` runs every
+recipe through one arrangement → growth → deformation → projection → attachment
+pipeline; it has no family-specific geometry branches. A new recipe can combine
+these properties without modifying the generator. Stable random slots preserve
+seeded variations. The resulting parts use the existing Flora editor and renderer.
+
+Regression coverage includes 48 geometry fixtures and 20 GPU pixel hashes captured
+before this refactor (`tests/flower-preservation.html`; pixel hashes are specific
+to the reference browser/GPU). An unregistered hybrid profile also exercises the
+shared pipeline. Tests: `tests/flower.test.mjs` and `tests/flower.html` (12 family/view
 combinations, JSON pixel roundtrip, transparent PNG and Layers ZIP).
 The saved visual review in `tests/reviews/flower-growth-20/` includes 20 seeds,
 identical-settings before/after comparisons and a recognition matrix. Regenerate

@@ -1,5 +1,5 @@
-import {rasterBands} from './tiled-export.js?v=flower-f-2';
-import {exportDimensions} from './document.js?v=flower-f-2';
+import {rasterBands} from './tiled-export.js?v=flower-f-5';
+import {exportDimensions} from './document.js?v=flower-f-5';
 let runtime;
 async function cms(){if(!runtime)runtime=import('./vendor/lcms/lcms.js').then(async api=>({api,engine:await api.instantiate({locateFile:name=>new URL('./vendor/lcms/'+name,import.meta.url).href})}));return runtime;}
 export class PrintColor {

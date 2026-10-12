@@ -1,5 +1,5 @@
 import { UnifiedColorPicker } from '../infra/framework/src/index.js?v=tool-ui-4';
-import { MAX_CUSTOM_COLORS, addCustomColor, removeCustomColor, colorIsUsed } from './custom-colors.js?v=flower-f-2';
+import { MAX_CUSTOM_COLORS, addCustomColor, removeCustomColor, colorIsUsed } from './custom-colors.js?v=flower-f-5';
 
 const byId=id=>document.getElementById(id);
 const node=(tag,className)=>{const el=document.createElement(tag);el.className=className;return el;};

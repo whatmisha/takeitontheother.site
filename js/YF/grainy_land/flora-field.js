@@ -1,6 +1,6 @@
-import { floraParts } from './flora.js?v=flower-f-2';
-import { flattenVectorPath } from './vector-path.js?v=flower-f-2';
-import { groupColor } from './custom-colors.js?v=flower-f-2';
+import { floraParts } from './flora.js?v=flower-f-5';
+import { flattenVectorPath } from './vector-path.js?v=flower-f-5';
+import { groupColor } from './custom-colors.js?v=flower-f-5';
 const cache=new Map();
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 // Linear-time separable squared Euclidean distance transform.

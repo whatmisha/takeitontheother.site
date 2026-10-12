@@ -1,20 +1,19 @@
-import {flowerType,flowerTypes} from './flower.js?v=flower-f-2';
-import { resizeFloraStack } from './flora.js?v=flower-f-2';
-import { addLayer } from './layers.js?v=flower-f-2';
-import { PrintColor } from './print-color.js?v=flower-f-2';
-import { motionFrame, renderVideo } from './motion.js?v=flower-f-2';
-import { CustomColorEditor } from './custom-color-editor.js?v=flower-f-2';
-import { editCanvas } from './canvas-size.js?v=flower-f-2';
-import { renderPNG } from './png-export.js?v=flower-f-2';
-import { renderLayersZIP } from './layers-export.js?v=flower-f-2';
+import { resizeFloraStack } from './flora.js?v=flower-f-5';
+import { addLayer } from './layers.js?v=flower-f-5';
+import { PrintColor } from './print-color.js?v=flower-f-5';
+import { motionFrame, renderVideo } from './motion.js?v=flower-f-5';
+import { CustomColorEditor } from './custom-color-editor.js?v=flower-f-5';
+import { editCanvas } from './canvas-size.js?v=flower-f-5';
+import { renderPNG } from './png-export.js?v=flower-f-5';
+import { renderLayersZIP } from './layers-export.js?v=flower-f-5';
 import { downloadBlob } from '../infra/framework/src/ui/GeneratorHost.js?v=7';
 import { defineTool, UnifiedColorPicker, ToolUiController, FileIntakeController, PresetMenuKeyboardController } from '../infra/framework/src/index.js?v=tool-ui-4';
-import { defaults, ranges, switchMode, regenerate, toneKeys, migratePresets, normalizeSettings, makeDocument, readDocument, exportDimensions } from './document.js?v=flower-f-2';
-import { adjacentColors, hexRGB } from './scene.js?v=flower-f-2';
-import { LandscapeRenderer } from './render.js?v=flower-f-2';
+import { defaults, ranges, switchMode, regenerate, toneKeys, migratePresets, normalizeSettings, makeDocument, readDocument, exportDimensions } from './document.js?v=flower-f-5';
+import { adjacentColors, hexRGB } from './scene.js?v=flower-f-5';
+import { LandscapeRenderer } from './render.js?v=flower-f-5';
 
-import { getLayers } from './layer-data.js?v=flower-f-2';
-import { FormEditor } from './form-editor.js?v=flower-f-2';
+import { getLayers } from './layer-data.js?v=flower-f-5';
+import { FormEditor } from './form-editor.js?v=flower-f-5';
 
 const printColor=new PrintColor();
 let motionStart=null,motionRAF=0;
@@ -65,7 +64,6 @@ function sync(tool) {
         byId(key+'Slider').closest('.control-group').hidden=s.mode!=='landscape';
     }
     byId('flowerComposition').hidden=s.mode!=='f';byId('fType').value=s.fType;
-    const flower=getLayers(s).find(l=>l.flora?.generator==='flower');byId('fTypeName').textContent=s.mode==='f'&&s.fType==='random'&&flower?flowerTypes[flowerType(flower,s)]:'';
     byId('floraComposition').hidden=s.mode!=='flora';byId('floraLayout').value=s.floraLayout;
     for(const key of ['scale','complexity','flow','folds'])byId(key+'Slider').closest('.control-group').hidden=['flora','f'].includes(s.mode);
     byId('floraCountSlider').closest('.control-group').hidden=s.floraLayout==='single';
@@ -117,7 +115,7 @@ function sync(tool) {
     byId('transparentBackground').checked=s.transparentBackground;
     const exportAction=ui?.actions.find(action=>action.id==='png');
     if(exportAction)exportAction.label=s.exportLayers?'Export ZIP':'Export PNG';
-    byId('mainCanvas').setAttribute('aria-label', s.mode === 'f' ? 'Generated grainy flower' : s.mode === 'flora' ? 'Generated grainy flora' : s.mode === 'abstract' ? 'Generated grainy abstract artwork' : 'Generated grainy landscape');
+    byId('mainCanvas').setAttribute('aria-label', s.mode === 'f' ? 'Generated grainy flower' : s.mode === 'flora' ? 'Generated grainy flora' : s.mode === 'abstract' ? 'Generated grainy Spot artwork' : 'Generated grainy landscape');
     formEditor?.sync();
     ui?.refresh();
 }
@@ -205,7 +203,7 @@ function bind(tool) {
     ui = new ToolUiController({
         id: 'grainy_land', title: 'Grainy Land',
         summaries: {
-            compositionPanel: () => tool.settings.mode,
+            compositionPanel: () => tool.settings.mode==='abstract'?'Spot':tool.settings.mode,
             layersPanel: () => getLayers(tool.settings).length + ' layers'
         },
         actions: [
@@ -291,9 +289,21 @@ const app = defineTool({
     colorPickers: { containerId:'unifiedColorPickerContainer',swatches:['sky','terrain','depth','light'].map(setting => ({
         type:setting,setting,itemId:setting+'ColorItem',dotId:setting+'ColorPreview',hexId:setting+'ColorHex',hsbSlotId:setting+'ColorHsbSlot'
     })) },
-    presets: { migrate:migratePresets, storageKey:'upgrade:grainy_land:presets:v1',basePath:'./presets',defaultName:'Ember',
+    presets: { migrate:async store => {
+        // Refresh named built-ins from their shipped files; personal copies stay intact.
+        const shipped={};
+        for(const [name,file] of [['Drift','drift.json'],['Six cup','six-cup.json']]){
+        if(store.loadAll()?.[name]?.seeded!==true)continue;
+        try{
+            const response=await fetch('./presets/'+file,{cache:'no-cache',signal:AbortSignal.timeout(5000)});
+            if(!response.ok)throw new Error('HTTP '+response.status);
+            shipped[name]=normalizeSettings(await response.json());
+        }catch(error){console.warn('Could not refresh built-in '+name+':',error);}
+        }
+        migratePresets(store,shipped);
+    }, storageKey:'upgrade:grainy_land:presets:v1',basePath:'./presets',forceSeed:true,defaultName:'Ember',
         colorDots: s => [s.sky,s.terrain,s.depth,s.light].map(value => ({kind:'solid',value})),
-        suggestSaveName: tool => (tool.settings.mode==='f'?'F':tool.settings.mode==='flora'?'Flora':tool.settings.mode==='abstract'?'Abstract':'Landscape')+' '+tool.settings.seed },
+        suggestSaveName: tool => (tool.settings.mode==='f'?'F':tool.settings.mode==='flora'?'Flora':tool.settings.mode==='abstract'?'Spot':'Landscape')+' '+tool.settings.seed },
     history: { maxSize:60,debounceMs:150 },
     share: {}, shortcuts: false, dialog: {},
     export: { filename:'grainy-land.svg' },
