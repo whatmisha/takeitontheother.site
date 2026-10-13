@@ -238,3 +238,7 @@ feedback; `{ reported: true }` предотвращает повторное с�
 4. browser/visual Gate соответствующих приложений.
 
 Void, Grid v2, Sparky fork, Keyboarder fork и Wander Pattern являются donors, а не зависимостями. Их улучшения переносятся по одному после доказательства универсальности.
+
+## MP4 container adapter
+
+`src/export/mp4Muxer.js` is a public, worker-safe entry for `muxAvcToMp4` (also exported from the barrel). It packages WebCodecs AVC chunks in decode order into a constant-frame-rate MP4, preserving presentation timestamps for reordered frames. It has no DOM dependencies. Used by Sparky and Grainy Land.

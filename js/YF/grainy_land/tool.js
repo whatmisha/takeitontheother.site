@@ -4,7 +4,7 @@ import { ExportProgress } from './export-progress.js?v=petal-motion-1';
 import { ObjectUI } from './object-ui.js?v=petal-motion-1';
 import { modeLabels } from './object-model.js?v=petal-motion-1';
 import { PrintColor } from './print-color.js?v=petal-motion-1';
-import { motionFrame, renderVideo } from './motion.js?v=petal-motion-1';
+import { motionFrame, renderVideo } from './motion.js?v=video-frames-1';
 import { CustomColorEditor } from './custom-color-editor.js?v=petal-motion-1';
 import { editCanvas } from './canvas-size.js?v=petal-motion-1';
 import { renderPNG } from './png-export.js?v=petal-motion-1';
@@ -266,7 +266,7 @@ function bind(tool) {
                 }) },
             { id:'motion-video',button:'exportMotion',label:'MP4',kind:'export',group:'primary',enabled:()=>!exportProgress.busy,
                 run:({signal})=>output(signal,'MP4',async(r,s,{signal,onProgress})=>{
-                    const result=await renderVideo(r,s,{signal,onProgress:({current,total})=>onProgress({current,total,message:'MP4 · '+current.toFixed(1)+' / '+total+' s'})});
+                    const result=await renderVideo(r,s,{signal,onProgress});
                     signal.throwIfAborted();downloadBlob(result.blob,'grainy-land-'+s.seed+'.'+result.extension);
                 }) },
             { id:'json-export', button:'exportJsonBtn', label:'Export JSON', kind:'export', group:'extra', shortcut:'mod+j',

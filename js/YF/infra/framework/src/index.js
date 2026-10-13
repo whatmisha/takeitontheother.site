@@ -62,3 +62,5 @@ export * as StripeGeometry from './geometry/StrokeGeometry.js';
 
 // Config
 export * from './config/timings.js';
+
+export { muxAvcToMp4 } from './export/mp4Muxer.js';

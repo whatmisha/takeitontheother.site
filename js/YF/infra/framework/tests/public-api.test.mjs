@@ -23,7 +23,7 @@ test('public barrel exports the documented framework surface', async () => {
     const expected = [
         'ActionDockController', 'ApplicationShell', 'CanvasTarget', 'ColorPicker', 'DOMCache', 'DialogHost',
         'ExportFeedbackController', 'ExportGuard', 'FileIntakeController', 'GradientStrokeEffect', 'HistoryBridge', 'HistoryManager',
-        'MathUtils', 'MobileBootstrap', 'NoiseGenerator', 'OverlayDialogHost', 'PanelManager', 'PresetMenuKeyboardController', 'PresetSession', 'PresetStore',
+        'muxAvcToMp4', 'MathUtils', 'MobileBootstrap', 'NoiseGenerator', 'OverlayDialogHost', 'PanelManager', 'PresetMenuKeyboardController', 'PresetSession', 'PresetStore',
         'RenderTarget', 'SVGExporter', 'SHARED_SLOT',
         'SeededRandom', 'ShareCodec', 'ShortcutRouter', 'SliderController', 'StripeGeometry',
         'SvgTarget', 'TextToPath', 'TooltipService', 'UnifiedColorPicker',
@@ -75,7 +75,7 @@ test('framework source graph stays local and application-agnostic', async () => 
             assert.ok(resolved.startsWith(`${frameworkRoot}${path.sep}`));
         }
     }
-    assert.equal(files.length, 51); // Includes the opt-in GeneratorHost; all imports remain local.
+    assert.equal(files.length, 53); // Includes shared ZIP and MP4 writers; all imports remain local.
 });
 
 test('working CSS and exporters use checked-in same-origin assets', async () => {

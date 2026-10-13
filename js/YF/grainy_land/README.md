@@ -523,9 +523,17 @@ the entire gesture. Resizing, painting and editing vector nodes do not duplicate
   flower types, individual parameters and manual contours share this deformation.
   Locked flowers stay still. Preview and MP4 use the same seamless pose; it is never
   saved into JSON or presets.
-  Video requires a browser MP4 encoder, targets 30 fps and supports up to 1920 px
+  Video requires WebCodecs H.264 support, exports a fixed 30 fps and supports up to 1920 px
   on the long side. Hidden Background is flattened onto black (MP4 has no alpha).
-  Recording runs in real time and can be cancelled; heavy scenes can produce fewer frames.
+  Frames are rendered offline at exact timeline positions, then encoded with explicit timestamps.
+  Heavy scenes take longer to export without dropping frames. Progress counts frames; Cancel
+  also interrupts encoder waits. Incomplete encoding fails instead of downloading a broken file.
+  The MP4 container writer is shared with Sparky.
+
+`tests/video-export.html` checks real MP4 timing and decoded poses across all four modes,
+all flower types, 32 flowers, Full HD/portrait/square canvases, intentionally slow rendering,
+a 30-second loop, hidden Background and cancellation/retry. `tests/video-export.test.mjs`
+covers exact frame submission, backpressure, aborted waits, encoder errors and incomplete output.
 
 `tests/studio-renderer.html` verifies rotated picking, local material, pixel-matching
 GPU tile boundaries, a 9000 px PNG and real video encoding/decoding. Studio node tests
