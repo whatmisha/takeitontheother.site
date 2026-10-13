@@ -11,7 +11,7 @@ import { renderPNG } from './png-export.js?v=petal-motion-1';
 import { renderLayersZIP } from './layers-export.js?v=petal-motion-1';
 import { downloadBlob } from '../infra/framework/src/ui/GeneratorHost.js?v=petal-motion-1';
 import { defineTool, UnifiedColorPicker, ToolUiController, FileIntakeController, PresetMenuKeyboardController } from '../infra/framework/src/index.js?v=petal-motion-1';
-import { defaults, ranges, switchMode, regenerate, toneKeys, migratePresets, normalizeSettings, makeDocument, readDocument, exportDimensions } from './document.js?v=presets-quiet-removed-1';
+import { defaults, ranges, switchMode, regenerate, toneKeys, migratePresets, normalizeSettings, makeDocument, readDocument, exportDimensions } from './document.js?v=flower-flow-1';
 import { adjacentColors, hexRGB } from './scene.js?v=petal-motion-1';
 import { LandscapeRenderer } from './render.js?v=petal-motion-1';
 
@@ -314,8 +314,8 @@ const app = defineTool({
     presets: { migrate:async store => {
         // Refresh named built-ins from their shipped files; personal copies stay intact.
         const shipped={};
-        for(const [name,file] of [['Ember','ember.json'],['Drift','drift.json'],['Field','field.json'],['Six cup','six-cup.json']]){
-        if(store.loadAll()?.[name]?.seeded!==true)continue;
+        for(const [name,file] of [['Ember','ember.json'],['Drift','drift.json'],['Field','field.json'],['Six Cup','six-cup.json'],['Flower Flow','flower-flow.json']]){
+        if(store.loadAll()?.[name]?.seeded!==true && !(name==='Six Cup' && store.loadAll()?.['Six cup']?.seeded===true))continue;
         try{
             const response=await fetch('./presets/'+file,{cache:'no-cache',signal:AbortSignal.timeout(5000)});
             if(!response.ok)throw new Error('HTTP '+response.status);
@@ -323,7 +323,7 @@ const app = defineTool({
         }catch(error){console.warn('Could not refresh built-in '+name+':',error);}
         }
         migratePresets(store,shipped);
-    }, storageKey:'upgrade:grainy_land:presets:v1',basePath:'./presets',forceSeed:true,defaultName:'Ember',
+    }, storageKey:'upgrade:grainy_land:presets:v1',basePath:'./presets',forceSeed:true,defaultName:'Flower Flow',
         colorDots: s => [s.sky,s.terrain,s.depth,s.light].map(value => ({kind:'solid',value})),
         suggestSaveName: tool => modeLabels[tool.settings.mode]+' '+tool.settings.seed },
     history: { maxSize:60,debounceMs:150 },

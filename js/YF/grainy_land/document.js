@@ -169,6 +169,11 @@ export function migratePresets(store, shipped = {}) {
     const all=store.loadAll();
     if(!all || typeof all!=='object' || Array.isArray(all)) return;
     let changed=false;
+    // Rename the shipped entry in existing libraries without overwriting personal presets.
+    if(all['Six cup']?.seeded===true){
+        if(!Object.hasOwn(all,'Six Cup'))all['Six Cup']=all['Six cup'];
+        delete all['Six cup'];changed=true;
+    }
     for(const name of ['Pigment','Quiet dunes'])if(all[name]?.seeded===true){delete all[name];changed=true;}
     for(const name of new Set([...Object.keys(presetTones),...Object.keys(shipped)])) {
         const preset=all[name];

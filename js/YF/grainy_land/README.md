@@ -4,7 +4,9 @@ Landscape, abstract field and procedural flora generator using the shared YF fra
 Open `grainy_land/` through the YF development server. No build step or remote
 runtime dependencies are needed. Rendering requires WebGL.
 
-The default preset is **Ember**, based on `grainy-land-1565559100.json`: seed
+The startup preset is **Flower Flow**, imported from `grainy-land-six-cup-flora-20261013_20-22-12.json`.
+
+The **Ember** preset is based on `grainy-land-1565559100.json`: seed
 1565559100, Glow 0, Grain 55 and Radiant tones at 100. Drift uses the supplied `Drift.json` settings in Spot mode: seed 256455718 and eight layers with individually assigned color groups. Its cached built-in copy refreshes from the shipped JSON; personal presets remain intact.
 The original presets Ember and Drift use Depth #FF5900
 and start with eight layers: six original forms above two blue background coats.
@@ -12,7 +14,7 @@ In Ember, Blue 1 and Blue 2 start hidden; their eye buttons can enable them.
 Drift keeps both blue coats visible. Explicit layer visibility is
 preserved by Generate, JSON and personal presets; newly added blue coats are visible.
 
-The built-in list also includes **Six cup** (Flora), refreshed from `grainy-land-505310381.json`, and **Field** (Plant), retaining
+The built-in list also includes **Six Cup** (Flora), refreshed from `grainy-land-505310381.json`, and **Field** (Plant), retaining
 the supplied layer edits and custom colors. Startup merges missing built-ins into
 the saved list without replacing personal presets. **Spot** is the displayed name
 for the mode stored as `abstract`.
@@ -92,7 +94,7 @@ in [UX_AUDIT_PLAN.md](UX_AUDIT_PLAN.md).
 Choose **Flora** in Composition. It has its own layer stack and surface memory, starting
 with an independent palette and the same spray defaults as Plant. It initially
 creates one flower. **Radial** is the default; Fan, Cup and Lobed are also available. Generate
-keeps the chosen family while varying the individual petals. Six cup explicitly
+keeps the chosen family while varying the individual petals. Six Cup explicitly
 uses Cup to retain its original shape.
 
 - **Flower size**, **Petals** (3–12), **Opening** and **View angle** are the main controls.
@@ -125,7 +127,7 @@ uses Cup to retain its original shape.
   bound the relative size range (20–150% by default); Size variation blends
   between equal sizes and that range. Variation changes
   opening, width, curl, asymmetry, tilt, rotation and stem proportions, retaining
-  the chosen shared type. One-flower framing, including Six cup, is unchanged.
+  the chosen shared type. One-flower framing, including Six Cup, is unchanged.
 - **Color variation** includes **Flower colors** (palette variation between objects),
   **Petal colors** (several colors within one flower), and **Color pattern**:
   Grouped, Alternating or Scattered. Assignments use the scene palette, including

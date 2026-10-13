@@ -116,7 +116,7 @@ test('default settings match the shipped Ember and cached built-ins update witho
     assert.equal(drift.abstractLayers.length,8);
     assert.deepEqual(drift.abstractLayers.map(l=>l.group),['sky','light','terrain','sky','light','depth','depth','terrain']);
     const manifest = JSON.parse(readFileSync(new URL('../presets/manifest.json', import.meta.url), 'utf8'));
-    assert.deepEqual(manifest.presets.map(p=>p.name), ['Ember','Drift','Six cup','Field']);
+    assert.deepEqual(manifest.presets.map(p=>p.name), ['Flower Flow','Ember','Drift','Six Cup','Field']);
     const personal = { seed: 9, glow: 33 };
     let all = { Ember: { seeded: true, createdAt: 123, seed: 80423, glow: 82, ...presetTones.Ember }, Pigment: pigment, 'Quiet dunes': {seeded:true,depth:'#713004'}, Drift: {seeded:true,createdAt:456,seed:925731,scale:125,glow:34,...presetTones.Drift}, Personal: personal };
     let writes = 0;

@@ -1,6 +1,10 @@
 {
   "presets": [
     {
+      "name": "Flower Flow",
+      "file": "flower-flow.json"
+    },
+    {
       "name": "Ember",
       "file": "ember.json"
     },
@@ -9,7 +13,7 @@
       "file": "drift.json"
     },
     {
-      "name": "Six cup",
+      "name": "Six Cup",
       "file": "six-cup.json"
     },
     {
