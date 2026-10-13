@@ -1,9 +1,13 @@
-import { normalizeFlora, floraTemplate } from './flora.js?v=flower-f-5';
-import { normalizeMaterial } from './transforms.js?v=flower-f-5';
-import { normalizeVectorPath, defaultVectorPath } from './vector-path.js?v=flower-f-5';
-import { normalizeStrokes } from './paint.js?v=flower-f-5';
+import {FLOWER_MOTION} from './flower-motion.js?v=petal-motion-1';
+import {composeFlowers} from './flower-composition.js?v=petal-motion-1';
+import {layerKind,normalizeParameters,normalizeComposition} from './object-model.js?v=petal-motion-1';
+import { normalizeFlora, floraTemplate } from './flora.js?v=petal-motion-1';
+import { normalizeMaterial } from './transforms.js?v=petal-motion-1';
+import { normalizeVectorPath, defaultVectorPath } from './vector-path.js?v=petal-motion-1';
+import { normalizeStrokes } from './paint.js?v=petal-motion-1';
 
-export const MAX_LAYERS=16;
+import {MAX_LAYERS} from './layer-limits.js?v=petal-motion-1';
+export {MAX_LAYERS};
 export const layerSettingsKey=mode=>mode==='f'?'fLayers':mode==='flora'?'floraLayers':mode==='abstract'?'abstractLayers':'landscapeLayers';
 export const layerNames=['Terrain','Bank 1','Basin','Bank 2','Fold','Foreground'];
 export const layerGroups=['terrain','depth','light','sky'];
@@ -19,8 +23,9 @@ export function normalizeLayerStack(value,settings) {
         let id=typeof item.id==='string'&&/^[a-zA-Z0-9_-]{1,64}$/.test(item.id)?item.id:'layer-'+i;
         const base=id;let suffix=1;while(ids.has(id))id=base.slice(0,52)+'-copy-'+suffix++;ids.add(id);
         const source=Math.round(number(item.source,0,0,7));
+        const kind=layerKind(item,settings),parameterMode=item.parameterMode==='individual'?'individual':'auto';
         const mode=['auto','pinned','drawn','vector'].includes(item.mode)?item.mode:'auto';
-        return [{id,name:typeof item.name==='string'&&item.name.trim()?item.name.trim().slice(0,64):'Layer '+(i+1),
+        return [{id,kind,parameterMode,...(item[FLOWER_MOTION]?{[FLOWER_MOTION]:item[FLOWER_MOTION]}:{}),...(normalizeComposition(item.composition)?{composition:normalizeComposition(item.composition)}:{}),...(parameterMode==='individual'?{parameters:normalizeParameters(kind,item.parameters??settings)}:{}),name:typeof item.name==='string'&&item.name.trim()?item.name.trim().slice(0,64):'Layer '+(i+1),
             ...(item.flora?{flora:normalizeFlora(item.flora)}:{}),source,mode,seed:number(item.seed,settings.seed,0,4294967295)>>>0,salt:number(item.salt,0,0,4294967295)>>>0,
             layout:['auto','basin','ridge','valley','fold'].includes(item.layout)?item.layout:'auto',
             x:number(item.x,0,-1,1),y:number(item.y,0,-1,1),scaleX:number(item.scaleX,1,.25,3),scaleY:number(item.scaleY,1,.25,3),
@@ -36,11 +41,11 @@ export function normalizeLayerStack(value,settings) {
 }
 // Missing stacks preserve old documents exactly. An empty array is deliberately
 // empty and must never regenerate the six original forms.
-export function getLayers(settings) {
+function rawLayers(settings) {
     const explicit=settings[layerSettingsKey(settings.mode)];
     if(Array.isArray(explicit))return explicit;
-    if(settings.mode==='f')return floraTemplate({...settings,floraLayout:'single'}).map(l=>({...l,id:'flower-1',name:'Flower',flora:{...l.flora,generator:'flower'}}));
-    if(settings.mode==='flora')return floraTemplate(settings);
+    if(settings.mode==='f')return normalizeLayerStack(composeFlowers(settings,floraTemplate({...settings,floraLayout:'single',floraCount:settings.fCount??1}).map(l=>({...l,id:'flower-'+(l.flora.index+1),name:'Flower '+(l.flora.index+1),flora:{...l.flora,generator:'flower'}}))),settings);
+    if(settings.mode==='flora')return normalizeLayerStack(floraTemplate(settings),settings);
     const legacy=settings[settings.mode==='abstract'?'abstractForms':'landscapeForms'];
     const original=Array.from({length:6},(_,i)=>{
         const edit=legacy?.[i];
@@ -57,3 +62,5 @@ export function blueLayerPair(settings,start=1) {
         mode:'auto',group:'sky',seed:(settings.seed+(start===1?0:start*2654435761>>>0))>>>0,
         salt:start===1?0:start*2654435761>>>0,layout:settings.layout})),settings);
 }
+
+export function getLayers(settings){return rawLayers(settings).map(l=>({...l,kind:layerKind(l,settings),parameterMode:l.parameterMode??'auto'}));}

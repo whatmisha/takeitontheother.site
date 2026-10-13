@@ -116,15 +116,16 @@ test('default settings match the shipped Ember and cached built-ins update witho
     assert.equal(drift.abstractLayers.length,8);
     assert.deepEqual(drift.abstractLayers.map(l=>l.group),['sky','light','terrain','sky','light','depth','depth','terrain']);
     const manifest = JSON.parse(readFileSync(new URL('../presets/manifest.json', import.meta.url), 'utf8'));
-    assert.deepEqual(manifest.presets.map(p=>p.name), ['Ember','Drift','Quiet dunes','Six cup','Field']);
+    assert.deepEqual(manifest.presets.map(p=>p.name), ['Ember','Drift','Six cup','Field']);
     const personal = { seed: 9, glow: 33 };
-    let all = { Ember: { seeded: true, createdAt: 123, seed: 80423, glow: 82, ...presetTones.Ember }, Pigment: pigment, Drift: {seeded:true,createdAt:456,seed:925731,scale:125,glow:34,...presetTones.Drift}, Personal: personal };
+    let all = { Ember: { seeded: true, createdAt: 123, seed: 80423, glow: 82, ...presetTones.Ember }, Pigment: pigment, 'Quiet dunes': {seeded:true,depth:'#713004'}, Drift: {seeded:true,createdAt:456,seed:925731,scale:125,glow:34,...presetTones.Drift}, Personal: personal };
     let writes = 0;
     const store = { loadAll: () => all, saveAll: next => { all = next; writes++; } };
     migratePresets(store,{Drift:drift});
     assert.deepEqual(normalizeSettings(all.Ember), ember);
     assert.equal(all.Ember.createdAt, 123);
     assert.equal(Object.hasOwn(all,'Pigment'),false);
+    assert.equal(Object.hasOwn(all,'Quiet dunes'),false);
     assert.deepEqual(normalizeSettings(all.Drift), drift);
     assert.equal(all.Drift.createdAt,456);
     assert.deepEqual(all.Personal, personal);
@@ -133,10 +134,12 @@ test('default settings match the shipped Ember and cached built-ins update witho
     all.Ember = { ...personal };
     all.Drift = { ...personal,seeded:false };
     all.Pigment = { ...personal,seeded:false };
+    all['Quiet dunes'] = { ...personal,seeded:false };
     migratePresets(store,{Drift:drift});
     assert.deepEqual(all.Ember, personal);
     assert.deepEqual(all.Drift, {...personal,seeded:false});
     assert.deepEqual(all.Pigment, {...personal,seeded:false});
+    assert.deepEqual(all['Quiet dunes'], {...personal,seeded:false});
     assert.equal(writes, 1);
 });
 
@@ -167,8 +170,8 @@ test('original shipped depths migrate once while personal colors and other setti
     for(const {name} of manifest.presets) assert.deepEqual(all[name],{...old[name],depth:'#FF5900'});
     assert.deepEqual(all.Personal,old.Personal);
     migratePresets(store);assert.equal(writes,1);
-    all['Quiet dunes']={...old['Quiet dunes'],seeded:false};migratePresets(store);
-    assert.equal(all['Quiet dunes'].depth,'#713004');assert.equal(writes,1);
+    all.Drift={...old.Drift,seeded:false};migratePresets(store);
+    assert.equal(all.Drift.depth,'#713004');assert.equal(writes,1);
 });
 
 

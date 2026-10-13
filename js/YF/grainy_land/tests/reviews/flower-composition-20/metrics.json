@@ -1,0 +1,122 @@
+[
+  {
+    "fType": "radial",
+    "fColorPattern": "grouped",
+    "fCount": 6,
+    "seed": 121347
+  },
+  {
+    "fType": "cup",
+    "fColorPattern": "grouped",
+    "fCount": 6,
+    "seed": 876260
+  },
+  {
+    "fType": "fan",
+    "fColorPattern": "grouped",
+    "fCount": 6,
+    "seed": 1631173
+  },
+  {
+    "fType": "lobed",
+    "fColorPattern": "grouped",
+    "fCount": 6,
+    "seed": 2386086
+  },
+  {
+    "fType": "radial",
+    "fColorPattern": "alternating",
+    "fCount": 12,
+    "seed": 3140999
+  },
+  {
+    "fType": "cup",
+    "fColorPattern": "alternating",
+    "fCount": 12,
+    "seed": 3895912
+  },
+  {
+    "fType": "fan",
+    "fColorPattern": "alternating",
+    "fCount": 12,
+    "seed": 4650825
+  },
+  {
+    "fType": "lobed",
+    "fColorPattern": "alternating",
+    "fCount": 12,
+    "seed": 5405738
+  },
+  {
+    "fType": "radial",
+    "fColorPattern": "scattered",
+    "fCount": 20,
+    "seed": 6160651
+  },
+  {
+    "fType": "cup",
+    "fColorPattern": "scattered",
+    "fCount": 20,
+    "seed": 6915564
+  },
+  {
+    "fType": "fan",
+    "fColorPattern": "scattered",
+    "fCount": 20,
+    "seed": 7670477
+  },
+  {
+    "fType": "lobed",
+    "fColorPattern": "scattered",
+    "fCount": 20,
+    "seed": 8425390
+  },
+  {
+    "fType": "radial",
+    "fColorPattern": "grouped",
+    "fCount": 32,
+    "seed": 9180303
+  },
+  {
+    "fType": "cup",
+    "fColorPattern": "grouped",
+    "fCount": 32,
+    "seed": 9935216
+  },
+  {
+    "fType": "fan",
+    "fColorPattern": "grouped",
+    "fCount": 32,
+    "seed": 10690129
+  },
+  {
+    "fType": "lobed",
+    "fColorPattern": "grouped",
+    "fCount": 32,
+    "seed": 11445042
+  },
+  {
+    "fType": "radial",
+    "fColorPattern": "alternating",
+    "fCount": 8,
+    "seed": 12199955
+  },
+  {
+    "fType": "cup",
+    "fColorPattern": "alternating",
+    "fCount": 8,
+    "seed": 12954868
+  },
+  {
+    "fType": "fan",
+    "fColorPattern": "alternating",
+    "fCount": 8,
+    "seed": 13709781
+  },
+  {
+    "fType": "lobed",
+    "fColorPattern": "alternating",
+    "fCount": 8,
+    "seed": 14464694
+  }
+]

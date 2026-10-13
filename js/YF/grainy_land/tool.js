@@ -1,24 +1,28 @@
-import { resizeFloraStack } from './flora.js?v=flower-f-5';
-import { addLayer } from './layers.js?v=flower-f-5';
-import { PrintColor } from './print-color.js?v=flower-f-5';
-import { motionFrame, renderVideo } from './motion.js?v=flower-f-5';
-import { CustomColorEditor } from './custom-color-editor.js?v=flower-f-5';
-import { editCanvas } from './canvas-size.js?v=flower-f-5';
-import { renderPNG } from './png-export.js?v=flower-f-5';
-import { renderLayersZIP } from './layers-export.js?v=flower-f-5';
-import { downloadBlob } from '../infra/framework/src/ui/GeneratorHost.js?v=7';
-import { defineTool, UnifiedColorPicker, ToolUiController, FileIntakeController, PresetMenuKeyboardController } from '../infra/framework/src/index.js?v=tool-ui-4';
-import { defaults, ranges, switchMode, regenerate, toneKeys, migratePresets, normalizeSettings, makeDocument, readDocument, exportDimensions } from './document.js?v=flower-f-5';
-import { adjacentColors, hexRGB } from './scene.js?v=flower-f-5';
-import { LandscapeRenderer } from './render.js?v=flower-f-5';
+import {jsonExportName} from './export-naming.js?v=preset-export-1';
+import {MAX_DOCUMENT_BYTES} from './layer-limits.js?v=petal-motion-1';
+import { ExportProgress } from './export-progress.js?v=petal-motion-1';
+import { ObjectUI } from './object-ui.js?v=petal-motion-1';
+import { modeLabels } from './object-model.js?v=petal-motion-1';
+import { PrintColor } from './print-color.js?v=petal-motion-1';
+import { motionFrame, renderVideo } from './motion.js?v=petal-motion-1';
+import { CustomColorEditor } from './custom-color-editor.js?v=petal-motion-1';
+import { editCanvas } from './canvas-size.js?v=petal-motion-1';
+import { renderPNG } from './png-export.js?v=petal-motion-1';
+import { renderLayersZIP } from './layers-export.js?v=petal-motion-1';
+import { downloadBlob } from '../infra/framework/src/ui/GeneratorHost.js?v=petal-motion-1';
+import { defineTool, UnifiedColorPicker, ToolUiController, FileIntakeController, PresetMenuKeyboardController } from '../infra/framework/src/index.js?v=petal-motion-1';
+import { defaults, ranges, switchMode, regenerate, toneKeys, migratePresets, normalizeSettings, makeDocument, readDocument, exportDimensions } from './document.js?v=presets-quiet-removed-1';
+import { adjacentColors, hexRGB } from './scene.js?v=petal-motion-1';
+import { LandscapeRenderer } from './render.js?v=petal-motion-1';
 
-import { getLayers } from './layer-data.js?v=flower-f-5';
-import { FormEditor } from './form-editor.js?v=flower-f-5';
+import { getLayers } from './layer-data.js?v=petal-motion-1';
+import { FormEditor } from './form-editor.js?v=petal-motion-1';
+import { editableTarget, visibleDialog } from '../infra/framework/src/ui/CommandPolicy.js?v=2';
 
 const printColor=new PrintColor();
 let motionStart=null,motionRAF=0;
-let formEditor, customColorEditor;
-let renderer, ui, intake, presetKeyboard, listeners, unsubscribe, unsubscribeFloraCount, resizeObserver, panelObserver, panelPositionObserver, tonePicker;
+let formEditor, customColorEditor, objectUi;
+let renderer, ui, exportProgress, intake, presetKeyboard, listeners, unsubscribe, resizeObserver, panelObserver, panelPositionObserver, tonePicker;
 let renderFailed = false, lastSize = '';
 const byId = id => document.getElementById(id);
 const status = text => { byId('operationStatus').textContent = text; };
@@ -30,14 +34,14 @@ function draw({ ctx2d, settings, width, height }, exporting = false) {
         const scale = exporting ? Math.abs(transform.a) : Math.min(1.5, Math.max(.5, Math.abs(transform.a)),4096/Math.max(width,height),Math.sqrt(8388608/(width*height)));
         const w = Math.max(1, Math.round(width * scale)), h = Math.max(1, Math.round(height * scale));
         const animated=!exporting&&motionStart!=null?motionFrame(settings,(performance.now()-motionStart)/1000/settings.motionDuration):settings;
-        const transparent=exporting?settings.transparentBackground:settings.previewTransparent&&!settings.softProof;
+        const transparent=!settings.backgroundVisible||(exporting?settings.transparentBackground:settings.previewTransparent&&!settings.softProof);
         let surface = renderer.render(animated, w, h, 0, transparent);
         if(!exporting&&settings.softProof&&printColor.profile)surface=printColor.proof(surface,settings.printIntent);
-        if(!exporting&&transparent){const size=12/Math.max(.01,Math.abs(transform.a));ctx2d.fillStyle='#555';ctx2d.fillRect(0,0,width,height);ctx2d.fillStyle='#777';for(let y=0;y<height;y+=size)for(let x=0;x<width;x+=size)if((Math.floor(x/size)+Math.floor(y/size))%2===0)ctx2d.fillRect(x,y,size,size);}
+        if(!exporting&&transparent&&!settings.softProof){const size=12/Math.max(.01,Math.abs(transform.a));ctx2d.fillStyle='#555';ctx2d.fillRect(0,0,width,height);ctx2d.fillStyle='#777';for(let y=0;y<height;y+=size)for(let x=0;x<width;x+=size)if((Math.floor(x/size)+Math.floor(y/size))%2===0)ctx2d.fillRect(x,y,size,size);}
         ctx2d.drawImage(surface, 0, 0, width, height);
         if (renderFailed) status('');
         renderFailed = false;
-        if (!exporting) formEditor?.draw();
+        if (!exporting) formEditor?.draw(animated);
     } catch (error) {
         renderFailed = true; status(error.message);
         if (exporting) throw error;
@@ -66,9 +70,7 @@ function sync(tool) {
     byId('flowerComposition').hidden=s.mode!=='f';byId('fType').value=s.fType;
     byId('floraComposition').hidden=s.mode!=='flora';byId('floraLayout').value=s.floraLayout;
     for(const key of ['scale','complexity','flow','folds'])byId(key+'Slider').closest('.control-group').hidden=['flora','f'].includes(s.mode);
-    byId('floraCountSlider').closest('.control-group').hidden=s.floraLayout==='single';
-    byId('newPlantLayer').hidden=!['flora','f'].includes(s.mode);byId('newPlantLayer').textContent=s.mode==='f'?'+ Flower':'+ Plant';byId('newAutoLayer').hidden=['flora','f'].includes(s.mode);byId('newBlueLayers').hidden=['flora','f'].includes(s.mode);
-    byId('newPlantLayer').disabled=getLayers(s).length>=16||s.mode==='f'&&getLayers(s).some(l=>l.flora);
+    byId('newBlueLayers').hidden=s.mode!=='abstract';
     byId('toneCharacterSelect').value = s.toneCharacter;
     const neighbors=adjacentColors(s), strength=s.toneAmount/100;
     ['sky','terrain','depth','light'].forEach(key => {
@@ -114,8 +116,8 @@ function sync(tool) {
     byId('exportLayers').checked=s.exportLayers;
     byId('transparentBackground').checked=s.transparentBackground;
     const exportAction=ui?.actions.find(action=>action.id==='png');
-    if(exportAction)exportAction.label=s.exportLayers?'Export ZIP':'Export PNG';
-    byId('mainCanvas').setAttribute('aria-label', s.mode === 'f' ? 'Generated grainy flower' : s.mode === 'flora' ? 'Generated grainy flora' : s.mode === 'abstract' ? 'Generated grainy Spot artwork' : 'Generated grainy landscape');
+    if(exportAction)exportAction.label=s.exportLayers?'ZIP':'PNG';
+    byId('mainCanvas').setAttribute('aria-label', s.mode === 'f' ? 'Generated grainy Flora artwork' : s.mode === 'flora' ? 'Generated grainy Plant artwork' : s.mode === 'abstract' ? 'Generated grainy Spot artwork' : 'Generated grainy landscape');
     formEditor?.sync();
     ui?.refresh();
 }
@@ -143,9 +145,7 @@ function bind(tool) {
     for (const key of toneKeys) on(byId(key+'Auto'), 'click', () => change(tool, {[key]:null}, 'Automatic tone'));
     for (const radio of document.querySelectorAll('input[name="mode"]')) on(radio, 'change', () => change(tool,switchMode(tool.settings,radio.value),'Mode'));
     on(byId('fType'),'change',()=>change(tool,{fType:byId('fType').value},'Flower type'));
-    on(byId('floraLayout'),'change',()=>change(tool,resizeFloraStack({...tool.settings,floraLayout:byId('floraLayout').value}),'Flora arrangement'));
-    unsubscribeFloraCount=tool.settingsStore.subscribe('floraCount',()=>{const next=resizeFloraStack(tool.settings);if(JSON.stringify(next.floraLayers)!==JSON.stringify(tool.settings.floraLayers))tool.settingsStore.set('floraLayers',next.floraLayers);});
-    on(byId('newPlantLayer'),'click',()=>{try{const result=addLayer(tool.settings,'auto');change(tool,result.settings,'Add plant');formEditor.select(result.id);}catch(error){status(error.message);}});
+    on(byId('floraLayout'),'change',()=>change(tool,{floraLayout:byId('floraLayout').value},'Plant arrangement'));
     on(byId('seedInput'),'change',e => change(tool,regenerate(tool.settings,Number(e.target.value)),'Seed'));
     on(byId('toneCharacterSelect'),'change',e => change(tool,{toneCharacter:e.target.value},'Tone character'));
     const fit = () => { tool.renderNow(); tool.target.fitToScreen(); };
@@ -176,7 +176,7 @@ function bind(tool) {
     customColorEditor = new CustomColorEditor(tool,change,status).init();
     unsubscribe = tool.settingsStore.subscribe('*', () => sync(tool));
     intake = new FileIntakeController({
-        input: 'jsonFileInput', trigger: 'jsonPickerTrigger', accept: '.json,application/json', maxBytes: 4*1024*1024,
+        input: 'jsonFileInput', trigger: 'jsonPickerTrigger', accept: '.json,application/json', maxBytes: MAX_DOCUMENT_BYTES,
         errorText: error => error.message || 'Could not read settings.',
         onSelect: async file => {
             const settings = readDocument(JSON.parse(await file.text()));
@@ -186,35 +186,62 @@ function bind(tool) {
         onReject: result => status(result.message)
     }).init();
     formEditor = new FormEditor(tool,change).init();
+    objectUi = new ObjectUI(tool,change,formEditor).init();formEditor.objectUI=objectUi;
     for(const key of ['previewTransparent','softProof'])on(byId(key),'change',()=>change(tool,{[key]:byId(key).checked},'Preview'));
     for(const key of ['printIntent','motionAmount','motionDuration'])on(byId(key),'change',()=>change(tool,{[key]:Number(byId(key).value)},'Output settings'));
     on(byId('loadICC'),'click',()=>byId('iccFile').click());
     on(byId('iccFile'),'change',async()=>{const file=byId('iccFile').files[0];if(!file)return;try{if(file.size>4*1024*1024)throw Error('ICC profiles are limited to 4 MiB.');const profile=await printColor.load(new Uint8Array(await file.arrayBuffer()),file.name);byId('iccName').textContent=profile.name+' · '+profile.space;byId('softProof').disabled=false;byId('exportTIFF').disabled=false;tool.render();status('ICC profile loaded for this session.');}catch(error){status(error.message);}finally{byId('iccFile').value='';}});
-    const stopMotion=()=>{if(motionStart==null)return;motionStart=null;cancelAnimationFrame(motionRAF);byId('playMotion').textContent='Play';tool.renderNow();};
-    on(document,'pointerdown',event=>{if(!event.target.closest('#playMotion'))stopMotion();},{capture:true});
-    on(document,'keydown',stopMotion,{capture:true});
-    on(byId('playMotion'),'click',()=>{
+    const stopMotion=()=>{if(motionStart==null)return;motionStart=null;cancelAnimationFrame(motionRAF);byId('playMotion').textContent='Play';byId('playMotion').setAttribute('aria-pressed','false');tool.renderNow();};
+    const toggleMotion=()=>{
         if(motionStart!=null){stopMotion();return;}
-        formEditor.select(null);motionStart=performance.now();byId('playMotion').textContent='Stop';
+        formEditor.select(null);motionStart=performance.now();byId('playMotion').textContent='Stop';byId('playMotion').setAttribute('aria-pressed','true');
         const frame=()=>{if(motionStart==null||listeners.signal.aborted)return;tool.render();motionRAF=requestAnimationFrame(frame);};frame();
-    });
+    };
+    // Defer a Space tap until release so Space + drag keeps panning without starting playback.
+    let motionTap=false;
+    const canToggleMotion=event=>!event.isComposing&&!event.metaKey&&!event.ctrlKey&&!event.altKey&&!event.shiftKey
+        &&!editableTarget(event.target)&&!visibleDialog(document)&&!exportProgress?.busy
+        &&(!event.target.closest?.('button,a[href],summary,[role="button"]')||event.target.closest?.('#playMotion'))
+        &&!formEditor.gesture&&!formEditor.reorderGesture&&!formEditor.vector?.drag&&!formEditor.vector?.penDrag&&!formEditor.flora?.drag;
+    on(document,'pointerdown',event=>{motionTap=false;if(!event.target.closest('#playMotion'))stopMotion();},{capture:true});
+    on(document,'keydown',event=>{
+        if(event.code==='Space'&&canToggleMotion(event)&&!event.defaultPrevented){
+            event.preventDefault();if(!event.repeat)motionTap=true;return;
+        }
+        motionTap=false;stopMotion();
+    },{capture:true});
+    on(document,'keyup',event=>{
+        if(event.code!=='Space')return;
+        const toggle=motionTap;motionTap=false;
+        if(toggle&&canToggleMotion(event)){event.preventDefault();toggleMotion();}
+    },{capture:true});
+    on(window,'blur',()=>{motionTap=false;});
+    on(byId('playMotion'),'click',toggleMotion);
 
+    exportProgress=new ExportProgress({container:byId('exportActions'),status:byId('exportStatus'),progress:byId('exportProgress'),message:byId('exportMessage'),cancelButton:byId('cancelExport'),onChange:()=>ui?.refresh()});
+    const output=(signal,label,operation)=>{
+        status('');const snapshot=tool.getSnapshot();
+        return exportProgress.run({signal,label},async context=>{
+            const exportRenderer=new LandscapeRenderer();
+            try{return await operation(exportRenderer,snapshot,context);}finally{exportRenderer.destroy();tool.render();}
+        });
+    };
     presetKeyboard = new PresetMenuKeyboardController().init();
     ui = new ToolUiController({
         id: 'grainy_land', title: 'Grainy Land',
         summaries: {
-            compositionPanel: () => tool.settings.mode==='abstract'?'Spot':tool.settings.mode,
-            layersPanel: () => getLayers(tool.settings).length + ' layers'
+            compositionPanel: () => modeLabels[tool.settings.mode],
+            layersPanel: () => {const count=getLayers(tool.settings).length;return count+' '+(count===1?'layer':'layers');}
         },
         actions: [
             { id:'tool-erase', label:'Erase', kind:'command', group:'keyboard', shortcut:'e', run: () => formEditor.setTool('erase') },
             { id:'tool-brush', label:'Brush', kind:'command', group:'keyboard', shortcut:'b', run: () => formEditor.setTool('paint') },
             { id:'tool-pen', label:'Pen', kind:'command', group:'keyboard', shortcut:'p', run:()=>formEditor.vector.startPen() },
             { id:'tool-move', label:'Move', kind:'command', group:'keyboard', shortcut:'v', run: () => formEditor.setTool('move') },
-            ...[[-2,'[','Smaller brush'],[2,']','Larger brush']].map(([step,shortcut,label])=>({
-                id:step<0?'brush-smaller':'brush-larger',label,kind:'command',group:'keyboard',shortcut,repeat:true,
-                enabled:()=>formEditor.paintTool!=='move'&&!formEditor.gesture,
-                run:()=>formEditor.setBrushSize(formEditor.brushSize+step)
+            ...[[-2,'[','Send to back / Smaller brush'],[2,']','Bring to front / Larger brush']].map(([step,shortcut,label])=>({
+                id:step<0?'layer-to-back':'layer-to-front',label,kind:'command',group:'keyboard',shortcut,repeat:true,
+                enabled:()=>!formEditor.gesture&&!formEditor.vector?.drag&&!formEditor.vector?.penDrag&&!formEditor.flora?.drag&&!formEditor.reorderGesture,
+                run:()=>['paint','erase'].includes(formEditor.paintTool)&&!formEditor.vector.pen&&!formEditor.vector.editing&&!formEditor.flora.editing?formEditor.setBrushSize(formEditor.brushSize+step):formEditor.edgeLayer(step)
             })),
             { id:'layer-duplicate',label:'Duplicate layer',kind:'command',group:'keyboard',shortcut:'shift+d',enabled:()=>formEditor.canChangeLayer(),run:()=>formEditor.duplicateSelected() },
             ...['delete','backspace'].map(shortcut=>({id:'layer-'+shortcut,label:'Delete layer',kind:'command',group:'keyboard',shortcut,run:()=>formEditor.deleteSelected()})),
@@ -222,37 +249,32 @@ function bind(tool) {
             ...[[-1,'mod+[','Send layer backward'],[1,'mod+]','Bring layer forward']].map(([delta,shortcut,label])=>({id:delta<0?'layer-backward':'layer-forward',label,kind:'command',group:'keyboard',shortcut,repeat:true,run:()=>formEditor.shiftLayer(delta)})),
             { id:'generate', button:'generateBtn', label:'Generate', kind:'command', group:'utility', shortcut:'r',
                 run: () => { change(tool,regenerate(tool.settings,crypto.getRandomValues(new Uint32Array(1))[0]),'Generate'); status(''); } },
-            { id:'png', button:'exportPngBtn', label:'Export PNG', kind:'export', group:'primary', shortcut:'mod+e',
-                run: async ({signal}) => {
-                    exportDimensions(tool.settings); status('Preparing export…');
-                    try {
-                        const snapshot=tool.getSnapshot(),filename='grainy-land-'+snapshot.seed+'.png';
-                        if(snapshot.exportLayers) {
-                            // A dedicated renderer and snapshot let editing continue without restoring over new changes.
-                            const exportRenderer=new LandscapeRenderer();
-                            try {
-                                const {blob,count}=await renderLayersZIP(exportRenderer,snapshot,{signal,
-                                    onProgress:({current,total})=>status('Rendering layer '+current+' / '+total+'…')});
-                                signal.throwIfAborted();
-                                downloadBlob(blob,'grainy-land-'+snapshot.seed+'-layers.zip');
-                                status(count+' layers exported as ZIP.');
-                            } finally {exportRenderer.destroy();}
-                            return;
-                        }
-                        const exportRenderer=new LandscapeRenderer();
-                        try{const {blob}=await renderPNG(exportRenderer,snapshot,{signal,onProgress:({current,total})=>status('Rendering '+Math.round(current/total*100)+'%…')});signal.throwIfAborted();downloadBlob(blob,filename);}finally{exportRenderer.destroy();}
-                        status(snapshot.transparentBackground?'Transparent PNG exported.':'PNG exported.');
+            { id:'png', button:'exportPngBtn', label:'PNG', kind:'export', group:'primary', shortcut:'mod+e', enabled:()=>!exportProgress.busy,
+                run: ({signal}) => output(signal,tool.settings.exportLayers?'ZIP':'PNG',async(r,s,{signal,onProgress})=>{
+                    exportDimensions(s);
+                    if(s.exportLayers){
+                        const {blob}=await renderLayersZIP(r,s,{signal,onProgress:({current,total})=>onProgress({current,total,message:'Layers · '+current+' / '+total})});
+                        signal.throwIfAborted();downloadBlob(blob,'grainy-land-'+s.seed+'-layers.zip');
+                    }else{
+                        const {blob}=await renderPNG(r,s,{signal,onProgress});
+                        signal.throwIfAborted();downloadBlob(blob,'grainy-land-'+s.seed+'.png');
                     }
-                    finally { tool.render(); }
-                } },
-            { id:'print-tiff',button:'exportTIFF',label:'Export print TIFF',kind:'export',group:'panel',enabled:()=>!!printColor.profile,run:async({signal})=>{const r=new LandscapeRenderer();try{const snapshot=tool.getSnapshot();const {blob}=await printColor.export(r,snapshot,{signal,onProgress:({current,total})=>status('Preparing print '+Math.round(current/total*100)+'%…')});signal.throwIfAborted();downloadBlob(blob,'grainy-land-'+snapshot.seed+'.tif');status('Print TIFF exported with ICC profile.');}finally{r.destroy();}}},
-            { id:'motion-video',button:'exportMotion',label:'Export video',kind:'export',group:'panel',run:async({signal})=>{const r=new LandscapeRenderer();try{const snapshot=tool.getSnapshot(),result=await renderVideo(r,snapshot,{signal,onProgress:({current,total})=>status('Recording '+Math.round(current/total*100)+'%…')});signal.throwIfAborted();downloadBlob(result.blob,'grainy-land-'+snapshot.seed+'.'+result.extension);status('Loop video exported.');}finally{r.destroy();}}},
+                }) },
+            { id:'print-tiff',button:'exportTIFF',label:'Export print TIFF',kind:'export',group:'panel',enabled:()=>!!printColor.profile&&!exportProgress.busy,
+                run:({signal})=>output(signal,'TIFF',async(r,s,{signal,onProgress})=>{
+                    const {blob}=await printColor.export(r,s,{signal,onProgress});signal.throwIfAborted();downloadBlob(blob,'grainy-land-'+s.seed+'.tif');
+                }) },
+            { id:'motion-video',button:'exportMotion',label:'MP4',kind:'export',group:'primary',enabled:()=>!exportProgress.busy,
+                run:({signal})=>output(signal,'MP4',async(r,s,{signal,onProgress})=>{
+                    const result=await renderVideo(r,s,{signal,onProgress:({current,total})=>onProgress({current,total,message:'MP4 · '+current.toFixed(1)+' / '+total+' s'})});
+                    signal.throwIfAborted();downloadBlob(result.blob,'grainy-land-'+s.seed+'.'+result.extension);
+                }) },
             { id:'json-export', button:'exportJsonBtn', label:'Export JSON', kind:'export', group:'extra', shortcut:'mod+j',
-                run: () => tool.exporter.exportJSON(makeDocument(tool.getSnapshot()),'grainy-land-'+tool.settings.seed+'.json') },
+                run: () => tool.exporter.exportJSON(makeDocument(tool.getSnapshot()),jsonExportName(tool.settings,tool.presets)) },
             { id:'json-import', button:'importJsonBtn', label:'Import JSON', kind:'import', group:'extra', shortcut:'mod+shift+j', run: () => intake.open() },
             { id:'undo', label:'Undo', kind:'command', group:'keyboard', shortcut:'mod+z', run: () => tool.undo() },
             { id:'redo', label:'Redo', kind:'command', group:'keyboard', shortcut:'mod+shift+z', run: () => tool.redo() }
-        ], onError: error => status(error.message || 'Operation failed.')
+        ], onError: (error,action) => {if(!['png','motion-video','print-tiff'].includes(action?.id))status(error.message || 'Operation failed.');}
     }).init();
     resizeObserver = new ResizeObserver(() => fit()); resizeObserver.observe(byId('canvasContainer'));
     // Dock properties beside Layers; a manually dragged properties panel keeps its own position.
@@ -266,12 +288,12 @@ function bind(tool) {
     panelPositionObserver.observe(byId('layersPanel'),{attributes:true,attributeFilter:['style','class']});
     panelObserver = new ResizeObserver(entries => {
         const root=document.querySelector('.grainy-land');
-        const properties={canvasPanel:'--canvas-panel-height',layersPanel:'--layers-panel-height',layerPanel:'--layer-panel-height'};
+        const properties={canvasPanel:'--canvas-panel-height',layersPanel:'--layers-panel-height',layerPanel:'--layer-panel-height',animationPanel:'--animation-panel-height'};
         for(const entry of entries)root.style.setProperty(properties[entry.target.id],entry.target.getBoundingClientRect().height+'px');
         updateLayerDock();
         formEditor?.drawThumbs();
     });
-    for(const id of ['canvasPanel','layersPanel','layerPanel'])panelObserver.observe(byId(id));
+    for(const id of ['canvasPanel','layersPanel','layerPanel','animationPanel'])panelObserver.observe(byId(id));
     updateLayerDock();
     sync(tool);
     document.documentElement.dataset.ready = 'true';
@@ -282,17 +304,17 @@ const app = defineTool({
         presetDropdown:'presetDropdown',presetToggle:'presetDropdownToggle',presetMenu:'presetDropdownMenu',
         saveBtn:'savePresetBtn',shareBtn:'presetToolbarShareBtn' },
     settings: defaults,
-    controls: { sliders: Object.entries(ranges).map(([setting,[min,max,step]]) => ({
+    controls: { sliders: Object.entries(ranges).filter(([key])=>!['floraCount','fCount','fDensity'].includes(key)).map(([setting,[min,max,step]]) => ({
         id:setting+'Slider', valueId:setting+'Value',setting,min,max,decimals:step<1?1:0,baseStep:step,shiftStep:step*10
     })), toggles:false },
-    panels: ['canvas','composition','material','layers','layer','tools'].map(name => ({id:name+'Panel',headerId:name+'PanelHeader',persistent:true})),
+    panels: ['canvas','composition','material','layers','layer','tools','animation'].map(name => ({id:name+'Panel',headerId:name+'PanelHeader',persistent:true})),
     colorPickers: { containerId:'unifiedColorPickerContainer',swatches:['sky','terrain','depth','light'].map(setting => ({
         type:setting,setting,itemId:setting+'ColorItem',dotId:setting+'ColorPreview',hexId:setting+'ColorHex',hsbSlotId:setting+'ColorHsbSlot'
     })) },
     presets: { migrate:async store => {
         // Refresh named built-ins from their shipped files; personal copies stay intact.
         const shipped={};
-        for(const [name,file] of [['Drift','drift.json'],['Six cup','six-cup.json']]){
+        for(const [name,file] of [['Ember','ember.json'],['Drift','drift.json'],['Field','field.json'],['Six cup','six-cup.json']]){
         if(store.loadAll()?.[name]?.seeded!==true)continue;
         try{
             const response=await fetch('./presets/'+file,{cache:'no-cache',signal:AbortSignal.timeout(5000)});
@@ -303,7 +325,7 @@ const app = defineTool({
         migratePresets(store,shipped);
     }, storageKey:'upgrade:grainy_land:presets:v1',basePath:'./presets',forceSeed:true,defaultName:'Ember',
         colorDots: s => [s.sky,s.terrain,s.depth,s.light].map(value => ({kind:'solid',value})),
-        suggestSaveName: tool => (tool.settings.mode==='f'?'F':tool.settings.mode==='flora'?'Flora':tool.settings.mode==='abstract'?'Spot':'Landscape')+' '+tool.settings.seed },
+        suggestSaveName: tool => modeLabels[tool.settings.mode]+' '+tool.settings.seed },
     history: { maxSize:60,debounceMs:150 },
     share: {}, shortcuts: false, dialog: {},
     export: { filename:'grainy-land.svg' },
@@ -316,9 +338,9 @@ const app = defineTool({
     onReady: bind,
     onDestroy: () => {
         motionStart=null;cancelAnimationFrame(motionRAF);printColor.clear();
-        formEditor?.destroy(); formEditor=null;customColorEditor?.destroy();customColorEditor=null;
-        listeners?.abort(); unsubscribe?.(); unsubscribeFloraCount?.(); resizeObserver?.disconnect(); panelObserver?.disconnect(); panelPositionObserver?.disconnect(); intake?.destroy();
-        presetKeyboard?.destroy(); ui?.destroy(); renderer?.destroy(); renderer=null; ui=null; tonePicker=null;
+        objectUi?.destroy();objectUi=null;formEditor?.destroy(); formEditor=null;customColorEditor?.destroy();customColorEditor=null;
+        listeners?.abort(); unsubscribe?.(); resizeObserver?.disconnect(); panelObserver?.disconnect(); panelPositionObserver?.disconnect(); intake?.destroy();
+        exportProgress?.destroy();exportProgress=null;presetKeyboard?.destroy(); ui?.destroy(); renderer?.destroy(); renderer=null; ui=null; tonePicker=null;
         delete document.documentElement.dataset.ready;
     }
 });

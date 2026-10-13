@@ -1,11 +1,11 @@
-import { addCustomColor, removeCustomColor } from '../custom-colors.js?v=studio-1';
-import { editCanvas } from '../canvas-size.js?v=studio-1';
-import { renderPNG } from '../png-export.js?v=studio-1';
-import {getLayers,withLayers,editLayer,addLayer,duplicateLayer,removeLayer,reorderLayer,convertLayer,MAX_LAYERS} from '../layers.js?v=studio-1';
+import { addCustomColor, removeCustomColor } from '../custom-colors.js?v=flower-field-2';
+import { editCanvas } from '../canvas-size.js?v=flower-field-2';
+import { renderPNG } from '../png-export.js?v=flower-field-2';
+import {getLayers,withLayers,editLayer,addLayer,duplicateLayer,removeLayer,reorderLayer,convertLayer,MAX_LAYERS} from '../layers.js?v=flower-field-2';
 import { ShareCodec } from '../../infra/framework/src/preset/ShareCodec.js';
-import { LandscapeRenderer } from '../render.js?v=flower-f-5';
-import { defaults as currentDefaults, palettes, toneKeys, makeDocument, readDocument, editForm, regenerate, normalizeSettings } from '../document.js?v=studio-1';
-import { adjacentColors } from '../scene.js?v=studio-1';
+import { LandscapeRenderer } from '../render.js?v=flower-field-2';
+import { defaults as currentDefaults, palettes, toneKeys, makeDocument, readDocument, editForm, regenerate, normalizeSettings } from '../document.js?v=flower-field-2';
+import { adjacentColors } from '../scene.js?v=flower-field-2';
 const defaults={...currentDefaults,blueLayers:false};
 const renderer = new LandscapeRenderer(), results = [], urls = [];
 const check = (name, condition) => { results.push((condition ? 'PASS ' : 'FAIL ') + name); if (!condition) throw new Error(name); };

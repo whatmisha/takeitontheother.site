@@ -1,8 +1,8 @@
-import {floraParts,editFloraPart} from './flora.js?v=flower-f-5';
-import {getLayers,editLayer,layerSettingsKey} from './layers.js?v=flower-f-5';
-import {localToCanvas,canvasToLocal} from './transforms.js?v=flower-f-5';
-import {moveVectorNode,setVectorNodesSmooth,splitVectorSegment,vectorSegment,cubicPoint,flattenVectorPath,vectorDistance} from './vector-path.js?v=flower-f-5';
-import {groupColor} from './custom-colors.js?v=flower-f-5';
+import {floraParts,editFloraPart} from './flora.js?v=petal-motion-1';
+import {getLayers,editLayer,layerSettingsKey} from './layers.js?v=petal-motion-1';
+import {localToCanvas,canvasToLocal} from './transforms.js?v=petal-motion-1';
+import {moveVectorNode,setVectorNodesSmooth,splitVectorSegment,vectorSegment,cubicPoint,flattenVectorPath,vectorDistance} from './vector-path.js?v=petal-motion-1';
+import {groupColor} from './custom-colors.js?v=petal-motion-1';
 const byId=id=>document.getElementById(id),NS='http://www.w3.org/2000/svg';
 function svg(tag,attrs){const el=document.createElementNS(NS,tag);for(const [k,v]of Object.entries(attrs))el.setAttribute(k,String(v));return el;}
 export class FloraEditor{
@@ -11,15 +11,15 @@ export class FloraEditor{
  part(){return this.parts().find(p=>p.id===this.partId);}
  init(){const e=this.e,on=(target,event,handler,capture=false)=>target.addEventListener(event,handler,{signal:e.abort.signal,capture});this.svg=byId('floraOverlay');
   on(byId('editFloraParts'),'click',()=>this.open(!this.editing));
-  on(byId('regeneratePlant'),'click',()=>{const l=e.layer();if(l?.flora&&!l.locked)e.change(e.tool,editLayer(e.tool.settings,l.id,{flora:{...l.flora,variant:l.flora.variant+1}}),'Regenerate plant');});
+  on(byId('regeneratePlant'),'click',()=>{const l=e.layer();if(l?.flora&&!l.locked)e.change(e.tool,editLayer(e.tool.settings,l.id,{flora:{...l.flora,variant:l.flora.variant+1}}),'Regenerate object');});
   on(byId('floraSmooth'),'click',()=>this.smooth(true));on(byId('floraCorner'),'click',()=>this.smooth(false));on(byId('floraDeletePoint'),'click',()=>this.deletePoint());
-  on(byId('floraResetPart'),'click',()=>this.patch({reset:true},'Reset plant part'));
-  on(byId('floraDetach'),'click',()=>this.patch({detached:!this.part()?.detached},'Plant attachment'));
+  on(byId('floraResetPart'),'click',()=>this.patch({reset:true},'Reset object part'));
+  on(byId('floraDetach'),'click',()=>this.patch({detached:!this.part()?.detached},'Part attachment'));
   on(byId('floraHidePart'),'click',()=>this.patch({hidden:!this.e.layer()?.flora.edits?.[this.partId]?.hidden},'Part visibility'));
   for(const [id,angle,scale]of [['floraRotateLeft',-15,1],['floraRotateRight',15,1],['floraPartSmaller',0,.9],['floraPartLarger',0,1.1]])on(byId(id),'click',()=>this.transform(angle,scale));
   on(e.container,'dblclick',event=>{
    if(event.button!==0||e.space)return;
-   if(this.editing){const segment=event.target.closest('[data-flora-segment]');if(segment){this.stop(event);const p=this.part();if(p.local.length>=48)return;const i=Number(segment.dataset.floraSegment),pos=this.point(event),curve=vectorSegment(p.local,i);let at=.5,d=Infinity;for(let t=.02;t<1;t+=.02){const q=cubicPoint(curve,t),dist=(q[0]-pos[0]+p.origin[0])**2+(q[1]-pos[1]+p.origin[1])**2;if(dist<d){d=dist;at=t;}}this.node=i+1;this.patch({path:splitVectorSegment(p.local,i,at),reindex:{at:i+1,delta:1}},'Add plant point');}return;}
+   if(this.editing){const segment=event.target.closest('[data-flora-segment]');if(segment){this.stop(event);const p=this.part();if(p.local.length>=48)return;const i=Number(segment.dataset.floraSegment),pos=this.point(event),curve=vectorSegment(p.local,i);let at=.5,d=Infinity;for(let t=.02;t<1;t+=.02){const q=cubicPoint(curve,t),dist=(q[0]-pos[0]+p.origin[0])**2+(q[1]-pos[1]+p.origin[1])**2;if(dist<d){d=dist;at=t;}}this.node=i+1;this.patch({path:splitVectorSegment(p.local,i,at),reindex:{at:i+1,delta:1}},'Add part point');}return;}
    const id=e.hit(e.point(event)),l=getLayers(e.tool.settings).find(l=>l.id===id);if(!l?.flora||l.locked)return;this.stop(event);e.select(id,{individual:true});this.open(true);this.chooseAt(this.point(event));
   },true);
   on(e.container,'pointerdown',event=>this.down(event),true);on(e.container,'pointermove',event=>this.move(event),true);
@@ -31,7 +31,7 @@ export class FloraEditor{
    if((event.metaKey||event.ctrlKey)&&event.key.toLowerCase()==='z'&&this.drag){this.stop(event);this.cancel();return;}
    if(!this.editing||event.metaKey||event.ctrlKey||event.altKey)return;
    if(['Delete','Backspace'].includes(event.key)){this.stop(event);this.deletePoint();return;}
-   if(e.container.contains(event.target)&&['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key)){this.stop(event);const p=this.part();if(!p)return;const n=p.local[this.node],step=event.shiftKey?10:1;if(this.node===0&&p.parent&&!p.detached)return;this.patch({path:moveVectorNode(p.local,this.node,[n.x+(event.key==='ArrowLeft'?-step:event.key==='ArrowRight'?step:0)/e.tool.settings.width,n.y+(event.key==='ArrowUp'?-step:event.key==='ArrowDown'?step:0)/e.tool.settings.height])},'Move plant point');}
+   if(e.container.contains(event.target)&&['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key)){this.stop(event);const p=this.part();if(!p)return;const n=p.local[this.node],step=event.shiftKey?10:1;if(this.node===0&&p.parent&&!p.detached)return;this.patch({path:moveVectorNode(p.local,this.node,[n.x+(event.key==='ArrowLeft'?-step:event.key==='ArrowRight'?step:0)/e.tool.settings.width,n.y+(event.key==='ArrowUp'?-step:event.key==='ArrowDown'?step:0)/e.tool.settings.height])},'Move part point');}
   },true);return this;
  }
  stop(event){event.preventDefault();event.stopImmediatePropagation();}
@@ -44,10 +44,10 @@ export class FloraEditor{
  point(event){const s=this.e.tool.settings;return canvasToLocal(this.e.point(event),this.e.layer(),s.width/s.height);}
  chooseAt(point){const candidates=this.parts().filter(p=>!p.hidden).map(p=>({p,d:vectorDistance(point[0],point[1],flattenVectorPath(p.path))})),inside=candidates.filter(x=>x.d>=0);const chosen=inside.at(-1)??candidates.sort((a,b)=>b.d-a.d)[0];if(chosen){this.partId=chosen.p.id;this.node=0;this.e.sync();this.e.tool.render();}}
  patch(patch,label){const l=this.e.layer();if(!l||l.locked||!this.part())return;const updated=editFloraPart(l,this.e.tool.settings,this.partId,patch);this.e.change(this.e.tool,editLayer(this.e.tool.settings,l.id,{flora:updated.flora}),label);}
- smooth(value){const p=this.part();if(p)this.patch({path:setVectorNodesSmooth(p.local,[this.node],value)},value?'Smooth plant point':'Corner plant point');}
+ smooth(value){const p=this.part();if(p)this.patch({path:setVectorNodesSmooth(p.local,[this.node],value)},value?'Smooth part point':'Corner part point');}
  protectedPoint(){const p=this.part();return !!p&&(this.node===0&&p.parent&&!p.detached||this.parts().some(child=>child.parent===p.id&&!child.detached&&child.parentNode===this.node));}
- deletePoint(){const p=this.part();if(!p)return;if(p.local.length<=3||this.protectedPoint()){this.e.report('Keep the attachment and at least three points.');return;}const at=this.node,path=p.local.filter((_,i)=>i!==at);this.node=Math.min(at,path.length-1);this.patch({path,reindex:{at,delta:-1}},'Delete plant point');}
- transform(angle,scale){const p=this.part();if(!p)return;const a=angle*Math.PI/180,c=Math.cos(a),s=Math.sin(a),aspect=this.e.tool.settings.width/this.e.tool.settings.height,at=([x,y])=>[(x*aspect*c-y*s)*scale/aspect,(x*aspect*s+y*c)*scale];this.patch({path:p.local.map(n=>{const [x,y]=at([n.x,n.y]);return {...n,x,y,in:at(n.in),out:at(n.out)};})},'Transform plant part');}
+ deletePoint(){const p=this.part();if(!p)return;if(p.local.length<=3||this.protectedPoint()){this.e.report('Keep the attachment and at least three points.');return;}const at=this.node,path=p.local.filter((_,i)=>i!==at);this.node=Math.min(at,path.length-1);this.patch({path,reindex:{at,delta:-1}},'Delete part point');}
+ transform(angle,scale){const p=this.part();if(!p)return;const a=angle*Math.PI/180,c=Math.cos(a),s=Math.sin(a),aspect=this.e.tool.settings.width/this.e.tool.settings.height,at=([x,y])=>[(x*aspect*c-y*s)*scale/aspect,(x*aspect*s+y*c)*scale];this.patch({path:p.local.map(n=>{const [x,y]=at([n.x,n.y]);return {...n,x,y,in:at(n.in),out:at(n.out)};})},'Transform object part');}
  center(){const parts=this.parts(),part=parts.find(p=>p.id==='p0'),node=parts.find(p=>p.parent==='p0')?.parentNode??2;return {part,node};}
  centerEditable(){const l=this.e.layer();return l?.flora?.generator==='flower'&&l.mode!=='drawn'&&!l.locked&&l.visible&&this.e.paintTool==='move'&&!this.e.vector?.pen;}
  down(event){const e=this.e;
@@ -63,7 +63,7 @@ export class FloraEditor{
   this.drag={pointerId:event.pointerId,part,side,node:this.node,layer:e.layer(),snapshot:e.tool.getSnapshot(),origin:this.point(event),started:false};e.container.setPointerCapture(event.pointerId);e.tool.render();
  }
  move(event){const g=this.drag,e=this.e;if(!g||g.pointerId!==event.pointerId)return;this.stop(event);const point=this.point(event);if(!g.started&&Math.hypot(point[0]-g.origin[0],point[1]-g.origin[1])<.001)return;
-  if(!g.started){e.tool.history.flush();e.tool.history.beginTransaction(g.center?'Move flower center':'Edit plant part');g.started=true;}
+  if(!g.started){e.tool.history.flush();e.tool.history.beginTransaction(g.center?'Move flower center':'Edit object part');g.started=true;}
   const at=g.center?[g.part.local[g.node].x+point[0]-g.origin[0],g.part.local[g.node].y+point[1]-g.origin[1]]:[point[0]-g.part.origin[0],point[1]-g.part.origin[1]],path=moveVectorNode(g.part.local,g.node,at,g.side,event.altKey),updated=editFloraPart(g.layer,g.snapshot,g.part.id,{path});
   const next=editLayer(g.snapshot,g.layer.id,{flora:updated.flora});e.tool.settingsStore.set(layerSettingsKey(g.snapshot.mode),next[layerSettingsKey(g.snapshot.mode)]);
  }

@@ -1,3 +1,4 @@
+import {floraParts} from './flora.js?v=petal-motion-1';
 // Stable color IDs are shared by both layer stacks and survive palette edits.
 export const MAX_CUSTOM_COLORS = 16;
 export function normalizeCustomColors(value) {
@@ -15,7 +16,7 @@ export function groupColor(settings, group) {
     return settings.customColors?.find(color => color.id === group)?.color ?? settings[group] ?? settings.terrain;
 }
 export function colorIsUsed(settings, id) {
-    return ['landscapeLayers', 'abstractLayers', 'floraLayers', 'fLayers'].some(key => settings[key]?.some(layer => layer.group === id || Object.values(layer.flora?.edits??{}).some(part=>part.group===id)));
+    return [({landscape:'landscapeLayers',abstract:'abstractLayers',flora:'floraLayers',f:'fLayers'})[settings.mode]].some(key => settings[key]?.some(layer => layer.group === id || Object.values(layer.flora?.edits??{}).some(part=>part.group===id)||layer.flora&&floraParts(layer,settings).some(part=>part.group===id)));
 }
 export function addCustomColor(settings) {
     const colors = normalizeCustomColors(settings.customColors);

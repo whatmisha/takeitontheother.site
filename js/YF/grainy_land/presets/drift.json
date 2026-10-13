@@ -1,6 +1,6 @@
 {
   "floraLayout": "cluster",
-  "floraCount": 4,
+  "floraCount": 0,
   "floraScale": 112,
   "floraRecognition": 55,
   "floraBranches": 3,
@@ -24,7 +24,19 @@
   "fStem": 65,
   "fBend": 35,
   "fMerge": 30,
+  "fColorVariation": 70,
+  "fPetalColors": 60,
+  "fColorPattern": "grouped",
   "fLayers": null,
+  "fCount": 0,
+  "fDensity": 55,
+  "fMinSize": 20,
+  "fMaxSize": 150,
+  "fSizeVariation": 90,
+  "fShapeVariation": 55,
+  "fPoseVariation": 60,
+  "sceneMemory": null,
+  "objectDefaults": {},
   "surfaceMemory": null,
   "schemaVersion": 1,
   "width": 1920,
@@ -52,6 +64,7 @@
   "toneSpread": 65,
   "toneScale": 110,
   "toneBleed": 50,
+  "backgroundVisible": true,
   "previewTransparent": false,
   "softProof": false,
   "printIntent": 1,
@@ -85,6 +98,8 @@
   "abstractLayers": [
     {
       "id": "blue-1",
+      "kind": "spot",
+      "parameterMode": "auto",
       "name": "Blue 1",
       "source": 6,
       "mode": "auto",
@@ -105,6 +120,8 @@
     },
     {
       "id": "blue-2",
+      "kind": "spot",
+      "parameterMode": "auto",
       "name": "Blue 2",
       "source": 7,
       "mode": "auto",
@@ -125,6 +142,8 @@
     },
     {
       "id": "form-0",
+      "kind": "spot",
+      "parameterMode": "auto",
       "name": "Field 1",
       "source": 0,
       "mode": "auto",
@@ -145,6 +164,8 @@
     },
     {
       "id": "form-1",
+      "kind": "spot",
+      "parameterMode": "auto",
       "name": "Field 2",
       "source": 1,
       "mode": "auto",
@@ -165,6 +186,8 @@
     },
     {
       "id": "form-2",
+      "kind": "spot",
+      "parameterMode": "auto",
       "name": "Field 3",
       "source": 2,
       "mode": "auto",
@@ -185,6 +208,8 @@
     },
     {
       "id": "form-3",
+      "kind": "spot",
+      "parameterMode": "auto",
       "name": "Field 4",
       "source": 3,
       "mode": "auto",
@@ -205,6 +230,8 @@
     },
     {
       "id": "form-4",
+      "kind": "spot",
+      "parameterMode": "auto",
       "name": "Field 5",
       "source": 4,
       "mode": "auto",
@@ -225,6 +252,8 @@
     },
     {
       "id": "form-5",
+      "kind": "spot",
+      "parameterMode": "auto",
       "name": "Field 6",
       "source": 5,
       "mode": "auto",

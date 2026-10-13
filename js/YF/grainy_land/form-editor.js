@@ -1,13 +1,15 @@
-import {normalizeFloraParams} from './flora.js?v=flower-f-5';
-import { FloraEditor } from './flora-editor.js?v=flower-f-5';
-import { editSelection, duplicateSelection, reorderSelection, resizeSelection } from './selection.js?v=flower-f-5';
-import { localToCanvas, canvasToLocal, materialRanges } from './transforms.js?v=flower-f-5';
-import { VectorEditor } from './vector-editor.js?v=flower-f-5';
-import { groupColor } from './custom-colors.js?v=flower-f-5';
-import { brushStroke, localPaintPoint, strokePointCount, MAX_STROKES, MAX_STROKE_POINTS, MAX_FORM_POINTS } from './paint.js?v=flower-f-5';
-import { getLayers, withLayers, layerSettingsKey, MAX_LAYERS, editLayer, addLayer, addBlueLayers, duplicateLayer, removeLayer, reorderLayer, convertLayer } from './layers.js?v=flower-f-5';
-import { createLayerScene } from './scene.js?v=flower-f-5';
-import { LandscapeRenderer } from './render.js?v=flower-f-5';
+import {kindLabels,effectiveSettings} from './object-model.js?v=petal-motion-1';
+import { LayerHover } from './layer-hover.js?v=petal-motion-1';
+import {normalizeFloraParams} from './flora.js?v=petal-motion-1';
+import { FloraEditor } from './flora-editor.js?v=petal-motion-1';
+import { editSelection, duplicateSelection, reorderSelection, resizeSelection } from './selection.js?v=petal-motion-1';
+import { localToCanvas, canvasToLocal, materialRanges } from './transforms.js?v=petal-motion-1';
+import { VectorEditor } from './vector-editor.js?v=petal-motion-1';
+import { groupColor } from './custom-colors.js?v=petal-motion-1';
+import { brushStroke, localPaintPoint, strokePointCount, MAX_STROKES, MAX_STROKE_POINTS, MAX_FORM_POINTS } from './paint.js?v=petal-motion-1';
+import { getLayers, withLayers, layerSettingsKey, MAX_LAYERS, editLayer, addLayer, addBlueLayer, duplicateLayer, removeLayer, reorderLayer, convertLayer } from './layers.js?v=petal-motion-1';
+import { createLayerScene } from './scene.js?v=petal-motion-1';
+import { LandscapeRenderer } from './render.js?v=petal-motion-1';
 
 export function visibleBounds(map, selected) {
     let left=map.width,top=map.height,right=-1,bottom=-1;
@@ -44,20 +46,22 @@ export class FormEditor {
     commit(patch,label,manual=false){this.change(this.tool,editSelection(this.tool.settings,this.selection(),patch,this.selected),label);}
     report(message=''){byId('paintStatus').textContent=message||this.vector?.draftHint()||'';}
     init() {
-        this.selectedIds=new Set();this.flora=new FloraEditor(this).init();this.vector=new VectorEditor(this).init();
+        this.selectedIds=new Set();this.hover=new LayerHover(this);this.flora=new FloraEditor(this).init();this.vector=new VectorEditor(this).init();
         const on=(target,event,handler,opts={})=>target.addEventListener(event,handler,{...opts,signal:this.abort.signal});
-        for(const mode of ['drawn','auto'])on(byId(mode==='drawn'?'newDrawnLayer':'newAutoLayer'),'click',()=>{
+        for(const mode of ['drawn'])on(byId(mode==='drawn'?'newDrawnLayer':'newAutoLayer'),'click',()=>{
             try {const result=addLayer(this.tool.settings,mode);this.change(this.tool,result.settings,'Add layer');this.select(result.id);this.setTool(mode==='drawn'?'paint':'move');}
             catch(error){this.report(error.message);}
         });
         on(byId('newBlueLayers'),'click',()=>{
-            try {const result=addBlueLayers(this.tool.settings);this.change(this.tool,result.settings,'Add blue layers');this.select(result.id);this.setTool('move');}
+            try {const result=addBlueLayer(this.tool.settings);this.change(this.tool,result.settings,'Add blue layer');this.select(result.id);this.setTool('move');}
             catch(error){this.report(error.message);}
         });
         on(byId('newVectorLayer'),'click',()=>{try{const result=addLayer(this.tool.settings,'vector');this.change(this.tool,result.settings,'Add vector layer');this.select(result.id);this.vector.setEditing(true);}catch(error){this.report(error.message);}});
         on(byId('layerDuplicate'),'click',()=>this.duplicateSelected());
         on(byId('layerDelete'),'click',()=>this.deleteSelected());
         on(byId('layerConvert'),'click',()=>{this.change(this.tool,this.selection().reduce((s,id)=>getLayers(s).find(l=>l.id===id)?.locked?s:convertLayer(s,id),this.tool.settings),'Convert to drawn');this.report('Silhouette preserved. Generation controls no longer change its shape.');});
+        byId('backgroundVisibility').innerHTML=icon('eye');
+        on(byId('backgroundVisibility'),'click',()=>this.change(this.tool,{backgroundVisible:!this.tool.settings.backgroundVisible},'Background visibility'));
         on(byId('backgroundLayer'),'click',()=>{
             this.select(null);
             byId('materialPanel').querySelector('.panel-content').scrollTop=0;
@@ -155,7 +159,7 @@ export class FormEditor {
         this.sync();return this;
     }
     endOpacity(){if(this.opacityEditing){this.opacityEditing=false;this.tool.history.endTransaction();}}
-    canChangeLayer(){return !!this.layer()&&!this.gesture&&!this.vector?.drag&&!this.flora?.drag&&!this.reorderGesture;}
+    canChangeLayer(){return !!this.layer()&&!this.gesture&&!this.vector?.drag&&!this.vector?.penDrag&&!this.flora?.drag&&!this.reorderGesture;}
     duplicateSelected(){
         if(!this.canChangeLayer())return;this.endOpacity();
         try {const result=duplicateSelection(this.tool.settings,this.selection());this.change(this.tool,result.settings,'Duplicate layer');this.select(result.id);this.selectedIds=new Set(result.ids);this.sync();this.tool.render();this.container.focus({preventScroll:true});}
@@ -166,6 +170,13 @@ export class FormEditor {
         if(!this.canChangeLayer()||this.layer().locked)return;const stack=getLayers(this.tool.settings),ids=this.selection(),indices=ids.map(id=>stack.findIndex(l=>l.id===id));
         const edge=delta>0?Math.max(...indices):Math.min(...indices),target=stack[edge+delta];if(!target)return;
         this.endOpacity();this.change(this.tool,reorderSelection(this.tool.settings,ids,target.id,delta>0?'before':'after'),'Reorder layers');
+        byId('layerList').querySelector('.is-selected')?.scrollIntoView({block:'nearest'});
+    }
+    edgeLayer(delta){
+        if(!this.canChangeLayer())return;
+        const stack=getLayers(this.tool.settings),ids=this.selection(),rest=stack.filter(l=>!ids.includes(l.id));
+        const target=delta<0?rest[0]:rest.at(-1);if(!target)return;
+        this.endOpacity();this.change(this.tool,reorderSelection(this.tool.settings,ids,target.id,delta<0?'after':'before'),'Reorder layers');
         byId('layerList').querySelector('.is-selected')?.scrollIntoView({block:'nearest'});
     }
     async renameLayer(id){
@@ -202,19 +213,19 @@ export class FormEditor {
         const ids=this.selection(),used=new Set(getLayers(this.tool.settings).filter(l=>!ids.includes(l.id)).map(l=>l.collection));let unique=name.trim().slice(0,40),suffix=2;while(used.has(unique))unique=name.trim().slice(0,40)+' '+suffix++;this.commit({collection:unique},'Group layers');
     }
     renderList(stack) {
-        const key=JSON.stringify([this.tool.settings.floraBranches,this.tool.settings.fPetals,this.tool.settings.fType,this.tool.settings.fTilt,stack.map(l=>[l.id,l.name,l.mode,l.visible,l.locked,l.group,l.collection,l.flora])]);
+        const key=JSON.stringify([this.tool.settings.floraBranches,this.tool.settings.fPetals,this.tool.settings.fType,this.tool.settings.fTilt,this.tool.settings.objectDefaults,stack.map(l=>[l.id,l.name,l.mode,l.parameterMode,l.parameters,l.visible,l.locked,l.group,l.collection,l.flora])]);
         if(key===this.listKey)return;this.listKey=key;const list=byId('layerList'),scroll=list.scrollTop;list.replaceChildren();
         for(const layer of [...stack].reverse()) {
             const row=document.createElement('div');row.className='layer-row ui-list-row';row.dataset.layerId=layer.id;row.setAttribute('role','listitem');row.dataset.locked=String(layer.locked);
             row.classList.toggle('is-selected',layer.id===this.selected);row.classList.toggle('is-hidden',!layer.visible);
             const action=(key,title,pressed,run)=>{
-                const b=document.createElement('button');b.type='button';b.className='layer-icon ui-icon-button';b.innerHTML=icon(key);b.title=title;b.setAttribute('aria-label',title+' '+layer.name);b.setAttribute('aria-pressed',String(pressed));b.addEventListener('click',run);return b;
+                const b=document.createElement('button');b.type='button';b.className='layer-icon ui-icon-button';b.dataset.action=key;b.innerHTML=icon(key);b.title=title;b.setAttribute('aria-label',title+' '+layer.name);b.setAttribute('aria-pressed',String(pressed));b.addEventListener('click',run);return b;
             };
             const eye=action('eye',layer.visible?'Hide':'Show',layer.visible,()=>this.change(this.tool,editLayer(this.tool.settings,layer.id,{visible:!layer.visible}),'Layer visibility'));
             const select=document.createElement('button');select.type='button';select.className='layer-select ui-list-select';select.title='Cmd/Ctrl-click: select multiple; Shift-click: range; double-click: rename; drag: reorder';select.setAttribute('aria-pressed',String(this.selection().includes(layer.id)));select.setAttribute('aria-label','Select '+layer.name);
             const thumb=document.createElement('canvas');thumb.className='layer-thumb';thumb.width=48;thumb.height=30;thumb.setAttribute('aria-hidden','true');thumb.dataset.thumbId=layer.id;
             const text=document.createElement('span');text.className='layer-label';const title=document.createElement('span');title.className='ui-list-title';title.textContent=layer.name;
-            const state=document.createElement('span');state.className='layer-state ui-meta';state.textContent=layer.mode==='auto'?'Auto':layer.mode==='pinned'?'Pinned':layer.mode==='vector'?'Vector':'Drawn';state.title=this.modeDescription(layer);if(layer.collection){const group=document.createElement('span');group.className='ui-meta';group.textContent=layer.collection;group.title='Click to select this group; Cmd/Ctrl-click selects individual layers';text.append(group);}text.append(title,state);select.append(thumb,text);
+            const state=document.createElement('span');state.className='layer-state ui-meta';state.textContent=['drawn','vector'].includes(layer.mode)?(layer.mode==='vector'?'Vector':'Drawn'):(kindLabels[layer.kind]+' · '+(layer.parameterMode==='individual'?'Individual':'Auto')+(layer.mode==='pinned'?' · Pinned':''));state.title=this.modeDescription(layer);if(layer.collection){const group=document.createElement('span');group.className='ui-meta';group.textContent=layer.collection;group.title='Click to select this group; Cmd/Ctrl-click selects individual layers';text.append(group);}text.append(title,state);select.append(thumb,text);
             select.addEventListener('click',event=>this.select(layer.id,{range:event.shiftKey,toggle:event.metaKey||event.ctrlKey}));select.addEventListener('dblclick',()=>this.renameLayer(layer.id));
             const pin=action('pin',layer.mode==='pinned'?'Unpin':'Pin',layer.mode==='pinned',()=>this.pin(layer.id));pin.disabled=['drawn','vector'].includes(layer.mode)||layer.locked;
             if(['drawn','vector'].includes(layer.mode))pin.title='Drawn and vector layers are always kept by Generate';
@@ -260,7 +271,8 @@ export class FormEditor {
         }
     }
     clearDrops(){byId('layerList').querySelectorAll('.drop-before,.drop-after,.is-dragging').forEach(row=>row.classList.remove('drop-before','drop-after','is-dragging'));}
-    modeDescription(layer){return {auto:'Generate replaces this shape. Moving or painting pins it.',pinned:'Generate keeps this shape. Composition controls still apply.',drawn:'Shape follows your drawing. Generate and composition controls keep it.',vector:'Editable Bezier shape. Generate and composition controls keep its contour.'}[layer.mode]+(layer.locked?' Locked against manual edits.':'');}
+    modeDescription(layer){return (['drawn','vector'].includes(layer.mode)?'Shape is independent of generation controls.':layer.parameterMode==='individual'?'Individual parameters; Generate keeps this shape.':'Auto follows shared parameters. '+(layer.mode==='pinned'?'Pinned seed stays unchanged on Generate.':'Generate varies the seed.'))+(layer.locked?' Locked against edits and Generate.':'');}
+
     syncColorSwatches(layer) {
         const s=this.tool.settings,container=byId('layerColorSwatches');
         const colors=[...Object.entries({sky:'Background',terrain:'Terrain',depth:'Depth',light:'Light'}).map(([id,name])=>({id,name,color:s[id]})),...(s.customColors??[])];
@@ -298,19 +310,20 @@ export class FormEditor {
             byId(id).disabled=stack.length>=MAX_LAYERS;
             byId(id).title=(id==='newVectorLayer'?'New vector shape':id==='newDrawnLayer'?'New drawn layer':'New generated layer')+' · '+stack.length+' / '+MAX_LAYERS+' layers';
         }
-        byId('newBlueLayers').disabled=stack.length>MAX_LAYERS-2;
-        byId('newBlueLayers').title='Add two blue layers behind the artwork · '+stack.length+' / '+MAX_LAYERS+' layers';
+        byId('newBlueLayers').disabled=stack.length>=MAX_LAYERS;
+        byId('newBlueLayers').title='Add a blue layer behind the artwork · '+stack.length+' / '+MAX_LAYERS+' layers';
         byId('layerDuplicate').disabled=!layer||stack.length+this.selection().length>MAX_LAYERS;byId('layerDelete').disabled=!layer||layer.locked;
         byId('backgroundThumb').style.background=s.sky;
+        const eye=byId('backgroundVisibility');eye.setAttribute('aria-pressed',String(s.backgroundVisible));eye.setAttribute('aria-label',(s.backgroundVisible?'Hide':'Show')+' Background');eye.title=s.backgroundVisible?'Hide':'Show';eye.closest('.background-row').classList.toggle('is-hidden',!s.backgroundVisible);
         byId('layerPanel').hidden=!layer;byId('brushControls').hidden=this.paintTool==='move';
-        this.vector?.sync();this.flora?.sync();
+        this.vector?.sync();this.flora?.sync();this.objectUI?.sync();
         document.querySelectorAll('[data-form-tool]').forEach(button=>button.setAttribute('aria-pressed',String(!this.vector?.pen&&button.dataset.formTool===this.paintTool)));
         if(!layer)return;
         byId('selectedLayerName').textContent=this.selection().length>1?this.selection().length+' selected':layer.name;
         byId('groupLayers').disabled=this.selection().length<2;byId('ungroupLayers').disabled=!getLayers(s).some(l=>this.selection().includes(l.id)&&l.collection);
         byId('formRotation').value=layer.rotation||0;
         for(const key of Object.keys(materialRanges)){const input=byId('local-'+key);input.value=layer.material?.[key]??s[key];input.classList.toggle('is-inherited',layer.material?.[key]==null);input.nextElementSibling.disabled=layer.material?.[key]==null;}byId('selectedLayerName').title=layer.name;
-        const mode=byId('layerModeLabel');mode.textContent=(layer.mode==='auto'?'Auto':layer.mode==='pinned'?'Pinned':layer.mode==='vector'?'Vector':'Drawn')+(layer.locked?' · Locked':'');mode.title=this.modeDescription(layer);mode.setAttribute('aria-label',mode.textContent+'. '+mode.title);
+        const mode=byId('layerModeLabel');mode.textContent=(['drawn','vector'].includes(layer.mode)?(layer.mode==='vector'?'Vector':'Drawn'):(kindLabels[layer.kind]+' · '+(layer.parameterMode==='individual'?'Individual':'Auto')+(layer.mode==='pinned'?' · Pinned':'')))+(layer.locked?' · Locked':'');mode.title=this.modeDescription(layer);mode.setAttribute('aria-label',mode.textContent+'. '+mode.title);
         byId('layerEditable').disabled=layer.locked;this.syncColorSwatches(layer);byId('layerOpacity').value=layer.opacity;byId('layerOpacityValue').textContent=layer.opacity+'%';
         byId('layerConvert').hidden=layer.mode==='drawn';byId('layerConvert').title='Keep this silhouette and edit it only by drawing.';
         byId('clearPaint').hidden=!layer.strokes.length;byId('clearPaint').title='Clear '+layer.strokes.length+' strokes';
@@ -318,7 +331,7 @@ export class FormEditor {
         if(layer.locked||!layer.visible)this.cursor.hidden=true;
     }
     point(event){const rect=this.container.getBoundingClientRect(),t=this.tool.target,s=this.tool.settings;return [(event.clientX-rect.left-t.panX)/(t.zoom*s.width),(event.clientY-rect.top-t.panY)/(t.zoom*s.height)];}
-    refreshMap(){const s=this.tool.settings,key=JSON.stringify([createLayerScene(s),normalizeFloraParams(s),s.width,s.height,s.softness,s.edgeVariation]);if(key===this.mapKey)return;this.picker ||=new LandscapeRenderer();const width=Math.max(64,Math.round(400*Math.min(1,s.width/s.height))),height=Math.max(64,Math.round(400*Math.min(1,s.height/s.width)));this.map=this.picker.formMap(s,width,height);this.mapKey=key;}
+    refreshMap(){const s=this.tool.settings,key=JSON.stringify([createLayerScene(s),getLayers(s).map(l=>l.flora?normalizeFloraParams(effectiveSettings(s,l)):null),s.width,s.height,s.softness,s.edgeVariation]);if(key===this.mapKey)return;this.picker ||=new LandscapeRenderer();const width=Math.max(64,Math.round(400*Math.min(1,s.width/s.height))),height=Math.max(64,Math.round(400*Math.min(1,s.height/s.width)));this.map=this.picker.formMap(s,width,height);this.mapKey=key;}
     hit(point) {
         const [x,y]=point;if(x<0||y<0||x>=1||y>=1)return null;
         this.refreshMap();const index=this.map.ids[Math.floor(y*this.map.height)*this.map.width+Math.floor(x*this.map.width)]-1;
@@ -385,7 +398,7 @@ export class FormEditor {
         if(byId('layersPanel').classList.contains('panel-collapsed'))return;
         const s=this.tool.settings,scene=createLayerScene(s);this.picker ||=new LandscapeRenderer();
         scene.forEach((l,i)=>{const canvas=byId('layerList').querySelector('[data-thumb-id="'+l.id+'"]');if(!canvas)return;
-            const key=JSON.stringify([l.phases,l.transform,l.field,l.shape,l.style,l.foldField,l.crest,l.pocket,l.geometryA,l.geometryB,l.strokes,l.vectorPath,l.flora,l.flora?normalizeFloraParams(s):null,l.affine,l.materialA,l.materialB,groupColor(s,l.group),s.width/s.height]);
+            const key=JSON.stringify([l.phases,l.transform,l.field,l.shape,l.style,l.foldField,l.crest,l.pocket,l.geometryA,l.geometryB,l.strokes,l.vectorPath,l.flora,l.parameters,s.objectDefaults,l.flora?normalizeFloraParams(effectiveSettings(s,l)):null,l.affine,l.materialA,l.materialB,groupColor(s,l.group),s.width/s.height]);
             let cached=this.thumbs.get(l.id);
             if(cached?.key!==key){const map=this.picker.formMap(s,48,30,i),ctx=canvas.getContext('2d'),data=ctx.createImageData(48,30),rgb=groupColor(s,l.group).slice(1).match(/../g).map(v=>parseInt(v,16));for(let n=0;n<map.ids.length;n++)if(map.ids[n])data.data.set([...rgb,230],n*4);cached={key,data};this.thumbs.set(l.id,cached);}
             canvas.getContext('2d').putImageData(cached.data,0,0);
@@ -393,8 +406,9 @@ export class FormEditor {
         for(const id of this.thumbs.keys())if(!scene.some(l=>l.id===id))this.thumbs.delete(id);
     }
     selectionBounds(){const stack=getLayers(this.tool.settings),boxes=this.selection().map(id=>visibleBounds(this.map,stack.findIndex(l=>l.id===id))).filter(Boolean);return boxes.length?{left:Math.min(...boxes.map(b=>b.left)),right:Math.max(...boxes.map(b=>b.right)),top:Math.min(...boxes.map(b=>b.top)),bottom:Math.max(...boxes.map(b=>b.bottom))}:null;}
-    draw(){
-        this.drawThumbs();this.vector?.draw();this.flora?.draw();if(this.vector?.editing||this.flora?.editing||!this.active)return;this.refreshMap();const t=this.tool.target,s=this.tool.settings,dpr=t.dpr,rect=this.container.getBoundingClientRect();
+    hoverMap(settings,width,height,index){this.picker ||=new LandscapeRenderer();return this.picker.formMap(settings,width,height,index);}
+    draw(settings=this.tool.settings){
+        this.hover?.draw(settings);this.drawThumbs();this.vector?.draw();this.flora?.draw();if(this.vector?.editing||this.flora?.editing||!this.active)return;this.refreshMap();const t=this.tool.target,s=this.tool.settings,dpr=t.dpr,rect=this.container.getBoundingClientRect();
         this.overlay.width=Math.round(rect.width*dpr);this.overlay.height=Math.round(rect.height*dpr);const ctx=this.overlay.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);this.handle=null;
         const layer=this.layer();if(!layer)return;const selected=this.index(),map=this.map,indices=this.selection().map(id=>getLayers(s).findIndex(l=>l.id===id));
         const bounds=this.selectionBounds();
@@ -405,5 +419,5 @@ export class FormEditor {
         const x=t.panX+bounds.left*w,y=t.panY+bounds.top*h,bw=(bounds.right-bounds.left)*w,bh=(bounds.bottom-bounds.top)*h;ctx.strokeStyle='rgba(255,255,255,.85)';ctx.lineWidth=1;ctx.setLineDash([4,4]);ctx.strokeRect(x,y,bw,bh);ctx.setLineDash([]);
         const hx=clamp(x+bw-7,7,rect.width-7),hy=clamp(y+bh-7,7,rect.height-7);ctx.fillStyle='#FFF';ctx.fillRect(hx-5,hy-5,10,10);ctx.strokeStyle='#111';ctx.strokeRect(hx-5,hy-5,10,10);this.handle=[(hx-t.panX)/w,(hy-t.panY)/h];
     }
-    destroy(){this.flora?.cancel();this.vector?.cancel();this.cancel();this.finishReorder(false);this.endOpacity();this.abort.abort();this.picker?.destroy();}
+    destroy(){this.hover?.destroy();this.flora?.cancel();this.vector?.cancel();this.cancel();this.finishReorder(false);this.endOpacity();this.abort.abort();this.picker?.destroy();}
 }

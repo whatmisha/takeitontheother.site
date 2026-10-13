@@ -1,12 +1,14 @@
-import { normalizeFloraParams } from './flora.js?v=flower-f-5';
-import { defaultVectorPath } from './vector-path.js?v=flower-f-5';
-import { normalizeSettings, formSettingsKey } from './document.js?v=flower-f-5';
-import { MAX_LAYERS, getLayers, layerSettingsKey, normalizeLayerStack, geometrySnapshot, sourceGroup, blueLayerPair } from './layer-data.js?v=flower-f-5';
-export { MAX_LAYERS, getLayers, layerSettingsKey } from './layer-data.js?v=flower-f-5';
+import {effectiveSettings,objectCount,normalizeParameters} from './object-model.js?v=petal-motion-1';
+import { normalizeFloraParams } from './flora.js?v=petal-motion-1';
+import { defaultVectorPath } from './vector-path.js?v=petal-motion-1';
+import { normalizeSettings, formSettingsKey } from './document.js?v=petal-motion-1';
+import { MAX_LAYERS, getLayers, layerSettingsKey, normalizeLayerStack, geometrySnapshot, sourceGroup, blueLayerPair } from './layer-data.js?v=petal-motion-1';
+export { MAX_LAYERS, getLayers, layerSettingsKey } from './layer-data.js?v=petal-motion-1';
 
 export function withLayers(settings,layers) {
     const s=normalizeSettings(settings);
-    return {...s,[layerSettingsKey(s.mode)]:normalizeLayerStack(layers,s),...(['flora','f'].includes(s.mode)?{}:{[formSettingsKey(s.mode)]:null})};
+    const next=normalizeLayerStack(layers,s);
+    return {...s,floraCount:objectCount(s,next,'plant'),fCount:objectCount(s,next,'flower'),[layerSettingsKey(s.mode)]:next,...(['flora','f'].includes(s.mode)?{}:{[formSettingsKey(s.mode)]:null})};
 }
 export function editLayer(settings,id,patch,{manual=false}={}) {
     const s=normalizeSettings(settings),stack=getLayers(s),layer=stack.find(l=>l.id===id);
@@ -32,6 +34,7 @@ export function duplicateLayer(settings,id) {
     if(index<0)throw new Error('Choose a layer first.');
     if(stack.length>=MAX_LAYERS)throw new Error('Maximum '+MAX_LAYERS+' layers per composition.');
     const copy={...structuredClone(stack[index]),id:uniqueId(stack),name:stack[index].name+' copy',locked:false};
+    if(!['drawn','vector'].includes(copy.mode)){copy.parameters=normalizeParameters(copy.kind,effectiveSettings(s,stack[index]));copy.parameterMode='individual';}
     if(copy.mode==='auto')copy.mode='pinned';
     stack.splice(index+1,0,copy);
     return {settings:withLayers(s,stack),id:copy.id};
@@ -53,7 +56,7 @@ export function convertLayer(settings,id) {
     if(!layer||layer.locked||layer.mode==='drawn')return s;
     // Freeze the analytic silhouette instead of rasterizing it. It is now an
     // immutable base for paint/erase, independent of every generation control.
-    return editLayer(s,id,{mode:'drawn',...(layer.flora?{flora:{...layer.flora,frozen:normalizeFloraParams(s)}}:{}),hasBase:!layer.vectorPath&&!layer.flora,geometry:layer.geometry??geometrySnapshot(s)});
+    return editLayer(s,id,{mode:'drawn',...(layer.flora?{flora:{...layer.flora,frozen:normalizeFloraParams(effectiveSettings(s,layer))}}:{}),hasBase:!layer.vectorPath&&!layer.flora,geometry:layer.geometry??geometrySnapshot(effectiveSettings(s,layer))});
 }
 
 export function addBlueLayers(settings) {
@@ -62,4 +65,12 @@ export function addBlueLayers(settings) {
     let start=1;while(stack.some(layer=>layer.id==='blue-'+start||layer.id==='blue-'+(start+1)))start+=2;
     const pair=blueLayerPair(s,start);
     return {settings:withLayers(s,[...pair,...stack]),id:pair[1].id};
+}
+
+export function addBlueLayer(settings) {
+ const s=normalizeSettings(settings),stack=getLayers(s);
+ if(stack.length>=MAX_LAYERS)throw new Error('Maximum '+MAX_LAYERS+' layers per composition.');
+ let start=1;while(stack.some(l=>l.id==='blue-'+start))start++;
+ const layer=blueLayerPair(s,start)[0];layer.parameterMode='individual';layer.parameters=normalizeParameters(layer.kind,effectiveSettings(s,layer));layer.source=6+(start-1)%2;
+ return {settings:withLayers(s,[layer,...stack]),id:layer.id};
 }

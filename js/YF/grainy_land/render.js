@@ -1,9 +1,11 @@
-import { bakeFlora } from './flora-field.js?v=flower-f-5';
-import { MAX_CUSTOM_COLORS } from './custom-colors.js?v=flower-f-5';
-import { createLayerScene, materialColors, adjacentColors, customMaterialColors, hexRGB } from './scene.js?v=flower-f-5';
-import { bakePaint } from './paint.js?v=flower-f-5';
-import { MAX_LAYERS } from './layer-data.js?v=flower-f-5';
-import { normalizeSettings } from './document.js?v=flower-f-5';
+import {FLOWER_MOTION} from './flower-motion.js?v=petal-motion-1';
+import {effectiveSettings} from './object-model.js?v=petal-motion-1';
+import { bakeFlora } from './flora-field.js?v=petal-motion-1';
+import { MAX_CUSTOM_COLORS } from './custom-colors.js?v=petal-motion-1';
+import { createLayerScene, materialColors, adjacentColors, customMaterialColors, hexRGB } from './scene.js?v=petal-motion-1';
+import { bakePaint } from './paint.js?v=petal-motion-1';
+import { MAX_LAYERS, getLayers } from './layer-data.js?v=petal-motion-1';
+import { normalizeSettings } from './document.js?v=petal-motion-1';
 
 const vertexSource = `
 attribute vec2 position;
@@ -22,7 +24,7 @@ uniform vec4 fields[${MAX_LAYERS}], layers[${MAX_LAYERS}], layerStyles[${MAX_LAY
 uniform vec4 geometryA[${MAX_LAYERS}], geometryB[${MAX_LAYERS}], formInfo[${MAX_LAYERS}];
 uniform float editorPass, layerCount, backgroundAlpha, exportLayer;
 uniform sampler2D paintAtlas, customPalette, floraAtlas, floraColors;
-uniform vec4 floraBounds[16], floraMeta[16];
+uniform vec4 floraBounds[${MAX_LAYERS}], floraMeta[${MAX_LAYERS}];
 uniform vec2 floraAtlasSize, floraCellSize;
 uniform float floraColumns, floraMode;
 uniform vec4 paintBounds[${MAX_LAYERS}], paintMeta[${MAX_LAYERS}];
@@ -251,7 +253,7 @@ void main() {
                 floraBridge=radius*.25*proximity*proximity;
                 d+=floraBridge;
             }
-            if(!isolated)previousFloraDistance=max(previousFloraDistance,original);
+            if(!isolated&&floraMeta[i].w>=0.)previousFloraDistance=max(previousFloraDistance,original);
         }
         float edgeField=fbm(surface*vec2(5.,8.)+id*11.+offset);
         float localSoft=mix(1.,mix(.20,2.1,smoothstep(.25,.75,edgeField)),edgeVariation);
@@ -470,10 +472,11 @@ export class LandscapeRenderer {
     }
     render(raw, width, height, editorPass = 0, transparent = false, exportLayer = -1, region = null) {
         const s = normalizeSettings(raw), gl = this.gl;
+        transparent=transparent||!s.backgroundVisible;
         if (gl.isContextLost()) throw new Error('Graphics context lost. Reload to restore the renderer.');
         const max = Math.min(gl.getParameter(gl.MAX_TEXTURE_SIZE), gl.getParameter(gl.MAX_RENDERBUFFER_SIZE));
         if (width > max || height > max) throw new Error('This GPU cannot render that size. Reduce export scale.');
-        const key = JSON.stringify([s,width,height,editorPass,transparent,exportLayer,region]);
+        const key = JSON.stringify([s,getLayers(s).map(l=>l[FLOWER_MOTION]),width,height,editorPass,transparent,exportLayer,region]);
         if (key === this.cacheKey) return this.canvas;
         this.canvas.width = width; this.canvas.height = height;
         gl.viewport(0,0,width,height); gl.useProgram(this.program);
@@ -537,8 +540,8 @@ export class LandscapeRenderer {
         }
         this.floraKeys=fields.map(f=>f?.key);this.floraAtlasShape=shape;
         gl.uniform2f(this.location('floraAtlasSize'),width,height);gl.uniform2f(this.location('floraCellSize'),cellW,cellH);gl.uniform1f(this.location('floraColumns'),columns);
-        gl.uniform4fv(this.location('floraBounds[0]'),Array.from({length:16},(_,i)=>fields[i]?.bounds??[0,0,1,1]).flat());
-        gl.uniform4fv(this.location('floraMeta[0]'),Array.from({length:16},(_,i)=>[fields[i]?.width??1,fields[i]?.height??1,(scene[i]?.flora?.index??0)*17.31+(scene[i]?.flora?.variant??0)*.057,scene[i]?.flora?.generator==='flower'?0:(scene[i]?.flora?.frozen?.floraFusion??settings.floraFusion)/100]).flat());
+        gl.uniform4fv(this.location('floraBounds[0]'),Array.from({length:MAX_LAYERS},(_,i)=>fields[i]?.bounds??[0,0,1,1]).flat());
+        gl.uniform4fv(this.location('floraMeta[0]'),Array.from({length:MAX_LAYERS},(_,i)=>[fields[i]?.width??1,fields[i]?.height??1,(scene[i]?.flora?.index??0)*17.31+(scene[i]?.flora?.variant??0)*.057,scene[i]?.flora?.generator==='flower'?-1:(scene[i]?.flora?.frozen?.floraFusion??(scene[i]?effectiveSettings(settings,scene[i]).floraFusion:0))/100]).flat());
     }
     uploadPaint(scene) {
         const gl=this.gl,fields=scene.map(layer=>layer.strokes.length||layer.vectorPath?bakePaint(layer.strokes,layer.vectorPath):null);

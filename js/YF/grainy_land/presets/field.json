@@ -11,6 +11,8 @@
   "floraLayers": [
     {
       "id": "flora-2",
+      "kind": "plant",
+      "parameterMode": "auto",
       "name": "Plant 2",
       "flora": {
         "index": 1,
@@ -36,6 +38,8 @@
     },
     {
       "id": "flora-1",
+      "kind": "plant",
+      "parameterMode": "auto",
       "name": "Plant 1",
       "flora": {
         "index": 0,
@@ -61,6 +65,8 @@
     },
     {
       "id": "flora-3",
+      "kind": "plant",
+      "parameterMode": "auto",
       "name": "Plant 3",
       "flora": {
         "index": 2,
@@ -86,6 +92,8 @@
     },
     {
       "id": "flora-4",
+      "kind": "plant",
+      "parameterMode": "auto",
       "name": "Plant 4",
       "flora": {
         "index": 3,
@@ -125,7 +133,19 @@
   "fStem": 65,
   "fBend": 35,
   "fMerge": 30,
+  "fColorVariation": 70,
+  "fPetalColors": 60,
+  "fColorPattern": "grouped",
   "fLayers": null,
+  "fCount": 0,
+  "fDensity": 55,
+  "fMinSize": 20,
+  "fMaxSize": 150,
+  "fSizeVariation": 90,
+  "fShapeVariation": 55,
+  "fPoseVariation": 60,
+  "sceneMemory": null,
+  "objectDefaults": {},
   "surfaceMemory": {
     "f": {
       "grain": 49,
@@ -174,6 +194,7 @@
   "toneSpread": 65,
   "toneScale": 110,
   "toneBleed": 50,
+  "backgroundVisible": true,
   "previewTransparent": false,
   "softProof": false,
   "printIntent": 1,

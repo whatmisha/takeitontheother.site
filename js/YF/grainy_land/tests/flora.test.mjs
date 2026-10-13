@@ -1,7 +1,8 @@
+import {resizeObjects} from '../object-actions.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {defaults,floraSurfaceDefaults,switchMode,normalizeSettings,regenerate,editForm,makeDocument,readDocument} from '../document.js';
-import {floraParts,editFloraPart,resizeFloraStack} from '../flora.js';
+import {floraParts,editFloraPart} from '../flora.js';
 import {bakeFlora,signedField} from '../flora-field.js';
 import {getLayers,withLayers,editLayer,convertLayer,addLayer} from '../layers.js';
 import {addCustomColor,colorIsUsed} from '../custom-colors.js';
@@ -13,7 +14,7 @@ const shape=(l,s)=>floraParts(l,s).map(p=>[p.id,p.parent,p.path,p.origin]);
 test('Flora validates discrete controls and bounds untrusted edits',()=>{
  const s=normalizeSettings({...settings(),floraCount:5.7,floraBranches:2.4,floraScale:999,floraRecognition:null});
  assert.equal(s.floraCount,6);assert.equal(s.floraBranches,2);assert.equal(s.floraScale,180);assert.equal(s.floraRecognition,55);
- assert.equal(getLayers({...s,floraLayout:'single'}).length,1);
+ assert.equal(getLayers({...s,floraLayout:'single'}).length,6);
  for(const layout of ['single','cluster','field']){const a={...s,floraLayout:layout};for(const l of getLayers(a))assert.ok(floraParts(l,a).every(p=>p.path.every(n=>Number.isFinite(n.x)&&Number.isFinite(n.y))));}
 });
 test('Flora geometry is seeded, palette-independent, and controlled by recognizability',()=>{
@@ -52,7 +53,7 @@ test('Generate keeps manual petal paths; Drawn conversion freezes all Flora geom
 test('Flora edits preserve Landscape and Abstract and round-trip through JSON/share',async()=>{
  let s={...editForm(defaults,0,{x:.2}),mode:'flora'},l=getLayers(s)[0];s=editLayer(s,l.id,{opacity:60});
  assert.equal(s.landscapeForms[0].x,.2);const land=s.landscapeForms;
- s=addLayer({...s,mode:'abstract'},'vector').settings;s={...s,mode:'flora'};
+ s=addLayer({...s,mode:'abstract'},'vector').settings;s=normalizeSettings({...s,mode:'flora'});
  const re=readDocument(JSON.parse(JSON.stringify(makeDocument(s))));assert.deepEqual(re,s);assert.deepEqual(re.landscapeForms,land);
  const codec=new ShareCodec({pristineDefaults:defaults});assert.deepEqual(normalizeSettings((await codec.decode(await codec.encode(s))).full),s);
 });
@@ -63,8 +64,8 @@ test('Custom colors survive on parent and parts and cannot be deleted while used
 });
 test('Count changes preserve surviving edits and drawn layers; empty stack stays empty on Generate',()=>{
  let s=withLayers(settings(),getLayers(settings()));s=editLayer(s,'flora-1',{name:'My flower'});s=addLayer(s).settings;
- const shrunk=resizeFloraStack({...s,floraCount:2});assert.equal(getLayers(shrunk).length,3);assert.equal(getLayers(shrunk)[0].name,'My flower');assert.equal(getLayers(shrunk).at(-1).mode,'drawn');
- assert.equal(getLayers(resizeFloraStack({...shrunk,floraCount:5})).filter(l=>l.flora).length,5);
+ const shrunk=resizeObjects(s,'plant',2);assert.equal(getLayers(shrunk).length,3);assert.equal(getLayers(shrunk)[0].name,'My flower');assert.equal(getLayers(shrunk).at(-1).mode,'drawn');
+ assert.equal(getLayers(resizeObjects(shrunk,'plant',5)).filter(l=>l.flora).length,5);
  assert.deepEqual(getLayers(regenerate(withLayers(s,[]),92)),[]);
 });
 test('Signed fields are isotropic; baked Flora masks are deterministic and have clear margins',()=>{
@@ -88,7 +89,7 @@ test('Flora surface defaults are scoped to mode entry and retain edits through r
  const codec=new ShareCodec({pristineDefaults:defaults}),shared=await codec.decode(await codec.encode(back));
  assert.deepEqual(surface(switchMode(shared.full,'flora')),surface(edited));
  assert.deepEqual(surface(normalizeSettings(edited)),surface(edited));
- assert.equal(switchMode({...defaults,mode:'abstract',glow:66},'landscape').glow,66);
+ assert.equal(switchMode({...defaults,mode:'abstract',glow:66},'landscape').glow,defaults.glow);
  assert.deepEqual(surface(normalizeSettings(defaults)),surface(defaults));
 });
 

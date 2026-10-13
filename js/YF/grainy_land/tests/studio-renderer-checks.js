@@ -1,9 +1,9 @@
-import {LandscapeRenderer} from '../render.js?v=studio-1';
-import {defaults} from '../document.js?v=studio-1';
-import {withLayers,addLayer,editLayer} from '../layers.js?v=studio-1';
-import {renderTiledPNG} from '../tiled-export.js?v=studio-1';
-import {renderVideo} from '../motion.js?v=studio-1';
-import {localToCanvas} from '../transforms.js?v=studio-1';
+import {LandscapeRenderer} from '../render.js?v=flower-field-2';
+import {defaults} from '../document.js?v=flower-field-2';
+import {withLayers,addLayer,editLayer} from '../layers.js?v=flower-field-2';
+import {renderTiledPNG} from '../tiled-export.js?v=flower-field-2';
+import {renderVideo} from '../motion.js?v=flower-field-2';
+import {localToCanvas} from '../transforms.js?v=flower-field-2';
 const r=new LandscapeRenderer(),results=[],check=(name,ok)=>{results.push((ok?'PASS ':'FAIL ')+name);document.querySelector('#results').textContent=results.join('\n');if(!ok)throw Error(name);};
 const pixels=source=>{const c=document.createElement('canvas');c.width=source.width;c.height=source.height;const ctx=c.getContext('2d',{willReadFrequently:true});ctx.drawImage(source,0,0);return ctx.getImageData(0,0,c.width,c.height).data;};
 try{

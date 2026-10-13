@@ -49,7 +49,7 @@ test('repeat P and Move/Brush/Erase preserve a resumable draft and its history',
 }));
 test('selecting a layer and Edit path suspend Pen; resuming Pen exits path editing',()=>usingFixture(({e,v,addPoint})=>{
     const id=e.selected;v.startPen();addPoint(.2,.2);e.select(id);assert.equal(v.pen,null);v.setEditing(true);assert.equal(v.editing,true);
-    v.startPen();assert.equal(v.editing,false);assert.equal(v.pen.length,1);assert.equal(e.selected,null);
+    v.startPen();assert.equal(v.editing,false);assert.equal(v.pen.length,1);assert.equal(e.selected,id);
 }));
 test('Landscape and Abstract keep independent drafts and refresh their status hints',()=>usingFixture(({e,v,addPoint})=>{
     v.startPen();addPoint(.2,.2);addPoint(.4,.4);const landscape=structuredClone(v.pen);
@@ -75,7 +75,7 @@ test('Escape discards only the current draft; completing a path creates one docu
 }));
 test('Pen checks the layer limit before entering and retains a suspended draft at capacity',()=>usingFixture(({e,v,addPoint,element})=>{
     v.startPen();addPoint(.2,.2);e.setTool('move');let s=e.tool.settings;while(getLayers(s).length<MAX_LAYERS)s=addLayer(s,'vector').settings;
-    e.tool.applySnapshot(s);assert.equal(element('penTool').disabled,true);v.startPen();assert.equal(v.pen,null);assert.match(e.message,/Maximum 16 layers/);
+    e.tool.applySnapshot(s);assert.equal(element('penTool').disabled,true);v.startPen();assert.equal(v.pen,null);assert.match(e.message,/Maximum 32 layers/);
     e.tool.applySnapshot({...s,landscapeLayers:s.landscapeLayers.slice(0,-1)});v.startPen();assert.equal(v.pen.length,1);
 }));
 test('Pen drag is one undoable point; pointer cancellation rolls it back without losing redo',()=>usingFixture(({e,v,point,key})=>{

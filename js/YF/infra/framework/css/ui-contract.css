@@ -566,3 +566,13 @@ body,
 .controls-panel .ui-icon-button:hover:not(:disabled) { color: var(--ui-foreground); background: var(--ui-item-hover); }
 .controls-panel .ui-icon-button:disabled { color: var(--color-inactive-text); cursor: default; }
 .controls-panel :is(.ui-list-row, .ui-list-select, .ui-icon-button):focus-visible { outline: 2px solid var(--ui-foreground); outline-offset: -2px; }
+
+/* Full-width playback action, matching the Modes panel in Sparky. */
+.controls-panel .panel-action.panel-action--playback {
+ width: 100%; height: 32px; padding: 0 6px; font: inherit; font-size: .9rem;
+ color: var(--color-text-secondary); background: var(--color-bg-input);
+}
+.controls-panel .panel-action.panel-action--playback:hover:not(:disabled),
+.controls-panel .panel-action.panel-action--playback:focus-visible:not(:disabled) {
+ color: var(--color-bg); background: var(--color-text);
+}

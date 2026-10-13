@@ -1,6 +1,6 @@
 {
   "floraLayout": "cluster",
-  "floraCount": 4,
+  "floraCount": 0,
   "floraScale": 112,
   "floraRecognition": 55,
   "floraBranches": 3,
@@ -24,9 +24,14 @@
   "fStem": 70,
   "fBend": -30,
   "fMerge": 30,
+  "fColorVariation": 70,
+  "fPetalColors": 60,
+  "fColorPattern": "grouped",
   "fLayers": [
     {
       "id": "flower-1",
+      "kind": "flower",
+      "parameterMode": "auto",
       "name": "Flower",
       "flora": {
         "generator": "flower",
@@ -34,9 +39,18 @@
         "variant": 0,
         "edits": {
           "p1": {
-            "group": "terrain"
+            "group": "depth"
           },
           "p5": {
+            "group": "terrain"
+          },
+          "p0": {
+            "group": "depth"
+          },
+          "p3": {
+            "group": "depth"
+          },
+          "p2": {
             "group": "terrain"
           }
         }
@@ -59,6 +73,15 @@
       "hasBase": true
     }
   ],
+  "fCount": 1,
+  "fDensity": 55,
+  "fMinSize": 20,
+  "fMaxSize": 150,
+  "fSizeVariation": 90,
+  "fShapeVariation": 55,
+  "fPoseVariation": 60,
+  "sceneMemory": null,
+  "objectDefaults": {},
   "surfaceMemory": {
     "other": {
       "grain": 55,
@@ -97,6 +120,7 @@
   "toneSpread": 65,
   "toneScale": 110,
   "toneBleed": 50,
+  "backgroundVisible": true,
   "previewTransparent": false,
   "softProof": false,
   "printIntent": 1,

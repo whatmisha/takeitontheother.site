@@ -1,3 +1,4 @@
+import {MAX_DOCUMENT_BYTES} from '../layer-limits.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {defaults as currentDefaults,normalizeSettings,editForm,regenerate,makeDocument,readDocument} from '../document.js';
@@ -33,17 +34,17 @@ test('manual geometry edits pin automatically; appearance and names stay Auto',(
     const released=editLayer(s,'form-0',{mode:'auto'});
     assert.equal(getLayers(released)[0].x,.15);
     const rerolled=getLayers(regenerate(released,9))[0];
-    assert.equal(rerolled.seed,9);assert.equal(rerolled.x,0);assert.deepEqual(rerolled.strokes,[]);
+    assert.equal(rerolled.seed,9);assert.equal(rerolled.x,.15);assert.deepEqual(rerolled.strokes,[stroke]);
     assert.equal(rerolled.name,'Peak');assert.equal(rerolled.opacity,60);assert.equal(rerolled.group,'light');
 });
-test('Lock blocks manual changes and deletion while generation still follows mode',()=>{
+test('Lock protects manual edits, deletion and generation',()=>{
     const s=editLayer(defaults,'form-0',{locked:true});
     assert.deepEqual(editLayer(s,'form-0',{x:.3},{manual:true}),s);
     assert.deepEqual(editLayer(s,'form-0',{opacity:0}),s);
     assert.deepEqual(removeLayer(s,'form-0'),s);
     assert.deepEqual(reorderLayer(s,'form-0','form-5'),s);
     assert.deepEqual(convertLayer(s,'form-0'),s);
-    assert.equal(getLayers(regenerate(s,123))[0].seed,123);
+    assert.equal(getLayers(regenerate(s,123))[0].seed,getLayers(s)[0].seed);
     assert.equal(getLayers(editLayer(s,'form-0',{visible:false}))[0].visible,false);
     assert.equal(getLayers(editLayer(s,'form-0',{locked:false}))[0].locked,false);
 });
@@ -86,8 +87,8 @@ test('untrusted stacks have bounded counts, transforms, geometry and stable uniq
     assert.deepEqual(normalizeSettings(bad),bad);assert.throws(()=>addLayer(bad),/Maximum/);
     const points=Array.from({length:16},()=>[-7.12345,-7.12345]);
     const strokes=Array.from({length:64},()=>({...stroke,rx:1.23456,ry:1.23456,points}));
-    const max={...bad,abstractLayers:stack.map(l=>({...l,strokes})),landscapeLayers:stack.map(l=>({...l,strokes}))};
-    assert.ok(Buffer.byteLength(JSON.stringify(makeDocument(max),null,2))<4*1024*1024);
+    const max={...bad,abstractLayers:stack.map(l=>({...l,strokes})),landscapeLayers:stack.map(l=>({...l,strokes})),floraLayers:stack.map(l=>({...l,strokes})),fLayers:stack.map(l=>({...l,strokes}))};
+    assert.ok(Buffer.byteLength(JSON.stringify(makeDocument(max),null,2))<MAX_DOCUMENT_BYTES);
 });
 
 

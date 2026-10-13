@@ -1,9 +1,11 @@
-import {flowerDefaults,flowerRanges} from './flower.js?v=flower-f-5';
-import { floraDefaults, floraRanges, normalizeFloraParams } from './flora.js?v=flower-f-5';
-import { normalizeCustomColors } from './custom-colors.js?v=flower-f-5';
-import { canvasDefaults, normalizeCanvas, assertExportSize } from './canvas-size.js?v=flower-f-5';
-import { normalizeLayerStack, layerSettingsKey } from './layer-data.js?v=flower-f-5';
-import { normalizeStrokes } from './paint.js?v=flower-f-5';
+import {composeFlowers} from './flower-composition.js?v=petal-motion-1';
+import {modeKinds,kindModes,variationDefaults,variationRanges,normalizeObjectDefaults,objectCount} from './object-model.js?v=petal-motion-1';
+import {flowerDefaults,flowerRanges} from './flower.js?v=petal-motion-1';
+import { floraDefaults, floraRanges, normalizeFloraParams } from './flora.js?v=petal-motion-1';
+import { normalizeCustomColors } from './custom-colors.js?v=petal-motion-1';
+import { canvasDefaults, normalizeCanvas, assertExportSize } from './canvas-size.js?v=petal-motion-1';
+import { normalizeLayerStack, layerSettingsKey, getLayers } from './layer-data.js?v=petal-motion-1';
+import { normalizeStrokes } from './paint.js?v=petal-motion-1';
 export const TOOL_ID = 'grainy_land';
 export const VERSION = 1;
 export const palettes = {
@@ -16,7 +18,7 @@ export const toneCharacters = { pigment: 'Pigment', pearlescent: 'Pearlescent', 
 export const toneKeys = ['terrainLow', 'depthLow', 'lightLow', 'terrainHigh', 'depthHigh', 'lightHigh', 'skyLow', 'skyHigh'];
 export const automaticTones = Object.fromEntries(toneKeys.map(key => [key, null]));
 export const ranges = {
-    ...floraRanges,...flowerRanges,
+    ...floraRanges,...flowerRanges,...variationRanges,
     scale: [40, 220, 1], complexity: [1, 6, 1], flow: [0, 100, 1], folds: [0, 100, 1],
     horizon: [15, 80, 1], relief: [0, 100, 1], softness: [0, 100, 1],
     edgeVariation: [0, 100, 1], glowCoverage: [0, 100, 1], glow: [0, 100, 1], halo: [0, 100, 1], contrast: [50, 180, 1],
@@ -28,12 +30,14 @@ export const floraSurfaceDefaults = Object.freeze({grain:49,grainSize:1,softness
     edgeVariation:80,contrast:120,glow:10,glowCoverage:10,halo:100});
 const surfaceKeys = Object.keys(floraSurfaceDefaults);
 export const defaults = {
-    ...floraDefaults,...flowerDefaults, surfaceMemory:null, schemaVersion: VERSION, width: 1920, height: 1080, seed: 1565559100, mode: 'landscape', layout:'auto',
+    ...floraDefaults,...flowerDefaults,...variationDefaults, sceneMemory:null,objectDefaults:{},surfaceMemory:null, schemaVersion: VERSION, width: 1920, height: 1080, seed: 1565559100, mode: 'landscape', layout:'auto',
     scale: 100, complexity: 2, flow: 48, folds: 65, horizon: 53, relief: 62,
     softness: 38, edgeVariation: 70, glowCoverage: 35, glow: 0, halo: 65, contrast: 118, grain: 55, grainSize: 1,
     toneCharacter: 'radiant', skyToneAmount: 0, toneAmount: 100, toneSpread: 65, toneScale: 110, toneBleed: 50,
-    previewTransparent:false,softProof:false,printIntent:1,motionAmount:3,motionDuration:6,customColors: [], blueLayers: true, blueLayersVisible: false, exportScale: 1, transparentBackground: false, exportLayers: false, ...canvasDefaults, ...palettes.ember, ...automaticTones, landscapeForms: null, abstractForms: null, landscapeLayers: null, abstractLayers: null
+    backgroundVisible:true,previewTransparent:false,softProof:false,printIntent:1,motionAmount:3,motionDuration:6,customColors: [], blueLayers: true, blueLayersVisible: false, exportScale: 1, transparentBackground: false, exportLayers: false, ...canvasDefaults, ...palettes.ember, ...automaticTones, landscapeForms: null, abstractForms: null, landscapeLayers: null, abstractLayers: null
 };
+export const sceneKeys=[...Object.keys(ranges),'seed','layout','floraLayout','fType','fColorPattern','sky','terrain','depth','light',...toneKeys,'toneCharacter','customColors','backgroundVisible','blueLayers','blueLayersVisible','objectDefaults','motionAmount','motionDuration'];
+const sceneSnapshot=s=>structuredClone(Object.fromEntries(sceneKeys.map(key=>[key,s[key]])));
 const clamp = (n, a, b) => Math.min(b, Math.max(a, n));
 const formNumber = (value, fallback, min, max) => typeof value === 'number' && Number.isFinite(value)
     ? Math.round(clamp(value, min, max) * 10000) / 10000 : fallback;
@@ -67,6 +71,7 @@ export function normalizeSettings(value = {}) {
         if (typeof value[key] === 'string' && /^#[0-9a-f]{6}$/i.test(value[key])) out[key] = value[key].toUpperCase();
     }
     Object.assign(out,normalizeCanvas(value,defaults));
+    out.backgroundVisible=value.backgroundVisible!==false;
     out.transparentBackground=value.transparentBackground===true;
     out.exportLayers=value.exportLayers===true;
     out.previewTransparent=value.previewTransparent===true;out.softProof=value.softProof===true;out.printIntent=[0,1,3].includes(value.printIntent)?value.printIntent:1;
@@ -96,27 +101,32 @@ export function normalizeSettings(value = {}) {
         if(Object.keys(memory).length)out.surfaceMemory=memory;
     }
     out.customColors = normalizeCustomColors(value.customColors);
-    out.floraLayers=normalizeLayerStack(value.floraLayers,out);
-    out.fLayers=normalizeLayerStack(value.fLayers,out);
+    out.objectDefaults=normalizeObjectDefaults(value.objectDefaults);
+    const memory={};
+    for(const mode of Object.keys(modeKinds))if(value.sceneMemory?.[mode]&&typeof value.sceneMemory[mode]==='object'){
+        memory[mode]=sceneSnapshot(normalizeSettings({...value.sceneMemory[mode],mode,sceneMemory:null}));
+    }
+    if(Object.keys(memory).length)out.sceneMemory=memory;
     out.landscapeForms = normalizeForms(value.landscapeForms);
     out.abstractForms = normalizeForms(value.abstractForms);
-    out.landscapeLayers = normalizeLayerStack(value.landscapeLayers,out);
-    out.abstractLayers = normalizeLayerStack(value.abstractLayers,out);
+    for(const mode of Object.keys(modeKinds)){
+        const key=layerSettingsKey(mode),context=mode===out.mode?out:{...out,...memory[mode],mode};
+        out[key]=normalizeLayerStack(value[key],context);
+    }
+    const active=out[layerSettingsKey(out.mode)];
+    if(active){out.floraCount=objectCount(out,active,'plant');out.fCount=objectCount(out,active,'flower');}
     // Explicit stacks supersede migrated six-form data.
     if(out.landscapeLayers)out.landscapeForms=null;
     if(out.abstractLayers)out.abstractForms=null;
     return out;
 }
-// Flora has its own starting surface. Returning to either family restores its
-// edited values; palette and the existing Land/Abstract surface sharing stay intact.
-export function switchMode(settings, mode) {
+// Each scene owns its generation defaults, seed, palette, surface and layer stack.
+export function switchMode(settings,mode){
     const s=normalizeSettings(settings);
-    if(!['landscape','abstract','flora','f'].includes(mode)||mode===s.mode)return s;
-    const from=['flora','f'].includes(s.mode)?s.mode:'other',to=['flora','f'].includes(mode)?mode:'other';
-    if(from===to)return {...s,mode};
-    const memory={...s.surfaceMemory,[from]:Object.fromEntries(surfaceKeys.map(key=>[key,s[key]]))};
-    const target=memory[to]??Object.fromEntries(surfaceKeys.map(key=>[key,(to!=='other'?floraSurfaceDefaults:defaults)[key]]));
-    return {...s,...target,mode,surfaceMemory:memory};
+    if(!Object.hasOwn(modeKinds,mode)||mode===s.mode)return s;
+    const memory={...s.sceneMemory,[s.mode]:sceneSnapshot(s)};
+    const target=memory[mode]??sceneSnapshot({...defaults,...(['flora','f'].includes(mode)?floraSurfaceDefaults:{}),mode});
+    return normalizeSettings({...s,...target,mode,sceneMemory:memory,[layerSettingsKey(s.mode)]:getLayers(s)});
 }
 export function makeDocument(settings) {
     return { toolId: TOOL_ID, schemaVersion: VERSION, settings: normalizeSettings(settings) };
@@ -135,8 +145,7 @@ export function exportDimensions(settings) {
 // User presets and every explicitly saved value remain intact; this is idempotent.
 export const presetTones = {
     Ember: {toneCharacter:'radiant',toneAmount:100,toneSpread:65,toneScale:110,toneBleed:50},
-    Drift: {toneCharacter:'radiant',toneAmount:100,toneSpread:65,toneScale:110,toneBleed:50},
-    'Quiet dunes': {toneCharacter:'pigment',toneAmount:30,toneSpread:30,toneScale:150,toneBleed:20}
+    Drift: {toneCharacter:'radiant',toneAmount:100,toneSpread:65,toneScale:110,toneBleed:50}
 };
 export function migrateTonePresets(store) {
     const all=store.loadAll();
@@ -160,7 +169,7 @@ export function migratePresets(store, shipped = {}) {
     const all=store.loadAll();
     if(!all || typeof all!=='object' || Array.isArray(all)) return;
     let changed=false;
-    if(all.Pigment?.seeded===true){delete all.Pigment;changed=true;}
+    for(const name of ['Pigment','Quiet dunes'])if(all[name]?.seeded===true){delete all[name];changed=true;}
     for(const name of new Set([...Object.keys(presetTones),...Object.keys(shipped)])) {
         const preset=all[name];
         if(!preset || preset.seeded!==true) continue;
@@ -185,13 +194,12 @@ export function editForm(settings, index, patch) {
     return {...s, [key]:normalizeForms(forms)};
 }
 export function regenerate(settings, seed) {
-    const s = normalizeSettings({...settings,seed});
-    for (const key of ['landscapeForms','abstractForms']) s[key] = normalizeForms(s[key]?.map(form => form?.locked ? form : null));
-    for(const mode of ['landscape','abstract','flora','f']) {
-        const key=layerSettingsKey(mode);
-        if(s[key])s[key]=s[key].map(layer=>layer.mode==='auto'?{
-            ...layer,seed:(s.seed+layer.salt)>>>0,layout:s.layout,x:0,y:0,scaleX:1,scaleY:1,strokes:[]
-        }:layer);
-    }
-    return s;
+    const s=normalizeSettings(settings),key=layerSettingsKey(s.mode),stack=getLayers(s);
+    const legacyKey=formSettingsKey(s.mode);
+    if(['landscape','abstract'].includes(s.mode)&&!s[key]&&s[legacyKey])return normalizeSettings({...s,seed:seed>>>0,[legacyKey]:s[legacyKey].map(form=>form?.locked?form:null)});
+    const next={...s,seed:seed>>>0};
+    const rerolled=stack.map(layer=>layer.mode==='auto'&&layer.parameterMode!=='individual'&&!layer.locked?{
+        ...layer,seed:(seed+(layer.kind==='flower'?0:layer.salt))>>>0
+    }:layer);
+    return normalizeSettings({...next,[key]:composeFlowers(next,rerolled)});
 }

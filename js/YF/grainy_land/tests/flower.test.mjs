@@ -57,8 +57,8 @@ test('F regenerate preserves manual edits and pinning; Drawn freezes all flower 
  const altered=regenerate({...drawn,fType:'radial',fPetals:12,fTilt:85,fScale:50,fMerge:100},728);
  assert.deepEqual(shape(altered),before);assert.equal(bakeFlora(getLayers(altered)[0],altered),baked);
 });
-test('Custom colors on F parts are protected even while another mode is active',()=>{
- let {settings:s,id}=addCustomColor(start()),l=getLayers(s)[0];l=editFloraPart(l,s,'p1',{group:id});s=withLayers(s,[l]);assert.equal(colorIsUsed(switchMode(s,'landscape'),id),true);
+test('Custom colors on Flower parts remain protected in their own scene',()=>{
+ let {settings:s,id}=addCustomColor(start()),l=getLayers(s)[0];l=editFloraPart(l,s,'p1',{group:id});s=withLayers(s,[l]);assert.equal(colorIsUsed(switchMode(s,'landscape'),id),false);assert.equal(colorIsUsed(switchMode(switchMode(s,'landscape'),'f'),id),true);
 });
 
 test('Flower center follows the attachment after inserting a stem anchor',()=>{

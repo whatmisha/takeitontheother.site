@@ -1,6 +1,6 @@
-import {defaults,switchMode} from '../document.js?v=flower-f-5';
-import {getLayers,withLayers} from '../layers.js?v=flower-f-5';
-import {LandscapeRenderer} from '../render.js?v=flower-f-5';
+import {defaults,switchMode} from '../document.js?v=flower-field-2';
+import {getLayers,withLayers} from '../layers.js?v=flower-field-2';
+import {LandscapeRenderer} from '../render.js?v=flower-field-2';
 const samples=await(await fetch('./fixtures/flower-approved.json')).json(),renderer=new LandscapeRenderer(),base=switchMode(defaults,'f'),signatures={},log=[];
 const canvas=Object.assign(document.createElement('canvas'),{width:640,height:360}),ctx=canvas.getContext('2d',{willReadFrequently:true});
 try{

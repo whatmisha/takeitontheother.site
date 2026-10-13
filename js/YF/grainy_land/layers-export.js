@@ -1,7 +1,7 @@
-import { normalizeSettings, exportDimensions } from './document.js?v=flower-f-5';
-import { getLayers, layerSettingsKey } from './layer-data.js?v=flower-f-5';
-import { renderPNG } from './png-export.js?v=flower-f-5';
-import { StoredZipWriter } from '../infra/framework/src/export/StoredZipWriter.js?v=1';
+import { normalizeSettings, exportDimensions } from './document.js?v=petal-motion-1';
+import { getLayers, layerSettingsKey } from './layer-data.js?v=petal-motion-1';
+import { renderPNG } from './png-export.js?v=petal-motion-1';
+import { StoredZipWriter } from '../infra/framework/src/export/StoredZipWriter.js?v=petal-motion-1';
 
 export function layerExportPlan(raw) {
     const settings=normalizeSettings(raw);
@@ -12,7 +12,7 @@ export function layerExportPlan(raw) {
         const title=Array.from(layer.name.normalize('NFC').replace(/[<>:"/\\|?*\x00-\x1f\x7f]/g,'_')).slice(0,48).join('').replace(/[. ]+$/g,'').trim()||'Layer';
         return {index:stack.length-1-order,name:String(order+1).padStart(2,'0')+'-'+title+(layer.visible?'':'-hidden')+'.png'};
     });
-    if(!settings.transparentBackground)entries.push({index:-1,name:String(entries.length+1).padStart(2,'0')+'-Background.png'});
+    if(!settings.transparentBackground)entries.push({index:-1,name:String(entries.length+1).padStart(2,'0')+'-Background'+(settings.backgroundVisible?'':'-hidden')+'.png'});
     return {settings,entries};
 }
 
@@ -26,7 +26,7 @@ export async function renderLayersZIP(renderer,raw,{signal,onProgress=()=>{}}={}
         await new Promise(resolve=>setTimeout(resolve,0));
         signal?.throwIfAborted();
         const background=entry.index===-1;
-        const isolated={...settings,transparentBackground:!background,exportLayers:false,
+        const isolated={...settings,transparentBackground:!background,backgroundVisible:true,exportLayers:false,
             [key]:background?[]:stack.map((layer,index)=>index===entry.index?{...layer,visible:true}:layer)};
         const {blob}=await renderPNG(renderer,isolated,{layerIndex:entry.index,signal});
         signal?.throwIfAborted();

@@ -1,7 +1,7 @@
-import {rasterBands} from './tiled-export.js?v=flower-f-5';
-import {exportDimensions} from './document.js?v=flower-f-5';
+import {rasterBands} from './tiled-export.js?v=petal-motion-1';
+import {exportDimensions} from './document.js?v=petal-motion-1';
 let runtime;
-async function cms(){if(!runtime)runtime=import('./vendor/lcms/lcms.js').then(async api=>({api,engine:await api.instantiate({locateFile:name=>new URL('./vendor/lcms/'+name,import.meta.url).href})}));return runtime;}
+async function cms(){if(!runtime)runtime=import('./vendor/lcms/lcms.js?v=petal-motion-1').then(async api=>({api,engine:await api.instantiate({locateFile:name=>new URL('./vendor/lcms/'+name,import.meta.url).href})}));return runtime;}
 export class PrintColor {
  constructor(){this.profile=null;this.transforms=null;this.proofCanvas=null;}
  async load(bytes,name='ICC profile'){

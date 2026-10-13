@@ -1,12 +1,13 @@
 // F: a single corolla built from curved petal profiles in a tilted local plane.
 // Geometry stays separate from palette, pigment and spray rendering.
-import {flowerProfiles} from './flower-profiles.js?v=flower-f-5';
+import {flowerProfiles} from './flower-profiles.js?v=petal-motion-1';
 export const flowerTypes=Object.fromEntries(Object.entries(flowerProfiles).map(([id,p])=>[id,p.label]));
-export const flowerDefaults={fType:'radial',fScale:110,fPetals:6,fOpening:75,fWidth:55,fCurl:35,fAsymmetry:40,fRecognition:60,fTilt:35,fRotation:0,fCenterX:50,fCenterY:53,fStem:65,fBend:35,fMerge:30,fLayers:null};
-export const flowerRanges={fScale:[40,180,1],fPetals:[3,12,1],fOpening:[0,100,1],fWidth:[0,100,1],fCurl:[-100,100,1],fAsymmetry:[0,100,1],fRecognition:[0,100,1],fTilt:[0,85,1],fRotation:[-180,180,1],fCenterX:[5,95,1],fCenterY:[5,95,1],fStem:[0,100,1],fBend:[-100,100,1],fMerge:[0,100,1]};
+export {flowerDefaults,flowerRanges} from "./object-model.js?v=petal-motion-1";
+import {flowerDefaults,flowerRanges} from "./object-model.js?v=petal-motion-1";
+
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 export function normalizeFlowerParams(s={}){
- const out={fType:Object.hasOwn(flowerTypes,s.fType)?s.fType:'radial'};
+ const out={fType:Object.hasOwn(flowerTypes,s.fType)?s.fType:'radial',fColorPattern:['grouped','alternating','scattered'].includes(s.fColorPattern)?s.fColorPattern:'grouped'};
  for(const [key,[min,max,step]] of Object.entries(flowerRanges))out[key]=Math.round(clamp(s[key]!=null&&Number.isFinite(Number(s[key]))?Number(s[key]):flowerDefaults[key],min,max)/step)*step;
  return out;
 }
@@ -38,7 +39,7 @@ export function buildFlowerFromProfile(layer,raw,profile){
  const s={...flowerDefaults,...raw},seed=(layer.seed+layer.flora.variant*1013904223)>>>0,r=random(seed^0x748FAC13);
  const aspect=s.width/s.height,unit=Math.min(1,aspect),size=s.fScale/100*unit,opening=s.fOpening/100,asym=s.fAsymmetry/100,abstract=1-s.fRecognition/100;
  const tilt=s.fTilt*Math.PI/180,rotation=s.fRotation*Math.PI/180,ct=Math.cos(tilt),st=Math.sin(tilt),cr=Math.cos(rotation),sr=Math.sin(rotation);
- const center=[s.fCenterX/100,s.fCenterY/100],length=s.fStem/100*.78*unit,bend=s.fBend/100,root=[center[0]-bend*.19*unit/aspect,center[1]+length];
+ const center=[s.fCenterX/100,s.fCenterY/100],length=s.fStem/100*.78*unit+(layer.composition?.stemExtension??0)*s.fStem/(layer.composition?.stemLengthRef??65),bend=s.fBend/100,root=[center[0]-bend*.19*unit/aspect,center[1]+length];
  const tip=[(center[0]-root[0])*aspect,-length],width=(.023+.073*abstract)*size;
  const stem={id:'p0',name:'Stem',kind:'stem',path:stemPath(tip,length,width,bend,asym,random(seed^0x94FAB127)),parent:null,parentNode:0,origin:root,shade:.5,hidden:s.fStem===0};
  const {arrangement:a,length:l,width:w,neck:n,growth:g,bend:b,projection:z}=profile;

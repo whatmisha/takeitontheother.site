@@ -137,7 +137,7 @@ test('layer commands cannot interrupt a paint stroke or a layer reorder',()=>{
         const {editor}=pointerEditor(),snapshot=editor.tool.getSnapshot();
         editor[state]={pointerId:12};
         editor.change=()=>assert.fail('A running gesture must not change layer history');
-        editor.duplicateSelected();editor.deleteSelected();editor.shiftLayer(-1);
+        editor.duplicateSelected();editor.deleteSelected();editor.shiftLayer(-1);editor.edgeLayer(-1);
         assert.equal(editor.tool.getSnapshot(),snapshot);assert.ok(editor[state]);
     }
 });
@@ -186,10 +186,10 @@ test('Alt click makes no copy; cancelling an Alt drag restores both stack and se
 });
 test('layer limit prevents drag copies without interrupting movement',()=>{
     const {editor,pointer}=pointerEditor();let s=editor.tool.settings;
-    while(getLayers(s).length<16)s=addLayer(s).settings;
+    while(getLayers(s).length<32)s=addLayer(s).settings;
     editor.tool.applySnapshot(s);editor.paintTool='move';editor.hit=()=>editor.selected;
     const id=editor.selected,messages=[];editor.report=m=>messages.push(m);
     editor.start(pointer([.4,.4]));editor.move({...pointer([.5,.4]),altKey:true});editor.move({...pointer([.6,.4]),altKey:true});editor.finish(pointer([.6,.4]));
-    assert.equal(editor.selected,id);assert.equal(getLayers(editor.tool.settings).length,16);
-    assert.equal(messages.length,1);assert.match(messages[0],/Maximum 16/);assert.ok(editor.layer().x>.19);
+    assert.equal(editor.selected,id);assert.equal(getLayers(editor.tool.settings).length,32);
+    assert.equal(messages.length,1);assert.match(messages[0],/Maximum 32/);assert.ok(editor.layer().x>.19);
 });
