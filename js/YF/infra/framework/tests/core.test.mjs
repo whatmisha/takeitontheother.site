@@ -126,3 +126,11 @@ test('ApplicationShell coalesces concurrent init calls and keeps completed init 
     assert.equal(await shell.init(), shell);
     assert.equal(initializeCount, 1);
 });
+
+test('snapshot restoration may defer drawing while keeping controls and chrome synchronized',()=>{
+ const calls=[],shell=Object.create(ApplicationShell.prototype);
+ shell.config={restore:(_shell,snapshot)=>calls.push(['restore',snapshot])};
+ shell._syncControls=()=>calls.push('controls');shell.render=()=>calls.push('scheduled');shell.renderNow=()=>calls.push('immediate');shell._refreshChrome=()=>calls.push('chrome');
+ shell.applySnapshot({value:3},{deferRender:true});assert.deepEqual(calls,[['restore',{value:3}],'controls','scheduled','chrome']);assert.equal(shell._isApplying,false);
+ calls.length=0;shell.applySnapshot({value:4});assert.deepEqual(calls,[['restore',{value:4}],'controls','immediate','chrome']);
+});

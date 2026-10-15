@@ -576,3 +576,12 @@ body,
 .controls-panel .panel-action.panel-action--playback:focus-visible:not(:disabled) {
  color: var(--color-bg); background: var(--color-text);
 }
+
+/* A collapsible field group keeps the field heading's inset and divider. */
+.controls-panel .ui-disclosure > summary.control-field-heading {
+    padding: 12px 20px 0;
+}
+.controls-panel .ui-disclosure:not([open]) > summary.control-field-heading {
+    margin-bottom: 0 !important;
+    padding-bottom: 12px;
+}

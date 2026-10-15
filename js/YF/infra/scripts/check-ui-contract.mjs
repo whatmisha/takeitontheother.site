@@ -51,9 +51,9 @@ assert.match(contractCss, /\.btn-export-pdf,[\s\S]*?font-weight:\s*400\s*!import
 
 entrypoints.forEach((html, index) => {
     const app = applications[index];
-    const version = app === 'grainy_land' ? 'uiq-6' : 'uiq-5';
     const controllerVersion = app === 'pulsar_coder' ? 'uiq-3' : app === 'dither' ? 'uiq-4' : 'uiq-2';
-    assert.ok(html.includes(`infra/framework/css/ui-contract.css?v=${version}`), `${app}: missing final UI CSS`);
+    // Cache versions change with features; enforce the stylesheet and its order, not a historical tag.
+    assert.match(html, /infra\/framework\/css\/ui-contract\.css\?v=[^\s"']+/u, `${app}: missing versioned UI CSS`);
     // GeneratorHost tools initialize ToolUiController in their module, not via legacy auto-init.
     if (app !== 'grainy_land') {
         assert.ok(html.includes(`infra/framework/src/ui/unifiedUiAutoInit.js?v=${controllerVersion}`), `${app}: missing shared UI controller`);
@@ -163,12 +163,14 @@ assert.match(grainyTool, /new ToolUiController\(/u, 'Grainy Land must use the sh
 assert.ok(grainyHtml.lastIndexOf('ui-contract.css') > grainyHtml.lastIndexOf('app.css'), 'Grainy Land must load the UI contract last');
 assert.match(grainyHtml, /class="form-tools segmented-control"/u, 'Drawing tools must use shared segments');
 assert.match(grainyHtml, /id="materialPanelHeader"><span>Appearance<\/span>/u, 'Appearance must have a regular panel heading');
-assert.match(grainyHtml, /id="colorHeading" class="control-field-heading">Color<\/h3>/u);
-assert.match(grainyHtml, /id="surfaceHeading" class="control-field-heading">Surface<\/h3>/u);
+assert.match(grainyHtml, /<details id="colorSection"[^>]*class="ui-disclosure appearance-section control-field-group control-field-group--flush"[^>]* open>/u);
+assert.match(grainyHtml, /<summary id="colorHeading" class="control-field-heading">Color<svg class="ui-disclosure__chevron"/u);
+assert.match(grainyHtml, /<details id="surfaceSection" class="ui-disclosure appearance-section control-field-group" aria-labelledby="surfaceHeading">/u);
+assert.match(grainyHtml, /<summary id="surfaceHeading" class="control-field-heading">Surface<svg class="ui-disclosure__chevron"/u);
 assert.doesNotMatch(grainyHtml, /role="tab(?:list|panel)?"|colorTab|surfaceTab/u, 'Color and Surface must be stacked sections');
 assert.doesNotMatch(grainyTool + grainyEditor, /selectTab|colorTab|surfaceTab/u, 'No stale tab handlers may remain');
-assert.equal(grainyHtml.match(/<details class="ui-disclosure\b|<details id="[^"]+" class="ui-disclosure\b/gu)?.length, 7, 'All seven disclosures must use shared styling');
-assert.equal(grainyHtml.match(/class="ui-disclosure__chevron"/gu)?.length, 7, 'Disclosures must use panel chevrons');
+assert.equal(grainyHtml.match(/<details class="ui-disclosure\b|<details id="[^"]+" class="ui-disclosure\b/gu)?.length, grainyHtml.match(/<details\b/gu)?.length, 'All disclosures must use shared styling');
+assert.equal(grainyHtml.match(/class="ui-disclosure__chevron"/gu)?.length, grainyHtml.match(/<details\b/gu)?.length, 'Disclosures must use panel chevrons');
 for (const name of ['ui-list-row', 'ui-list-select', 'ui-list-title', 'ui-meta', 'ui-icon-button']) {
     assert.ok(grainyEditor.includes(name), `Grainy Land layers must use ${name}`);
 }

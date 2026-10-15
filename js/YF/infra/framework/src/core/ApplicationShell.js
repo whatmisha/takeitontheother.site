@@ -455,7 +455,7 @@ export class ApplicationShell {
         return this.settingsStore.toObject();
     }
 
-    applySnapshot(snap) {
+    applySnapshot(snap, { deferRender = false } = {}) {
         this._isApplying = true;
         try {
             if (typeof this.config.restore === 'function') {
@@ -467,7 +467,7 @@ export class ApplicationShell {
             this._isApplying = false;
         }
         this._syncControls();
-        this.renderNow();
+        if (deferRender) this.render(); else this.renderNow();
         this._refreshChrome();
     }
 

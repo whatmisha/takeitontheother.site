@@ -242,3 +242,21 @@ Void, Grid v2, Sparky fork, Keyboarder fork и Wander Pattern являются d
 ## MP4 container adapter
 
 `src/export/mp4Muxer.js` is a public, worker-safe entry for `muxAvcToMp4` (also exported from the barrel). It packages WebCodecs AVC chunks in decode order into a constant-frame-rate MP4, preserving presentation timestamps for reordered frames. It has no DOM dependencies. Used by Sparky and Grainy Land.
+
+### Deferred interactive snapshots and dynamic sliders
+
+`ApplicationShell.applySnapshot(snapshot, { deferRender: true })` restores state,
+synchronizes controls and refreshes chrome immediately, but schedules drawing through
+`render()` so input events within one animation frame coalesce. The default remains
+synchronous drawing. The caller still owns the history transaction.
+
+`SliderController.initSlider()` accepts an optional `signal` for dynamically mounted
+controls. Aborting removes its input/focus/keyboard listeners. Text values commit on
+blur or Enter; Escape restores the current setting without committing, including an
+empty or invalid draft. A settings adapter may resolve a selection and apply one
+shared value to its editable members.
+
+Panel dragging sets `data-panel-position="manual"` after movement. Applications can
+use that state to release a default dock without inspecting inline CSS text.
+A `summary.control-field-heading` inside `.ui-disclosure` keeps the same divider and
+inset as a non-collapsible field group.

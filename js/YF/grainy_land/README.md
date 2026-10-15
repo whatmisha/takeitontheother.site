@@ -634,3 +634,34 @@ color patterns); saved review images: `tests/reviews/flower-composition-20/`.
 JSON export names include the tool, current named preset (when present), current display mode
 and a local timestamp: `grainy-land-six-cup-flora-20261013_09-30-00.json`.
 New/shared sessions use the mode without a preset name. The seed remains in the JSON.
+
+
+### Editor optimization pass — 15 October 2026
+
+Dynamic object controls now use the framework SliderController. Numeric text drafts
+commit on Enter/blur, Escape cancels them, and live changes schedule one drawing
+pass per animation frame. Count drafts do not remove objects before confirmation.
+Selection properties display Mixed; color, opacity, material and parameter changes
+apply to editable selected layers, leaving locked members unchanged. Individual
+shape fields are shared only by selections of one procedural kind. Parts/path editing
+and copying to another scene require a single object.
+
+The Flora field cache separates contour/shading from RGB. Palette edits reuse the
+geometry and its GPU texture; unused palette edits and surface/transform changes
+reuse the complete local field. Still and moving caches use LRU ordering, entry limits
+and a 96 MiB byte budget each. Hidden Flora objects are skipped in ordinary rendering;
+isolated thumbnails still render hidden objects. Layer miniatures no longer invalidate
+for surface-only changes or repaint an unchanged bitmap.
+
+Docked layer properties reserve canvas space. Layers has a bounded vertical resize
+handle, Appearance shares the remaining height, and Color/Surface are collapsible
+field groups. Below 1200 px panels flow beneath the canvas. Dragging a panel releases
+its default docking position using the framework's explicit manual-position marker.
+
+Validation: the five saved Fan/Cup/Lobed/Radial/Plant field hashes remain identical.
+The palette-only CPU benchmark (1920×1080, median of five changes, this machine)
+was 32.9→11.1 ms for one flower, 248.8→120.5 ms for eight, and 910.9→295.7 ms
+for 32. These measurements exclude GPU drawing and are not playback FPS.
+The full-frame petal animation algorithm remains a later optimization stage.
+Regression cases: `tests/field-cache.test.mjs`, `tests/object-controls.test.mjs`,
+`tests/flora.html` and `tests/objects-ui.html`.

@@ -136,7 +136,7 @@ export class VectorEditor {
     releasePenDrag(rollback=false){const g=this.penDrag;this.penDrag=null;if(g&&rollback)Object.assign(this.draft,g.before);if(g&&this.editor.container.hasPointerCapture(g.pointerId))this.editor.container.releasePointerCapture(g.pointerId);if(g&&rollback)this.editor.tool.render();}
     cancel(){this.releasePenDrag(true);const g=this.drag;if(!g)return;this.drag=null;if(g.started){this.editor.tool.applySnapshot(g.snapshot);this.editor.tool.history.endTransaction();}if(this.editor.container.hasPointerCapture(g.pointerId))this.editor.container.releasePointerCapture(g.pointerId);}
     sync(){
-        const e=this.editor,l=e.layer(),vector=l?.mode==='vector',full=getLayers(e.tool.settings).length>=MAX_LAYERS,modeChanged=this.mode!==e.tool.settings.mode;
+        const e=this.editor,l=e.layer(),vector=(e.selection?.().length??1)===1&&l?.mode==='vector',full=getLayers(e.tool.settings).length>=MAX_LAYERS,modeChanged=this.mode!==e.tool.settings.mode;
         this.mode=e.tool.settings.mode;
         if(this.pen&&(this.draftMode!==this.mode||full)){this.pausePen();e.report(full?'Maximum '+MAX_LAYERS+' layers. Delete a layer before using Pen.':'');}
         else if(modeChanged)e.report();

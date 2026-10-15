@@ -14,33 +14,67 @@ function edt(input,w,h){const out=new Float32Array(input),n=Math.max(w,h),f=new 
 }
 export function signedField(mask,w,h,step){const a=new Float32Array(mask.length),b=new Float32Array(mask.length);for(let i=0;i<a.length;i++){a[i]=mask[i]?1e9:0;b[i]=mask[i]?0:1e9;}const inside=edt(a,w,h),outside=edt(b,w,h);const distance=new Float32Array(mask.length);for(let i=0;i<distance.length;i++)distance[i]=(Math.sqrt(inside[i])-Math.sqrt(outside[i]))*step;return distance;}
 function blur(data,w,h,r){if(r<1)return data;const a=new Float32Array(data.length),b=new Float32Array(data.length),den=2*r+1;for(let y=0;y<h;y++){let sum=0;for(let k=-r;k<=r;k++)sum+=data[y*w+clamp(k,0,w-1)];for(let x=0;x<w;x++){a[y*w+x]=sum/den;sum+=data[y*w+clamp(x+r+1,0,w-1)]-data[y*w+clamp(x-r,0,w-1)];}}for(let x=0;x<w;x++){let sum=0;for(let k=-r;k<=r;k++)sum+=a[clamp(k,0,h-1)*w+x];for(let y=0;y<h;y++){b[y*w+x]=sum/den;sum+=a[clamp(y+r+1,0,h-1)*w+x]-a[clamp(y-r,0,h-1)*w+x];}}return b;}
+// Geometry owns contour, shading and the topmost part at each sample. Palette
+// changes reuse those buffers and only rebuild RGB. Keep one palette per shape.
+const CACHE_BYTES=96*1024*1024;
+function remember(map,key,field,limit){
+ map.delete(key);map.set(key,field);
+ let bytes=0;for(const f of map.values())bytes+=f.pixels.byteLength+f.colors.byteLength+f.owners.byteLength;
+ while(map.size>limit||bytes>CACHE_BYTES&&map.size>1){const first=map.keys().next().value,f=map.get(first);bytes-=f.pixels.byteLength+f.colors.byteLength+f.owners.byteLength;map.delete(first);}
+ return field;
+}
+function paintColors(field,palette,coverage){
+ const {owners,width:w,height:h,shadingRadius}=field,len=owners.length;
+ const rgb=Array.from({length:3},()=>new Float32Array(len));
+ const mask=coverage?null:new Float32Array(len);
+ for(let i=0;i<len;i++)if(owners[i]){const color=palette[owners[i]-1];for(let k=0;k<3;k++)rgb[k][i]=color[k];if(mask)mask[i]=1;}
+ coverage ||= blur(mask,w,h,shadingRadius);
+ const blurred=rgb.map(c=>blur(c,w,h,shadingRadius)),colors=new Uint8Array(len*4);
+ for(let i=0;i<len;i++){
+  const at=i*4,weight=Math.max(coverage[i],.00001);
+  for(let k=0;k<3;k++)colors[at+k]=Math.round(clamp(blurred[k][i]/weight,0,1)*255);
+  colors[at+3]=Math.round(clamp(coverage[i]*8,0,1)*255);
+ }
+ return colors;
+}
 export function bakeFlora(layer,settings){
- const mergeKey=layer.flora.generator==='flower'?'fMerge':'floraMerge',merge=layer.flora.frozen?.[mergeKey]??effectiveSettings(settings,layer)[mergeKey];
- const parts=floraParts(layer,settings).filter(p=>!p.hidden),key=JSON.stringify([parts,layer.group,merge,settings.sky,settings.terrain,settings.depth,settings.light,settings.customColors,settings.width/settings.height]);
- const moving=!!layer[FLOWER_MOTION],slot=layer.id;
- if(moving&&motionCache.get(slot)?.key===key)return motionCache.get(slot);
- if(!moving&&cache.has(key))return cache.get(key);
- const aspect=settings.width/settings.height,polys=parts.map(p=>flattenVectorPath(p.path));
+ const mergeKey=layer.flora.generator==='flower'?'fMerge':'floraMerge';
+ const merge=layer.flora.frozen?.[mergeKey]??effectiveSettings(settings,layer)[mergeKey];
+ const parts=floraParts(layer,settings).filter(p=>!p.hidden),aspect=settings.width/settings.height;
+ const geometryKey=JSON.stringify([parts.map(p=>[p.path,p.kind,p.shade]),merge,aspect]);
+ const colorNames=parts.map(p=>groupColor(settings,p.group??layer.group)),colorKey=JSON.stringify(colorNames);
+ const key=JSON.stringify([geometryKey,colorKey]),moving=!!layer[FLOWER_MOTION],map=moving?motionCache:cache,slot=moving?layer.id:geometryKey,limit=moving?MAX_LAYERS:MAX_LAYERS+4;
+ let field=map.get(slot);
+ if(field?.geometryKey===geometryKey&&field.colorKey===colorKey){map.delete(slot);map.set(slot,field);return field;}
+ const palette=colorNames.map(hex=>hex.slice(1).match(/../g).map(v=>parseInt(v,16)/255));
+ if(field?.geometryKey===geometryKey)return remember(map,slot,{...field,key,colorKey,colors:paintColors(field,palette)},limit);
+ const polys=parts.map(p=>flattenVectorPath(p.path));
+ // Preserve the established sampling grid and edge appearance in this pass.
  let left=0,top=0,right=1,bottom=1;for(const poly of polys)for(const [x,y]of poly){left=Math.min(left,x);top=Math.min(top,y);right=Math.max(right,x);bottom=Math.max(bottom,y);}
  left-=.24/aspect;right+=.24/aspect;top-=.24;bottom+=.24;
  const step=Math.max((bottom-top)/440,(right-left)*aspect/760),w=Math.ceil((right-left)*aspect/step)+1,h=Math.ceil((bottom-top)/step)+1;
- const bounds=[left,top,(w-1)*step/aspect,(h-1)*step],len=w*h,mask=new Float32Array(len),tone=new Float32Array(len),rgb=Array.from({length:3},()=>new Float32Array(len));
- // Scanline fill retains separate editable contours while combining their coverage.
- polys.forEach((poly,index)=>{const part=parts[index],color=groupColor(settings,part.group??layer.group).slice(1).match(/../g).map(x=>parseInt(x,16)/255);
-  const ys=poly.map(p=>(p[1]-top)/step),y0=clamp(Math.floor(Math.min(...ys)),0,h-1),y1=clamp(Math.ceil(Math.max(...ys)),0,h-1);
-  for(let y=y0;y<=y1;y++){const py=top+y*step,cross=[];for(let i=0,j=poly.length-1;i<poly.length;j=i++){const a=poly[j],b=poly[i];if((a[1]>py)!==(b[1]>py))cross.push((a[0]+(py-a[1])*(b[0]-a[0])/(b[1]-a[1])-left)*aspect/step);}
-   cross.sort((a,b)=>a-b);for(let c=0;c+1<cross.length;c+=2)for(let x=clamp(Math.ceil(cross[c]),0,w-1);x<=Math.min(w-1,Math.floor(cross[c+1]));x++){const at=y*w+x;mask[at]=1;tone[at]=part.kind==='petal'?Math.min(1,part.shade*.65+.52*((x-cross[c])/Math.max(1,cross[c+1]-cross[c]))**2):part.shade;for(let k=0;k<3;k++)rgb[k][at]=color[k];}
+ const bounds=[left,top,(w-1)*step/aspect,(h-1)*step],len=w*h,mask=new Float32Array(len),tone=new Float32Array(len),owners=new Uint16Array(len);
+ polys.forEach((poly,index)=>{
+  const part=parts[index],ys=poly.map(p=>(p[1]-top)/step),y0=clamp(Math.floor(Math.min(...ys)),0,h-1),y1=clamp(Math.ceil(Math.max(...ys)),0,h-1);
+  for(let y=y0;y<=y1;y++){
+   const py=top+y*step,cross=[];
+   for(let i=0,j=poly.length-1;i<poly.length;j=i++){const a=poly[j],b=poly[i];if((a[1]>py)!==(b[1]>py))cross.push((a[0]+(py-a[1])*(b[0]-a[0])/(b[1]-a[1])-left)*aspect/step);}
+   cross.sort((a,b)=>a-b);
+   for(let c=0;c+1<cross.length;c+=2)for(let x=clamp(Math.ceil(cross[c]),0,w-1);x<=Math.min(w-1,Math.floor(cross[c+1]));x++){
+    const at=y*w+x;mask[at]=1;owners[at]=index+1;
+    tone[at]=part.kind==='petal'?Math.min(1,part.shade*.65+.52*((x-cross[c])/Math.max(1,cross[c+1]-cross[c]))**2):part.shade;
+   }
   }
  });
- const fusion=merge/100,radius=Math.round(fusion*.026/step);
- const merged=radius?blur(blur(mask,w,h,radius),w,h,radius):mask;
+ const radius=Math.round(merge/100*.026/step),merged=radius?blur(blur(mask,w,h,radius),w,h,radius):mask;
  const binary=new Uint8Array(len),threshold=radius?.30:.5;for(let i=0;i<len;i++)binary[i]=merged[i]>threshold?1:0;
- const distance=signedField(binary,w,h,step);
- const shadingRadius=Math.max(2,Math.round(.048/step)),coverage=blur(mask,w,h,shadingRadius),shade=blur(tone,w,h,shadingRadius),color=rgb.map(c=>blur(c,w,h,shadingRadius));
- const pixels=new Uint8Array(len*4),colors=new Uint8Array(len*4);
- for(let i=0;i<len;i++){const at=i*4,d=Math.round((clamp(distance[i],-1,1)*.5+.5)*65535),weight=Math.max(coverage[i],.00001);pixels[at]=d>>8;pixels[at+1]=d&255;pixels[at+2]=Math.round(clamp(shade[i]/weight,0,1)*255);pixels[at+3]=255;for(let k=0;k<3;k++)colors[at+k]=Math.round(clamp(color[k][i]/weight,0,1)*255);colors[at+3]=Math.round(clamp(coverage[i]*8,0,1)*255);}
- const result={key,width:w,height:h,bounds,pixels,colors};// Keep only the current moving pose per object, without evicting still artwork.
- if(moving){motionCache.set(slot,result);while(motionCache.size>MAX_LAYERS)motionCache.delete(motionCache.keys().next().value);}
- else{cache.set(key,result);while(cache.size>MAX_LAYERS+4)cache.delete(cache.keys().next().value);}
- return result;
+ const distance=signedField(binary,w,h,step),shadingRadius=Math.max(2,Math.round(.048/step));
+ const coverage=blur(mask,w,h,shadingRadius),shade=blur(tone,w,h,shadingRadius),pixels=new Uint8Array(len*4);
+ for(let i=0;i<len;i++){
+  const at=i*4,d=Math.round((clamp(distance[i],-1,1)*.5+.5)*65535),weight=Math.max(coverage[i],.00001);
+  pixels[at]=d>>8;pixels[at+1]=d&255;pixels[at+2]=Math.round(clamp(shade[i]/weight,0,1)*255);pixels[at+3]=255;
+ }
+ field={key,geometryKey,colorKey,width:w,height:h,bounds,pixels,owners,shadingRadius};
+ field.colors=paintColors(field,palette,coverage);
+ return remember(map,slot,field,limit);
 }

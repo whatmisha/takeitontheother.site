@@ -478,11 +478,12 @@ export class LandscapeRenderer {
         if (width > max || height > max) throw new Error('This GPU cannot render that size. Reduce export scale.');
         const key = JSON.stringify([s,getLayers(s).map(l=>l[FLOWER_MOTION]),width,height,editorPass,transparent,exportLayer,region]);
         if (key === this.cacheKey) return this.canvas;
-        this.canvas.width = width; this.canvas.height = height;
+        if(this.canvas.width!==width)this.canvas.width=width;
+        if(this.canvas.height!==height)this.canvas.height=height;
         gl.viewport(0,0,width,height); gl.useProgram(this.program);
         const scene = createLayerScene(s);
         this.uploadPaint(scene);
-        this.uploadFlora(scene,s);
+        this.uploadFlora(scene,s,editorPass);
         gl.uniform1f(this.location('floraMode'),['flora','f'].includes(s.mode)?1:0);
         this.uploadCustomColors(s);
         const values = { softness: s.softness/100, glow: s.glow/100, halo: s.halo/100,
@@ -527,18 +528,20 @@ export class LandscapeRenderer {
         }
         gl.uniform1i(this.location('customPalette'),1);
     }
-    uploadFlora(scene,settings){
-        const gl=this.gl,fields=scene.map(l=>l.flora?bakeFlora(l,settings):null),columns=fields.some(Boolean)?Math.min(4,scene.length):1;
+    uploadFlora(scene,settings,editorPass=0){
+        const isolated=editorPass>1.5?editorPass-2:null;
+        const gl=this.gl,fields=scene.map((l,i)=>l.flora&&(isolated!=null?i===isolated:l.info[2]>0)?bakeFlora(l,settings):null),columns=fields.some(Boolean)?Math.min(4,scene.length):1;
         const cellW=Math.max(1,...fields.map(f=>f?.width??1)),cellH=Math.max(1,...fields.map(f=>f?.height??1)),width=columns*cellW,height=Math.max(1,Math.ceil(scene.length/columns))*cellH;
         const shape=[width,height,cellW,cellH,columns].join(':'),resize=shape!==this.floraAtlasShape;
-        if(resize)this.floraKeys=[];
+        if(resize){this.floraKeys=[];this.floraColorKeys=[];}
         for(const [unit,texture,property,name]of [[2,this.floraTexture,'pixels','floraAtlas'],[3,this.floraColorTexture,'colors','floraColors']]){
             gl.activeTexture(gl.TEXTURE0+unit);gl.bindTexture(gl.TEXTURE_2D,texture);
             if(resize){gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,width,height,0,gl.RGBA,gl.UNSIGNED_BYTE,null);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);}
-            fields.forEach((f,i)=>{if(f&&f.key!==this.floraKeys[i])gl.texSubImage2D(gl.TEXTURE_2D,0,(i%columns)*cellW,Math.floor(i/columns)*cellH,f.width,f.height,gl.RGBA,gl.UNSIGNED_BYTE,f[property]);});
+            const keys=property==='pixels'?this.floraKeys:this.floraColorKeys;
+            fields.forEach((f,i)=>{if(f&&(property==='pixels'?f.geometryKey:f.key)!==keys?.[i])gl.texSubImage2D(gl.TEXTURE_2D,0,(i%columns)*cellW,Math.floor(i/columns)*cellH,f.width,f.height,gl.RGBA,gl.UNSIGNED_BYTE,f[property]);});
             gl.uniform1i(this.location(name),unit);
         }
-        this.floraKeys=fields.map(f=>f?.key);this.floraAtlasShape=shape;
+        this.floraKeys=fields.map(f=>f?.geometryKey);this.floraColorKeys=fields.map(f=>f?.key);this.floraAtlasShape=shape;
         gl.uniform2f(this.location('floraAtlasSize'),width,height);gl.uniform2f(this.location('floraCellSize'),cellW,cellH);gl.uniform1f(this.location('floraColumns'),columns);
         gl.uniform4fv(this.location('floraBounds[0]'),Array.from({length:MAX_LAYERS},(_,i)=>fields[i]?.bounds??[0,0,1,1]).flat());
         gl.uniform4fv(this.location('floraMeta[0]'),Array.from({length:MAX_LAYERS},(_,i)=>[fields[i]?.width??1,fields[i]?.height??1,(scene[i]?.flora?.index??0)*17.31+(scene[i]?.flora?.variant??0)*.057,scene[i]?.flora?.generator==='flower'?-1:(scene[i]?.flora?.frozen?.floraFusion??(scene[i]?effectiveSettings(settings,scene[i]).floraFusion:0))/100]).flat());

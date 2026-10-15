@@ -2,7 +2,7 @@ import {kindLabels,effectiveSettings} from './object-model.js?v=petal-motion-1';
 import { LayerHover } from './layer-hover.js?v=petal-motion-1';
 import {normalizeFloraParams} from './flora.js?v=petal-motion-1';
 import { FloraEditor } from './flora-editor.js?v=petal-motion-1';
-import { editSelection, duplicateSelection, reorderSelection, resizeSelection } from './selection.js?v=petal-motion-1';
+import { editSelection, duplicateSelection, reorderSelection, resizeSelection, selectionValue, selectedLayers, deleteSelection } from './selection.js?v=petal-motion-1';
 import { localToCanvas, canvasToLocal, materialRanges } from './transforms.js?v=petal-motion-1';
 import { VectorEditor } from './vector-editor.js?v=petal-motion-1';
 import { groupColor } from './custom-colors.js?v=petal-motion-1';
@@ -41,6 +41,8 @@ export class FormEditor {
         this.cursor=byId('brushCursor');this.mask=document.createElement('canvas');this.mode=tool.settings.mode;
     }
     layer(){return getLayers(this.tool.settings).find(l=>l.id===this.selected);}
+    editableLayers(){return selectedLayers(this.tool.settings,this.selection(),{editable:true});}
+    editableLayer(){return this.editableLayers().find(l=>l.id===this.selected)??this.editableLayers()[0];}
     index(){return getLayers(this.tool.settings).findIndex(l=>l.id===this.selected);}
     selection(){return this.selectedIds?.size?[...this.selectedIds]:this.selected?[this.selected]:[];}
     commit(patch,label,manual=false){this.change(this.tool,editSelection(this.tool.settings,this.selection(),patch,this.selected),label);}
@@ -63,7 +65,7 @@ export class FormEditor {
         byId('backgroundVisibility').innerHTML=icon('eye');
         on(byId('backgroundVisibility'),'click',()=>this.change(this.tool,{backgroundVisible:!this.tool.settings.backgroundVisible},'Background visibility'));
         on(byId('backgroundLayer'),'click',()=>{
-            this.select(null);
+            this.select(null);byId('colorSection').open=true;
             byId('materialPanel').querySelector('.panel-content').scrollTop=0;
             if(byId('materialPanel').classList.contains('panel-collapsed'))byId('materialPanelHeader').querySelector('.collapse-icon').click();
             byId('skyColorPreview').click();byId('skyColorPreview').scrollIntoView({block:'nearest'});
@@ -71,20 +73,20 @@ export class FormEditor {
         const colorSwatches=byId('layerColorSwatches');
         on(colorSwatches,'click',e=>{
             const button=e.target.closest('[data-color-group]'),layer=this.layer();
-            if(button&&layer&&!layer.locked&&layer.group!==button.dataset.colorGroup)this.commit({group:button.dataset.colorGroup},'Layer color group');
+            if(button&&this.editableLayers().some(l=>l.group!==button.dataset.colorGroup))this.commit({group:button.dataset.colorGroup},'Layer color group');
         });
         on(colorSwatches,'keydown',e=>{
             // Keep Space on a swatch from activating canvas panning.
             if(e.key===' '||e.key==='Enter'){e.stopPropagation();return;}
             if(e.altKey||e.ctrlKey||e.metaKey||!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'].includes(e.key))return;
             const buttons=[...colorSwatches.querySelectorAll('[data-color-group]')],index=buttons.indexOf(e.target);
-            if(index<0||this.layer()?.locked)return;
+            if(index<0||!this.editableLayers().length)return;
             e.preventDefault();e.stopPropagation();
             const next=e.key==='Home'?0:e.key==='End'?buttons.length-1:(index+(['ArrowLeft','ArrowUp'].includes(e.key)?-1:1)+buttons.length)%buttons.length;
             buttons[next].click();buttons[next].focus();
         });
         on(byId('layerOpacity'),'input',e=>{
-            if(!this.layer()||this.layer().locked)return;
+            if(!this.editableLayers().length)return;
             if(!this.opacityEditing){this.tool.history.flush();this.tool.history.beginTransaction('Layer opacity');this.opacityEditing=true;}
             const next=editSelection(this.tool.settings,this.selection(),{opacity:Number(e.target.value)},this.selected);
             this.tool.settingsStore.set(layerSettingsKey(this.tool.settings.mode),next[layerSettingsKey(this.tool.settings.mode)]);
@@ -95,7 +97,7 @@ export class FormEditor {
         on(byId('clearPaint'),'click',()=>{this.commit({strokes:[]},'Clear strokes',true);this.report();});
         for(const [field,id] of Object.entries(fields)) {
             const input=byId(id),apply=()=>{
-                const edit=this.layer(),value=Number(input.value)/100;
+                const edit=this.editableLayer(),value=Number(input.value)/100;
                 if(!edit||edit.locked||!Number.isFinite(value)||!input.value.trim()){this.sync();return;}
                 if(value===edit[field])return;
                 let patch={[field]:value};
@@ -165,7 +167,7 @@ export class FormEditor {
         try {const result=duplicateSelection(this.tool.settings,this.selection());this.change(this.tool,result.settings,'Duplicate layer');this.select(result.id);this.selectedIds=new Set(result.ids);this.sync();this.tool.render();this.container.focus({preventScroll:true});}
         catch(error){this.report(error.message);}
     }
-    deleteSelected(){const layer=this.layer();if(!this.canChangeLayer()||layer.locked)return;this.endOpacity();this.change(this.tool,withLayers(this.tool.settings,getLayers(this.tool.settings).filter(l=>!this.selection().includes(l.id)||l.locked)),'Delete layers');this.report();this.container.focus({preventScroll:true});}
+    deleteSelected(){if(!this.canChangeLayer()||!this.editableLayers().length)return;this.endOpacity();this.change(this.tool,deleteSelection(this.tool.settings,this.selection()),'Delete layers');this.report();this.container.focus({preventScroll:true});}
     shiftLayer(delta){
         if(!this.canChangeLayer()||this.layer().locked)return;const stack=getLayers(this.tool.settings),ids=this.selection(),indices=ids.map(id=>stack.findIndex(l=>l.id===id));
         const edge=delta>0?Math.max(...indices):Math.min(...indices),target=stack[edge+delta];if(!target)return;
@@ -274,7 +276,7 @@ export class FormEditor {
     modeDescription(layer){return (['drawn','vector'].includes(layer.mode)?'Shape is independent of generation controls.':layer.parameterMode==='individual'?'Individual parameters; Generate keeps this shape.':'Auto follows shared parameters. '+(layer.mode==='pinned'?'Pinned seed stays unchanged on Generate.':'Generate varies the seed.'))+(layer.locked?' Locked against edits and Generate.':'');}
 
     syncColorSwatches(layer) {
-        const s=this.tool.settings,container=byId('layerColorSwatches');
+        const s=this.tool.settings,container=byId('layerColorSwatches'),chosen=selectedLayers(s,this.selection()),group=selectionValue(chosen,l=>l.group),editable=chosen.some(l=>!l.locked);
         const colors=[...Object.entries({sky:'Background',terrain:'Terrain',depth:'Depth',light:'Light'}).map(([id,name])=>({id,name,color:s[id]})),...(s.customColors??[])];
         const key=colors.map(color=>color.id).join('|');
         if(key!==this.colorSwatchesKey) {
@@ -285,12 +287,12 @@ export class FormEditor {
             }));
         }
         [...container.children].forEach((button,i)=>{
-            const color=colors[i],selected=color.id===layer.group;
+            const color=colors[i],selected=!group.mixed&&color.id===group.value;
             button.style.backgroundColor=color.color;
             button.title=color.name+' · '+color.color.toUpperCase();button.setAttribute('aria-label',button.title);
-            button.setAttribute('aria-checked',String(selected));button.tabIndex=selected?0:-1;button.disabled=layer.locked;
+            button.setAttribute('aria-checked',String(selected));button.tabIndex=selected||group.mixed&&i===0?0:-1;button.disabled=!editable;
         });
-        byId('layerColorName').textContent=colors.find(color=>color.id===layer.group)?.name??'';
+        byId('layerColorName').textContent=group.mixed?'Mixed':colors.find(color=>color.id===group.value)?.name??'';
     }
     sync() {
         const s=this.tool.settings,stack=getLayers(s);
@@ -312,22 +314,35 @@ export class FormEditor {
         }
         byId('newBlueLayers').disabled=stack.length>=MAX_LAYERS;
         byId('newBlueLayers').title='Add a blue layer behind the artwork · '+stack.length+' / '+MAX_LAYERS+' layers';
-        byId('layerDuplicate').disabled=!layer||stack.length+this.selection().length>MAX_LAYERS;byId('layerDelete').disabled=!layer||layer.locked;
+        byId('layerDuplicate').disabled=!layer||stack.length+this.selection().length>MAX_LAYERS;byId('layerDelete').disabled=!this.editableLayers().length;
         byId('backgroundThumb').style.background=s.sky;
         const eye=byId('backgroundVisibility');eye.setAttribute('aria-pressed',String(s.backgroundVisible));eye.setAttribute('aria-label',(s.backgroundVisible?'Hide':'Show')+' Background');eye.title=s.backgroundVisible?'Hide':'Show';eye.closest('.background-row').classList.toggle('is-hidden',!s.backgroundVisible);
         byId('layerPanel').hidden=!layer;byId('brushControls').hidden=this.paintTool==='move';
         this.vector?.sync();this.flora?.sync();this.objectUI?.sync();
         document.querySelectorAll('[data-form-tool]').forEach(button=>button.setAttribute('aria-pressed',String(!this.vector?.pen&&button.dataset.formTool===this.paintTool)));
         if(!layer)return;
-        byId('selectedLayerName').textContent=this.selection().length>1?this.selection().length+' selected':layer.name;
-        byId('groupLayers').disabled=this.selection().length<2;byId('ungroupLayers').disabled=!getLayers(s).some(l=>this.selection().includes(l.id)&&l.collection);
-        byId('formRotation').value=layer.rotation||0;
-        for(const key of Object.keys(materialRanges)){const input=byId('local-'+key);input.value=layer.material?.[key]??s[key];input.classList.toggle('is-inherited',layer.material?.[key]==null);input.nextElementSibling.disabled=layer.material?.[key]==null;}byId('selectedLayerName').title=layer.name;
-        const mode=byId('layerModeLabel');mode.textContent=(['drawn','vector'].includes(layer.mode)?(layer.mode==='vector'?'Vector':'Drawn'):(kindLabels[layer.kind]+' · '+(layer.parameterMode==='individual'?'Individual':'Auto')+(layer.mode==='pinned'?' · Pinned':'')))+(layer.locked?' · Locked':'');mode.title=this.modeDescription(layer);mode.setAttribute('aria-label',mode.textContent+'. '+mode.title);
-        byId('layerEditable').disabled=layer.locked;this.syncColorSwatches(layer);byId('layerOpacity').value=layer.opacity;byId('layerOpacityValue').textContent=layer.opacity+'%';
-        byId('layerConvert').hidden=layer.mode==='drawn';byId('layerConvert').title='Keep this silhouette and edit it only by drawing.';
-        byId('clearPaint').hidden=!layer.strokes.length;byId('clearPaint').title='Clear '+layer.strokes.length+' strokes';
-        for(const [field,id]of Object.entries(fields))byId(id).value=Number((layer[field]*100).toFixed(1));
+        const chosen=selectedLayers(s,this.selection()),editable=chosen.filter(l=>!l.locked),multiple=chosen.length>1;
+        byId('selectedLayerName').textContent=multiple?chosen.length+' selected':layer.name;
+        byId('selectedLayerName').title=chosen.map(l=>l.name).join(', ');
+        const locked=chosen.length-editable.length,note=byId('selectionNote');
+        note.hidden=!multiple;note.textContent=locked?locked+' locked '+(locked===1?'layer stays':'layers stay')+' unchanged.':'Changes apply to all selected layers.';
+        byId('groupLayers').disabled=editable.length<2;byId('ungroupLayers').disabled=!editable.some(l=>l.collection);
+        const number=(id,read,format=v=>v)=>{
+            const input=byId(id),state=selectionValue(chosen,read);
+            if(document.activeElement!==input){input.value=state.mixed?'':format(state.value);input.placeholder=state.mixed?'Mixed':'';}
+        };
+        number('formRotation',l=>l.rotation||0);
+        for(const key of Object.keys(materialRanges)){
+            const input=byId('local-'+key);number('local-'+key,l=>l.material?.[key]??s[key]);
+            input.classList.toggle('is-inherited',chosen.every(l=>l.material?.[key]==null));input.nextElementSibling.disabled=!editable.some(l=>l.material?.[key]!=null);
+        }
+        const descriptions=chosen.map(l=>(['drawn','vector'].includes(l.mode)?(l.mode==='vector'?'Vector':'Drawn'):(kindLabels[l.kind]+' · '+(l.parameterMode==='individual'?'Individual':'Auto')+(l.mode==='pinned'?' · Pinned':'')))+(l.locked?' · Locked':''));
+        const mode=byId('layerModeLabel');mode.textContent=descriptions.every(v=>v===descriptions[0])?descriptions[0]:'Mixed';mode.title=multiple?'Properties of the selected layers. Locked layers are unchanged.':this.modeDescription(layer);mode.setAttribute('aria-label',mode.textContent+'. '+mode.title);
+        byId('layerEditable').disabled=!editable.length;this.syncColorSwatches(layer);
+        const opacity=selectionValue(chosen,l=>l.opacity);byId('layerOpacity').value=opacity.value;byId('layerOpacityValue').textContent=opacity.mixed?'Mixed':opacity.value+'%';byId('layerOpacity').setAttribute('aria-valuetext',opacity.mixed?'Mixed':opacity.value+'%');
+        byId('layerConvert').hidden=chosen.every(l=>l.mode==='drawn');byId('layerConvert').title='Keep each silhouette and edit it only by drawing.';
+        byId('clearPaint').hidden=!chosen.some(l=>l.strokes.length);byId('clearPaint').title='Clear strokes on selected layers';
+        for(const [field,id]of Object.entries(fields))number(id,l=>l[field],value=>Number((value*100).toFixed(1)));
         if(layer.locked||!layer.visible)this.cursor.hidden=true;
     }
     point(event){const rect=this.container.getBoundingClientRect(),t=this.tool.target,s=this.tool.settings;return [(event.clientX-rect.left-t.panX)/(t.zoom*s.width),(event.clientY-rect.top-t.panY)/(t.zoom*s.height)];}
@@ -398,10 +413,10 @@ export class FormEditor {
         if(byId('layersPanel').classList.contains('panel-collapsed'))return;
         const s=this.tool.settings,scene=createLayerScene(s);this.picker ||=new LandscapeRenderer();
         scene.forEach((l,i)=>{const canvas=byId('layerList').querySelector('[data-thumb-id="'+l.id+'"]');if(!canvas)return;
-            const key=JSON.stringify([l.phases,l.transform,l.field,l.shape,l.style,l.foldField,l.crest,l.pocket,l.geometryA,l.geometryB,l.strokes,l.vectorPath,l.flora,l.parameters,s.objectDefaults,l.flora?normalizeFloraParams(effectiveSettings(s,l)):null,l.affine,l.materialA,l.materialB,groupColor(s,l.group),s.width/s.height]);
+            const key=JSON.stringify([l.phases,l.transform,l.field,l.shape,l.style,l.foldField,l.crest,l.pocket,l.geometryA,l.geometryB,l.strokes,l.vectorPath,l.flora,l.parameters,s.objectDefaults,l.flora?normalizeFloraParams(effectiveSettings(s,l)):null,l.affine,groupColor(s,l.group),s.width/s.height]);
             let cached=this.thumbs.get(l.id);
             if(cached?.key!==key){const map=this.picker.formMap(s,48,30,i),ctx=canvas.getContext('2d'),data=ctx.createImageData(48,30),rgb=groupColor(s,l.group).slice(1).match(/../g).map(v=>parseInt(v,16));for(let n=0;n<map.ids.length;n++)if(map.ids[n])data.data.set([...rgb,230],n*4);cached={key,data};this.thumbs.set(l.id,cached);}
-            canvas.getContext('2d').putImageData(cached.data,0,0);
+            if(canvas._thumbnailData!==cached.data){canvas.getContext('2d').putImageData(cached.data,0,0);canvas._thumbnailData=cached.data;}
         });
         for(const id of this.thumbs.keys())if(!scene.some(l=>l.id===id))this.thumbs.delete(id);
     }

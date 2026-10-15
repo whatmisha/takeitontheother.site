@@ -45,3 +45,15 @@ export function resizeSelection(settings,ids,sx,sy,center){
   return next;
  }));
 }
+
+// Shared values include locked objects; commands edit only the unlocked subset.
+export function selectionValue(layers, read) {
+ const values=layers.map(read),value=values[0];
+ return {value,mixed:values.some(v=>!Object.is(v,value))};
+}
+export function selectedLayers(settings,ids,{editable=false}={}) {
+ return getLayers(settings).filter(l=>ids.includes(l.id)&&(!editable||!l.locked));
+}
+export function deleteSelection(settings,ids) {
+ return withLayers(settings,getLayers(settings).filter(l=>!ids.includes(l.id)||l.locked));
+}

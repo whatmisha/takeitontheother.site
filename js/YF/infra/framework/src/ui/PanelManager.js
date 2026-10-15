@@ -155,6 +155,7 @@ export class PanelManager {
         const constrainedX = Math.max(0, Math.min(newX, maxX));
         const constrainedY = Math.max(0, Math.min(newY, maxY));
 
+        if(deltaX || deltaY) panel.dataset.panelPosition = 'manual';
         this.setPosition(this.dragState.panel, constrainedX, constrainedY);
     }
 

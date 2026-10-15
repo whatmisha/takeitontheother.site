@@ -6,8 +6,8 @@
     <title>Grainy Land — YF Tools</title>
     <link rel="icon" href="data:,">
     <link rel="stylesheet" href="../infra/framework/css/othersite-styles.css">
-    <link rel="stylesheet" href="./app.css?v=pin-playback-1">
-    <link rel="stylesheet" href="../infra/framework/css/ui-contract.css?v=playback-1">
+    <link rel="stylesheet" href="./app.css?v=review-1">
+    <link rel="stylesheet" href="../infra/framework/css/ui-contract.css?v=review-1">
 </head>
 <body>
 <div class="container grainy-land">
@@ -106,6 +106,7 @@
             <div class="panel-header" id="layerPanelHeader"><span>Layer properties</span><button class="collapse-icon" type="button" aria-label="Collapse layer properties"><svg width="10" height="6" viewBox="0 0 12 8" fill="none" aria-hidden="true"><path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
             <div class="panel-content">
                 <div class="selected-layer-heading"><span id="selectedLayerName" class="ui-list-title"></span><span id="layerModeLabel" class="ui-meta" tabindex="0"></span></div>
+                <p id="selectionNote" class="field-note" hidden></p>
                 <fieldset id="layerEditable"><legend class="sr-only">Editable layer properties</legend>
                     <div id="objectParameterControls"><div class="segmented-control" role="group" aria-label="Parameter mode"><button type="button" data-parameter-mode="auto">Auto</button><button type="button" data-parameter-mode="individual">Individual</button></div><button id="sharedObjectSettings" type="button" class="btn-add-object">Shared settings</button><details class="ui-disclosure compact-details"><summary>Object shape<svg class="ui-disclosure__chevron" width="10" height="6" viewBox="0 0 12 8" fill="none" aria-hidden="true"><path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></summary><div id="individualObjectFields"></div></details></div>
                     <div class="control-group layer-color-group"><div class="layer-color-heading"><span id="layerColorLabel">Color group</span><output id="layerColorName" class="ui-meta"></output></div><div id="layerColorSwatches" class="layer-color-swatches" role="radiogroup" aria-labelledby="layerColorLabel"></div></div>
@@ -125,8 +126,8 @@
         <aside class="controls-panel" id="materialPanel">
             <div class="panel-header" id="materialPanelHeader"><span>Appearance</span><button class="collapse-icon" type="button" aria-label="Collapse appearance"><svg width="10" height="6" viewBox="0 0 12 8" fill="none" aria-hidden="true"><path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
             <div class="panel-content">
-                <section id="colorSection" class="control-field-group control-field-group--flush" aria-labelledby="colorHeading">
-                <h3 id="colorHeading" class="control-field-heading">Color</h3>
+                <details id="colorSection" class="ui-disclosure appearance-section control-field-group control-field-group--flush" aria-labelledby="colorHeading" open>
+                <summary id="colorHeading" class="control-field-heading">Color<svg class="ui-disclosure__chevron" width="10" height="6" viewBox="0 0 12 8" fill="none" aria-hidden="true"><path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
                 <div class="control-section">
                     <div class="color-swatches-compact"><div class="color-swatch-row"><div class="color-swatch-compact" id="skyColorItem" data-color-type="sky"><button class="color-dot color-dot--expandable" id="skyColorPreview" type="button" aria-label="Open background color"></button><span class="color-label">Background</span><input class="color-swatch-hex" id="skyColorHex" value="#2353DB" aria-label="Background color hex"></div><div class="color-hsb-slot" id="skyColorHsbSlot"><div id="unifiedColorPickerContainer"></div></div></div>
 <div class="color-swatch-row"><div class="color-swatch-compact" id="terrainColorItem" data-color-type="terrain"><button class="color-dot color-dot--expandable" id="terrainColorPreview" type="button" aria-label="Open terrain color"></button><span class="color-label">Terrain</span><input class="color-swatch-hex" id="terrainColorHex" value="#FF9306" aria-label="Terrain color hex"></div><div class="color-hsb-slot" id="terrainColorHsbSlot"></div></div>
@@ -218,9 +219,9 @@
                     <div class="control-group" data-control="toneScale"><label for="toneScaleSlider"><span>Patch size</span><input id="toneScaleValue" class="value-display" value="110" aria-label="Patch size value" inputmode="decimal"></label><input id="toneScaleSlider" type="range" min="20" max="200" step="1" value="110"></div>
                     <div class="control-group" data-control="toneBleed"><label for="toneBleedSlider"><span>Color bleed</span><input id="toneBleedValue" class="value-display" value="50" aria-label="Color bleed value" inputmode="decimal"></label><input id="toneBleedSlider" type="range" min="0" max="100" step="1" value="50"></div>
                 </details>
-                </section>
-                <section id="surfaceSection" class="control-field-group" aria-labelledby="surfaceHeading">
-                <h3 id="surfaceHeading" class="control-field-heading">Surface</h3>
+                </details>
+                <details id="surfaceSection" class="ui-disclosure appearance-section control-field-group" aria-labelledby="surfaceHeading">
+                <summary id="surfaceHeading" class="control-field-heading">Surface<svg class="ui-disclosure__chevron" width="10" height="6" viewBox="0 0 12 8" fill="none" aria-hidden="true"><path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
                 <div class="control-section"><div class="control-group" data-control="grain"><label for="grainSlider"><span>Grain</span><input id="grainValue" class="value-display" value="55" aria-label="Grain value" inputmode="decimal"></label><input id="grainSlider" type="range" min="0" max="100" step="1" value="55"></div>
 <div class="control-group" data-control="grainSize"><label for="grainSizeSlider"><span>Grain size</span><input id="grainSizeValue" class="value-display" value="1" aria-label="Grain size value" inputmode="decimal"></label><input id="grainSizeSlider" type="range" min="0.5" max="4" step="0.1" value="1"></div>
 <div class="control-group" data-control="softness"><label for="softnessSlider"><span>Softness</span><input id="softnessValue" class="value-display" value="38" aria-label="Softness value" inputmode="decimal"></label><input id="softnessSlider" type="range" min="0" max="100" step="1" value="38"></div>
@@ -229,7 +230,7 @@
 <div class="control-group" data-control="glow"><label for="glowSlider"><span>Glow</span><input id="glowValue" class="value-display" value="0" aria-label="Glow value" inputmode="decimal"></label><input id="glowSlider" type="range" min="0" max="100" step="1" value="0"></div>
 <div class="control-group" data-control="glowCoverage"><label for="glowCoverageSlider"><span>Glow coverage</span><input id="glowCoverageValue" class="value-display" value="35" aria-label="Glow coverage value" inputmode="decimal"></label><input id="glowCoverageSlider" type="range" min="0" max="100" step="1" value="35"></div>
 <div class="control-group" data-control="halo"><label for="haloSlider"><span>Halo width</span><input id="haloValue" class="value-display" value="65" aria-label="Halo width value" inputmode="decimal"></label><input id="haloSlider" type="range" min="0" max="100" step="1" value="65"></div></div>
-                </section>
+                </details>
             </div>
         </aside>
         <aside class="controls-panel" id="animationPanel"><div class="panel-header" id="animationPanelHeader"><span>Animation</span><button class="collapse-icon" type="button" aria-label="Collapse animation"><svg width="10" height="6" viewBox="0 0 12 8" fill="none" aria-hidden="true"><path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div><div class="panel-content"><div class="dimensions-row"><label for="motionAmount">Motion, %<input id="motionAmount" type="number" min="0" max="20" value="3"></label><label for="motionDuration">Loop, s<input id="motionDuration" type="number" min="2" max="30" value="6"></label></div><button id="playMotion" class="panel-action panel-action--playback" title="Play / Stop (Space)" aria-keyshortcuts="Space" type="button" aria-pressed="false">Play</button></div></aside>
@@ -265,6 +266,6 @@
     <input id="jsonFileInput" type="file" accept=".json,application/json" hidden><button id="jsonPickerTrigger" type="button" hidden>Choose JSON</button>
     <dialog id="dialog" class="modal" aria-labelledby="dialogTitle"><div class="modal-content"><h2 id="dialogTitle" class="modal-title"></h2><div id="dialogText" class="modal-text"></div><input id="dialogInput" class="modal-input" type="text" style="display:none"><div id="dialogButtons" class="modal-buttons"></div></div></dialog>
 </div>
-<script type="module" src="./tool.js?v=flower-flow-1"></script>
+<script type="module" src="./tool.js?v=review-1"></script>
 </body>
 </html>

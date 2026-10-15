@@ -15,6 +15,8 @@ try{
  const set=async(id,value)=>{$(id).value=String(value);$(id).dispatchEvent(new w.Event('input',{bubbles:true}));$(id).dispatchEvent(new w.Event('change',{bubbles:true}));$(id).blur();$(id).dispatchEvent(new w.FocusEvent('blur'));await pause();};
  const rows=()=>[...d.querySelectorAll('#layerList > [data-layer-id]')],selected=()=>d.querySelector('#layerList .layer-select[aria-pressed="true"]');
  check('App ready',d.documentElement.dataset.ready==='true');
+ // Use a known empty Flora scene; the startup preset may contain mixed objects.
+ await click('presetDropdownToggle');d.querySelector('#presetDropdownMenu [data-value="Ember"]').click();await pause();
  check('New terminology',d.querySelector('label[for="modeFlora"]').textContent==='Plant'&&d.querySelector('label[for="modeFlower"]').textContent==='Flora');
  await click('modeFlower');await set('fCountValue',3);check('Flowers count creates three Auto layers',rows().length===3&&rows().every(r=>r.textContent.includes('Flower · Auto')));
  check('Arrange actions are removed',!$('arrange-flower')&&!$('arrange-plant'));

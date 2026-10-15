@@ -54,11 +54,12 @@ export class SliderController {
         }
 
         // Event handlers
-        slider.addEventListener('input', (e) => this.handleSliderInput(sliderId, e));
+        const options = config.signal ? { signal: config.signal } : undefined;
+        slider.addEventListener('input', (e) => this.handleSliderInput(sliderId, e), options);
         // Removed input handler for valueInput - changes applied only on blur or Enter
-        valueInput.addEventListener('keydown', (e) => this.handleKeyDown(sliderId, e));
-        valueInput.addEventListener('focus', (e) => e.target.select());
-        valueInput.addEventListener('blur', (e) => this.handleValueBlur(sliderId, e));
+        valueInput.addEventListener('keydown', (e) => this.handleKeyDown(sliderId, e), options);
+        valueInput.addEventListener('focus', (e) => e.target.select(), options);
+        valueInput.addEventListener('blur', (e) => this.handleValueBlur(sliderId, e), options);
     }
 
     /**
@@ -168,9 +169,26 @@ export class SliderController {
         if (!sliderData) return;
 
         const { element, valueInput, config } = sliderData;
+        // Enter and Escape also work for an empty/invalid draft. Cancelling must
+        // not let the resulting blur commit the abandoned draft.
+        if (event.key === 'Escape') {
+            event.preventDefault();
+            const value = config.setting ? this.settings.get(config.setting) : Number(element.value);
+            this.updateValueDisplay(valueInput, value, config);
+            element.value = value;
+            sliderData.cancelBlur = true;
+            valueInput.blur();
+            sliderData.cancelBlur = false;
+            return;
+        }
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            valueInput.blur();
+            return;
+        }
         let currentValue = parseFloat(valueInput.value);
-        
-        if (isNaN(currentValue)) return;
+        if (!Number.isFinite(currentValue)) currentValue = config.setting ? this.settings.get(config.setting) : Number(element.value);
+        if (!Number.isFinite(currentValue)) return;
 
         let newValue = currentValue;
         let handled = false;
@@ -231,20 +249,7 @@ export class SliderController {
                 }
                 handled = true;
                 break;
-            case 'Enter':
-                valueInput.blur();
-                handled = true;
-                break;
-            case 'Escape':
-                // Restore value from settings
-                if (config.setting) {
-                    newValue = this.settings.get(config.setting);
-                    this.updateValueDisplay(valueInput, newValue, config);
-                    element.value = newValue;
-                }
-                valueInput.blur();
-                handled = true;
-                break;
+
         }
 
         if (handled && (event.key === 'ArrowUp' || event.key === 'ArrowDown')) {
@@ -286,10 +291,12 @@ export class SliderController {
         const sliderData = this.sliders.get(sliderId);
         if (!sliderData) return;
 
+        if (sliderData.cancelBlur) return;
         const { element, valueInput, config } = sliderData;
         let value = parseFloat(valueInput.value);
+        const valid = Number.isFinite(value);
         
-        if (isNaN(value)) {
+        if (!valid) {
             // Restore from settings
             value = config.setting ? this.settings.get(config.setting) : parseFloat(element.value);
         }
@@ -300,6 +307,8 @@ export class SliderController {
         // Update UI with correct formatting
         this.updateValueDisplay(valueInput, value, config);
         element.value = value;
+        // Restoring an invalid/empty draft is display-only, including mixed selections.
+        if (!valid) return;
         
         // Update settings
         if (config.setting) {
