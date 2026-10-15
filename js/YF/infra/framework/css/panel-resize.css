@@ -1,0 +1,49 @@
+/* No visible grip: the existing panel edge is the affordance. Desktop only;
+   the controller removes managed attributes in every mobile/sheet layout. */
+.controls-panel[data-ui-resize-managed] {
+    resize: none !important;
+}
+.controls-panel[data-ui-resize-unbounded]:not(.panel-collapsed) {
+    max-height: var(--ui-panel-limit, calc(100dvh - 40px)) !important;
+}
+.controls-panel[data-ui-resize-managed] > .panel-content { min-height: 0; }
+.controls-panel[data-ui-resize-managed] > .panel-content > :not(.layers-list):not(.layer-list) { flex-shrink: 0; }
+.controls-panel[data-ui-panel-height]:not(.panel-collapsed) {
+    height: var(--ui-panel-height) !important;
+    min-height: 0 !important;
+    max-height: var(--ui-panel-limit) !important;
+}
+.controls-panel[data-ui-group-height]:not(.panel-collapsed) {
+    height: var(--ui-group-height) !important;
+    min-height: 0 !important;
+    max-height: var(--ui-group-height) !important;
+    flex: 0 0 auto !important;
+}
+.controls-panel[data-ui-group-anchor="top"] { top: var(--ui-group-edge) !important; bottom: auto !important; }
+.controls-panel[data-ui-group-anchor="bottom"] { bottom: var(--ui-group-edge) !important; top: auto !important; }
+.controls-panel:is([data-ui-panel-height], [data-ui-group-height], [data-ui-resize-unbounded]):not(.panel-collapsed) > .panel-content {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow-y: auto !important;
+}
+.controls-panel[data-ui-resize-list]:not(.panel-collapsed) > .panel-content { overflow: hidden !important; }
+.controls-panel[data-ui-resize-list] :is(.layers-list, .layer-list) { flex: 1 1 auto !important; min-height: 0 !important; overflow-y: auto; }
+.controls-panel > .ui-panel-resize-handle {
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    bottom: 0;
+    height: 6px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: ns-resize;
+    touch-action: none;
+    z-index: 2;
+}
+.controls-panel > .ui-panel-resize-handle[data-edge="top"] { top: 0; bottom: auto; }
+.controls-panel > .ui-panel-resize-handle[hidden], .controls-panel.panel-collapsed > .ui-panel-resize-handle { display: none !important; }
+.ui-panel-resize-handle:focus-visible { outline: 1px solid var(--ui-foreground); outline-offset: -2px; }
+html[data-ui-panel-resizing], html[data-ui-panel-resizing] * { cursor: ns-resize !important; user-select: none !important; }
+.controls-panel[data-ui-panel-resizing], .controls-panel[data-ui-panel-resizing] > .panel-content { transition: none !important; }

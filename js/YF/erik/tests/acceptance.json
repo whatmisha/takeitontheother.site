@@ -1,0 +1,98 @@
+{
+  "date": "2026-10-15",
+  "browser": "Codex in-app browser (Chromium)",
+  "status": "passed",
+  "unit": {
+    "command": "node --test erik/tests/model.test.mjs",
+    "passed": 15,
+    "collisionGeometryCombinations": 2160,
+    "collisionSpeeds": [
+      10,
+      120,
+      400
+    ]
+  },
+  "artifactChecks": [
+    {
+      "name": "Opening logo fills the frame and crops overflow"
+    },
+    {
+      "name": "Logo precedes crawl, then both are visible during the handoff"
+    },
+    {
+      "name": "Shared Speed controls logo motion; overlapping logo and crawl match worker export"
+    },
+    {
+      "name": "Visible opening logo and empty final frame",
+      "frames": 1181,
+      "durationSeconds": 39.36666666666667
+    },
+    {
+      "name": "Deterministic random access and transparent 1080p PNG"
+    },
+    {
+      "name": "Font size changes the crawl and matches the exported PNG"
+    },
+    {
+      "name": "Logo gap delays text independently; line spacing and gap match exported PNG"
+    },
+    {
+      "name": "Tilt changes projected geometry"
+    },
+    {
+      "name": "Worker PNG matches full-resolution preview pixel-for-pixel"
+    },
+    {
+      "name": "00:05:28 regression: logo gone before contact; worker PNG matches",
+      "settings": {
+        "fontSize": 36,
+        "speed": 120,
+        "tilt": 62,
+        "perspective": 100,
+        "logoGap": 240
+      },
+      "fadeStartSeconds": 2.447,
+      "fadeEndSeconds": 5.447
+    },
+    {
+      "name": "Real glyph rasters never overlap across extreme settings",
+      "configurations": 8,
+      "simultaneousStageFrames": 29
+    },
+    {
+      "name": "Fade recalculates after geometry edits while Speed preserves its spatial deadline"
+    },
+    {
+      "name": "Cyrillic text and paragraphs render"
+    },
+    {
+      "name": "Complete ZIP: sequential names, exact frame count, transparent PNG",
+      "frames": 181,
+      "bytes": 15599295
+    },
+    {
+      "name": "Export cancellation releases worker; next export succeeds"
+    },
+    {
+      "name": "Full H.264 MP4 decodes and seeks with visible text, correct size and duration",
+      "width": 1920,
+      "height": 1080,
+      "fps": 30,
+      "durationSeconds": 6.033333333333333,
+      "bytes": 719133
+    }
+  ],
+  "interfaceChecks": [
+    "Logo to text gap is visible beneath the logo; default 360 at speed 120 shows entry 00:03:00",
+    "Gap 720 moves entry to 00:06:00 without changing logo motion",
+    "Line spacing is visible beneath Font size; 2.2 increases space between the credit rows",
+    "Gap 720 and line spacing 2.2 persist after reload; default 360 and 1.4 restored after testing",
+    "Gap and line spacing changes update duration and match the worker PNG export",
+    "Reported settings and frame 00:05:28 show crawl only; the logo has disappeared before contact. Default gap 360 restored after checking."
+  ],
+  "repositoryLimits": [
+    "Catalog layout/boundary checks encounter pre-existing unregistered grid_generator_02",
+    "Wander Wall back-arrow entity fails the existing literal-arrow assertion",
+    "Cache-version check reports existing unversioned Sparky dependency edges"
+  ]
+}

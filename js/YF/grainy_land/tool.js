@@ -14,10 +14,10 @@ import { downloadBlob } from '../infra/framework/src/ui/GeneratorHost.js?v=petal
 import { defineTool, UnifiedColorPicker, ToolUiController, FileIntakeController, PresetMenuKeyboardController } from '../infra/framework/src/index.js?v=petal-motion-1';
 import { defaults, ranges, switchMode, regenerate, toneKeys, migratePresets, normalizeSettings, makeDocument, readDocument, exportDimensions } from './document.js?v=flower-flow-1';
 import { adjacentColors, hexRGB } from './scene.js?v=petal-motion-1';
-import { LandscapeRenderer } from './render.js?v=gpu-perf-1';
+import { LandscapeRenderer } from './render.js?v=layers-polish-1';
 
 import { getLayers } from './layer-data.js?v=petal-motion-1';
-import { FormEditor } from './form-editor.js?v=gpu-perf-1';
+import { FormEditor } from './form-editor.js?v=layers-polish-1';
 import { editableTarget, visibleDialog } from '../infra/framework/src/ui/CommandPolicy.js?v=2';
 
 const printColor=new PrintColor();
@@ -174,7 +174,7 @@ function bind(tool) {
         on(input,'change',apply);on(input,'keydown',e=>{if(e.key==='Enter'){e.preventDefault();apply();}});
     }
     on(byId('exportScaleSelect'),'change',e=>applyCanvas({exportScale:Number(e.target.value)}));
-    on(byId('transparentBackground'),'change',e=>change(tool,{transparentBackground:e.target.checked},'Transparent PNG'));
+    on(byId('transparentBackground'),'change',e=>change(tool,{transparentBackground:e.target.checked},'No background'));
     on(byId('exportLayers'),'change',e=>change(tool,{exportLayers:e.target.checked},'Export layers'));
     customColorEditor = new CustomColorEditor(tool,change,status).init();
     unsubscribe = tool.settingsStore.subscribe('*', () => sync(tool));
@@ -265,8 +265,8 @@ function bind(tool) {
             ...['delete','backspace'].map(shortcut=>({id:'layer-'+shortcut,label:'Delete layer',kind:'command',group:'keyboard',shortcut,run:()=>formEditor.deleteSelected()})),
             // Consume browser-history keys even without a selection; shiftLayer guards editing state.
             ...[[-1,'mod+[','Send layer backward'],[1,'mod+]','Bring layer forward']].map(([delta,shortcut,label])=>({id:delta<0?'layer-backward':'layer-forward',label,kind:'command',group:'keyboard',shortcut,repeat:true,run:()=>formEditor.shiftLayer(delta)})),
-            { id:'generate', button:'generateBtn', label:'Generate', kind:'command', group:'utility', shortcut:'r',
-                run: () => { change(tool,regenerate(tool.settings,crypto.getRandomValues(new Uint32Array(1))[0]),'Generate'); status(''); } },
+            { id:'generate', button:'generateBtn', label:'Regenerate', kind:'command', group:'utility', shortcut:'r',
+                run: () => { change(tool,regenerate(tool.settings,crypto.getRandomValues(new Uint32Array(1))[0]),'Regenerate'); status(''); } },
             { id:'png', button:'exportPngBtn', label:'PNG', kind:'export', group:'primary', shortcut:'mod+e', enabled:()=>!exportProgress.busy,
                 run: ({signal}) => output(signal,tool.settings.exportLayers?'ZIP':'PNG',async(r,s,{signal,onProgress})=>{
                     exportDimensions(s);

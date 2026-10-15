@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Grainy Land — YF Tools</title>
     <link rel="icon" href="data:,">
-    <link rel="stylesheet" href="../infra/framework/css/othersite-styles.css">
-    <link rel="stylesheet" href="./app.css?v=review-1">
-    <link rel="stylesheet" href="../infra/framework/css/ui-contract.css?v=review-1">
+    <link rel="stylesheet" href="../infra/framework/css/othersite-styles.css?v=layers-polish-1">
+    <link rel="stylesheet" href="./app.css?v=layers-polish-1">
+    <link rel="stylesheet" href="../infra/framework/css/ui-contract.css?v=panel-resize-1&rev=2">
 </head>
 <body>
 <div class="container grainy-land">
@@ -47,7 +47,7 @@
                     <button id="loadICC" class="btn-add-object" type="button">Load ICC profile</button><input id="iccFile" type="file" accept=".icc,.icm" hidden><p id="iccName" class="field-note">No profile loaded. PNG uses sRGB.</p>
                     <label class="stacked-select-label" for="printIntent">Rendering intent<select id="printIntent" class="style-select"><option value="1">Relative colorimetric</option><option value="0">Perceptual</option><option value="3">Absolute colorimetric</option></select></label>
                     <label class="toggle-label"><div class="toggle-switch"><input id="softProof" type="checkbox" disabled><span class="toggle-slider"></span></div><span>Soft proof</span></label>
-                    <button id="exportTIFF" class="panel-action" type="button" disabled>Export print TIFF</button><p class="field-note">The profile stays in this session. TIFF embeds it with DPI. It includes Background; Layers and Transparent apply to PNG/ZIP.</p>
+                    <button id="exportTIFF" class="panel-action" type="button" disabled>Export print TIFF</button><p class="field-note">The profile stays in this session. TIFF embeds it with DPI. It includes Background; Layers and No background apply to PNG/ZIP.</p>
                 </details>
             </div>
         </aside>
@@ -88,17 +88,18 @@
         <aside class="controls-panel" id="layersPanel" aria-label="Layers panel">
             <div class="panel-header" id="layersPanelHeader"><span>Layers</span><button class="collapse-icon" type="button" aria-label="Collapse layers"><svg width="10" height="6" viewBox="0 0 12 8" fill="none" aria-hidden="true"><path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
             <div class="panel-content">
-                <div class="layer-create" role="group" aria-label="Add object">
-                    <button id="newAutoLayer" class="btn-add-object" type="button" data-add-kind="land">+ Landform</button>
-                    <button id="newSpotLayer" class="btn-add-object" type="button" data-add-kind="spot">+ Spot</button>
-                    <button id="newPlantLayer" class="btn-add-object" type="button" data-add-kind="plant">+ Plant</button>
-                    <button id="newFlowerLayer" class="btn-add-object" type="button" data-add-kind="flower">+ Flower</button>
-                    <button id="newDrawnLayer" class="btn-add-object" type="button" title="New drawn layer">+ Drawn</button>
-                    <button id="newVectorLayer" class="btn-add-object" type="button" title="New editable vector shape">+ Vector</button>
-                    <button id="newBlueLayers" class="btn-add-object" type="button" title="Add a blue layer behind the artwork">+ Blue</button>
+                <div id="layerList" class="layers-list" role="list" aria-label="Layers, front to back">
+                    <div class="background-row layer-row ui-list-row" role="listitem"><button id="backgroundVisibility" class="layer-icon ui-icon-button" type="button" aria-label="Hide Background" aria-pressed="true"></button><button id="backgroundLayer" class="background-layer ui-list-select" type="button"><span id="backgroundThumb"></span><span class="ui-list-title">Background</span><span class="field-note ui-meta">Color</span></button></div>
                 </div>
-                <div id="layerList" class="layers-list" role="list" aria-label="Layers, front to back"></div>
-                <div class="background-row layer-row ui-list-row"><button id="backgroundVisibility" class="layer-icon ui-icon-button" type="button" aria-label="Hide Background" aria-pressed="true"></button><button id="backgroundLayer" class="background-layer ui-list-select" type="button"><span id="backgroundThumb"></span><span class="ui-list-title">Background</span><span class="field-note ui-meta">Color</span></button></div>
+                <div class="layer-create pill-toggle-row" role="group" aria-label="Add object">
+                    <button id="newAutoLayer" class="pill-toggle" type="button" data-add-kind="land"><span>+ Landform</span></button>
+                    <button id="newSpotLayer" class="pill-toggle" type="button" data-add-kind="spot"><span>+ Spot</span></button>
+                    <button id="newPlantLayer" class="pill-toggle" type="button" data-add-kind="plant"><span>+ Plant</span></button>
+                    <button id="newFlowerLayer" class="pill-toggle" type="button" data-add-kind="flower"><span>+ Flower</span></button>
+                    <button id="newDrawnLayer" class="pill-toggle" type="button" title="New drawn layer"><span>+ Drawn</span></button>
+                    <button id="newVectorLayer" class="pill-toggle" type="button" title="New editable vector shape"><span>+ Vector</span></button>
+                    <button id="newBlueLayers" class="pill-toggle" type="button" title="Add a blue layer behind the artwork"><span>+ Blue</span></button>
+                </div>
                 <p id="paintStatus" class="field-note form-help" role="status"></p>
             </div>
         </aside>
@@ -237,7 +238,7 @@
     </main>
     <nav class="bottom-buttons action-dock" role="toolbar" aria-label="Tool actions">
         <div class="action-dock__slot action-dock__slot--utility">
-            <button id="generateBtn" class="btn-fixed btn-fixed--muted" type="button">Generate</button>
+            <button id="generateBtn" class="btn-fixed btn-fixed--muted" type="button">Regenerate</button>
             <button id="exportJsonBtn" class="btn-fixed btn-fixed--muted" type="button" data-action-dock-extra hidden>Export JSON</button>
             <button id="importJsonBtn" class="btn-fixed btn-fixed--muted" type="button" data-action-dock-extra hidden>Import JSON</button>
         </div>
@@ -253,10 +254,10 @@
         </div>
         <div class="action-dock__slot action-dock__slot--options">
             <label class="toggle-label" title="Remove the background from PNG or omit the Background layer from ZIP. The canvas preview keeps its background color.">
-                <div class="toggle-switch"><input type="checkbox" id="transparentBackground" aria-label="Transparent background"><span class="toggle-slider"></span></div>
-                <span class="toggle-label-text">Transparent</span>
+                <div class="toggle-switch"><input type="checkbox" id="transparentBackground" aria-label="No background"><span class="toggle-slider"></span></div>
+                <span class="toggle-label-text">No background</span>
             </label>
-            <label class="toggle-label" title="Export all layers, including hidden layers, as separate PNGs in one ZIP. Full canvas size; Background is included unless Transparent is on.">
+            <label class="toggle-label" title="Export all layers, including hidden layers, as separate PNGs in one ZIP. Full canvas size; Background is included unless No background is on.">
                 <div class="toggle-switch"><input type="checkbox" id="exportLayers" aria-label="Export layers as ZIP"><span class="toggle-slider"></span></div>
                 <span class="toggle-label-text">Layers</span>
             </label>
@@ -266,6 +267,7 @@
     <input id="jsonFileInput" type="file" accept=".json,application/json" hidden><button id="jsonPickerTrigger" type="button" hidden>Choose JSON</button>
     <dialog id="dialog" class="modal" aria-labelledby="dialogTitle"><div class="modal-content"><h2 id="dialogTitle" class="modal-title"></h2><div id="dialogText" class="modal-text"></div><input id="dialogInput" class="modal-input" type="text" style="display:none"><div id="dialogButtons" class="modal-buttons"></div></div></dialog>
 </div>
-<script type="module" src="./tool.js?v=gpu-perf-1"></script>
+<script type="module" src="./tool.js?v=layers-polish-1"></script>
+    <script type="module" src="../infra/framework/src/ui/panelResizeAutoInit.js?v=9"></script>
 </body>
 </html>

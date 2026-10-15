@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "toolId": "erik",
+  "renderer": "canvas-webgl",
+  "framework": "infra/framework/src/index.js",
+  "modes": [
+    "crawl"
+  ],
+  "exports": [
+    "mp4",
+    "png-sequence",
+    "png"
+  ],
+  "history": true,
+  "presets": false,
+  "share": false,
+  "storageKey": "upgrade:erik:draft:v1",
+  "acceptance": {
+    "status": "passed",
+    "unit": [
+      "erik/tests/model.test.mjs"
+    ],
+    "artifact": [
+      "erik/tests/browser.html",
+      "erik/tests/browser.js"
+    ],
+    "browser": [
+      "erik/tests/acceptance.json"
+    ]
+  }
+}

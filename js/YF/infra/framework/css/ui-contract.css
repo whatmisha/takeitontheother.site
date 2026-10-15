@@ -1,3 +1,4 @@
+@import url('./panel-resize.css?v=2');
 /* Shared UI contract. Keep this stylesheet last so application renderers stay private. */
 :root {
     --ui-font-stack: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
@@ -244,12 +245,12 @@ body,
     border: 0 !important;
 }
 
-.controls-panel .pill-toggle:hover:not(.inactive):not(.controls-disabled),
+.controls-panel .pill-toggle:hover:not(:disabled):not(.inactive):not(.controls-disabled),
 .controls-panel .pill-toggle:has(input:checked:not(:disabled)):not(.controls-disabled) {
     background: var(--ui-foreground) !important;
 }
 
-.controls-panel .pill-toggle:hover:not(.inactive):not(.controls-disabled) span,
+.controls-panel .pill-toggle:hover:not(:disabled):not(.inactive):not(.controls-disabled) span,
 .controls-panel .pill-toggle:has(input:checked:not(:disabled)):not(.controls-disabled) span {
     color: #000 !important;
 }

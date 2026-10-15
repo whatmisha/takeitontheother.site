@@ -245,6 +245,19 @@
         "height": 900
       },
       "capabilityContract": "wander_wall/capabilities.json#wander_wall"
+    },
+    {
+      "id": "erik",
+      "name": "Erik",
+      "group": "lunnen",
+      "entry": "erik/index.html",
+      "state": "accepted",
+      "cohort": "native",
+      "referenceViewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "capabilityContract": "erik/capabilities.json#erik"
     }
   ]
 }

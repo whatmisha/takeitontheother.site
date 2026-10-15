@@ -2096,6 +2096,10 @@ legend {
     transition: background-color var(--transition-fast), color var(--transition-fast);
 }
 
+/* The same capsule can trigger an action as a native button. */
+button.pill-toggle { appearance: none; font: inherit; }
+button.pill-toggle:focus-visible { outline: 2px solid var(--color-text); outline-offset: 2px; }
+
 .pill-toggle span {
     font-size: 0.8rem;
     color: var(--color-inactive-text);
@@ -2111,11 +2115,11 @@ legend {
     gap: 2px;
 }
 
-.pill-toggle:hover {
+.pill-toggle:hover:not(:disabled) {
     background: var(--color-text);
 }
 
-.pill-toggle:hover span {
+.pill-toggle:hover:not(:disabled) span {
     color: var(--color-bg);
 }
 
@@ -2133,6 +2137,7 @@ legend {
 }
 
 /* Muted pills: single dark treatment even when checked (no bright capsule) */
+button.pill-toggle:disabled,
 .pill-toggle:has(input:disabled),
 .pill-toggle.controls-disabled,
 .pill-toggle.inactive {
@@ -2141,12 +2146,14 @@ legend {
     cursor: default !important;
 }
 
+button.pill-toggle:disabled span,
 .pill-toggle:has(input:disabled) span,
 .pill-toggle.controls-disabled span,
 .pill-toggle.inactive span {
     color: var(--color-inactive-text);
 }
 
+button.pill-toggle:disabled,
 .pill-toggle:has(input:disabled),
 .pill-toggle.controls-disabled {
     pointer-events: none;

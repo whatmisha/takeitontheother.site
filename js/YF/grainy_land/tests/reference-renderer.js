@@ -3,7 +3,9 @@
 import {LandscapeRenderer} from '../render.js?v=gpu-perf-1';
 const response=await fetch(new URL('./fixtures/gpu-before.glsl',import.meta.url));
 if(!response.ok)throw Error('Cannot load the GPU visual reference');
-const reference=await response.text();
+// Clean Background is an intentional visual change. Remove only its two grain
+// terms from the frozen shader; retain every object/material calculation.
+const reference=(await response.text()).split('\n').filter(line=>!line.includes('background*=')).join('\n');
 export function createReferenceRenderer(){
  const prototype=WebGLRenderingContext.prototype,original=prototype.shaderSource;
  prototype.shaderSource=function(shader,source){return original.call(this,shader,source.includes('precision highp float;')?reference:source);};

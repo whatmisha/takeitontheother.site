@@ -6,13 +6,62 @@ import { flattenVectorPath } from './vector-path.js?v=petal-motion-1';
 import { groupColor } from './custom-colors.js?v=petal-motion-1';
 const cache=new Map(),motionCache=new Map();
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
-// Linear-time separable squared Euclidean distance transform.
-function edt(out,w,h){const n=Math.max(w,h),f=new Float64Array(n),d=new Float64Array(n),v=new Int32Array(n),z=new Float64Array(n+1);
- function line(len){let k=0;v[0]=0;z[0]=-Infinity;z[1]=Infinity;for(let q=1;q<len;q++){let s;do{s=((f[q]+q*q)-(f[v[k]]+v[k]*v[k]))/(2*q-2*v[k]);if(s<=z[k])k--;else break;}while(k>=0);k++;v[k]=q;z[k]=s;z[k+1]=Infinity;}k=0;for(let q=0;q<len;q++){while(z[k+1]<q)k++;d[q]=(q-v[k])**2+f[v[k]];}}
- for(let x=0;x<w;x++){for(let y=0;y<h;y++)f[y]=out[y*w+x];line(h);for(let y=0;y<h;y++)out[y*w+x]=d[y];}
- for(let y=0;y<h;y++){for(let x=0;x<w;x++)f[x]=out[y*w+x];line(w);for(let x=0;x<w;x++)out[y*w+x]=d[x];}return out;
+// Exact squared Euclidean distances for a binary mask. In the vertical pass
+// one distance is always zero; store only the distance to the opposite value.
+// Two row-major scans find it without building a parabola envelope per column.
+export function signedField(mask,w,h,step){
+ const len=mask.length,vertical=new Float32Array(len),distance=new Float32Array(len);
+ const nearest=new Int32Array(w),far=1e9;
+ nearest.fill(-1);
+ for(let y=0;y<h;y++){
+  const row=y*w;
+  for(let x=0;x<w;x++){
+   const i=row+x;
+   if(y&&!!mask[i]!==!!mask[i-w])nearest[x]=y-1;
+   const delta=y-nearest[x];
+   vertical[i]=nearest[x]<0?far:Math.min(far,delta*delta);
+  }
+ }
+ nearest.fill(-1);
+ for(let y=h-1;y>=0;y--){
+  const row=y*w;
+  for(let x=0;x<w;x++){
+   const i=row+x;
+   if(y<h-1&&!!mask[i]!==!!mask[i+w])nearest[x]=y+1;
+   if(nearest[x]>=0){const delta=nearest[x]-y;vertical[i]=Math.min(vertical[i],delta*delta);}
+  }
+ }
+ // Horizontal lower envelopes still provide Euclidean (not chamfer) distance.
+ // Reuse row scratch buffers and write only the nonzero side of the signed field.
+ const f=new Float64Array(w),v=new Int32Array(w),z=new Float64Array(w+1);
+ for(let y=0;y<h;y++){
+  const row=y*w;
+  for(let inside=0;inside<2;inside++){
+   let needed=false;
+   for(let x=0;x<w;x++){
+    const same=!!mask[row+x]===!!inside;
+    f[x]=same?vertical[row+x]:0;needed ||= same;
+   }
+   if(!needed)continue;
+   let k=0;v[0]=0;z[0]=-Infinity;z[1]=Infinity;
+   for(let q=1;q<w;q++){
+    let split;
+    do{const p=v[k];split=((f[q]+q*q)-(f[p]+p*p))/(2*q-2*p);if(split<=z[k])k--;else break;}while(k>=0);
+    k++;v[k]=q;z[k]=split;z[k+1]=Infinity;
+   }
+   k=0;
+   for(let x=0;x<w;x++){
+    while(z[k+1]<x)k++;
+    if(!!mask[row+x]===!!inside){
+     const delta=x-v[k];
+     // The original two-pass transform stores squared distances in Float32.
+     distance[row+x]=(inside?1:-1)*Math.sqrt(Math.fround(delta*delta+f[v[k]]))*step;
+    }
+   }
+  }
+ }
+ return distance;
 }
-export function signedField(mask,w,h,step){const a=new Float32Array(mask.length),b=new Float32Array(mask.length);for(let i=0;i<a.length;i++){a[i]=mask[i]?1e9:0;b[i]=mask[i]?0:1e9;}const inside=edt(a,w,h),outside=edt(b,w,h);const distance=new Float32Array(mask.length);for(let i=0;i<distance.length;i++)distance[i]=(Math.sqrt(inside[i])-Math.sqrt(outside[i]))*step;return distance;}
 function blur(data,w,h,r){
  if(r<1)return data;
  const a=new Float32Array(data.length),b=new Float32Array(data.length),den=2*r+1;
@@ -44,15 +93,23 @@ function remember(map,key,field,limit){
  while(map.size>limit||bytes>cacheBytes&&map.size>1){const first=map.keys().next().value,f=map.get(first);bytes-=f.pixels.byteLength+f.colors.byteLength+f.owners.byteLength;map.delete(first);}
  return field;
 }
-function paintColors(field,palette,coverage){
- const {owners,width:w,height:h,shadingRadius}=field,len=owners.length;
- const rgb=Array.from({length:3},()=>new Float32Array(len));
- const mask=coverage?null:new Float32Array(len);
- for(let i=0;i<len;i++)if(owners[i]){const color=palette[owners[i]-1];for(let k=0;k<3;k++)rgb[k][i]=color[k];if(mask)mask[i]=1;}
- coverage ||= blur(mask,w,h,shadingRadius);
- const blurred=rgb.map(c=>blur(c,w,h,shadingRadius)),colors=new Uint8Array(len*4);
- for(let i=0;i<len;i++){
-  const at=i*4,weight=Math.max(coverage[i],.00001);
+function paintColors(field,palette){
+ const {owners,width:w,height:h,shadingRadius:r,colorBounds}=field;
+ const colors=new Uint8Array(owners.length*4);
+ if(!colorBounds)return colors;
+ // The box filter has finite support. Keep the original sample coordinates and
+ // include its full radius; clamping then agrees with the full-canvas filter.
+ const x0=Math.max(0,colorBounds[0]-r),y0=Math.max(0,colorBounds[1]-r);
+ const x1=Math.min(w-1,colorBounds[2]+r),y1=Math.min(h-1,colorBounds[3]+r);
+ const cw=x1-x0+1,ch=y1-y0+1,len=cw*ch;
+ const rgb=Array.from({length:3},()=>new Float32Array(len)),mask=new Float32Array(len);
+ for(let y=0;y<ch;y++)for(let x=0;x<cw;x++){
+  const owner=owners[(y+y0)*w+x+x0];
+  if(owner){const i=y*cw+x,color=palette[owner-1];for(let k=0;k<3;k++)rgb[k][i]=color[k];mask[i]=1;}
+ }
+ const coverage=blur(mask,cw,ch,r),blurred=rgb.map(c=>blur(c,cw,ch,r));
+ for(let y=0;y<ch;y++)for(let x=0;x<cw;x++){
+  const i=y*cw+x,at=((y+y0)*w+x+x0)*4,weight=Math.max(coverage[i],.00001);
   for(let k=0;k<3;k++)colors[at+k]=Math.round(clamp(blurred[k][i]/weight,0,1)*255);
   colors[at+3]=Math.round(clamp(coverage[i]*8,0,1)*255);
  }
@@ -75,14 +132,20 @@ export function bakeFlora(layer,settings){
  left-=.24/aspect;right+=.24/aspect;top-=.24;bottom+=.24;
  const step=Math.max((bottom-top)/440,(right-left)*aspect/760),w=Math.ceil((right-left)*aspect/step)+1,h=Math.ceil((bottom-top)/step)+1;
  const bounds=[left,top,(w-1)*step/aspect,(h-1)*step],len=w*h,mask=new Float32Array(len),owners=new Uint16Array(len);
+ let colorBounds=null;
  polys.forEach((poly,index)=>{
   const ys=poly.map(p=>(p[1]-top)/step),y0=clamp(Math.floor(Math.min(...ys)),0,h-1),y1=clamp(Math.ceil(Math.max(...ys)),0,h-1);
   for(let y=y0;y<=y1;y++){
    const py=top+y*step,cross=[];
    for(let i=0,j=poly.length-1;i<poly.length;j=i++){const a=poly[j],b=poly[i];if((a[1]>py)!==(b[1]>py))cross.push((a[0]+(py-a[1])*(b[0]-a[0])/(b[1]-a[1])-left)*aspect/step);}
    cross.sort((a,b)=>a-b);
-   for(let c=0;c+1<cross.length;c+=2)for(let x=clamp(Math.ceil(cross[c]),0,w-1);x<=Math.min(w-1,Math.floor(cross[c+1]));x++){
-    const at=y*w+x;mask[at]=1;owners[at]=index+1;
+   for(let c=0;c+1<cross.length;c+=2){
+    const x0=clamp(Math.ceil(cross[c]),0,w-1),x1=Math.min(w-1,Math.floor(cross[c+1]));
+    if(x1<x0)continue;
+    const start=y*w+x0,end=y*w+x1+1;
+    mask.fill(1,start,end);owners.fill(index+1,start,end);
+    if(colorBounds){colorBounds[0]=Math.min(colorBounds[0],x0);colorBounds[1]=Math.min(colorBounds[1],y);colorBounds[2]=Math.max(colorBounds[2],x1);colorBounds[3]=Math.max(colorBounds[3],y);}
+    else colorBounds=[x0,y,x1,y];
    }
   }
  });
@@ -91,12 +154,12 @@ export function bakeFlora(layer,settings){
  const distance=signedField(binary,w,h,step),shadingRadius=Math.max(2,Math.round(.048/step));
  // Keep native RGBA uploads: WebGL 1 luminance/alpha textures require costly
  // conversion on some GPUs. Only RG is used; the obsolete shade pass is gone.
- const coverage=blur(mask,w,h,shadingRadius),pixels=new Uint8Array(len*4);
+ const pixels=new Uint8Array(len*4);
  for(let i=0;i<len;i++){
   const at=i*4,d=Math.round((clamp(distance[i],-1,1)*.5+.5)*65535);
   pixels[at]=d>>8;pixels[at+1]=d&255;pixels[at+3]=255;
  }
- field={key,geometryKey,colorKey,width:w,height:h,bounds,pixels,owners,shadingRadius};
- field.colors=paintColors(field,palette,coverage);
+ field={key,geometryKey,colorKey,width:w,height:h,bounds,pixels,owners,shadingRadius,colorBounds};
+ field.colors=paintColors(field,palette);
  return remember(map,slot,field,limit);
 }

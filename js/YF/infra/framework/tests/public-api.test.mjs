@@ -75,7 +75,7 @@ test('framework source graph stays local and application-agnostic', async () => 
             assert.ok(resolved.startsWith(`${frameworkRoot}${path.sep}`));
         }
     }
-    assert.equal(files.length, 53); // Includes shared ZIP and MP4 writers; all imports remain local.
+    assert.equal(files.length, 55); // Includes shared panel resizing/auto-init, ZIP and MP4 writers; all imports remain local.
 });
 
 test('working CSS and exporters use checked-in same-origin assets', async () => {

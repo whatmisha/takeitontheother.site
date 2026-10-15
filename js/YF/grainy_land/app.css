@@ -155,7 +155,7 @@
 .grainy-land .layer-color-swatch[aria-checked="true"] { box-shadow: 0 0 0 1.5px var(--ui-foreground); }
 .grainy-land .layer-color-swatch:disabled { cursor: default; transform: none; }
 
-.grainy-land .layer-create { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin-bottom: 10px; }
+.grainy-land .layer-create { margin-top: var(--spacing-md); }
 .grainy-land #vectorOverlay { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: hidden; }
 .grainy-land .vector-contour { fill: none; stroke: #b6ffce; stroke-width: 1.25; pointer-events: none; }
 .grainy-land .vector-segment-hit { fill: none; stroke: transparent; stroke-width: 12; pointer-events: stroke; cursor: crosshair; }
@@ -256,7 +256,7 @@
  .grainy-land #compositionPanel { max-height: calc(100dvh - var(--composition-top) - var(--animation-panel-height) - 2 * var(--spacing-3xl)); }
 
  .grainy-land:has(#layerPanel:not([hidden]):not([data-panel-position="manual"])):not(:has(#layersPanel[data-panel-position="manual"])) { --canvas-right: calc(2 * var(--studio-panel-width) + 3 * var(--spacing-3xl)); }
- .grainy-land #layersPanel:not(.panel-collapsed) { min-height: min(260px, 36dvh); max-height: calc(100dvh - min(300px, 42dvh)); resize: vertical; overflow: hidden; }
+ .grainy-land #layersPanel:not(.panel-collapsed) { min-height: min(260px, 36dvh); max-height: calc(100dvh - min(300px, 42dvh)); overflow: hidden; }
 
 }
 

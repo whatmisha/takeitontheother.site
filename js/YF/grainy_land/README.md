@@ -12,7 +12,7 @@ The original presets Ember and Drift use Depth #FF5900
 and start with eight layers: six original forms above two blue background coats.
 In Ember, Blue 1 and Blue 2 start hidden; their eye buttons can enable them.
 Drift keeps both blue coats visible. Explicit layer visibility is
-preserved by Generate, JSON and personal presets; newly added blue coats are visible.
+preserved by Regenerate, JSON and personal presets; newly added blue coats are visible.
 
 The built-in list also includes **Six Cup** (Flora), refreshed from `grainy-land-505310381.json`, and **Field** (Plant), retaining
 the supplied layer edits and custom colors. Startup merges missing built-ins into
@@ -61,9 +61,9 @@ endpoints still override them.
   attached when a stem changes. Detach makes the part's origin independent; Attach
   connects it again. Moving a junction moves its descendants. Hidden branches hide
   attached descendants; detached parts stay independent.
-- **Regenerate plant** rerolls just that plant. Global Generate replaces Auto plants.
+- **Regenerate plant** rerolls just that plant. Global Regenerate replaces Auto plants.
   Both preserve manually edited part contours and palette assignments. Pinned plants
-  retain their seed on global Generate. Convert to drawn freezes the plant's generated
+  retain their seed on global Regenerate. Convert to drawn freezes the plant's generated
   parameters and retains its shape for Brush / Erase; parts are no longer editable.
 - Plant starts with Grain **49**, Grain size **1**, Softness **50**, Edge variation
   **80**, Contrast **120**, Glow **10**, Glow coverage **10**, and Halo width **100**.
@@ -93,7 +93,7 @@ in [UX_AUDIT_PLAN.md](UX_AUDIT_PLAN.md).
 
 Choose **Flora** in Composition. It has its own layer stack and surface memory, starting
 with an independent palette and the same spray defaults as Plant. It initially
-creates one flower. **Radial** is the default; Fan, Cup and Lobed are also available. Generate
+creates one flower. **Radial** is the default; Fan, Cup and Lobed are also available. Regenerate
 keeps the chosen family while varying the individual petals. Six Cup explicitly
 uses Cup to retain its original shape.
 
@@ -119,7 +119,7 @@ uses Cup to retain its original shape.
   new objects; existing geometry, positions and layer order stay intact. Reducing
   it removes eligible Auto accents before supporting flowers and the dominant one.
 - **Field** is the only Flower arrangement; the selector is removed. **Density**
-  adjusts spacing and overlaps, replanning eligible Auto flowers. **Generate** changes
+  adjusts spacing and overlaps, replanning eligible Auto flowers. **Regenerate** changes
   their seed and replans the composition. Individual, pinned and locked objects
   remain in place and participate as obstacles. There are no Arrange buttons.
 - Multi-flower compositions have a dominant flower, supporting forms and smaller
@@ -137,7 +137,7 @@ uses Cup to retain its original shape.
 - Most generated flowers extend their stems below the canvas without shifting
   their heads. A minority may float. Stem length remains editable, and zero
   still hides it. Manual stem contours are not stretched.
-- The **Generation** section is hidden in Composition for every mode. Generate and
+- The **Generation** section is hidden in Composition for every mode. Regenerate and
   its shortcut still work; the seed remains part of saved documents.
 
 Implementation: `flower-profiles.js` contains data-only recipes: angular layout,
@@ -161,8 +161,8 @@ with `python3 grainy_land/tests/review-server.py --review flower-growth-20 --por
 - **Composition:** Land / Plant / Flora / Spot, scale, complexity, flow, horizon,
   relief and folds. Landscape layouts vary reproducibly with the seed.
   **Folds** adds local curls, pockets and pinched passages; 0 gives simpler forms.
-  Generate (R) varies eligible Auto seeds and preserves Individual, Pinned, locked and Drawn layers.
-  Color, texture, names, order, visibility, opacity and editing locks survive Generate.
+  Regenerate (R) varies eligible Auto seeds and preserves Individual, Pinned, locked and Drawn layers.
+  Color, texture, names, order, visibility, opacity and editing locks survive Regenerate.
 - **Layers:** independent draggable panel at the bottom right, expanded by default, up to 480px tall (60% of the desktop viewport).
   The frontmost layer is at the top. Select a row or visible paint on the canvas;
   drag rows to reorder, or use **Cmd+[ / Cmd+]** (Ctrl on Windows/Linux) to move backward/forward. Each row has an isolated
@@ -179,19 +179,19 @@ with `python3 grainy_land/tests/review-server.py --review flower-growth-20 --por
   anchor and its Low / High tones. Grain, Grain size, Softness and Edge variation
   control the spray edges. Global Amount controls neighboring colors in these
   layers; Background amount affects only the underlying background color field.
-  Transparent removes only Background, retaining both blue forms. Layers exports
+  No background removes only Background, retaining both blue forms. Layers exports
   the forms as independent transparent PNGs. Older JSON without the new
   `blueLayers` template flag retains its original six forms; explicit stacks are
   never auto-populated or recreated after deletion.
 - **Auto / Pinned / Drawn:** Auto follows composition settings and is replaced by
-  Generate. Moving, resizing or painting an Auto layer pins it automatically.
-  Pinned keeps its seed, transforms and brushwork through Generate, while global
-  composition settings still affect its geometry. Unpin allows the next Generate to vary its seed; transforms and brushwork stay intact. Drawn geometry ignores Generate and all composition controls;
+  Regenerate. Moving, resizing or painting an Auto layer pins it automatically.
+  Pinned keeps its seed, transforms and brushwork through Regenerate, while global
+  composition settings still affect its geometry. Unpin allows the next Regenerate to vary its seed; transforms and brushwork stay intact. Drawn geometry ignores Regenerate and all composition controls;
   its color, spray, softness and glow still follow the material controls.
   **Convert to drawn** preserves the exact current silhouette and strokes at any
   export resolution, then freezes its generated geometry. Conversion is undoable.
 - **Lock** separately prevents manual editing, deleting and reordering. It does
-  not change its parameter mode; Generate keeps locked objects. Visibility can be toggled
+  not change its parameter mode; Regenerate keeps locked objects. Visibility can be toggled
   while locked; duplicating a locked layer makes an unlocked copy.
 - **Workspace:** Canvas starts collapsed at the top left; Composition is below
   it; Generation is hidden. Layer properties appears immediately to the left of Layers
@@ -212,22 +212,22 @@ with `python3 grainy_land/tests/review-server.py --review flower-growth-20 --por
   keep selection. With Brush/Erase, dragging from empty space still paints.
   Escape cancels a gesture or deselects. Space + drag and zoom remain available.
   Shortcuts do not interfere with text entry. Each gesture is one undo step.
-- **Transparent:** the export toggle beside Export PNG removes only the
+- **No background:** the export toggle beside Export PNG removes only the
   background from a single PNG or omits the separate Background PNG from a layer ZIP archive.
   Spray edges, layer opacity and glow retain alpha;
   the working preview keeps its background. Saved in JSON, presets and share links.
 - **Layers:** exports every layer, including hidden and editing-locked layers,
-  as a separate transparent PNG in one ZIP. When Transparent is off, the
+  as a separate transparent PNG in one ZIP. When No background is off, the
   canvas Background is included as a separate opaque PNG at the bottom of the stack.
   Files are numbered front-to-back like the Layers list; hidden layers have a
   `-hidden` suffix. Each PNG keeps the full export canvas, layer position, opacity,
   spray, glow and reflected color from lower visible coats. Empty layers produce
   clear PNGs. Millimetre documents retain DPI metadata. The two toggles are
-  independent: Layers changes the packaging; Transparent removes the background.
+  independent: Layers changes the packaging; No background removes the background.
   Rendering is sequential from a snapshot and never changes the editor's visibility,
   selection, document or history. ZIPs are limited to 512 MiB; reduce resolution
   if this limit is reached. An empty stack exports only Background, or reports
-  an error when Transparent is on.
+  an error when No background is on.
 - **Brush / Erase:** `[` / `]` decrease/increase size by two percentage points
   (3–60%, hold to repeat). Physical keys work in Russian layout too. They only
   apply to Brush/Erase, outside text fields and outside a running stroke. Add to a selected silhouette or cut it away. Layers above it
@@ -257,8 +257,8 @@ with `python3 grainy_land/tests/review-server.py --review flower-growth-20 --por
   seeded color fields have subtle spray texture and do not change layer geometry.
   Edit tones includes Background Low / High with the same color picker and Auto
   reset as the other anchors. Custom endpoints, strength and the seed survive
-  JSON, presets, share links and undo/redo. Transparent removes the background
-  including its tones; Layers exports it in its own PNG when Transparent is off.
+  JSON, presets, share links and undo/redo. No background removes the background
+  including its tones; Layers exports it in its own PNG when No background is off.
 - **Character:** Pigment gives soft, uneven warm/cool shading; Pearlescent creates
   broad flowing color shifts; Radiant concentrates brighter tones near folds and
   edges. Glow and contrast remain independently adjustable. Four read-only
@@ -269,7 +269,7 @@ with `python3 grainy_land/tests/review-server.py --review flower-growth-20 --por
   calculation from the current base colors, character and hue range. Unedited
   endpoints keep following those controls. Amount still controls the overall effect;
   at 0, custom tones have no effect. The custom count stays visible when folded.
-  Overrides survive Generate, presets, JSON, share links and undo/redo.
+  Overrides survive Regenerate, presets, JSON, share links and undo/redo.
 - **Softness** adjusts the color transitions and silhouette. **Edge variation**
   varies diffusion along each boundary, from compact edges to scattered pigment.
 - **Glow** controls luminous contours; **Glow coverage** sets how much of each
@@ -450,7 +450,7 @@ Custom color IDs and layer assignments are preserved in both composition modes, 
 ### Vector layers
 
 `+ Vector` creates a closed Bézier oval and opens its path editor. Vector is a
-fourth layer type alongside Auto, Pinned and Drawn. Generate and composition
+fourth layer type alongside Auto, Pinned and Drawn. Regenerate and composition
 controls preserve its contour. Color groups (including custom colors), opacity,
 transforms, grain, glow, visibility, locks, duplication and both PNG and Layers
 ZIP export use the same pipeline as other layers.
@@ -505,7 +505,7 @@ the entire gesture. Resizing, painting and editing vector nodes do not duplicate
 - **Layer surface:** collapsed overrides for grain, grain size, softness, edge
   variation, glow, halo, glow coverage and contrast. Values initially inherit
   Appearance; editing a value fixes it locally, and **Auto** restores inheritance.
-- **Transparency preview:** checkerboard in Canvas. Independent of the Transparent
+- **Transparency preview:** checkerboard in Canvas. Independent of the No background
   export switch; it removes Background in preview while retaining blue paint layers.
 - **Print color:** load an RGB or CMYK ICC profile, choose rendering intent, preview
   a soft proof, and export a TIFF with that exact profile embedded, plus physical DPI.
@@ -575,8 +575,8 @@ it expects font weight 500, while unchanged `ui-contract.css` specifies 400.
 
 
 Background has an eye button, saved as backgroundVisible independently of the
-Transparent export option and transparency preview. Layers ZIP continues exporting
-hidden layers, including Background-hidden.png unless Transparent omits Background.
+No background export option and transparency preview. Layers ZIP continues exporting
+hidden layers, including Background-hidden.png unless No background omits Background.
 The Blue action is shown only in Spot and now adds one blue layer at a time.
 Global [ / ] send the selected layers to the back/front, as in Wander Wall;
 Brush and Erase use those keys for size instead. Cmd/Ctrl+[ / ] still move one step.
@@ -607,7 +607,7 @@ Undo preserve all four scenes. Internal mode IDs remain `landscape`, `abstract`,
 - **Individual** owns a parameter snapshot. Switching Auto to Individual preserves
   the visible shape, including variation. Switching back joins the shared controls.
 - **Pin** fixes the seed while Auto parameters remain live. **Lock** blocks manual
-  edits, count reduction and Generate. Global Generate varies only eligible Auto
+  edits, count reduction and Regenerate. Global Regenerate varies only eligible Auto
   seeds in the active scene and preserves manually edited contours. Auto Flower
   compositions are also replanned; other object types keep their transforms.
 - **Copy to scene** creates an independent Individual copy and opens that scene.
@@ -749,3 +749,75 @@ hash mismatches. All 20 also fail using an untouched copy of the renderer and
 field implementation from before this optimization, so those historical hashes
 were not replaced or used to claim a regression-free result. The frozen-shader
 comparison above covers this change against the actual pre-change output.
+
+
+### CPU field optimization — 15 October 2026
+
+Animated Plant/Flora fields keep their original sample grid, dimensions, bounds,
+16-bit distance encoding and RGBA color bytes. Two changes reduce field baking:
+
+- The binary Euclidean distance transform finds the nearest opposite mask value
+  vertically with two contiguous scans, then uses exact horizontal lower
+  envelopes. It stores one vertical distance buffer instead of separate inside
+  and outside transforms, skips the zero side, and preserves Float32 rounding.
+- Color washes run only inside occupied bounds expanded by the full box-filter
+  radius. Scanline fills record those bounds and fill contiguous typed-array
+  spans. The output atlas retains its full size; no contour or halo is cropped.
+  Recoloring reuses the same bounds and geometry buffers.
+
+Local browser measurements for animated fields on a 1920×1080 document:
+
+| Flowers | Before, ms | After, ms |
+| --- | ---: | ---: |
+| 1 | 22.3 | 10.8 |
+| 8 | 51.5 | 21.7 |
+| 32 | 180.8 | 83.9 |
+
+`tests/field-performance.html` compares the frozen pre-change CPU implementation
+with production workers. Each median includes preparation and buffer transfer,
+excludes GPU drawing, and uses seven poses after two warm-up poses with
+alternating before/after order. Both paths use the same worker concurrency
+(one for one flower, four for larger scenes). These are field timings, not FPS;
+32-flower preview still does not reach 30 fps at full quality.
+
+Validation: all 299 Node tests and the shared UI contract passed. New tests compare
+binary distances with exhaustive nearest-opposite-pixel search, then compare
+fields byte for byte across all five Plant/Flora families, three aspect ratios,
+fusion extremes, recoloring, empty masks and large edited petals. The browser
+comparison checks nine poses at each layer count and exact final pixels for
+opaque/transparent output, picking and an isolated layer. Playback cancellation,
+rapid restart, Space and still-frame restoration passed. All eleven real MP4
+scenarios passed (58 checks), including 32 flowers, Full HD, a 30-second loop and
+cancellation/retry. The 32-flower 60-frame export plus decoding checks took 7.2 s
+in this run. Petal sockets, deformation, grain, softness and glow are unchanged.
+
+The frozen CPU oracle is in `tests/fixtures/field-before-cpu.js`; it is test-only
+and deliberately independent of production code. The historical GPU hashes
+noted above remain outside this comparison and have not been updated.
+
+
+### Layers UI and clean Background — 15 October 2026
+
+The main actions read **Regenerate** and **No background**. Background never
+receives spray/grain in any scene mode, including when its adjacent tones are
+active. Broad background color variation and all object materials remain.
+
+Add-object actions use the shared framework pill appearance, as native buttons
+with focus and disabled states. They sit below the scrolling layer stack.
+Background is the final, non-reorderable list item and scrolls with the objects;
+visibility, color editing and hover highlighting are retained.
+
+The layer list now reconciles cached per-layer blocks. Changing visibility on a
+32-layer scene replaces only that row, keeps the other 31 rows and all 32 thumbnail
+canvases, and causes zero unchanged-thumbnail repaints. Reordering moves existing
+nodes. Expanded part lists update when their effective parameters change; row
+replacement restores keyboard focus and preserves scroll position.
+
+Validation: `tests/layers-ui.html` passed 37 checks covering labels, shared pills,
+capacity, row/canvas reuse, focus, scrolling, parts, reordering, additions and
+Background interactions. Pixel checks confirm that grain 0 and 100 produce the
+same empty Background in all four modes, with tones off/on, while object grain
+still changes the image. All 316 Grainy Land/framework Node tests and the shared
+UI contract passed. The 125 GPU checks also pass: the test compiler removes only
+the two intentionally removed Background grain terms from its frozen reference;
+object shading, contours and picking remain covered independently.

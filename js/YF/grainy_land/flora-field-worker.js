@@ -1,4 +1,4 @@
-import {bakeFlora,setFloraCacheBudget} from './flora-field.js?v=gpu-perf-1';
+import {bakeFlora,setFloraCacheBudget} from './flora-field.js?v=layers-polish-1';
 import {FLOWER_MOTION} from './flower-motion.js?v=petal-motion-1';
 
 self.onmessage=({data:{id,settings,entries,cacheBudget}})=>{

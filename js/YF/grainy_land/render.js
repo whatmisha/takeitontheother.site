@@ -1,7 +1,7 @@
-import {FloraFieldPool} from './flora-field-pool.js?v=gpu-perf-1';
+import {FloraFieldPool} from './flora-field-pool.js?v=layers-polish-1';
 import {FLOWER_MOTION} from './flower-motion.js?v=petal-motion-1';
 import {effectiveSettings} from './object-model.js?v=petal-motion-1';
-import { bakeFlora } from './flora-field.js?v=gpu-perf-1';
+import { bakeFlora } from './flora-field.js?v=layers-polish-1';
 import { MAX_CUSTOM_COLORS } from './custom-colors.js?v=petal-motion-1';
 import { createLayerScene, materialColors, adjacentColors, customMaterialColors, hexRGB } from './scene.js?v=petal-motion-1';
 import { bakePaint } from './paint.js?v=petal-motion-1';
@@ -27,7 +27,7 @@ uniform float editorPass, layerCount, backgroundAlpha, exportLayer;
 uniform sampler2D paintAtlas, customPalette, floraAtlas, floraColors;
 uniform vec4 floraBounds[${MAX_LAYERS}], floraMeta[${MAX_LAYERS}];
 uniform vec2 floraAtlasSize, floraCellSize;
-uniform float floraColumns, floraMode;
+uniform float floraColumns;
 uniform vec4 paintBounds[${MAX_LAYERS}], paintMeta[${MAX_LAYERS}];
 uniform vec2 paintAtlasSize, paintCellSize;
 uniform float paintColumns;
@@ -107,10 +107,6 @@ vec2 foldPoint(vec2 p, vec4 f, float strength, float mode, float horizon) {
 void main() {
     vec2 p = (renderRegion.xy+vec2(gl_FragCoord.x,renderRegion.w-gl_FragCoord.y))/rasterSize;
 
-    // Grain size is relative to the artwork, independent of export resolution.
-    vec2 gp=p*2688.*vec2(1.,artboard.y/artboard.x)/grainSize;
-    float footprint=max(2688./rasterSize.x,2688.*artboard.y/artboard.x/rasterSize.y)/grainSize;
-    float resolve=min(1.,1.5/footprint);
     // Background tones are an optional opaque color field, independent of land geometry.
     // Keep it in underpaint even for transparent/layer exports so reflected colors agree.
     vec3 background=sky;
@@ -133,10 +129,7 @@ void main() {
         }
         background=mix(background,adjacent[6],negative*backgroundAmount*.92);
         background=mix(background,adjacent[7],positive*backgroundAmount*.88);
-        // Use the same filtered pigment texture, without changing the opaque background alpha.
-        if(grain>0.)background*=1.+grain*.04*backgroundAmount*(.5-spray(gp+offset,1.,footprint).y)*resolve;
     }
-    if(editorPass<.5 && floraMode>.5 && grain>0.)background*=1.+grain*.4*(spray(gp+vec2(41.7),1.,footprint).y-.5)*resolve;
     vec3 color=background*backgroundAlpha, underpaint=background;
     float alpha=backgroundAlpha;
 
@@ -509,7 +502,6 @@ export class LandscapeRenderer {
         const scene = prepared?.scene ?? createLayerScene(s);
         this.uploadPaint(scene);
         this.uploadFlora(scene,s,editorPass,prepared?.fields);
-        gl.uniform1f(this.location('floraMode'),['flora','f'].includes(s.mode)?1:0);
         this.uploadCustomColors(s);
         const values = { softness: s.softness/100, glow: s.glow/100, halo: s.halo/100,
             contrast: s.contrast/100, grain: s.grain/100, grainSize: s.grainSize, seed: s.seed % 16381,

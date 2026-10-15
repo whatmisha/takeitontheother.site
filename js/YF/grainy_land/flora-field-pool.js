@@ -1,10 +1,10 @@
-import {bakeFlora} from './flora-field.js?v=gpu-perf-1';
+import {bakeFlora} from './flora-field.js?v=layers-polish-1';
 import {FLOWER_MOTION} from './flower-motion.js?v=petal-motion-1';
 
 // A bounded pool, one batch in flight. Playback requests the next pose only after
 // the previous one is displayed; exports await every pose without dropping frames.
 export class FloraFieldPool {
- constructor({createWorker=()=>new Worker(new URL('./flora-field-worker.js?v=gpu-perf-1',import.meta.url),{type:'module'}),
+ constructor({createWorker=()=>new Worker(new URL('./flora-field-worker.js?v=layers-polish-1',import.meta.url),{type:'module'}),
   concurrency=Math.max(1,Math.min(4,(globalThis.navigator?.hardwareConcurrency??4)-1)),
   enabled=typeof Worker!=='undefined',timeoutMs=30_000}={}){
   Object.assign(this,{createWorker,concurrency,enabled,timeoutMs});this.workers=[];this.serial=0;this.active=null;this.destroyed=false;

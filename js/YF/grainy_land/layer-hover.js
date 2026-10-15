@@ -19,13 +19,13 @@ export class LayerHover {
         const list=document.getElementById('layerList'),background=document.getElementById('backgroundLayer').closest('.background-row');
         on(list,'pointermove',event=>{
             if(event.pointerType==='touch'||event.buttons)return;
-            this.pointer=[event.clientX,event.clientY];this.set(event.target.closest('[data-layer-id]')?.dataset.layerId??null);
+            this.pointer=[event.clientX,event.clientY];this.set(event.target.closest('.background-row')?'background':event.target.closest('[data-layer-id]')?.dataset.layerId??null);
         });
         on(list,'pointerleave',()=>{this.pointer=null;this.set(null);});
         on(list,'pointerdown',()=>this.set(null));
         on(list,'scroll',()=>{
             if(!this.pointer)return;const element=document.elementFromPoint(...this.pointer);
-            this.set(list.contains(element)?element.closest('[data-layer-id]')?.dataset.layerId??null:null);
+            this.set(list.contains(element)?element.closest('.background-row')?'background':element.closest('[data-layer-id]')?.dataset.layerId??null:null);
         });
         on(background,'pointerenter',event=>{if(event.pointerType!=='touch')this.set('background');});
         on(background,'pointerleave',()=>this.set(null));
