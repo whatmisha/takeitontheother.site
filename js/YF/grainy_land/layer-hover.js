@@ -34,7 +34,7 @@ export class LayerHover {
     set(id) {
         if(this.id===id)return;this.id=id;this.key='';this.draw();
     }
-    draw(settings=this.editor.tool.settings) {
+    draw(settings=this.editor.tool.settings,prepared=null) {
         const e=this.editor,s=settings;
         if(this.mode!==s.mode){this.mode=s.mode;this.id=null;this.key='';}
         const stack=getLayers(s),index=stack.findIndex(l=>l.id===this.id),background=this.id==='background';
@@ -43,7 +43,7 @@ export class LayerHover {
         const t=e.tool.target,rect=e.container.getBoundingClientRect(),width=Math.max(64,Math.round(640*Math.min(1,s.width/s.height))),height=Math.max(64,Math.round(640*Math.min(1,s.height/s.width)));
         const key=JSON.stringify([this.id,s]);
         if(key!==this.key){
-            const map=e.hoverMap(s,width,height,background?null:index);
+            const map=e.hoverMap(s,width,height,background?null:index,prepared);
             this.mask.width=width;this.mask.height=height;
             const ctx=this.mask.getContext('2d'),image=ctx.createImageData(width,height);image.data.set(hoverPixels(map,background));ctx.putImageData(image,0,0);this.key=key;
         }

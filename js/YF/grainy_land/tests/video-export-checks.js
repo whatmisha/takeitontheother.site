@@ -31,7 +31,7 @@ try{
  for(const [name,s,options={}] of cases){
   const renderer=new LandscapeRenderer(),original=JSON.stringify(s),start=performance.now();
   let rendered=0;
-  const source={gl:renderer.gl,render(...args){rendered++;if(options.slow){const end=performance.now()+80;while(performance.now()<end){ /* Simulate a render slower than 30 fps. */ }}return renderer.render(...args);}};
+  const source={gl:renderer.gl,async renderAsync(...args){rendered++;if(options.slow){const end=performance.now()+80;while(performance.now()<end){ /* Simulate a render slower than 30 fps. */ }}return renderer.renderAsync(...args);}};
   try{
    const result=await renderVideo(source,s,{onProgress:({message})=>{progress.textContent=name+' · '+message;}});
    const bytes=new Uint8Array(await result.blob.arrayBuffer()),stts=atom(bytes,'stts'),stsz=atom(bytes,'stsz'),mdhd=atom(bytes,'mdhd');

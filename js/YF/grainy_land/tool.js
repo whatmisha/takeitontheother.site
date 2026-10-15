@@ -1,10 +1,11 @@
+import {MotionPlayback} from './motion-playback.js?v=gpu-perf-1';
 import {jsonExportName} from './export-naming.js?v=preset-export-1';
 import {MAX_DOCUMENT_BYTES} from './layer-limits.js?v=petal-motion-1';
 import { ExportProgress } from './export-progress.js?v=petal-motion-1';
 import { ObjectUI } from './object-ui.js?v=petal-motion-1';
 import { modeLabels } from './object-model.js?v=petal-motion-1';
 import { PrintColor } from './print-color.js?v=petal-motion-1';
-import { motionFrame, renderVideo } from './motion.js?v=video-frames-1';
+import { motionFrame, renderVideo } from './motion.js?v=gpu-perf-1';
 import { CustomColorEditor } from './custom-color-editor.js?v=petal-motion-1';
 import { editCanvas } from './canvas-size.js?v=petal-motion-1';
 import { renderPNG } from './png-export.js?v=petal-motion-1';
@@ -13,14 +14,14 @@ import { downloadBlob } from '../infra/framework/src/ui/GeneratorHost.js?v=petal
 import { defineTool, UnifiedColorPicker, ToolUiController, FileIntakeController, PresetMenuKeyboardController } from '../infra/framework/src/index.js?v=petal-motion-1';
 import { defaults, ranges, switchMode, regenerate, toneKeys, migratePresets, normalizeSettings, makeDocument, readDocument, exportDimensions } from './document.js?v=flower-flow-1';
 import { adjacentColors, hexRGB } from './scene.js?v=petal-motion-1';
-import { LandscapeRenderer } from './render.js?v=petal-motion-1';
+import { LandscapeRenderer } from './render.js?v=gpu-perf-1';
 
 import { getLayers } from './layer-data.js?v=petal-motion-1';
-import { FormEditor } from './form-editor.js?v=petal-motion-1';
+import { FormEditor } from './form-editor.js?v=gpu-perf-1';
 import { editableTarget, visibleDialog } from '../infra/framework/src/ui/CommandPolicy.js?v=2';
 
 const printColor=new PrintColor();
-let motionStart=null,motionRAF=0;
+let motionStart=null,motionView=null,playback=null,motionRenderer=null;
 let formEditor, customColorEditor, objectUi;
 let renderer, ui, exportProgress, intake, presetKeyboard, listeners, unsubscribe, resizeObserver, panelObserver, panelPositionObserver, tonePicker;
 let renderFailed = false, lastSize = '';
@@ -33,15 +34,17 @@ function draw({ ctx2d, settings, width, height }, exporting = false) {
         const transform = ctx2d.getTransform();
         const scale = exporting ? Math.abs(transform.a) : Math.min(1.5, Math.max(.5, Math.abs(transform.a)),4096/Math.max(width,height),Math.sqrt(8388608/(width*height)));
         const w = Math.max(1, Math.round(width * scale)), h = Math.max(1, Math.round(height * scale));
-        const animated=!exporting&&motionStart!=null?motionFrame(settings,(performance.now()-motionStart)/1000/settings.motionDuration):settings;
+        const ready=!exporting&&motionStart!=null?playback?.frame:null;
+        const animated=ready?.settings??settings;
         const transparent=!settings.backgroundVisible||(exporting?settings.transparentBackground:settings.previewTransparent&&!settings.softProof);
-        let surface = renderer.render(animated, w, h, 0, transparent);
+        if(!exporting)motionView={settings,w,h,transparent};
+        let surface = ready?.surface??renderer.render(animated, w, h, 0, transparent);
         if(!exporting&&settings.softProof&&printColor.profile)surface=printColor.proof(surface,settings.printIntent);
         if(!exporting&&transparent&&!settings.softProof){const size=12/Math.max(.01,Math.abs(transform.a));ctx2d.fillStyle='#555';ctx2d.fillRect(0,0,width,height);ctx2d.fillStyle='#777';for(let y=0;y<height;y+=size)for(let x=0;x<width;x+=size)if((Math.floor(x/size)+Math.floor(y/size))%2===0)ctx2d.fillRect(x,y,size,size);}
         ctx2d.drawImage(surface, 0, 0, width, height);
         if (renderFailed) status('');
         renderFailed = false;
-        if (!exporting) formEditor?.draw(animated);
+        if (!exporting) formEditor?.draw(animated,{animated:motionStart!=null,prepared:ready?.prepared});
     } catch (error) {
         renderFailed = true; status(error.message);
         if (exporting) throw error;
@@ -191,11 +194,26 @@ function bind(tool) {
     for(const key of ['printIntent','motionAmount','motionDuration'])on(byId(key),'change',()=>change(tool,{[key]:Number(byId(key).value)},'Output settings'));
     on(byId('loadICC'),'click',()=>byId('iccFile').click());
     on(byId('iccFile'),'change',async()=>{const file=byId('iccFile').files[0];if(!file)return;try{if(file.size>4*1024*1024)throw Error('ICC profiles are limited to 4 MiB.');const profile=await printColor.load(new Uint8Array(await file.arrayBuffer()),file.name);byId('iccName').textContent=profile.name+' · '+profile.space;byId('softProof').disabled=false;byId('exportTIFF').disabled=false;tool.render();status('ICC profile loaded for this session.');}catch(error){status(error.message);}finally{byId('iccFile').value='';}});
-    const stopMotion=()=>{if(motionStart==null)return;motionStart=null;cancelAnimationFrame(motionRAF);byId('playMotion').textContent='Play';byId('playMotion').setAttribute('aria-pressed','false');tool.renderNow();};
+    const stopMotion=()=>{
+        if(motionStart==null)return;
+        motionStart=null;playback?.stop();motionRenderer?.destroy();motionRenderer=null;
+        byId('playMotion').textContent='Play';byId('playMotion').setAttribute('aria-pressed','false');tool.renderNow();
+    };
+    playback=new MotionPlayback({
+        getContext:()=>motionView,
+        renderFrame:async({settings,w,h,transparent},phase,{signal})=>{
+            const activeRenderer=motionRenderer ||= new LandscapeRenderer();
+            const animated=motionFrame(settings,phase);
+            const surface=await activeRenderer.renderAsync(animated,w,h,0,transparent,-1,null,{signal});
+            return {surface,settings:animated,prepared:activeRenderer.preparedFrame};
+        },
+        present:()=>tool.renderNow(),
+        onError:error=>{stopMotion();status(error.message);}
+    });
     const toggleMotion=()=>{
         if(motionStart!=null){stopMotion();return;}
         formEditor.select(null);motionStart=performance.now();byId('playMotion').textContent='Stop';byId('playMotion').setAttribute('aria-pressed','true');
-        const frame=()=>{if(motionStart==null||listeners.signal.aborted)return;tool.render();motionRAF=requestAnimationFrame(frame);};frame();
+        tool.renderNow();playback.start();
     };
     // Defer a Space tap until release so Space + drag keeps panning without starting playback.
     let motionTap=false;
@@ -337,7 +355,7 @@ const app = defineTool({
     renderTo: context => draw(context,true),
     onReady: bind,
     onDestroy: () => {
-        motionStart=null;cancelAnimationFrame(motionRAF);printColor.clear();
+        motionStart=null;playback?.stop();playback=null;motionView=null;motionRenderer?.destroy();motionRenderer=null;printColor.clear();
         objectUi?.destroy();objectUi=null;formEditor?.destroy(); formEditor=null;customColorEditor?.destroy();customColorEditor=null;
         listeners?.abort(); unsubscribe?.(); resizeObserver?.disconnect(); panelObserver?.disconnect(); panelPositionObserver?.disconnect(); intake?.destroy();
         exportProgress?.destroy();exportProgress=null;presetKeyboard?.destroy(); ui?.destroy(); renderer?.destroy(); renderer=null; ui=null; tonePicker=null;

@@ -1,0 +1,74 @@
+[
+  {
+    "type": "fan",
+    "phase": 0.17,
+    "width": 653,
+    "height": 441,
+    "pixels": "236481313cd84b680c3e6201ecfb0aa9999af3b49392ee7da19c6c5f8d2eca5b",
+    "colors": "084dffbd38d362bfe5d01051de88996aad691b5994c7de58adbc4da88273fc6c",
+    "distance": "4bf6667edb1c159cc694220c24ea74e30b511dbb84cfaa00dd0830d0614d24ce"
+  },
+  {
+    "type": "fan",
+    "phase": 0.61,
+    "width": 653,
+    "height": 441,
+    "pixels": "33a0e9cb1e8f7f60f49ca24cae46653197de09a279fa7220bec44f1db3461e6f",
+    "colors": "65a1c1680327e141af7c152f7b7de8015041b270c820ba48a2175ee09530089c",
+    "distance": "4b64ebdc680cfefdb5c1fe7b61e3dd0cd464c9d9ad1ab135cf0bac006ee9e4ae"
+  },
+  {
+    "type": "cup",
+    "phase": 0.17,
+    "width": 653,
+    "height": 441,
+    "pixels": "109f75e53c9b93908225967b189062ea274829539e1f6ff42c33e9b784ae902a",
+    "colors": "a117876fbb7e760cbfac3745aa7e121d1f70947534be62b2697eeb7957c49bb5",
+    "distance": "c248a0447ec2298a83ff38c35d4599dc9562a48c84f0784f6ec9bf487dd17761"
+  },
+  {
+    "type": "cup",
+    "phase": 0.61,
+    "width": 653,
+    "height": 441,
+    "pixels": "39964d5939ac9ac9ba8a3ed1af7dbcdaf13f75876eb033928152f134bf63bd14",
+    "colors": "9cf92c0228fe49463a778d654a12941d2d6bb228d6f831e6088f636f8f7381a6",
+    "distance": "c7a9f28b7eae9461452f9a6dd706ccbbacf1f19fb83f77a267ce8b1ce61fb7b8"
+  },
+  {
+    "type": "lobed",
+    "phase": 0.17,
+    "width": 653,
+    "height": 441,
+    "pixels": "af56a2e2a495df41d470adfafedffbfff4b788a1716a35869c5c9f9acb9aabb8",
+    "colors": "241c243d4c069150be1bb717d57a02a1640c92bba374716c3e008ec3ab0879ce",
+    "distance": "70436cb4b8319a5437b992d9535b43b8bd48a1b8a3387f1b4797dae477b9b747"
+  },
+  {
+    "type": "lobed",
+    "phase": 0.61,
+    "width": 653,
+    "height": 441,
+    "pixels": "5016ca9823bb9167c6cef67d7175f09a9510a56aaa872e9ce3e977416d24bd0a",
+    "colors": "f08449e43a45d2be81f4c223a5c88ef67205d8bd3879c419cd08812bc22a91ef",
+    "distance": "2c33b1dd19185dd04412b17f179e5494b0637204e64be3735cd0ec1809f0569c"
+  },
+  {
+    "type": "radial",
+    "phase": 0.17,
+    "width": 653,
+    "height": 441,
+    "pixels": "3979eb743acf3e0a17cb08cee6e06e166de3a34d0e5dde7235019cb76941542e",
+    "colors": "7eaee2bb05fd89d29d54237516cd451c83a423b96a89d2c13a444b9505dc918c",
+    "distance": "70c3740bf769e851ae00030be11264a054658ac7e3ff48c7377c3bba05680fc2"
+  },
+  {
+    "type": "radial",
+    "phase": 0.61,
+    "width": 653,
+    "height": 441,
+    "pixels": "8a618e442faf55e0514c5ee5ce8b2510a73c3721ddb6358860af2eae1c3a2b8f",
+    "colors": "2a318fea82c1debfddcd9794b1e81adc234391b9c4fb0bbbd1411df59b3a9641",
+    "distance": "525c2dea2f245a821373f91287b94c10d07e04a1a66dbca931731705c732a133"
+  }
+]

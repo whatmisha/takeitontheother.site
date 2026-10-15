@@ -86,3 +86,17 @@ test('Video export scales portrait and landscape sizes to an even 1920 px maximu
   const result=await renderVideo(e.renderer,{...settings,width,height});assert.deepEqual([result.width,result.height],expected);
  }
 });
+
+test('asynchronous field preparation is awaited for every frame with the export abort signal',async t=>{
+ const e=environment(t),controller=new AbortController();let prepared=0;
+ e.renderer.renderAsync=async(s,w,h,pass,transparent,layer,region,{signal})=>{
+  assert.equal(signal,controller.signal);await new Promise(r=>setTimeout(r,1));prepared++;return e.renderer.render(s,w,h);
+ };
+ const result=await renderVideo(e.renderer,settings,{signal:controller.signal});assert.equal(prepared,60);assert.equal(result.frameCount,60);
+});
+test('abort during asynchronous preparation does not submit or save an extra frame',async t=>{
+ const e=environment(t),controller=new AbortController();
+ e.renderer.renderAsync=async()=>{controller.abort();return e.canvas;};
+ await assert.rejects(renderVideo(e.renderer,settings,{signal:controller.signal}),{name:'AbortError'});
+ assert.equal(e.frames.length,0);assert.equal(e.encoders[0].state,'closed');
+});

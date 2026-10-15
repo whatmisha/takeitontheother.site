@@ -665,3 +665,87 @@ for 32. These measurements exclude GPU drawing and are not playback FPS.
 The full-frame petal animation algorithm remains a later optimization stage.
 Regression cases: `tests/field-cache.test.mjs`, `tests/object-controls.test.mjs`,
 `tests/flora.html` and `tests/objects-ui.html`.
+
+### Animation optimization — 15 October 2026
+
+Playback and MP4 prepare Flora fields in a bounded pool of up to four module
+Workers. Each frame is a complete scene; the next playback pose is requested only
+after the previous one is displayed. Stop, restart and teardown abort pending
+work and prevent late frames from appearing. The animation renderer and its
+Workers are released on Stop. Browsers without module Workers retain the
+synchronous path. The field cache budget is divided between Workers, rather
+than multiplied by their count.
+
+The sampling grid, petal deformation, attachment collars, grain and shading stay
+unchanged. The box-filter pass visits adjacent pixels and reuses its column sums;
+the distance transform no longer copies disposable input buffers. Control fields
+from the original version match byte for byte for Fan, Cup, Lobed and Radial at
+two moving poses. Worker and synchronous GPU renders also match exactly.
+
+Animated frames skip static thumbnail updates. Layer hover reuses prepared fields
+for its picking pass. Video awaits each exact timeline frame, keeps 30 fps and
+retains encoder backpressure, cancellation and completeness checks.
+
+Measured field preparation in the local browser (1920×1080 document, median of
+five poses; excludes GPU drawing): 1 flower 22.4→22.4 ms, 8 flowers 162.8→66.5 ms,
+32 flowers 650.3→194.7 ms compared with the optimized synchronous path. During
+Worker preparation the 16 ms main-thread timer had a maximum gap under 19 ms.
+These are field timings, not preview FPS; 32 full-quality flowers remain too
+heavy for 30 fps playback. GPU field generation/texture upload is the next
+performance target, without lowering exported image quality.
+
+Checks: `tests/motion-performance.html`, `tests/flower-motion.html`,
+`tests/video-export.html`, `tests/motion-ui.html`, `tests/field-pool.test.mjs`,
+`tests/motion-playback.test.mjs`, `tests/motion-field-baselines.json`.
+
+
+### GPU optimization — 15 October 2026
+
+The shader now branches by object family before building Land/Spot geometry or
+material. Plant and Flora retain their own distance fields and pigment model;
+unused warping, crest, fold and Land tone calculations no longer run for them.
+Picking skips background grain and surface shading. Near the zero-distance
+contour it retains the old smoothstep rounding so edge pixels select the same
+layer. The old CPU per-petal shade buffer/filter was also unused and is removed;
+the 16-bit contour, color coverage, sampling grid and deformation stay unchanged.
+
+Geometry and color atlases track allocation/upload keys independently. Picking
+uploads only contours, keeps a complete placeholder for the unused color sampler
+on first use, and retains the previous color atlas for the next paint pass.
+Surface edits still upload no fields, and recoloring uploads only color data.
+GPU size limits are queried once per renderer instead of once per frame.
+
+A tested two-channel LUMINANCE_ALPHA variant reduced field uploads by 25%, but
+its driver conversion made small renders/picking slower on the reference GPU.
+The shipped implementation keeps native RGBA textures. There is no precision,
+resolution, grain or blur quality reduction and no new user-facing controls.
+
+Local before/after measurements for 32 moving flowers, with already-baked fields:
+
+| Pass | Before, ms | After, ms |
+| --- | ---: | ---: |
+| Artwork, 960×540 | 27.6 | 20.0 |
+| Artwork, 1920×1080 | 76.4 | 47.6 |
+| Picking, 320×180 | 16.7 | 8.8 |
+
+Each value is a median of nine warm samples with alternating before/after order.
+Timing includes texture upload, draw submission and a synchronous GPU readback;
+it excludes field generation and is **not playback FPS**. Small single-flower
+previews showed no consistent improvement. Full 32-flower playback remains
+limited primarily by animated distance-field preparation on the CPU. Reducing
+that work (or moving it to the GPU) is the next performance target.
+
+Validation: 295 Node tests and the shared UI contract passed. `tests/gpu.html`
+checks 120 before/after render combinations plus five picking/cache scenarios,
+using the frozen pre-optimization shader in `tests/fixtures/gpu-before.glsl`.
+Color output differs by at most one 8-bit step with mean error below .001;
+picking IDs match exactly. Independent field fixtures verify the original RG
+contour bytes and RGBA colors exactly, including animated poses. PNG/ZIP at 32
+layers, tiled/9000 px PNG, eleven real MP4 scenarios, cancellation/restart, and
+the playback UI checks passed.
+
+Historical limitation: `tests/flower-preservation.html` still reports 20 legacy
+hash mismatches. All 20 also fail using an untouched copy of the renderer and
+field implementation from before this optimization, so those historical hashes
+were not replaced or used to claim a regression-free result. The frozen-shader
+comparison above covers this change against the actual pre-change output.

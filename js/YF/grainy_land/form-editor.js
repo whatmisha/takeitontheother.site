@@ -1,5 +1,5 @@
 import {kindLabels,effectiveSettings} from './object-model.js?v=petal-motion-1';
-import { LayerHover } from './layer-hover.js?v=petal-motion-1';
+import { LayerHover } from './layer-hover.js?v=gpu-perf-1';
 import {normalizeFloraParams} from './flora.js?v=petal-motion-1';
 import { FloraEditor } from './flora-editor.js?v=petal-motion-1';
 import { editSelection, duplicateSelection, reorderSelection, resizeSelection, selectionValue, selectedLayers, deleteSelection } from './selection.js?v=petal-motion-1';
@@ -9,7 +9,7 @@ import { groupColor } from './custom-colors.js?v=petal-motion-1';
 import { brushStroke, localPaintPoint, strokePointCount, MAX_STROKES, MAX_STROKE_POINTS, MAX_FORM_POINTS } from './paint.js?v=petal-motion-1';
 import { getLayers, withLayers, layerSettingsKey, MAX_LAYERS, editLayer, addLayer, addBlueLayer, duplicateLayer, removeLayer, reorderLayer, convertLayer } from './layers.js?v=petal-motion-1';
 import { createLayerScene } from './scene.js?v=petal-motion-1';
-import { LandscapeRenderer } from './render.js?v=petal-motion-1';
+import { LandscapeRenderer } from './render.js?v=gpu-perf-1';
 
 export function visibleBounds(map, selected) {
     let left=map.width,top=map.height,right=-1,bottom=-1;
@@ -421,9 +421,9 @@ export class FormEditor {
         for(const id of this.thumbs.keys())if(!scene.some(l=>l.id===id))this.thumbs.delete(id);
     }
     selectionBounds(){const stack=getLayers(this.tool.settings),boxes=this.selection().map(id=>visibleBounds(this.map,stack.findIndex(l=>l.id===id))).filter(Boolean);return boxes.length?{left:Math.min(...boxes.map(b=>b.left)),right:Math.max(...boxes.map(b=>b.right)),top:Math.min(...boxes.map(b=>b.top)),bottom:Math.max(...boxes.map(b=>b.bottom))}:null;}
-    hoverMap(settings,width,height,index){this.picker ||=new LandscapeRenderer();return this.picker.formMap(settings,width,height,index);}
-    draw(settings=this.tool.settings){
-        this.hover?.draw(settings);this.drawThumbs();this.vector?.draw();this.flora?.draw();if(this.vector?.editing||this.flora?.editing||!this.active)return;this.refreshMap();const t=this.tool.target,s=this.tool.settings,dpr=t.dpr,rect=this.container.getBoundingClientRect();
+    hoverMap(settings,width,height,index,prepared=null){this.picker ||=new LandscapeRenderer();return this.picker.formMap(settings,width,height,index,prepared);}
+    draw(settings=this.tool.settings,{animated=false,prepared=null}={}){
+        this.hover?.draw(settings,prepared);if(animated)return;this.drawThumbs();this.vector?.draw();this.flora?.draw();if(this.vector?.editing||this.flora?.editing||!this.active)return;this.refreshMap();const t=this.tool.target,s=this.tool.settings,dpr=t.dpr,rect=this.container.getBoundingClientRect();
         this.overlay.width=Math.round(rect.width*dpr);this.overlay.height=Math.round(rect.height*dpr);const ctx=this.overlay.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);this.handle=null;
         const layer=this.layer();if(!layer)return;const selected=this.index(),map=this.map,indices=this.selection().map(id=>getLayers(s).findIndex(l=>l.id===id));
         const bounds=this.selectionBounds();

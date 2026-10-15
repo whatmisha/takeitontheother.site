@@ -87,7 +87,11 @@ export async function renderVideo(renderer,settings,{signal,onProgress=()=>{}}={
   for(let index=0;index<frameCount;index++){
    assertActive();await capacity();assertActive();
    // Time belongs to the file, never to the CPU clock or canvas capture cadence.
-   const surface=renderer.render(motionFrame(settings,index/frameCount),width,height);
+   const pose=motionFrame(settings,index/frameCount);
+   const surface=renderer.renderAsync
+    ?await renderer.renderAsync(pose,width,height,0,false,-1,null,{signal})
+    :renderer.render(pose,width,height);
+   assertActive();
    if(renderer.gl?.isContextLost())throw Error('The graphics context was lost during export. Please retry.');
    ctx.fillStyle='#000';ctx.fillRect(0,0,width,height);ctx.drawImage(surface,0,0);
    const frame=new VideoFrame(canvas,{timestamp:timestampAt(index),duration:timestampAt(index+1)-timestampAt(index)});

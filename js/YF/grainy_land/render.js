@@ -1,6 +1,7 @@
+import {FloraFieldPool} from './flora-field-pool.js?v=gpu-perf-1';
 import {FLOWER_MOTION} from './flower-motion.js?v=petal-motion-1';
 import {effectiveSettings} from './object-model.js?v=petal-motion-1';
-import { bakeFlora } from './flora-field.js?v=petal-motion-1';
+import { bakeFlora } from './flora-field.js?v=gpu-perf-1';
 import { MAX_CUSTOM_COLORS } from './custom-colors.js?v=petal-motion-1';
 import { createLayerScene, materialColors, adjacentColors, customMaterialColors, hexRGB } from './scene.js?v=petal-motion-1';
 import { bakePaint } from './paint.js?v=petal-motion-1';
@@ -114,7 +115,7 @@ void main() {
     // Keep it in underpaint even for transparent/layer exports so reflected colors agree.
     vec3 background=sky;
     float backgroundAmount=skyToneAmount*toneAmount;
-    if(backgroundAmount>0.) {
+    if(editorPass<.5 && backgroundAmount>0.) {
         float frequency=mix(17.,2.,(toneScale-20.)/180.);
         vec2 offset=vec2(mod(seed,137.),floor(seed/137.))+vec2(47.3,91.7);
         vec2 q=p*vec2(1.,artboard.y/artboard.x);
@@ -135,7 +136,7 @@ void main() {
         // Use the same filtered pigment texture, without changing the opaque background alpha.
         if(grain>0.)background*=1.+grain*.04*backgroundAmount*(.5-spray(gp+offset,1.,footprint).y)*resolve;
     }
-    if(floraMode>.5 && grain>0.)background*=1.+grain*.4*(spray(gp+vec2(41.7),1.,footprint).y-.5)*resolve;
+    if(editorPass<.5 && floraMode>.5 && grain>0.)background*=1.+grain*.4*(spray(gp+vec2(41.7),1.,footprint).y-.5)*resolve;
     vec3 color=background*backgroundAlpha, underpaint=background;
     float alpha=backgroundAlpha;
 
@@ -165,59 +166,63 @@ void main() {
             v=vec2(v.x*affine.x+v.y*affine.y,-v.x*affine.y+v.y*affine.x);
             point=v/vec2(aspect,1.)/transform.zw*affine.zw+.5;
         }
-        vec2 anchor = vec2(.5,mode>.5 ? .5 : horizon);
-        vec2 q = (point-anchor)*scale+anchor;
-        vec2 offset = phases.xy*2.;
-        vec2 warp = vec2(fbm(q*3.+offset), fbm(q*3.+offset+20.))-.5;
-        q += warp*flow*.27;
-        if (phases.w > 3.141593) q.x = 1.-q.x;
-        q.x += sin(q.y*5.+phases.z)*flow*.035;
+        vec2 offset=phases.xy*2.,q=point,surface=point;
+        vec4 f=layers[i],style=layerStyles[i];
+        float id=info.x,x=point.x,d=-2.;
+        // Flora already supplies its distance field. Land warping and crest
+        // construction cannot contribute to these objects or their materials.
+        if(mode<1.5) {
+            vec2 anchor = vec2(.5,mode>.5 ? .5 : horizon);
+            q = (point-anchor)*scale+anchor;
+            vec2 warp = vec2(fbm(q*3.+offset), fbm(q*3.+offset+20.))-.5;
+            q += warp*flow*.27;
+            if (phases.w > 3.141593) q.x = 1.-q.x;
+            q.x += sin(q.y*5.+phases.z)*flow*.035;
 
-        vec4 f = layers[i], style = layerStyles[i];
-        float id = info.x;
-        // Local two-dimensional deformation lets one surface curl around another.
-        vec2 surface = foldPoint(q,foldFields[i],folds*(kind==0 ? .25 : (kind==4 ? .65 : 1.)),mode,horizon);
-        float x = surface.x;
-        float wave = sin(x*(5.+complexity)+style.y)*.023
-            + sin(x*(11.+complexity*2.)+style.y*2.)*.009*(complexity-1.);
-        float crest = bell((x-f.x)/f.y);
-        float y = horizon+f.z-relief*f.w*crest+style.x*(x-.5);
-        if (kind==1) y = horizon+.15+relief*(f.z-.15+f.w*smoothstep(f.x-.12,f.x+f.y*1.7,x));
-        if (kind==3) y = horizon+.15+relief*(f.z-.15+f.w*(1.-smoothstep(f.x-f.y*1.7,f.x+.12,x)));
-        if (kind==0) y -= relief*secondCrest.z*bell((x-secondCrest.x)/secondCrest.y);
-        if (kind==2) y += .21*bell((x+.06)/.26);
-        // A foreground fold rises into the basin, then opens out of frame.
-        if (kind==4) y += .20*bell((x+.08)/.35);
-        y += relief*flow*wave*2.;
-        y += (fbm(vec2(x*(4.+complexity),id*9.)+offset)-.5)*.055*flow;
-        float d = surface.y-y;
-        if (mode<.5 && kind==4) {
-            // A rounded pocket with an open tail, independent of the horizon graph.
-            vec2 v=surface-vec2(f.x,horizon+f.z-.065);
-            v.y-=sin(v.x*6.+style.y)*.035;
-            v=mat2(cos(pocketStyle.z),-sin(pocketStyle.z),sin(pocketStyle.z),cos(pocketStyle.z))*v;
-            float pocket=(1.-length(v/pocketStyle.xy))*.09;
-            float tail=surface.y-(horizon+pocketStyle.w+.08*sin(x*4.+style.y));
-            d=mix(d,smoothUnion(pocket,tail,.055),folds);
+            // Local two-dimensional deformation lets one surface curl around another.
+            surface = foldPoint(q,foldFields[i],folds*(kind==0 ? .25 : (kind==4 ? .65 : 1.)),mode,horizon);
+            x = surface.x;
+            float wave = sin(x*(5.+complexity)+style.y)*.023
+                + sin(x*(11.+complexity*2.)+style.y*2.)*.009*(complexity-1.);
+            float crest = bell((x-f.x)/f.y);
+            float y = horizon+f.z-relief*f.w*crest+style.x*(x-.5);
+            if (kind==1) y = horizon+.15+relief*(f.z-.15+f.w*smoothstep(f.x-.12,f.x+f.y*1.7,x));
+            if (kind==3) y = horizon+.15+relief*(f.z-.15+f.w*(1.-smoothstep(f.x-f.y*1.7,f.x+.12,x)));
+            if (kind==0) y -= relief*secondCrest.z*bell((x-secondCrest.x)/secondCrest.y);
+            if (kind==2) y += .21*bell((x+.06)/.26);
+            // A foreground fold rises into the basin, then opens out of frame.
+            if (kind==4) y += .20*bell((x+.08)/.35);
+            y += relief*flow*wave*2.;
+            y += (fbm(vec2(x*(4.+complexity),id*9.)+offset)-.5)*.055*flow;
+            d = surface.y-y;
+            if (mode<.5 && kind==4) {
+                // A rounded pocket with an open tail, independent of the horizon graph.
+                vec2 v=surface-vec2(f.x,horizon+f.z-.065);
+                v.y-=sin(v.x*6.+style.y)*.035;
+                v=mat2(cos(pocketStyle.z),-sin(pocketStyle.z),sin(pocketStyle.z),cos(pocketStyle.z))*v;
+                float pocket=(1.-length(v/pocketStyle.xy))*.09;
+                float tail=surface.y-(horizon+pocketStyle.w+.08*sin(x*4.+style.y));
+                d=mix(d,smoothUnion(pocket,tail,.055),folds);
+            }
+            if (mode>.5 && kind<6) {
+                // Independent rotated lobes; no periodic color ramp or horizon.
+                float angle = style.y;
+                vec2 v = surface-fields[i].xy;
+                v = mat2(cos(angle),-sin(angle),sin(angle),cos(angle))*v;
+                d = .21+fields[i].z*.5-length(v/vec2(1.35,.72));
+                d += flow*(fbm(q*(3.+complexity)+id*7.+offset)-.5)*.45;
+            }
+            if(kind>=6) {
+                // Two broad, independently editable sky coats, with irregular sprayed silhouettes.
+                vec2 v=q-fields[i].xy;
+                float angle=style.y;
+                v=mat2(cos(angle),-sin(angle),sin(angle),cos(angle))*v;
+                v+=(vec2(fbm(q*3.+offset+id*11.),fbm(q*3.+offset+id*11.+27.))-.5)*flow*.12;
+                d=(1.-length(v/fields[i].zw))*min(fields[i].z,fields[i].w);
+                d+=flow*(fbm(q*(3.+complexity*.4)+offset+id*7.)-.5)*.045;
+            }
+            if(gb.w<.5)d=-2.;
         }
-        if (mode>.5 && kind<6) {
-            // Independent rotated lobes; no periodic color ramp or horizon.
-            float angle = style.y;
-            vec2 v = surface-fields[i].xy;
-            v = mat2(cos(angle),-sin(angle),sin(angle),cos(angle))*v;
-            d = .21+fields[i].z*.5-length(v/vec2(1.35,.72));
-            d += flow*(fbm(q*(3.+complexity)+id*7.+offset)-.5)*.45;
-        }
-        if(kind>=6) {
-            // Two broad, independently editable sky coats, with irregular sprayed silhouettes.
-            vec2 v=q-fields[i].xy;
-            float angle=style.y;
-            v=mat2(cos(angle),-sin(angle),sin(angle),cos(angle))*v;
-            v+=(vec2(fbm(q*3.+offset+id*11.),fbm(q*3.+offset+id*11.+27.))-.5)*flow*.12;
-            d=(1.-length(v/fields[i].zw))*min(fields[i].z,fields[i].w);
-            d+=flow*(fbm(q*(3.+complexity*.4)+offset+id*7.)-.5)*.045;
-        }
-        if(gb.w<.5)d=-2.;
         vec4 floraSample=vec4(0.);vec4 flowerColor=vec4(0.);
         if(mode>1.5){
             vec4 b=floraBounds[i];vec2 at=(point-b.xy)/b.zw;d=-2.;
@@ -254,6 +259,12 @@ void main() {
                 d+=floraBridge;
             }
             if(!isolated&&floraMeta[i].w>=0.)previousFloraDistance=max(previousFloraDistance,original);
+        }
+        // Away from zero, the sign alone determines picking. Right on the
+        // contour retain smoothstep's floating-point rounding from the paint pass.
+        if (editorPass > .5 && abs(d)>.00001) {
+            if (d >= 0.) picked = float(i+1);
+            continue;
         }
         float edgeField=fbm(surface*vec2(5.,8.)+id*11.+offset);
         float localSoft=mix(1.,mix(.20,2.1,smoothstep(.25,.75,edgeField)),edgeVariation);
@@ -309,47 +320,9 @@ void main() {
         if (group>=4) base=texture2D(customPalette,vec2(1./6.,customRow)).rgb;
         float body = fbm(surface*vec2(5.,8.)+id*13.+offset);
         float patch=fbm(surface*vec2(4.,6.)+offset+id*5.7);
-        float crease=bell((d-.04-.07*patch)/(.012+.024*body));
-        float warmth = bell((x-f.x-style.w)/(.027+f.y*.06))
-            *bell((d-.025)/.055);
-        vec3 pigment = base;
-        if (group==0) {
-            pigment = mix(base,colors[2],.05*body*body);
-            pigment = mix(pigment,colors[3],warmth*.66);
-        } else if (group==2) {
-            pigment = mix(base,colors[0],.13+smoothstep(.38,.72,patch)*.32);
-            pigment = mix(pigment,colors[4],.18+body*.44);
-            pigment = mix(pigment,colors[0],.13*bell((body-.24)*8.));
-            pigment = mix(pigment,colors[3],warmth*.42);
-        } else if(group>=4) {
-            pigment=base*(.92+.12*body);
-        } else if(group==3) {
-            // Shade within the blue anchor; neighboring blue tones supply the variation.
-            pigment=base*(kind==6 ? .84+.14*body : 1.02+.12*body);
-        } else {
-            pigment = mix(base,colors[5],smoothstep(.01,.15,d)*.32+body*.14);
-            pigment *= .78+.20*body+.09*smoothstep(.02,.20,d);
-            pigment = mix(pigment,colors[0],bell(d/.022)*.14);
-        }
-        // Separate color fields keep hue variation independent of shape and grain.
-        float frequency = mix(17.,2.,(toneScale-20.)/180.);
-        vec2 colorPoint=surface+vec2(sin(surface.y*7.+style.y),cos(surface.x*6.+style.y))*.025;
-        float field = noise(colorPoint*frequency*.45+offset+id*8.3)*.7
-            + noise(colorPoint*frequency+offset+id*8.3)*.3;
-        float positive = pow(clamp((field-.18)/.72,0.,1.),1.7)*(.4+.6*bell(d/.22));
-        float negative = pow(clamp((.80-field)/.75,0.,1.),1.8)*(.35+.5*smoothstep(.01,.18,d));
-        positive = max(positive,warmth*.85);
-        if (toneCharacter>.5 && toneCharacter<1.5) {
-            float pearl = .5+.5*sin((q.x+q.y*.65)*frequency*.45+field*2.+style.y);
-            positive = pow(pearl,1.5)*.85;
-            negative = pow(1.-pearl,1.5)*.75;
-        } else if (toneCharacter>1.5) {
-            float rim=bell(d/(.025+.065*field));
-            float accent=smoothstep(.34,.78,patch);
-            positive=pow(field,2.8)*.40+rim*accent*.65+warmth*.48;
-            negative=smoothstep(.28,.7,1.-field)*(.5+.25*crease);
-            positive=clamp(positive,0.,.95);
-        }
+        float crease=0.,warmth=0.;
+        vec3 pigment=base;
+        float frequency=mix(17.,2.,(toneScale-20.)/180.);
         vec3 low = adjacent[0], high = adjacent[3];
         if (group==1) { low=adjacent[1]; high=adjacent[4]; }
         if (group==2) { low=adjacent[2]; high=adjacent[5]; }
@@ -358,9 +331,52 @@ void main() {
             low=texture2D(customPalette,vec2(.5,customRow)).rgb;
             high=texture2D(customPalette,vec2(5./6.,customRow)).rgb;
         }
-        if (group==1) { negative*=.62; positive*=.62; }
-        pigment = mix(pigment,low,negative*toneAmount*.92);
-        pigment = mix(pigment,high,positive*toneAmount*.88);
+        // Flowers have a separate pigment model below. Avoid calculating a
+        // complete Land material only to overwrite it on the same pixel.
+        if(mode<1.5) {
+            crease=bell((d-.04-.07*patch)/(.012+.024*body));
+            warmth = bell((x-f.x-style.w)/(.027+f.y*.06))
+                *bell((d-.025)/.055);
+            if (group==0) {
+                pigment = mix(base,colors[2],.05*body*body);
+                pigment = mix(pigment,colors[3],warmth*.66);
+            } else if (group==2) {
+                pigment = mix(base,colors[0],.13+smoothstep(.38,.72,patch)*.32);
+                pigment = mix(pigment,colors[4],.18+body*.44);
+                pigment = mix(pigment,colors[0],.13*bell((body-.24)*8.));
+                pigment = mix(pigment,colors[3],warmth*.42);
+            } else if(group>=4) {
+                pigment=base*(.92+.12*body);
+            } else if(group==3) {
+                // Shade within the blue anchor; neighboring blue tones supply the variation.
+                pigment=base*(kind==6 ? .84+.14*body : 1.02+.12*body);
+            } else {
+                pigment = mix(base,colors[5],smoothstep(.01,.15,d)*.32+body*.14);
+                pigment *= .78+.20*body+.09*smoothstep(.02,.20,d);
+                pigment = mix(pigment,colors[0],bell(d/.022)*.14);
+            }
+            // Separate color fields keep hue variation independent of shape and grain.
+            vec2 colorPoint=surface+vec2(sin(surface.y*7.+style.y),cos(surface.x*6.+style.y))*.025;
+            float field = noise(colorPoint*frequency*.45+offset+id*8.3)*.7
+                + noise(colorPoint*frequency+offset+id*8.3)*.3;
+            float positive = pow(clamp((field-.18)/.72,0.,1.),1.7)*(.4+.6*bell(d/.22));
+            float negative = pow(clamp((.80-field)/.75,0.,1.),1.8)*(.35+.5*smoothstep(.01,.18,d));
+            positive = max(positive,warmth*.85);
+            if (toneCharacter>.5 && toneCharacter<1.5) {
+                float pearl = .5+.5*sin((q.x+q.y*.65)*frequency*.45+field*2.+style.y);
+                positive = pow(pearl,1.5)*.85;
+                negative = pow(1.-pearl,1.5)*.75;
+            } else if (toneCharacter>1.5) {
+                float rim=bell(d/(.025+.065*field));
+                float accent=smoothstep(.34,.78,patch);
+                positive=pow(field,2.8)*.40+rim*accent*.65+warmth*.48;
+                negative=smoothstep(.28,.7,1.-field)*(.5+.25*crease);
+                positive=clamp(positive,0.,.95);
+            }
+            if (group==1) { negative*=.62; positive*=.62; }
+            pigment = mix(pigment,low,negative*toneAmount*.92);
+            pigment = mix(pigment,high,positive*toneAmount*.88);
+        }
         if(mode>1.5){
             float assigned=smoothstep(.03,.12,length(base-flowerColor.rgb))*flowerColor.a;
             low=mix(low,flowerColor.rgb*.58,assigned);
@@ -442,6 +458,7 @@ export class LandscapeRenderer {
         const gl = this.canvas.getContext('webgl', { alpha: true, premultipliedAlpha: true, antialias: false, preserveDrawingBuffer: true });
         if (!gl) throw new Error('Grainy Land needs WebGL. Enable hardware acceleration and reload.');
         this.gl = gl;
+        this.maxSize=Math.min(gl.getParameter(gl.MAX_TEXTURE_SIZE),gl.getParameter(gl.MAX_RENDERBUFFER_SIZE));
         const shader = (type, source) => {
             const object = gl.createShader(type);
             gl.shaderSource(object, source); gl.compileShader(object);
@@ -470,20 +487,28 @@ export class LandscapeRenderer {
         if (!this.locations.has(name)) this.locations.set(name, this.gl.getUniformLocation(this.program, name));
         return this.locations.get(name);
     }
-    render(raw, width, height, editorPass = 0, transparent = false, exportLayer = -1, region = null) {
-        const s = normalizeSettings(raw), gl = this.gl;
+    async renderAsync(raw, width, height, editorPass = 0, transparent = false, exportLayer = -1, region = null, {signal} = {}) {
+        signal?.throwIfAborted();
+        const settings=normalizeSettings(raw),scene=createLayerScene(settings);
+        this.fieldPool ||= new FloraFieldPool();
+        const fields=await this.fieldPool.prepare(scene,settings,{signal,editorPass});
+        signal?.throwIfAborted();
+        this.preparedFrame={settings,scene,fields};
+        return this.render(settings,width,height,editorPass,transparent,exportLayer,region,this.preparedFrame);
+    }
+    render(raw, width, height, editorPass = 0, transparent = false, exportLayer = -1, region = null, prepared = null) {
+        const s = prepared?.settings ?? normalizeSettings(raw), gl = this.gl;
         transparent=transparent||!s.backgroundVisible;
         if (gl.isContextLost()) throw new Error('Graphics context lost. Reload to restore the renderer.');
-        const max = Math.min(gl.getParameter(gl.MAX_TEXTURE_SIZE), gl.getParameter(gl.MAX_RENDERBUFFER_SIZE));
-        if (width > max || height > max) throw new Error('This GPU cannot render that size. Reduce export scale.');
+        if (width > this.maxSize || height > this.maxSize) throw new Error('This GPU cannot render that size. Reduce export scale.');
         const key = JSON.stringify([s,getLayers(s).map(l=>l[FLOWER_MOTION]),width,height,editorPass,transparent,exportLayer,region]);
         if (key === this.cacheKey) return this.canvas;
         if(this.canvas.width!==width)this.canvas.width=width;
         if(this.canvas.height!==height)this.canvas.height=height;
         gl.viewport(0,0,width,height); gl.useProgram(this.program);
-        const scene = createLayerScene(s);
+        const scene = prepared?.scene ?? createLayerScene(s);
         this.uploadPaint(scene);
-        this.uploadFlora(scene,s,editorPass);
+        this.uploadFlora(scene,s,editorPass,prepared?.fields);
         gl.uniform1f(this.location('floraMode'),['flora','f'].includes(s.mode)?1:0);
         this.uploadCustomColors(s);
         const values = { softness: s.softness/100, glow: s.glow/100, halo: s.halo/100,
@@ -528,20 +553,33 @@ export class LandscapeRenderer {
         }
         gl.uniform1i(this.location('customPalette'),1);
     }
-    uploadFlora(scene,settings,editorPass=0){
+    uploadFlora(scene,settings,editorPass=0,preparedFields=null){
         const isolated=editorPass>1.5?editorPass-2:null;
-        const gl=this.gl,fields=scene.map((l,i)=>l.flora&&(isolated!=null?i===isolated:l.info[2]>0)?bakeFlora(l,settings):null),columns=fields.some(Boolean)?Math.min(4,scene.length):1;
+        const gl=this.gl,fields=preparedFields??scene.map((l,i)=>l.flora&&(isolated!=null?i===isolated:l.info[2]>0)?bakeFlora(l,settings):null),columns=fields.some(Boolean)?Math.min(4,scene.length):1;
         const cellW=Math.max(1,...fields.map(f=>f?.width??1)),cellH=Math.max(1,...fields.map(f=>f?.height??1)),width=columns*cellW,height=Math.max(1,Math.ceil(scene.length/columns))*cellH;
-        const shape=[width,height,cellW,cellH,columns].join(':'),resize=shape!==this.floraAtlasShape;
-        if(resize){this.floraKeys=[];this.floraColorKeys=[];}
+        const shape=[width,height,cellW,cellH,columns].join(':');
+        const allocate=(w,h,format)=>{
+            gl.texImage2D(gl.TEXTURE_2D,0,format,w,h,0,format,gl.UNSIGNED_BYTE,null);
+            gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+        };
         for(const [unit,texture,property,name]of [[2,this.floraTexture,'pixels','floraAtlas'],[3,this.floraColorTexture,'colors','floraColors']]){
             gl.activeTexture(gl.TEXTURE0+unit);gl.bindTexture(gl.TEXTURE_2D,texture);
-            if(resize){gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,width,height,0,gl.RGBA,gl.UNSIGNED_BYTE,null);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);}
-            const keys=property==='pixels'?this.floraKeys:this.floraColorKeys;
-            fields.forEach((f,i)=>{if(f&&(property==='pixels'?f.geometryKey:f.key)!==keys?.[i])gl.texSubImage2D(gl.TEXTURE_2D,0,(i%columns)*cellW,Math.floor(i/columns)*cellH,f.width,f.height,gl.RGBA,gl.UNSIGNED_BYTE,f[property]);});
             gl.uniform1i(this.location(name),unit);
+            if(property==='colors' && editorPass>.5) {
+                // Picking never reads pigment. Keep a complete placeholder on
+                // first use, or retain the last paint atlas for a later redraw.
+                if(!this.floraColorAtlasShape){allocate(1,1,gl.RGBA);this.floraColorAtlasShape='empty';}
+                continue;
+            }
+            const format=gl.RGBA;
+            const shapeKey=property==='pixels'?'floraAtlasShape':'floraColorAtlasShape';
+            const keysKey=property==='pixels'?'floraKeys':'floraColorKeys',resize=shape!==this[shapeKey];
+            if(resize)allocate(width,height,format);
+            const keys=resize?[]:this[keysKey];
+            fields.forEach((f,i)=>{if(f&&(property==='pixels'?f.geometryKey:f.key)!==keys?.[i])gl.texSubImage2D(gl.TEXTURE_2D,0,(i%columns)*cellW,Math.floor(i/columns)*cellH,f.width,f.height,format,gl.UNSIGNED_BYTE,f[property]);});
+            this[keysKey]=fields.map(f=>property==='pixels'?f?.geometryKey:f?.key);this[shapeKey]=shape;
         }
-        this.floraKeys=fields.map(f=>f?.geometryKey);this.floraColorKeys=fields.map(f=>f?.key);this.floraAtlasShape=shape;
         gl.uniform2f(this.location('floraAtlasSize'),width,height);gl.uniform2f(this.location('floraCellSize'),cellW,cellH);gl.uniform1f(this.location('floraColumns'),columns);
         gl.uniform4fv(this.location('floraBounds[0]'),Array.from({length:MAX_LAYERS},(_,i)=>fields[i]?.bounds??[0,0,1,1]).flat());
         gl.uniform4fv(this.location('floraMeta[0]'),Array.from({length:MAX_LAYERS},(_,i)=>[fields[i]?.width??1,fields[i]?.height??1,(scene[i]?.flora?.index??0)*17.31+(scene[i]?.flora?.variant??0)*.057,scene[i]?.flora?.generator==='flower'?-1:(scene[i]?.flora?.frozen?.floraFusion??(scene[i]?effectiveSettings(settings,scene[i]).floraFusion:0))/100]).flat());
@@ -568,14 +606,15 @@ export class LandscapeRenderer {
         gl.uniform4fv(this.location('paintBounds[0]'),Array.from({length:MAX_LAYERS},(_,i)=>fields[i]?.bounds??[0,0,1,1]).flat());
         gl.uniform4fv(this.location('paintMeta[0]'),Array.from({length:MAX_LAYERS},(_,i)=>[fields[i]?.width??1,fields[i]?.height??1,fields[i]?1:0,0]).flat());
     }
-    formMap(settings, width, height, isolatedIndex = null) {
-        this.render(settings,width,height,isolatedIndex==null?1:isolatedIndex+2);
+    formMap(settings, width, height, isolatedIndex = null, prepared = null) {
+        this.render(settings,width,height,isolatedIndex==null?1:isolatedIndex+2,false,-1,null,prepared);
         const pixels = new Uint8Array(width*height*4), ids = new Uint8Array(width*height);
         this.gl.readPixels(0,0,width,height,this.gl.RGBA,this.gl.UNSIGNED_BYTE,pixels);
         for (let y=0;y<height;y++) for (let x=0;x<width;x++) ids[y*width+x]=pixels[((height-1-y)*width+x)*4];
         return {width,height,ids};
     }
     destroy() {
+        this.fieldPool?.destroy();this.preparedFrame=null;
         const gl = this.gl;
         gl.deleteTexture(this.paintTexture);gl.deleteTexture(this.floraTexture);gl.deleteTexture(this.floraColorTexture);gl.deleteTexture(this.customTexture);
         gl.deleteBuffer(this.buffer); gl.deleteProgram(this.program);
