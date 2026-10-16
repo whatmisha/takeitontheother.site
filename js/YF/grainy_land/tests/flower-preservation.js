@@ -1,4 +1,4 @@
-import {defaults,switchMode} from '../document.js?v=flower-field-2';
+import {defaults,switchMode} from '../legacy-document.js';
 import {getLayers,withLayers} from '../layers.js?v=flower-field-2';
 import {LandscapeRenderer} from '../render.js?v=flower-field-2';
 const samples=await(await fetch('./fixtures/flower-approved.json')).json(),renderer=new LandscapeRenderer(),base=switchMode(defaults,'f'),signatures={},log=[];

@@ -166,8 +166,13 @@ assert.match(grainyHtml, /id="materialPanelHeader"><span>Appearance<\/span>/u, '
 assert.match(grainyHtml, /<details id="colorSection"[^>]*class="ui-disclosure appearance-section control-field-group control-field-group--flush"[^>]* open>/u);
 assert.match(grainyHtml, /<summary id="colorHeading" class="control-field-heading">Color<svg class="ui-disclosure__chevron"/u);
 assert.match(grainyHtml, /<details id="surfaceSection" class="ui-disclosure appearance-section control-field-group" aria-labelledby="surfaceHeading">/u);
+assert.match(grainyHtml, /<details class="ui-disclosure appearance-section control-field-group" id="advancedTones" aria-labelledby="tonesHeading">/u);
 assert.match(grainyHtml, /<summary id="surfaceHeading" class="control-field-heading">Surface<svg class="ui-disclosure__chevron"/u);
-assert.doesNotMatch(grainyHtml, /role="tab(?:list|panel)?"|colorTab|surfaceTab/u, 'Color and Surface must be stacked sections');
+const appearanceMarkup = grainyHtml.slice(grainyHtml.indexOf('id="materialPanel"'), grainyHtml.indexOf('id="animationPanel"'));
+assert.ok(appearanceMarkup.includes('id="colorSection"') && appearanceMarkup.includes('id="surfaceSection"'), 'Appearance sections must be in the inspected panel');
+assert.doesNotMatch(appearanceMarkup, /role="tab(?:list|panel)?"|colorTab|surfaceTab/u, 'Color and Surface must be stacked sections');
+assert.match(grainyHtml, /class="segmented-control" role="tablist" aria-label="Object settings"/u, 'Composition must use shared settings tabs');
+for (const kind of ['land', 'spot', 'plant', 'flower']) assert.match(grainyHtml, new RegExp('role="tab" id="settings-' + kind + '"'), 'Every object type has one settings tab');
 assert.doesNotMatch(grainyTool + grainyEditor, /selectTab|colorTab|surfaceTab/u, 'No stale tab handlers may remain');
 assert.equal(grainyHtml.match(/<details class="ui-disclosure\b|<details id="[^"]+" class="ui-disclosure\b/gu)?.length, grainyHtml.match(/<details\b/gu)?.length, 'All disclosures must use shared styling');
 assert.equal(grainyHtml.match(/class="ui-disclosure__chevron"/gu)?.length, grainyHtml.match(/<details\b/gu)?.length, 'Disclosures must use panel chevrons');

@@ -1,0 +1,32 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { EndingAssetStorage } from '../asset-storage.js';
+import { seedDraftPreset } from '../library.js';
+import { presetDocument } from '../document.js';
+import { normalize } from '../model.js';
+import { PresetStore } from '../../infra/framework/src/index.js';
+const memory = () => { const map = new Map(); return { getItem: k => map.get(k) ?? null, setItem: (k, v) => map.set(k, v), removeItem: k => map.delete(k) }; };
+test('local asset references preserve original source and never enter portable preset snapshots', async () => {
+    const data = 'a'.repeat(70000), assets = new EndingAssetStorage(null, new Map([['source-id', data]]));
+    globalThis.localStorage = memory();
+    const store = new PresetStore({storageKey: 'test'});
+    const doc = presetDocument(normalize({ endingType: 'svg', endingAsset: {kind: 'svg', name: 'mark.svg', data} }));
+    await assets.attach(store); assert.ok(store.create('Original', doc).ok); assert.ok(store.create('Copy', doc).ok);
+    assert.ok(localStorage.getItem('test').length < 5000);
+    assert.deepEqual(store.load('Copy').settings, doc.settings);
+    const packed = assets.pack(doc); assert.equal(packed.settings.endingAsset.assetId, 'source-id');
+    assert.deepEqual(assets.unpack(packed), doc); assert.equal(doc.settings.endingAsset.data, data);
+    assert.throws(() => new EndingAssetStorage(null, new Map()).unpack(packed), /missing/);
+});
+test('Draft is added once to existing libraries, respects user content and retries a failed save', async () => {
+    globalThis.localStorage = memory(); const store = new PresetStore({storageKey:'seed'});
+    const doc = presetDocument(normalize({endingFadeIn:true}), 'Draft'), assets = { async prepare() {} };
+    let loads = 0; const load = async () => { loads++; return doc; };
+    const save = store.saveAll; store.saveAll = () => false;
+    await assert.rejects(seedDraftPreset(store, assets, {load})); assert.equal(localStorage.getItem('seed:draft-v1'), null);
+    store.saveAll = save;
+    await seedDraftPreset(store, assets, {load}); assert.ok(store.has('Draft'));
+    store.delete('Draft'); await seedDraftPreset(store, assets, {load}); assert.equal(store.has('Draft'), false); assert.equal(loads, 2);
+    const custom = new PresetStore({storageKey:'custom'}); custom.create('Draft', presetDocument(normalize({body:'Keep'}), 'Draft'));
+    await seedDraftPreset(custom, assets, {load}); assert.equal(custom.load('Draft').settings.body, 'Keep'); assert.equal(loads, 2);
+});

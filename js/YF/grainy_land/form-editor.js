@@ -1,14 +1,14 @@
-import {kindLabels,effectiveSettings} from './object-model.js?v=petal-motion-1';
-import { LayerHover } from './layer-hover.js?v=layers-polish-1';
+import {kindLabels,effectiveSettings} from './object-model.js?v=unified-document-1';
+import { LayerHover } from './layer-hover.js?v=unified-document-1';
 import {normalizeFloraParams} from './flora.js?v=petal-motion-1';
 import { FloraEditor } from './flora-editor.js?v=petal-motion-1';
 import { editSelection, duplicateSelection, reorderSelection, resizeSelection, selectionValue, selectedLayers, deleteSelection } from './selection.js?v=petal-motion-1';
 import { localToCanvas, canvasToLocal, materialRanges } from './transforms.js?v=petal-motion-1';
-import { VectorEditor } from './vector-editor.js?v=petal-motion-1';
-import { groupColor } from './custom-colors.js?v=petal-motion-1';
+import { VectorEditor } from './vector-editor.js?v=unified-document-1';
+import { groupColor } from './custom-colors.js?v=unified-document-1';
 import { brushStroke, localPaintPoint, strokePointCount, MAX_STROKES, MAX_STROKE_POINTS, MAX_FORM_POINTS } from './paint.js?v=petal-motion-1';
-import { getLayers, withLayers, layerSettingsKey, MAX_LAYERS, editLayer, addLayer, addBlueLayer, duplicateLayer, removeLayer, reorderLayer, convertLayer } from './layers.js?v=petal-motion-1';
-import { createLayerScene } from './scene.js?v=petal-motion-1';
+import { getLayers, withLayers, layerSettingsKey, MAX_LAYERS, editLayer, addLayer, addBlueLayer, duplicateLayer, removeLayer, reorderLayer, convertLayer } from './layers.js?v=unified-document-1';
+import { createLayerScene } from './scene.js?v=unified-document-1';
 import { LandscapeRenderer } from './render.js?v=layers-polish-1';
 
 export function visibleBounds(map, selected) {
@@ -38,7 +38,7 @@ export class FormEditor {
         this.tool=tool;this.change=change;this.active=false;this.selected=null;this.gesture=null;this.space=false;
         this.map=null;this.mapKey='';this.listKey='';this.thumbs=new Map();this.paintTool='move';this.brushSize=18;
         this.abort=new AbortController();this.container=byId('canvasContainer');this.overlay=byId('formOverlay');
-        this.cursor=byId('brushCursor');this.mask=document.createElement('canvas');this.mode=tool.settings.mode;
+        this.cursor=byId('brushCursor');this.mask=document.createElement('canvas');this.documentRevision=tool.documentRevision;
     }
     layer(){return getLayers(this.tool.settings).find(l=>l.id===this.selected);}
     editableLayers(){return selectedLayers(this.tool.settings,this.selection(),{editable:true});}
@@ -89,7 +89,7 @@ export class FormEditor {
             if(!this.editableLayers().length)return;
             if(!this.opacityEditing){this.tool.history.flush();this.tool.history.beginTransaction('Layer opacity');this.opacityEditing=true;}
             const next=editSelection(this.tool.settings,this.selection(),{opacity:Number(e.target.value)},this.selected);
-            this.tool.settingsStore.set(layerSettingsKey(this.tool.settings.mode),next[layerSettingsKey(this.tool.settings.mode)]);
+            this.tool.settingsStore.set(layerSettingsKey(),next[layerSettingsKey()]);
         });
         on(byId('layerOpacity'),'change',()=>this.endOpacity());on(byId('layerOpacity'),'blur',()=>this.endOpacity());
         document.querySelectorAll('[data-form-tool]').forEach(button=>on(button,'click',()=>this.setTool(button.dataset.formTool)));
@@ -182,12 +182,12 @@ export class FormEditor {
         byId('layerList').querySelector('.is-selected')?.scrollIntoView({block:'nearest'});
     }
     async renameLayer(id){
-        const layer=getLayers(this.tool.settings).find(l=>l.id===id),mode=this.tool.settings.mode;
+        const layer=getLayers(this.tool.settings).find(l=>l.id===id),revision=this.tool.documentRevision;
         if(!layer||layer.locked||this.renaming)return;
         this.select(id);this.renaming=true;
         try {
             const value=await this.tool.dialog.prompt({title:'Rename layer',value:layer.name,placeholder:'Layer name',confirmText:'Rename'});
-            if(this.abort.signal.aborted||this.tool.settings.mode!==mode||!value?.trim()||value===layer.name)return;
+            if(this.abort.signal.aborted||this.tool.documentRevision!==revision||!value?.trim()||value===layer.name)return;
             this.change(this.tool,editLayer(this.tool.settings,id,{name:value.trim().slice(0,64)}),'Rename layer');
         } finally {this.renaming=false;}
     }
@@ -208,7 +208,7 @@ export class FormEditor {
         if(range&&id&&this.selected){const a=stack.findIndex(l=>l.id===this.selected),b=stack.findIndex(l=>l.id===id);ids=new Set(stack.slice(Math.min(a,b),Math.max(a,b)+1).map(l=>l.id));}
         else if(toggle&&id){if(ids.has(id))ids.delete(id);else ids.add(id);}
         else {const l=stack.find(l=>l.id===id);ids=new Set(!id?[]:!individual&&l?.collection?stack.filter(x=>x.collection===l.collection).map(x=>x.id):[id]);}
-        this.selectedIds=ids;this.selected=ids.has(id)?id:[...ids].at(-1)??null;this.cursor.hidden=true;this.report();this.sync();this.tool.render();
+        this.selectedIds=ids;this.selected=ids.has(id)?id:[...ids].at(-1)??null;this.cursor.hidden=true;this.objectUI?.followSelection();this.report();this.sync();this.tool.render();
     }
     async groupSelection(){
         if(this.selection().length<2)return;const name=await this.tool.dialog.prompt({title:'Group layers',label:'Group name',value:'Group'});if(!name?.trim())return;
@@ -217,7 +217,7 @@ export class FormEditor {
     renderList(stack) {
         const settings=this.tool.settings,previous=this.listRows??new Map();
         const entries=[...stack].reverse().map(layer=>({layer,key:JSON.stringify([
-            settings.mode,layer.id,layer.name,layer.kind,layer.mode,layer.parameterMode,layer.parameters,
+            layer.id,layer.name,layer.kind,layer.mode,layer.parameterMode,layer.parameters,
             layer.visible,layer.locked,layer.group,layer.collection,layer.flora,
             this.flora?.expanded.has(layer.id)??false,
             this.flora?.expanded.has(layer.id)?normalizeFloraParams(effectiveSettings(settings,layer)):null
@@ -304,7 +304,7 @@ export class FormEditor {
         }
     }
     clearDrops(){byId('layerList').querySelectorAll('.drop-before,.drop-after,.is-dragging').forEach(row=>row.classList.remove('drop-before','drop-after','is-dragging'));}
-    modeDescription(layer){return (['drawn','vector'].includes(layer.mode)?'Shape is independent of generation controls.':layer.parameterMode==='individual'?'Individual parameters; Regenerate keeps this shape.':'Auto follows shared parameters. '+(layer.mode==='pinned'?'Pinned seed stays unchanged on Regenerate.':'Regenerate varies the seed.'))+(layer.locked?' Locked against edits and Regenerate.':'');}
+    modeDescription(layer){return (['drawn','vector'].includes(layer.mode)?'Shape is independent of generation controls.':layer.parameterMode==='individual'?'Individual parameters; Regenerate varies the seed unless pinned.':'Auto follows shared parameters. '+(layer.mode==='pinned'?'Pinned seed stays unchanged on Regenerate.':'Regenerate varies the seed.'))+(layer.locked?' Locked against edits and Regenerate.':'');}
 
     syncColorSwatches(layer) {
         const s=this.tool.settings,container=byId('layerColorSwatches'),chosen=selectedLayers(s,this.selection()),group=selectionValue(chosen,l=>l.group),editable=chosen.some(l=>!l.locked);
@@ -327,7 +327,7 @@ export class FormEditor {
     }
     sync() {
         const s=this.tool.settings,stack=getLayers(s);
-        if(s.mode!==this.mode){this.cancel();this.mode=s.mode;this.selectedIds?.clear();this.selected=null;this.thumbs.clear();}
+        if(this.tool.documentRevision!==this.documentRevision){this.cancel();this.documentRevision=this.tool.documentRevision;this.selectedIds?.clear();this.selected=null;this.thumbs.clear();}
         if(this.selectedIds)this.selectedIds=new Set([...this.selectedIds].filter(id=>stack.some(l=>l.id===id)));
         if(!stack.some(l=>l.id===this.selected))this.selected=[...(this.selectedIds??[])].at(-1)??null;
         this.active=this.selected!=null;

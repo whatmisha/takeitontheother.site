@@ -119,14 +119,18 @@ export class ApplicationShell {
 
         if (typeof c.onInit === 'function') c.onInit(this);
 
-        // First render must run before zoom so the surface has real dimensions.
-        this.renderNow();
+        // Zoom needs dimensions, but preset-backed tools can defer artwork until
+        // the initial preset or shared document has been resolved.
+        if (c.deferInitialRender) {
+            const {width, height} = this._logicalSize();
+            this.target.setLogicalSize(width, height);
+        } else this.renderNow();
         if (this.capabilities.zoom) {
             this.target.initZoom(c.zoom || {});
             this._bindZoomIndicator();
         }
 
-        // Load presets / shared payload after the first paint.
+        // Resolve presets / shared payload before the first committed frame.
         await this._bootstrapPresets();
 
         this._isInitializing = false;
@@ -409,6 +413,7 @@ export class ApplicationShell {
 
     /** Render immediately (synchronous). */
     renderNow() {
+        if (this._isInitializing && this.config.deferInitialRender) return;
         const { width, height } = this._logicalSize();
         this.target.setLogicalSize(width, height);
         this.target.beginFrame();
@@ -923,8 +928,7 @@ export class ApplicationShell {
         });
         if (result.action === 'cancel') return false;
         if (result.action === 'save') {
-            if (this.presets.isEphemeral) return await this.savePreset();
-            this.presets.saveCurrent();
+            return await this.savePreset();
         }
         return true;
     }
@@ -1065,9 +1069,10 @@ export class ApplicationShell {
             this._refreshChrome();
             return !!res.ok;
         }
-        this.presets.saveCurrent();
+        const result = this.presets.saveCurrent();
         this._refreshChrome();
-        return true;
+        if (!result.ok) this._showToast('Preset could not be saved. Browser storage may be unavailable.');
+        return result.ok;
     }
 
     /** Copy a share link for the current preset to the clipboard. */

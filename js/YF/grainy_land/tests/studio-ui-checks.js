@@ -9,7 +9,7 @@ const check=(name,ok)=>{log.push((ok?'PASS ':'FAIL ')+name);out.textContent=log.
 const pixels=source=>{const c=document.createElement('canvas');c.width=source.width;c.height=source.height;const ctx=c.getContext('2d');ctx.drawImage(source,0,0);return ctx.getImageData(0,0,c.width,c.height).data;};
 const alpha=(p,value)=>p.every((v,i)=>i%4!==3||v===value);
 try{
- const empty={...defaults,width:320,height:180,landscapeLayers:[],backgroundVisible:false};
+ const empty={...defaults,width:320,height:180,layers:[],backgroundVisible:false};
  check('Hidden Background renders transparent',alpha(pixels(r.render(empty,320,180)),0));
  check('Visible Background renders opaque',alpha(pixels(r.render({...empty,backgroundVisible:true},320,180)),255));
  for(const forceTiled of [false,true]){const {blob}=await renderPNG(r,empty,{forceTiled}),img=await createImageBitmap(blob);check('Hidden Background PNG, tiled '+forceTiled,alpha(pixels(img),0));img.close();}

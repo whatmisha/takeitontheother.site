@@ -1,5 +1,5 @@
-import { normalizeSettings, exportDimensions } from './document.js?v=petal-motion-1';
-import { getLayers, layerSettingsKey } from './layer-data.js?v=petal-motion-1';
+import { normalizeSettings, exportDimensions } from './document.js?v=unified-document-1';
+import { getLayers, layerSettingsKey } from './layer-data.js?v=unified-document-1';
 import { renderPNG } from './png-export.js?v=petal-motion-1';
 import { StoredZipWriter } from '../infra/framework/src/export/StoredZipWriter.js?v=petal-motion-1';
 
@@ -17,7 +17,7 @@ export function layerExportPlan(raw) {
 }
 
 export async function renderLayersZIP(renderer,raw,{signal,onProgress=()=>{}}={}) {
-    const {settings,entries}=layerExportPlan(raw),stack=getLayers(settings),key=layerSettingsKey(settings.mode);
+    const {settings,entries}=layerExportPlan(raw),stack=getLayers(settings),key=layerSettingsKey();
     const zip=new StoredZipWriter();
     for(let i=0;i<entries.length;i++) {
         signal?.throwIfAborted();

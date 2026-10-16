@@ -20,3 +20,20 @@
 npm run test:framework
 npm run gate:g2:static
 ```
+
+Раскрывающиеся подразделы в стиле Text Styles из Pizza Boxer доступны и для native `<details>`:
+
+```html
+<details class="ui-disclosure ui-disclosure-section">
+  <summary class="collapsible-header">Название<svg class="ui-disclosure__chevron">…</svg></summary>
+  <div class="ui-disclosure__content">…настройки…</div>
+</details>
+```
+
+`ui-contract.css` задаёт разделители и симметричные отступы секций, а общий `.collapsible-header` — зону наведения. Секции можно размещать в отдельных контейнерах и динамически скрывать: расстояния между соседними заголовками сохраняются. Раскрытием и клавиатурой управляет сам `<details>`.
+
+`ApplicationShell` supports `deferInitialRender: true` for preset-backed artwork.
+It supplies logical dimensions for zoom immediately, but skips render requests until
+preset/share bootstrap finishes. Other tools retain their existing first-paint policy.
+Native `.ui-disclosure.control-field-group` sections own their header spacing in both
+states. `.panel-action--icon` provides a 36 px circular transport/action button.

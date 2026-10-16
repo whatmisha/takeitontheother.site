@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {defaults,switchMode,normalizeSettings,makeDocument} from '../document.js';
+import {normalizeSettings,makeDocument} from '../document.js';
+import {defaults,switchMode} from '../legacy-document.js';
 import {getLayers,withLayers,editLayer,convertLayer} from '../layers.js';
 import {floraParts,editFloraPart} from '../flora.js';
 import {moveVectorNode,splitVectorSegment} from '../vector-path.js';
@@ -38,7 +39,7 @@ test('Every flower type animates petals independently while preserving attachmen
  }
 });
 test('Loop seam, zero Motion and locked flowers preserve exact source geometry',()=>{
- const s=start();assert.equal(motionFrame(s,0),s);assert.equal(motionFrame(s,1),s);assert.equal(motionFrame(s,-1),s);
+ const s=start();assert.deepEqual(motionFrame(s,0),normalizeSettings(s));assert.deepEqual(motionFrame(s,1),normalizeSettings(s));assert.deepEqual(motionFrame(s,-1),normalizeSettings(s));
  assert.equal(motionFrame({...s,motionAmount:0},.4).motionAmount,0);assert.deepEqual(pose({...s,motionAmount:0},.4).parts,pose(s,0).parts);
  const a=pose(s,.3),b=pose(s,1.3);assert.deepEqual(a.parts,b.parts);
  const near=pose(s,1-1e-7).parts,rest=pose(s,0).parts;

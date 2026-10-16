@@ -8,7 +8,7 @@
     <meta name="theme-color" content="#000000">
     <title>Lunnen Sparky — Parametric Character</title>
     <link id="frameworkStyles" rel="stylesheet" href="../infra/framework/css/othersite-styles.css?v=g6-choice-1">
-    <link id="applicationStyles" rel="stylesheet" href="./styles/sparky.css?v=integration-mobile-1&layout=root-infra-1">
+    <link id="applicationStyles" rel="stylesheet" href="./styles/sparky.css?v=lottie-1&layout=root-infra-1">
     <link rel="stylesheet" href="../infra/framework/css/ui-contract.css?v=panel-resize-1&rev=2">
 </head>
 <body>
@@ -375,6 +375,9 @@
             </div>
             <div class="action-dock__slot action-dock__slot--primary">
                 <div class="sparky-export-actions" id="animationExportActions">
+                    <button class="btn-fixed" id="exportLottieBtn" type="button" hidden
+                            title="Export vector animation with transparent background, without motion blur"
+                            aria-label="Export Lottie animation, without motion blur">Lottie</button>
                     <button class="btn-fixed" id="exportPngBtn" type="button">PNG</button>
                     <button class="btn-fixed" id="exportSvgBtn" type="button"
                             data-action-dock-primary-export>SVG ⌘E</button>
@@ -403,7 +406,7 @@
 
     <script type="module" src="../infra/framework/src/ui/actionDockAutoInit.js?v=g7-resilience-4"></script>
     <script type="module" src="../infra/framework/src/ui/presetMenuKeyboardAutoInit.js?v=g7-resilience-4"></script>
-    <script type="module" src="./tool.js?v=g6-capabilities-1&layout=root-infra-1"></script>
+    <script type="module" src="./tool.js?v=lottie-1&layout=root-infra-1"></script>
     <script type="module" src="../infra/framework/src/ui/unifiedUiAutoInit.js?v=uiq-2"></script>
     <script type="module" src="../infra/framework/src/ui/panelResizeAutoInit.js?v=9"></script>
 </body>

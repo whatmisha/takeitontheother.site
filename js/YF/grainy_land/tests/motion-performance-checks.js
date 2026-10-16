@@ -1,4 +1,5 @@
-import {defaults,switchMode,normalizeSettings} from '../document.js';
+import {defaults,switchMode} from '../legacy-document.js';
+import {normalizeSettings} from '../document.js?v=unified-document-1';
 import {resizeObjects,addObject} from '../object-actions.js';
 import {editLayer,getLayers} from '../layers.js';
 import {createLayerScene} from '../scene.js';

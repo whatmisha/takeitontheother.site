@@ -1,4 +1,4 @@
-import {defaults,switchMode} from '../document.js?v=petal-motion-1';
+import {defaults,switchMode} from '../legacy-document.js';
 import {LandscapeRenderer} from '../render.js?v=petal-motion-1';
 import {motionFrame,renderVideo} from '../motion.js?v=petal-motion-1';
 import {getLayers,layerSettingsKey} from '../layer-data.js?v=petal-motion-1';

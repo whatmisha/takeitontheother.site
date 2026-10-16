@@ -1,4 +1,4 @@
-import {getLayers} from './layer-data.js?v=petal-motion-1';
+import {getLayers} from './layer-data.js?v=unified-document-1';
 
 export function hoverPixels({width,height,ids},background=false) {
     const pixels=new Uint8ClampedArray(width*height*4),inside=at=>background?ids[at]===0:ids[at]!==0;
@@ -13,7 +13,7 @@ export function hoverPixels({width,height,ids},background=false) {
 // Transient canvas feedback is separate from selection, geometry editing and exports.
 export class LayerHover {
     constructor(editor) {
-        this.editor=editor;this.id=null;this.mode=editor.tool.settings.mode;this.key='';
+        this.editor=editor;this.id=null;this.mode=editor.tool.documentRevision;this.key='';
         this.canvas=document.getElementById('layerHoverOverlay');this.mask=document.createElement('canvas');
         this.abort=new AbortController();const on=(el,event,fn)=>el.addEventListener(event,fn,{signal:this.abort.signal});
         const list=document.getElementById('layerList'),background=document.getElementById('backgroundLayer').closest('.background-row');
@@ -36,7 +36,7 @@ export class LayerHover {
     }
     draw(settings=this.editor.tool.settings,prepared=null) {
         const e=this.editor,s=settings;
-        if(this.mode!==s.mode){this.mode=s.mode;this.id=null;this.key='';}
+        if(this.mode!==this.editor.tool.documentRevision){this.mode=this.editor.tool.documentRevision;this.id=null;this.key='';}
         const stack=getLayers(s),index=stack.findIndex(l=>l.id===this.id),background=this.id==='background';
         const shown=this.id!=null&&(background?s.backgroundVisible:index>=0&&stack[index].visible)&&!e.gesture&&!e.reorderGesture;
         this.canvas.hidden=!shown;this.canvas.dataset.layerId=shown?this.id:'';if(!shown)return;

@@ -1,12 +1,12 @@
 import { PenDraft } from './pen-draft.js?v=petal-motion-1';
 import { localToCanvas } from './transforms.js?v=petal-motion-1';
 import { localPaintPoint } from './paint.js?v=petal-motion-1';
-import { getLayers, addLayer, editLayer, layerSettingsKey, MAX_LAYERS } from './layers.js?v=petal-motion-1';
+import { getLayers, addLayer, editLayer, layerSettingsKey, MAX_LAYERS } from './layers.js?v=unified-document-1';
 import { moveVectorNode, setVectorNodesSmooth, splitVectorSegment, vectorSegment, cubicPoint, MAX_VECTOR_NODES } from './vector-path.js?v=petal-motion-1';
 const byId=id=>document.getElementById(id),NS='http://www.w3.org/2000/svg';
 const svgNode=(name,attrs)=>{const n=document.createElementNS(NS,name);for(const [k,v]of Object.entries(attrs))n.setAttribute(k,String(v));return n;};
 export class VectorEditor {
-    constructor(editor){this.editor=editor;this.state='idle';this.selected=0;this.layerId=null;this.drag=null;this.nodes=new Set([0]);this.drafts=new Map();this.draftMode=null;this.mode=editor.tool.settings.mode;}
+    constructor(editor){this.editor=editor;this.state='idle';this.selected=0;this.layerId=null;this.drag=null;this.nodes=new Set([0]);this.drafts=new Map();this.draftMode=null;this.mode=editor.tool.documentRevision;}
     get editing(){return this.state==='edit';}
     get draft(){return this.drafts.get(this.draftMode);}
     get pen(){return this.state==='pen'?this.draft.points:null;}
@@ -108,12 +108,12 @@ export class VectorEditor {
     deletePoint(){const e=this.editor,l=e.layer();if(!l||l.locked||!this.editing||this.drag)return;if(l.vectorPath.length-this.nodes.size<3){e.report('A closed shape needs at least three points.');return;}const path=l.vectorPath.filter((_,i)=>!this.nodes.has(i));this.selected=Math.min(this.selected,path.length-1);this.nodes=new Set([this.selected]);e.commit({vectorPath:path},'Delete vector points');}
     draftHint(){
         if(this.pen)return 'Pen: click or drag to add points. Enter closes; Cmd/Ctrl+Z undoes; Backspace removes the last point; Esc discards.';
-        return this.drafts.get(this.editor.tool.settings.mode)?.points.length?'Unfinished path saved. Press P to resume.':'';
+        return this.drafts.get(this.editor.tool.documentRevision)?.points.length?'Unfinished path saved. Press P to resume.':'';
     }
     startPen(){
         const e=this.editor;e.flora?.deactivate();if(this.pen){e.container.focus({preventScroll:true});return;}
         if(getLayers(e.tool.settings).length>=MAX_LAYERS){e.report('Maximum '+MAX_LAYERS+' layers. Delete a layer before using Pen.');return;}
-        this.setEditing(false);e.paintTool='move';this.draftMode=e.tool.settings.mode;
+        this.setEditing(false);e.paintTool='move';this.draftMode=e.tool.documentRevision;
         if(!this.drafts.has(this.draftMode))this.drafts.set(this.draftMode,new PenDraft());
         this.state='pen';this.penPress=null;e.sync();e.report();e.tool.render();e.container.focus({preventScroll:true});
     }
@@ -136,15 +136,15 @@ export class VectorEditor {
     releasePenDrag(rollback=false){const g=this.penDrag;this.penDrag=null;if(g&&rollback)Object.assign(this.draft,g.before);if(g&&this.editor.container.hasPointerCapture(g.pointerId))this.editor.container.releasePointerCapture(g.pointerId);if(g&&rollback)this.editor.tool.render();}
     cancel(){this.releasePenDrag(true);const g=this.drag;if(!g)return;this.drag=null;if(g.started){this.editor.tool.applySnapshot(g.snapshot);this.editor.tool.history.endTransaction();}if(this.editor.container.hasPointerCapture(g.pointerId))this.editor.container.releasePointerCapture(g.pointerId);}
     sync(){
-        const e=this.editor,l=e.layer(),vector=(e.selection?.().length??1)===1&&l?.mode==='vector',full=getLayers(e.tool.settings).length>=MAX_LAYERS,modeChanged=this.mode!==e.tool.settings.mode;
-        this.mode=e.tool.settings.mode;
+        const e=this.editor,l=e.layer(),vector=(e.selection?.().length??1)===1&&l?.mode==='vector',full=getLayers(e.tool.settings).length>=MAX_LAYERS,modeChanged=this.mode!==e.tool.documentRevision;
+        this.mode=e.tool.documentRevision;
         if(this.pen&&(this.draftMode!==this.mode||full)){this.pausePen();e.report(full?'Maximum '+MAX_LAYERS+' layers. Delete a layer before using Pen.':'');}
         else if(modeChanged)e.report();
         if(this.editing&&(!vector||l.id!==this.layerId||l.locked||!l.visible))this.state='idle';
         if(l?.id!==this.layerId)this.nodes=new Set([0]);
         this.layerId=l?.id??null;this.selected=Math.min(this.selected,(l?.vectorPath?.length??1)-1);
         this.nodes=new Set([...this.nodes].filter(i=>i<(l?.vectorPath?.length??0)));if(!this.nodes.size)this.nodes.add(0);
-        byId('penTool').setAttribute('aria-pressed',String(!!this.pen));byId('penTool').disabled=full;byId('penTool').title=full?'Maximum '+MAX_LAYERS+' layers. Delete a layer before using Pen.':this.drafts.get(e.tool.settings.mode)?.points.length?'Resume unfinished path (P)':'Pen (P)';
+        byId('penTool').setAttribute('aria-pressed',String(!!this.pen));byId('penTool').disabled=full;byId('penTool').title=full?'Maximum '+MAX_LAYERS+' layers. Delete a layer before using Pen.':this.drafts.get(e.tool.documentRevision)?.points.length?'Resume unfinished path (P)':'Pen (P)';
         byId('vectorControls').hidden=!vector;byId('vectorPointControls').hidden=!this.editing;
         byId('editVectorPath').textContent=this.editing?'Done editing':'Edit path';byId('editVectorPath').setAttribute('aria-pressed',String(this.editing));
         byId('editVectorPath').disabled=!vector||l.locked||!l.visible;

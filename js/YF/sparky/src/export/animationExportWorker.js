@@ -1,21 +1,5 @@
-import {
-    generateFocusPathForSettings,
-    rebuildFocusPath
-} from '../animation/focusPath.js?v=20260828-1';
-import {
-    createFocusTimeline,
-    resolveFocusStops,
-    sampleFocusTimeline
-} from '../animation/focusTimeline.js?v=20260826-1';
-import {
-    createEyeAnimationTimeline,
-    createLoopEyeAnimationTimeline,
-    sampleEyeAnimationTimeline
-} from '../animation/eyeTimeline.js?v=20260828-2';
-import {
-    createStationaryLoopTimeline,
-    sampleLoopFocus
-} from '../animation/loopTimeline.js?v=20260827-1';
+import { sampleEyeAnimationTimeline } from '../animation/eyeTimeline.js?v=20260828-2';
+import { createMotion, sampleMotionFocus, createLoopingEyeMotion } from './animationExportMotion.js';
 import { settingsAtBolidTime } from '../animation/bolid.js?v=20260828-3';
 import {
     resolveBlinkMotionBlurTime,
@@ -23,15 +7,13 @@ import {
     wrapMotionBlurTime
 } from '../animation/motionBlur.js?v=20260826-3';
 import {
-    BOLID_EYE_MOTION_TIME_CONSTANT,
     advanceEyeMotionToTarget,
-    createEyeMotionState,
     currentEyeMotionTransform
 } from '../animation/eyeMotion.js?v=20260828-1';
 import {
     buildAnimationFrameScene,
     drawAnimationFrame
-} from '../render/animationFrameRenderer.js?v=20260828-7';
+} from '../render/animationFrameRenderer.js?v=lottie-1';
 import {
     createAnimationFrameSamples,
     sampleAnimationFrame
@@ -45,7 +27,6 @@ import {
 } from './animationExportDefaults.js?v=20260825-2';
 
 let cancelledJob = null;
-const EYE_MOTION_WARMUP_FRAMES = 24;
 const now = () => globalThis.performance?.now?.() ?? Date.now();
 
 function createBenchmarkMetrics(job, frameCount) {
@@ -88,66 +69,6 @@ const postProgress = (jobId, completed, total, message) => {
 const assertActive = (jobId) => {
     if (cancelledJob === jobId) throw new DOMException('Export cancelled.', 'AbortError');
 };
-
-function createMotion(settings, startFocus, motionPath = null) {
-    if (settings.focusMode === 'bolid') {
-        const timeline = createStationaryLoopTimeline(startFocus, settings.motionDuration);
-        const eyeTimeline = createLoopEyeAnimationTimeline(timeline, {
-            blinkCount: settings.motionBlinkCount,
-            pairedBlinks: true,
-            emotionVariation: settings.motionEmotionVariation
-        });
-        return { path: null, timeline, eyeTimeline };
-    }
-    const path = motionPath
-        ? rebuildFocusPath(motionPath)
-        : generateFocusPathForSettings(settings, startFocus);
-    const stops = resolveFocusStops(settings.motionStopCount, path.anchors.length);
-    const timeline = createFocusTimeline(path, {
-        duration: settings.motionDuration,
-        ...stops,
-        speedVariation: settings.motionSpeedVariation,
-        easing: 'ease-in-out',
-        seed: settings.motionSeed
-    });
-    const eyeTimeline = createEyeAnimationTimeline(timeline, {
-        blinkCount: settings.motionBlinkCount,
-        blinkAtStops: true,
-        emotionVariation: settings.motionEmotionVariation,
-        easing: 'ease-in-out'
-    });
-    return { path, timeline, eyeTimeline };
-}
-
-const sampleMotionFocus = (timeline, timeMs) => (
-    sampleLoopFocus(timeline, timeMs, sampleFocusTimeline).point
-);
-
-function createLoopingEyeMotion(settings, timeline, frameCount, fps) {
-    const motion = createEyeMotionState(
-        settings.focusMode === 'bolid' ? BOLID_EYE_MOTION_TIME_CONSTANT : undefined
-    );
-    const frameDuration = 1000 / fps;
-    const warmupCount = Math.min(
-        frameCount,
-        settings.focusMode === 'bolid' ? 40 : EYE_MOTION_WARMUP_FRAMES
-    );
-    for (let index = frameCount - warmupCount; index < frameCount; index += 1) {
-        const timeMs = index * frameDuration;
-        const focus = sampleMotionFocus(timeline, timeMs);
-        const scene = buildAnimationFrameScene(settings, focus, {
-            timeMs,
-            durationMs: timeline.durationMs
-        });
-        advanceEyeMotionToTarget(
-            motion,
-            scene.eyes.pairCenter,
-            frameDuration,
-            scene.eyes.fitScale
-        );
-    }
-    return motion;
-}
 
 function drawMotionFrame(context, size, settings, samples, motion, frameIndex, fps, options = {}, metrics = null) {
     const state = sampleAnimationFrame(samples, frameIndex);
@@ -519,12 +440,32 @@ self.addEventListener('message', async (event) => {
     if (job?.type !== 'export') return;
     cancelledJob = null;
     try {
-        if (typeof OffscreenCanvas === 'undefined' || typeof Path2D === 'undefined') {
+        if (job.format !== 'lottie' && (typeof OffscreenCanvas === 'undefined' || typeof Path2D === 'undefined')) {
             throw new Error('This browser cannot render animation frames in a background worker.');
         }
-        const result = job.format === 'png-sequence'
-            ? await exportPngSequence(job)
-            : await exportMp4(job);
+        let result;
+        if (job.format === 'lottie') {
+            const { createLottieAnimation } = await import('./lottieExporter.js');
+            const animation = createLottieAnimation({
+                ...job,
+                onProgress: (completed, total) => {
+                    assertActive(job.jobId);
+                    postProgress(job.jobId, completed, total, `Building Lottie ${completed} of ${total}`);
+                }
+            });
+            postProgress(job.jobId, 1, 1, 'Packaging Lottie');
+            result = {
+                data: new Blob([JSON.stringify(animation)], { type: 'application/json' }),
+                mimeType: 'application/json',
+                filename: `${job.baseName}-lottie.json`
+            };
+        } else if (job.format === 'png-sequence') {
+            result = await exportPngSequence(job);
+        } else if (job.format === 'mp4') {
+            result = await exportMp4(job);
+        } else {
+            throw new Error('Unknown animation export format.');
+        }
         if (result.data instanceof Blob) {
             self.postMessage({
                 type: 'complete',

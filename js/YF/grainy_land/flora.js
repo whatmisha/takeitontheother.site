@@ -2,8 +2,8 @@ import {poseFlowerParts} from './flower-motion.js?v=petal-motion-1';
 import {colorFlower} from './flower-colors.js?v=petal-motion-1';
 import {buildFlowerParts,normalizeFlowerParams} from './flower.js?v=petal-motion-1';
 import { normalizeVectorPath } from './vector-path.js?v=petal-motion-1';
-export {plantDefaults as floraDefaults,plantRanges as floraRanges} from "./object-model.js?v=petal-motion-1";
-import {plantDefaults as floraDefaults,plantRanges as floraRanges,effectiveSettings} from "./object-model.js?v=petal-motion-1";
+export {plantDefaults as floraDefaults,plantRanges as floraRanges} from "./object-model.js?v=unified-document-1";
+import {plantDefaults as floraDefaults,plantRanges as floraRanges,effectiveSettings} from "./object-model.js?v=unified-document-1";
 
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const mixSize=(t,a,b)=>a+(b-a)*t;

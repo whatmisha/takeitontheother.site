@@ -9,7 +9,7 @@ import { settingsAtBolidTime } from '../animation/bolid.js?v=20260828-3';
 import {
     buildBolidColorTrailLayers,
     buildBolidEyeColorTrailLayers
-} from '../animation/bolidColorTrail.js?v=20260828-5';
+} from '../animation/bolidColorTrail.js?v=lottie-1';
 import { createBolidEyeScaffold } from '../animation/bolidEyeScaffold.js?v=20260828-2';
 
 export const ANIMATION_ARTBOARD_SIZE = 480;
@@ -24,6 +24,7 @@ function addDuration(metrics, key, startedAt) {
 
 export function buildAnimationFrameScene(settings, focus, {
     metrics = null,
+    includeTrailGeometry = false,
     timeMs = null,
     durationMs = Number(settings.motionDuration) * 1000
 } = {}) {
@@ -48,6 +49,7 @@ export function buildAnimationFrameScene(settings, focus, {
     startedAt = now();
     const colorTrailLayers = buildBolidColorTrailLayers(settings, effectiveFocus, {
         timeMs: Number.isFinite(timeMs) ? timeMs : 0,
+        includeGeometry: includeTrailGeometry,
         durationMs
     });
     addDuration(metrics, 'colorTrailMs', startedAt);

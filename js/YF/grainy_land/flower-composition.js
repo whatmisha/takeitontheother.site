@@ -3,7 +3,7 @@
 import {floraParts} from './flora.js?v=petal-motion-1';
 import {flattenVectorPath} from './vector-path.js?v=petal-motion-1';
 import {localToCanvas} from './transforms.js?v=petal-motion-1';
-import {sharedParameters,effectiveSettings} from './object-model.js?v=petal-motion-1';
+import {sharedParameters,effectiveSettings} from './object-model.js?v=unified-document-1';
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const flower=l=>l.flora?.generator==='flower';
 export const compositionRank=l=>l.composition?.rank??l.flora?.index??0;

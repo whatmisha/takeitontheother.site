@@ -19,7 +19,7 @@ test('custom colors retain stable assignments in both modes, JSON, shares and Ge
     assert.deepEqual(normalizeSettings((await codec.decode(await codec.encode(s))).full),s);
     const generated=regenerate(s,56);
     assert.deepEqual(generated.customColors,s.customColors);
-    for(const key of ['landscapeLayers','abstractLayers'])assert.deepEqual(generated[key].map(l=>l.group),s[key].map(l=>l.group));
+    for(const key of ['layers'])assert.deepEqual(generated[key].map(l=>l.group),s[key].map(l=>l.group));
     assert.throws(()=>removeCustomColor(s,id),/another color/);
 });
 test('unused palette edits preserve geometry and original tones, and deletion never renumbers IDs',()=>{
@@ -31,8 +31,8 @@ test('unused palette edits preserve geometry and original tones, and deletion ne
     assert.deepEqual(adjacentColors(defaults),adjacentColors(removed));
     assert.deepEqual(defaults.customColors,[]);
     assert.deepEqual(normalizeSettings({}).customColors,[]);
-    const refs=normalizeSettings({...removed,landscapeLayers:[{id:'test',source:6,group:'custom-missing'}]});
-    assert.equal(refs.landscapeLayers[0].group,'sky');
+    const refs=normalizeSettings({...removed,layers:[{id:'test',source:6,group:'custom-missing'}]});
+    assert.equal(refs.layers[0].group,'sky');
 });
 test('imported palettes are bounded, validate hex and IDs, and leave referenced colors intact',()=>{
     const s=normalizeSettings({...defaults,customColors:[
@@ -40,10 +40,10 @@ test('imported palettes are bounded, validate hex and IDs, and leave referenced 
         {id:'custom-green',color:'#FFFFFF'},
         {id:'sky',color:'url(x)'},null,
         {id:'sky',name:'x'.repeat(100),color:'#000000'}
-    ],landscapeLayers:[{id:'one',source:0,group:'custom-green'}]});
+    ],layers:[{id:'one',source:0,group:'custom-green'}]});
     assert.equal(s.customColors.length,2);assert.deepEqual(s.customColors[0],{id:'custom-green',name:'Green',color:'#ABC123'});
     assert.equal(s.customColors[1].name.length,32);assert.notEqual(s.customColors[1].id,'sky');
-    assert.equal(s.landscapeLayers[0].group,'custom-green');
+    assert.equal(s.layers[0].group,'custom-green');
     let full=defaults;for(let i=0;i<MAX_CUSTOM_COLORS;i++)full=addCustomColor(full).settings;
     assert.throws(()=>addCustomColor(full),/Maximum/);assert.equal(full.customColors.length,MAX_CUSTOM_COLORS);
     assert.equal(normalizeSettings({...full,customColors:[...full.customColors,{id:'custom-extra',color:'#FFFFFF'}]}).customColors.length,MAX_CUSTOM_COLORS);

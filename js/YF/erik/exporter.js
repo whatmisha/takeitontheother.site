@@ -1,3 +1,5 @@
+import { svgBitmap } from './ending-assets.js';
+import { hasEnding } from './ending-model.js';
 export class Exporter {
     constructor(onProgress = () => {}) { this.onProgress = onProgress; this.worker = null; }
     get busy() { return this.worker !== null; }
@@ -18,7 +20,13 @@ export class Exporter {
                 else if (data.type === 'complete') finish(null, data);
                 else if (data.type === 'error') finish(new Error(data.message));
             };
-            worker.postMessage({ type, settings, time });
+            // SVG decoding needs an Image in the document. Transfer the raster once;
+            // all frame composition and encoding still happen in the export worker.
+            (async () => {
+                const bitmap = hasEnding(settings) && settings.endingType === 'svg' ? await svgBitmap(settings.endingAsset) : null;
+                if (this.worker !== worker) { bitmap?.close(); return; }
+                worker.postMessage({ type, settings, time, bitmap }, bitmap ? [bitmap] : []);
+            })().catch(error => { if (this.worker === worker) finish(error); });
         });
     }
     cancel() { this.cancelCurrent?.(); }

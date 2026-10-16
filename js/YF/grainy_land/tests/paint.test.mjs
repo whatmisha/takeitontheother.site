@@ -1,7 +1,9 @@
+import {defaults} from '../legacy-document.js';
+import {getLayers} from '../layers.js';
 import { ShareCodec } from '../../infra/framework/src/preset/ShareCodec.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {defaults,editForm,formEdit,makeDocument,readDocument,regenerate,normalizeSettings} from '../document.js';
+import {editForm,formEdit,makeDocument,readDocument,regenerate,normalizeSettings} from '../document.js';
 import {normalizeStrokes,brushStroke,localPaintPoint,paintDistance,bakePaint,MAX_STROKES,MAX_STROKE_POINTS,MAX_FORM_POINTS,strokePointCount} from '../paint.js';
 const brush={kind:'paint',rx:.08,ry:.12,points:[[.3,.2],[.55,.3]]};
 const erase={kind:'erase',rx:.03,ry:.045,points:[[.4,.24]]};
@@ -30,11 +32,10 @@ test('paint survives document/preset snapshots and locked generation, with indep
     let s=editForm(defaults,5,{strokes:[brush,erase],locked:true});
     s=editForm({...s,mode:'abstract'},1,{strokes:[erase],locked:true});
     const roundtrip=readDocument(JSON.parse(JSON.stringify(makeDocument(s))));
-    assert.deepEqual(roundtrip,s);assert.deepEqual(normalizeSettings(s),s);
-    assert.deepEqual(regenerate(s,17).landscapeForms,s.landscapeForms);
-    assert.deepEqual(regenerate(s,17).abstractForms,s.abstractForms);
+    assert.deepEqual(roundtrip,normalizeSettings(s));
+    assert.deepEqual(getLayers(regenerate(s,17)).find(l=>l.id==='form-1').strokes,[erase]);
     const unlocked=editForm(s,1,{locked:false});
-    assert.equal(regenerate(unlocked,18).abstractForms,null);
+    assert.equal(getLayers(regenerate(unlocked,18)).find(l=>l.id==='form-1').seed,18);
     const cleared=editForm(s,1,{strokes:[]});
     assert.equal(formEdit(cleared,1).strokes,undefined);
     assert.equal(formEdit(cleared,1).locked,true);
@@ -81,5 +82,5 @@ test('share codec preserves ordered strokes without dropping their payload',asyn
     const codec=new ShareCodec({pristineDefaults:defaults});
     const encoded=await codec.encodeWithBudget(settings);
     const decoded=await codec.decode(encoded.encoded);
-    assert.deepEqual(normalizeSettings(decoded.full),settings);
+    assert.deepEqual(normalizeSettings(decoded.full),normalizeSettings(settings));
 });

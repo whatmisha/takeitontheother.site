@@ -1,4 +1,5 @@
-import {defaults,switchMode,normalizeSettings} from '../document.js';
+import {defaults,switchMode} from '../legacy-document.js';
+import {normalizeSettings} from '../document.js?v=unified-document-1';
 import {resizeObjects,addObject} from '../object-actions.js';
 import {getLayers,editLayer,addLayer,addBlueLayer} from '../layers.js';
 import {addCustomColor} from '../custom-colors.js';

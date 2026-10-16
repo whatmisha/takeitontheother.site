@@ -1,15 +1,15 @@
 import {SliderController} from '../infra/framework/src/index.js';
 import {selectionValue,selectedLayers} from './selection.js?v=petal-motion-1';
-import {modeKinds,modeLabels,kindLabels,kindModes,parameterRanges,sharedParameters,layerParameters} from './object-model.js?v=petal-motion-1';
-import {addObject,countLimits,countKey,resizeObjects,setParameterMode,editObjectParameters,editSharedParameters,copyObjectToScene} from './object-actions.js?v=petal-motion-1';
-import {getLayers,MAX_LAYERS} from './layers.js?v=petal-motion-1';
-import {normalizeSettings} from './document.js?v=petal-motion-1';
+import {kindLabels,kindModes,parameterRanges,sharedParameters,layerParameters} from './object-model.js?v=unified-document-1';
+import {addObject,countLimits,countKey,resizeObjects,setParameterMode,editObjectParameters,editSharedParameters} from './object-actions.js?v=unified-document-1';
+import {getLayers,MAX_LAYERS} from './layers.js?v=unified-document-1';
+import {normalizeSettings} from './document.js?v=unified-document-1';
 const byId=id=>document.getElementById(id);
 const labels={floraCount:'Plants',fCount:'Flowers',fDensity:'Density',fMinSize:'Min size, %',fMaxSize:'Max size, %',fColorVariation:'Flower colors',fPetalColors:'Petal colors',scale:'Scale',complexity:'Complexity',flow:'Flow',folds:'Folds',horizon:'Horizon',relief:'Relief',floraScale:'Plant size',floraRecognition:'Recognizability',floraBranches:'Blossoms',floraOpening:'Opening',floraBend:'Bend',floraMerge:'Merge parts',floraFusion:'Merge plants',fScale:'Flower size',fPetals:'Petals',fOpening:'Opening',fWidth:'Petal width',fCurl:'Curl',fAsymmetry:'Asymmetry',fRecognition:'Recognizability',fTilt:'View angle',fRotation:'Rotation',fCenterX:'Center X',fCenterY:'Center Y',fStem:'Stem length',fBend:'Stem bend',fMerge:'Merge parts',fSizeVariation:'Size variation',fShapeVariation:'Shape variation',fPoseVariation:'Pose variation'};
 const choices=kind=>kind==='flower'?['fType','Flower type',{fan:'Fan',cup:'Cup',lobed:'Lobed',radial:'Radial'}]:kind==='plant'?['floraLayout','Arrangement',{single:'Centered',cluster:'Cluster',field:'Field'}]:['layout','Layout',{auto:'Auto',basin:'Basin',ridge:'Ridge',valley:'Valley',fold:'Fold'}];
 export class ObjectUI {
  constructor(tool,change,editor){
-  Object.assign(this,{tool,change,editor});this.abort=new AbortController();this.blocks=new Map();this.bindings=new Map();
+  Object.assign(this,{tool,change,editor});this.kind=tool.compositionKind??'flower';this.abort=new AbortController();this.bindings=new Map();
   this.sliders=new SliderController({get:id=>this.bindings.get(id).read().value,set:(id,value)=>{
    const binding=this.bindings.get(id),current=binding.read();
    if(current.mixed||value!==current.value)binding.write(value);
@@ -46,21 +46,47 @@ export class ObjectUI {
    const next=this.editor.selection().reduce((s,id)=>setParameterMode(s,id,b.dataset.parameterMode),this.tool.settings);
    this.apply(next,'Parameter mode');
   }));
-  this.on(byId('copyObjectScene'),'change',()=>{
-   const mode=byId('copyObjectScene').value;if(!mode||this.editor.selection().length!==1)return;
-   try{const result=copyObjectToScene(this.tool.settings,this.editor.selected,mode);this.apply(result.settings,'Copy object to '+modeLabels[mode]);this.editor.select(result.id);}catch(e){this.editor.report(e.message);}byId('copyObjectScene').value='';
-  });
   this.on(byId('sharedObjectSettings'),'click',()=>{
-   const l=this.editor.layer();if(!l)return;const panel=byId('compositionPanel');if(panel.classList.contains('panel-collapsed'))panel.querySelector('.collapse-icon').click();
-   const target=byId('shared-'+l.kind)??byId(l.kind==='flower'?'flowerComposition':l.kind==='plant'?'floraComposition':'compositionPanel');if(target.tagName==='DETAILS')target.open=true;target.scrollIntoView({block:'nearest'});
+   const l=this.editor.layer();if(!l)return;this.showKind(l.kind);
+   const panel=byId('compositionPanel');if(panel.classList.contains('panel-collapsed'))panel.querySelector('.collapse-icon').click();
   });
-  for(const kind of ['plant','flower']){
-   const key=countKey(kind);
-   this.bindSlider(byId(key+'Slider'),byId(key+'Value'),()=>({value:countLimits(this.tool.settings,kind).value}),value=>this.live(resizeObjects(this.tool.settings,kind,value),kindLabels[kind]+' count'),0,MAX_LAYERS,1);
+  const tabs=[...document.querySelectorAll('[data-composition-kind]')];
+  tabs.forEach((tab,i)=>{
+   this.on(tab,'click',()=>this.showKind(tab.dataset.compositionKind));
+   this.on(tab,'keydown',event=>{
+    const next=event.key==='ArrowRight'?(i+1)%tabs.length:event.key==='ArrowLeft'?(i+tabs.length-1)%tabs.length:event.key==='Home'?0:event.key==='End'?tabs.length-1:null;
+    if(next==null)return;event.preventDefault();this.showKind(tabs[next].dataset.compositionKind);tabs[next].focus();
+   });
+  });
+  const keys=new Map();for(const kind of ['land','plant','flower'])for(const [key,range]of Object.entries(parameterRanges(kind)))keys.set(key,{kind,range});
+  this.sharedFields=[];
+  for(const [key,{kind,range:[min,max,step]}]of keys){
+   const type=()=>kind==='land'?(['land','spot'].includes(this.kind)?this.kind:'land'):kind;
+   const count=['floraCount','fCount'].includes(key);
+   const binding=this.bindSlider(byId(key+'Slider'),byId(key+'Value'),()=>({value:count?countLimits(this.tool.settings,type()).value:sharedParameters(this.tool.settings,type())[key]}),
+    value=>this.live(count?resizeObjects(this.tool.settings,type(),value):editSharedParameters(this.tool.settings,type(),{[key]:value}),kindLabels[type()]+' '+(labels[key]??key)),min,max,step);
+   this.sharedFields.push({key,kind,binding});
   }
-  this.on(byId('fColorPattern'),'change',()=>this.apply(editSharedParameters(this.tool.settings,'flower',{fColorPattern:byId('fColorPattern').value}),'Flower color pattern'));
-  this.bindSlider(byId('fDensitySlider'),byId('fDensityValue'),()=>({value:this.tool.settings.fDensity}),value=>this.live(editSharedParameters(this.tool.settings,'flower',{fDensity:value}),'Flower density'),0,100,1);
+  for(const [id,kind]of [['fType','flower'],['fColorPattern','flower'],['floraLayout','plant']])this.on(byId(id),'change',()=>this.apply(editSharedParameters(this.tool.settings,kind,{[id]:byId(id).value}),kindLabels[kind]+' settings'));
   this.on(window,'blur',()=>this.end());return this;
+ }
+ showKind(kind){
+  if(!Object.hasOwn(kindModes,kind))return;
+  this.end();this.kind=kind;this.tool.compositionKind=kind;this.syncView();this.tool.uiRefresh?.();
+ }
+ followSelection(){
+  const selected=this.selected();if(selected.length&&selected.every(l=>l.kind===selected[0].kind)&&!['drawn','vector'].includes(selected[0].mode))this.showKind(selected[0].kind);
+ }
+ syncView(){
+  this.kind=this.tool.compositionKind??this.kind;
+  document.querySelectorAll('[data-composition-kind]').forEach(tab=>{const selected=tab.dataset.compositionKind===this.kind;tab.setAttribute('aria-selected',String(selected));tab.tabIndex=selected?0:-1;});
+  for(const [id,kinds]of [['flowerComposition',['flower']],['floraComposition',['plant']],['landComposition',['land','spot']]]){
+   const panel=byId(id);panel.hidden=!kinds.includes(this.kind);if(!panel.hidden)panel.setAttribute('aria-labelledby','settings-'+this.kind);
+  }
+  for(const key of ['horizon','relief'])byId(key+'Slider').closest('.control-group').hidden=this.kind!=='land';
+  byId('newBlueLayers').hidden=this.kind!=='spot';
+  for(const {key,kind,binding}of this.sharedFields??[]){const limits=['floraCount','fCount'].includes(key)?countLimits(this.tool.settings,kind):null;this.syncSlider(binding,limits?.min,limits?.max);}
+  for(const [id,kind]of [['fType','flower'],['fColorPattern','flower'],['floraLayout','plant']])byId(id).value=sharedParameters(this.tool.settings,kind)[id];
  }
  buildFields(host,kind,local,id){
   const controls=[],selects=[choices(kind)];
@@ -95,7 +121,7 @@ export class ObjectUI {
   }
  }
  sync(){
-  const s=this.tool.settings,stack=getLayers(s),native=modeKinds[s.mode],selected=this.selected(),l=this.editor.layer();
+  const s=this.tool.settings,stack=getLayers(s),selected=this.selected(),l=this.editor.layer();
   const procedural=selected.length>0&&selected.every(l=>kindModes[l.kind]&&!['drawn','vector'].includes(l.mode));
   const commonKind=procedural&&selected.every(item=>item.kind===l.kind),mode=selectionValue(selected,item=>item.parameterMode);
   const individual=commonKind&&!mode.mixed&&mode.value==='individual';
@@ -111,21 +137,13 @@ export class ObjectUI {
    byId('sharedObjectSettings').hidden=!commonKind||mode.mixed||mode.value==='individual';byId('sharedObjectSettings').textContent='Shared '+kindLabels[l.kind]+' settings';
    this.syncFields(this.localFields,l.kind,true);
   }
-  byId('fColorPattern').value=s.fColorPattern;this.syncSlider(this.bindings.get('fDensitySlider'));
-  byId('copyObjectScene').disabled=selected.length!==1;byId('copyObjectScene').title=selected.length>1?'Select one object to copy.':'';
-  for(const option of byId('copyObjectScene').options)if(option.value)option.disabled=option.value===s.mode;
+  this.syncView();
   document.querySelectorAll('[data-add-kind]').forEach(b=>{b.disabled=stack.length>=MAX_LAYERS;});
   for(const kind of ['plant','flower']){
    const limits=countLimits(s,kind),key=countKey(kind);this.syncSlider(this.bindings.get(key+'Slider'),limits.min,limits.max);
-   byId(key+'Slider').title=limits.min?limits.min+' Individual, pinned or locked objects are protected.':'Total '+(kind==='plant'?'Plants':'Flowers')+' in this scene.';
+   byId(key+'Slider').title=limits.min?limits.min+' Individual, pinned or locked objects are protected.':'Total '+(kind==='plant'?'Plants':'Flowers')+' in this document.';
   }
-  const foreign=Object.keys(kindModes).filter(kind=>kind!==native&&stack.some(l=>l.kind===kind&&l.parameterMode!=='individual'&&!['drawn','vector'].includes(l.mode)));
-  for(const [kind,block]of this.blocks)block.host.hidden=!foreign.includes(kind);
-  for(const kind of foreign){
-   let block=this.blocks.get(kind);
-   if(!block){const host=document.createElement('details');host.id='shared-'+kind;host.className='ui-disclosure compact-details';const summary=document.createElement('summary');summary.innerHTML=kindLabels[kind]+' · shared'+'<svg class="ui-disclosure__chevron" width="10" height="6" viewBox="0 0 12 8" fill="none" aria-hidden="true"><path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';host.append(summary);byId('foreignObjectSettings').append(host);block={host,controls:this.buildFields(host,kind,false,'shared-'+kind)};this.blocks.set(kind,block);}
-   block.host.hidden=false;this.syncFields(block.controls,kind);
-  }
+
  }
  destroy(){this.end();for(const binding of this.bindings.values())binding.abort.abort();this.bindings.clear();this.sliders.sliders.clear();this.abort.abort();}
 }

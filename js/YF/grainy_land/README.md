@@ -1,13 +1,13 @@
 # Grainy Land
 
-Landscape, abstract field and procedural flora generator using the shared YF framework.
+Procedural artwork editor with Landform, Spot, Plant and Flower objects, using the shared YF framework.
 Open `grainy_land/` through the YF development server. No build step or remote
 runtime dependencies are needed. Rendering requires WebGL.
 
 The startup preset is **Flower Flow**, imported from `grainy-land-six-cup-flora-20261013_20-22-12.json`.
 
 The **Ember** preset is based on `grainy-land-1565559100.json`: seed
-1565559100, Glow 0, Grain 55 and Radiant tones at 100. Drift uses the supplied `Drift.json` settings in Spot mode: seed 256455718 and eight layers with individually assigned color groups. Its cached built-in copy refreshes from the shipped JSON; personal presets remain intact.
+1565559100, Glow 0, Grain 55 and Radiant tones at 100. Drift uses the supplied `Drift.json` settings with Spot objects: seed 256455718 and eight layers with individually assigned color groups. Its cached built-in copy refreshes from the shipped JSON; personal presets remain intact.
 The original presets Ember and Drift use Depth #FF5900
 and start with eight layers: six original forms above two blue background coats.
 In Ember, Blue 1 and Blue 2 start hidden; their eye buttons can enable them.
@@ -16,22 +16,20 @@ preserved by Regenerate, JSON and personal presets; newly added blue coats are v
 
 The built-in list also includes **Six Cup** (Flora), refreshed from `grainy-land-505310381.json`, and **Field** (Plant), retaining
 the supplied layer edits and custom colors. Startup merges missing built-ins into
-the saved list without replacing personal presets. **Spot** is the displayed name
-for the mode stored as `abstract`.
+the saved list without replacing personal presets. Four more presets, **Land**, **Spot**, **Plant** and **Flora**, preserve the four compositions captured before the unified-document migration. All nine presets remain available; Flower Flow is still the startup preset.
 
 ## Plant
 
-Choose **Plant** in Composition. Its scene has an independent palette, initially including
-editable Background #2353DB and Depth #FF5900. No additional preset is installed.
+Choose **Plant** in Graphics to inspect shared Plant parameters in the current document. The tab does not change the artwork. Palette and Surface apply to every object type; loading the Plant preset opens the saved Plant composition.
 The starting direction is references 5–6: broad, asymmetric petals, branching stems,
-merged silhouettes and spray transitions. Radiant neighboring tones in this mode
+merged silhouettes and spray transitions. Radiant neighboring tones in the botanical presets
 lean toward warm pink highlights, derived from the current anchors; manual tone
 endpoints still override them.
 
 - **Arrangement:** Centered, Cluster or Field; changing it never removes layers.
   **Plants** is the actual count of Plant objects, including manual additions and copies.
   Reducing it removes only unpinned, unlocked Auto objects. Individual, drawn, pinned
-  and locked objects establish the minimum. Up to 32 total layers fit in each scene.
+  and locked objects establish the minimum. Up to 32 total layers fit in the document.
 - Cluster uses four seeded asymmetric arrangements, mirrored growth directions and
   a dominant bloom with smaller cropped neighbors. Curved stems, unequal paddles,
   hooked lobes and elongated petals replace the repeated row of equal flower heads.
@@ -61,14 +59,13 @@ endpoints still override them.
   attached when a stem changes. Detach makes the part's origin independent; Attach
   connects it again. Moving a junction moves its descendants. Hidden branches hide
   attached descendants; detached parts stay independent.
-- **Regenerate plant** rerolls just that plant. Global Regenerate replaces Auto plants.
+- **Regenerate plant** rerolls just that plant. Global Regenerate varies unpinned, unlocked procedural plants, including Individual plants.
   Both preserve manually edited part contours and palette assignments. Pinned plants
   retain their seed on global Regenerate. Convert to drawn freezes the plant's generated
   parameters and retains its shape for Brush / Erase; parts are no longer editable.
 - Plant starts with Grain **49**, Grain size **1**, Softness **50**, Edge variation
   **80**, Contrast **120**, Glow **10**, Glow coverage **10**, and Halo width **100**.
-  Its surface settings are remembered independently from Land/Abstract, including
-  JSON, personal presets, share links and undo/redo. Changing modes keeps the palette.
+  These values belong to the saved Plant composition. Palette and Surface are global document settings; changing Graphics tabs preserves them.
 - Plant edges use a locally varying directional exposure. **Softness** controls
   its reach; **Edge variation** varies the sharp/soft patches and directional trail.
   At zero Edge variation the transition is uniform. Spray grain is applied after
@@ -91,9 +88,7 @@ in [UX_AUDIT_PLAN.md](UX_AUDIT_PLAN.md).
 
 ## Flora — procedural flowers
 
-Choose **Flora** in Composition. It has its own layer stack and surface memory, starting
-with an independent palette and the same spray defaults as Plant. It initially
-creates one flower. **Radial** is the default; Fan, Cup and Lobed are also available. Regenerate
+Choose **Flora** in Graphics to inspect the shared Flower parameters. Selecting this tab does not create objects or change the palette. Increase Flowers or use + Flower to add them to the current stack. **Radial** is the default; Fan, Cup and Lobed are also available. Regenerate
 keeps the chosen family while varying the individual petals. Six Cup explicitly
 uses Cup to retain its original shape.
 
@@ -137,7 +132,7 @@ uses Cup to retain its original shape.
 - Most generated flowers extend their stems below the canvas without shifting
   their heads. A minority may float. Stem length remains editable, and zero
   still hides it. Manual stem contours are not stretched.
-- The **Generation** section is hidden in Composition for every mode. Regenerate and
+- The **Generation** section is hidden in Graphics. Regenerate and
   its shortcut still work; the seed remains part of saved documents.
 
 Implementation: `flower-profiles.js` contains data-only recipes: angular layout,
@@ -158,10 +153,10 @@ with `python3 grainy_land/tests/review-server.py --review flower-growth-20 --por
 
 ## Controls
 
-- **Composition:** Land / Plant / Flora / Spot, scale, complexity, flow, horizon,
-  relief and folds. Landscape layouts vary reproducibly with the seed.
+- **Graphics:** Land / Plant / Flora / Spot, scale, complexity, flow, horizon,
+  relief and folds. These are settings tabs, not scene switches. Landform layouts vary reproducibly with the seed.
   **Folds** adds local curls, pockets and pinched passages; 0 gives simpler forms.
-  Regenerate (R) varies eligible Auto seeds and preserves Individual, Pinned, locked and Drawn layers.
+  Regenerate (R) varies unpinned, unlocked procedural seeds across all four types. Individual parameters, pinned and locked objects, Drawn and Vector geometry are preserved.
   Color, texture, names, order, visibility, opacity and editing locks survive Regenerate.
 - **Layers:** independent draggable panel at the bottom right, expanded by default, up to 480px tall (60% of the desktop viewport).
   The frontmost layer is at the top. Select a row or visible paint on the canvas;
@@ -171,11 +166,11 @@ with `python3 grainy_land/tests/review-server.py --review flower-growth-20 --por
   Brush. **Shift+D** duplicates the selection and preserves its shape (an Auto copy
   starts Pinned); **Delete / Backspace** removes the selected unlocked layer. Each
   command is undoable and stays inactive during text input, dialogs or gestures. Background opens the existing background color picker.
-  There are up to 32 layers in each mode, with separate Land, Plant, Flora and Spot stacks.
+  All object types share one stack with up to 32 layers, plus Background.
 - **Blue 1 / Blue 2:** two large seeded blue forms above Background and below the
   original artwork. They are ordinary Auto layers: move, paint/erase, Pin, Lock,
   opacity, reorder, duplicate, delete and conversion to Drawn work normally.
-  **+ Blue**, available in Spot, adds one layer at the back and requires one free slot. The Background color group uses the editable blue
+  **+ Blue**, visible while inspecting Spot settings, adds one layer at the back and requires one free slot. The Background color group uses the editable blue
   anchor and its Low / High tones. Grain, Grain size, Softness and Edge variation
   control the spray edges. Global Amount controls neighboring colors in these
   layers; Background amount affects only the underlying background color field.
@@ -193,7 +188,7 @@ with `python3 grainy_land/tests/review-server.py --review flower-growth-20 --por
 - **Lock** separately prevents manual editing, deleting and reordering. It does
   not change its parameter mode; Regenerate keeps locked objects. Visibility can be toggled
   while locked; duplicating a locked layer makes an unlocked copy.
-- **Workspace:** Canvas starts collapsed at the top left; Composition is below
+- **Workspace:** Canvas starts collapsed at the top left; Graphics is below
   it; Generation is hidden. Layer properties appears immediately to the left of Layers
   only for the current selection. It follows Layers until dragged independently;
   its position is constrained to the viewport. Default panels keep a 20px window margin and
@@ -243,7 +238,7 @@ with `python3 grainy_land/tests/review-server.py --review flower-growth-20 --por
   Color contains four editable base colors and folded Advanced tones. Surface
   contains grain, softness, edge variation, contrast and glow. Halo width and
   Glow coverage appear only when Glow is above zero; Landscape-only controls
-  disappear in Abstract mode. Selecting Background scrolls to and opens the background picker.
+  are hidden in the Spot settings tab. Selecting Background scrolls to and opens the background picker.
   Both palettes start with background **#2353DB** and Depth **#FF5900**.
 - **Advanced tones:** four base color pickers remain unchanged. **Amount** sets
   the strength of added neighboring tones (0 keeps the original automatic shading),
@@ -444,7 +439,7 @@ GeneratorHost initializes its shared controller directly rather than auto-init.
 
 The circular **Add color** swatch below Light creates an additional palette entry and opens the shared inline HSB editor. Each entry has a hex input and appears as a round preview in a layer's **Color group** palette; click a preview to assign it, or use arrow keys when the palette is focused. The selected color has an outline, and hovering shows its name and HEX. Adding a swatch does not change explicit layer assignments. Procedural Flower colors can use the expanded palette. Up to 16 custom colors are supported; their neighboring tones follow Advanced tones, while grain, softness, glow and transparent exports use the same renderer as the built-in materials.
 
-Custom color IDs and layer assignments are preserved in both composition modes, presets, undo/redo, JSON and share links. Removing an unused swatch does not renumber the remaining colors. A swatch used by either mode cannot be removed until those layers use another color. Older documents default to an empty custom palette.
+Custom color IDs and layer assignments are preserved across all object types, presets, undo/redo, JSON and share links. Removing an unused swatch does not renumber the remaining colors. A swatch used by any object cannot be removed until those layers use another color. Older documents default to an empty custom palette.
 
 
 ### Vector layers
@@ -589,51 +584,62 @@ or history, including during Pen and shape editing. Hidden layers stay hidden.
 `tests/feedback-ui.html` checks hover/selection isolation across these editor states;
 `tests/export-progress.test.mjs` covers cancellation, concurrency and feedback cleanup.
 
-## Independent scenes and object parameters
+## One document and four settings tabs
 
-Land / Spot / Plant / Flora keep their own seed, palette (including custom colors
-and tone endpoints), surface settings, object defaults and layer stack. Canvas
-size and export options belong to the whole document. JSON, presets, share and
-Undo preserve all four scenes. Internal mode IDs remain `landscape`, `abstract`,
-`flora` (Plant), and `f` (Flora); visible labels come from `object-model.js`.
+Land / Spot / Plant / Flora in Graphics are inspectors for the four object types.
+Switching a tab changes no document data, artwork, selection, history or preset-dirty
+state. Selecting a procedural object opens the matching tab. Left/Right, Home/End
+navigate the tabs from the keyboard. Drawn and Vector keep the current inspector.
 
-- **+ Landform / + Spot / + Plant / + Flower** are always visible in Layers,
-  in the same order across scenes, and add objects without switching scenes.
-  Every manual addition is **Individual**. Its Object shape controls live in Layer
-  properties; colors refer to roles in the active scene's palette.
-- **Auto** follows shared controls for its own object family in the current scene.
-  Native controls live in Composition; foreign Auto families get a shared section.
-  There are no live parameter links to another scene.
+The document has one layer stack, palette, Surface, canvas and animation settings.
+Each procedural type has its own shared parameters in `objectDefaults`. JSON v2,
+presets, sharing and Undo/Redo preserve this single document. Tab selection is UI
+state and is not saved into artwork or included in export filenames.
+
+- **+ Landform / + Spot / + Plant / + Flower** add an Individual object to the same
+  stack and select it. Individual shape controls live in Layer properties.
+- **Auto** follows the matching type's shared controls in Graphics.
+  There are no foreign-type sections or Copy to scene action.
 - **Individual** owns a parameter snapshot. Switching Auto to Individual preserves
-  the visible shape, including variation. Switching back joins the shared controls.
-- **Pin** fixes the seed while Auto parameters remain live. **Lock** blocks manual
-  edits, count reduction and Regenerate. Global Regenerate varies only eligible Auto
-  seeds in the active scene and preserves manually edited contours. Auto Flower
-  compositions are also replanned; other object types keep their transforms.
-- **Copy to scene** creates an independent Individual copy and opens that scene.
-  Base color roles use destination colors; source custom assignments fall back to
-  the destination's Depth (botanical objects) or Terrain role. The source stays intact.
-- Plants and Flowers are counted separately by object family, including hidden
-  objects and converted drawings of that family. Drawn/vector additions don't
-  increment either botanical count.
+  the visible shape; switching back joins that type's shared controls.
+- **Pin** preserves the seed and placement during Regenerate while Auto parameters
+  remain live. **Lock** additionally blocks manual edits and count reduction.
+  Regenerate varies every eligible procedural object, including Individual seeds;
+  it retains Individual parameters, edited contours, names and material assignments.
+  Auto Flowers are also replanned; Individual objects retain their placement.
+  Drawn and Vector objects do not regenerate.
+- Plants and Flowers show actual totals of their respective types in the stack,
+  including hidden objects and converted drawings of that family. Generic Drawn and
+  Vector additions do not increment those counts. Count reduction protects Individual,
+  drawn, pinned and locked objects. Total capacity is 32 objects plus Background.
 
-Run `node --test grainy_land/tests/*.test.mjs`; browser interaction and mixed PNG/ZIP
-checks are at `grainy_land/tests/objects-ui.html`.
+`legacy-document.js` is the v1 import/fixture boundary. Importing an old JSON or
+preset keeps its active composition and all its mixed object types. Inactive old
+scene memories are not merged into the canvas. Existing named presets remain
+unchanged. Four additional v2 presets preserve the actual Land, Spot, Plant and
+Flora compositions exported before the transition. An internal tone profile retains
+their former tone calculation without tying material appearance to inspector tabs.
+
+Run `node --test grainy_land/tests/*.test.mjs`. `tests/unified-ui.html` (also reachable
+at the old `tests/objects-ui.html` URL) covers mixed editing, tab/selection isolation,
+counts, shared versus Individual controls, regeneration, Undo/Redo, JSON and PNG/ZIP.
+The nine saved presets match pre-transition geometry and pigment fields exactly.
+`tests/fixtures/pixels-before-unification.json` records their GPU SHA-256 checksums
+at phases 0 and 0.25; all 18 checks match byte for byte in the baseline browser.
 
 Flower composition planning lives in `flower-composition.js`, separately from
 flower geometry. Seeded candidates are scored using sampled silhouettes, stem
 weights, overlaps, visible head area and layout intent. Roles are stored on layers
-so adding an object never changes an existing flower's variation. Native and
-foreign Auto Flowers use the same planner. Flower variation is included in
+so adding an object never changes an existing flower's variation. All Auto Flowers use the same planner, regardless of the currently inspected type. Flower variation is included in
 thumbnail and hit-test cache keys.
 
-Composition regression checks: `tests/flower-composition.test.mjs`. Visual gallery:
+Graphics regression checks: `tests/flower-composition.test.mjs`. Visual gallery:
 `tests/flower-composition-review.html` (20 seeded scenes, four types, 6–32 Flowers and three
 color patterns); saved review images: `tests/reviews/flower-composition-20/`.
 
-JSON export names include the tool, current named preset (when present), current display mode
-and a local timestamp: `grainy-land-six-cup-flora-20261013_09-30-00.json`.
-New/shared sessions use the mode without a preset name. The seed remains in the JSON.
+JSON export names include the tool, current named preset (when present), and a local
+timestamp: `grainy-land-six-cup-20261015_22-00-00.json`. Unnamed documents use
+`grainy-land-20261015_22-00-00.json`. The seed remains inside the JSON.
 
 
 ### Editor optimization pass — 15 October 2026
@@ -643,8 +649,7 @@ commit on Enter/blur, Escape cancels them, and live changes schedule one drawing
 pass per animation frame. Count drafts do not remove objects before confirmation.
 Selection properties display Mixed; color, opacity, material and parameter changes
 apply to editable selected layers, leaving locked members unchanged. Individual
-shape fields are shared only by selections of one procedural kind. Parts/path editing
-and copying to another scene require a single object.
+shape fields are shared only by selections of one procedural kind. Parts/path editing requires a single object.
 
 The Flora field cache separates contour/shading from RGB. Palette edits reuse the
 geometry and its GPU texture; unused palette edits and surface/transform changes
@@ -653,7 +658,9 @@ and a 96 MiB byte budget each. Hidden Flora objects are skipped in ordinary rend
 isolated thumbnails still render hidden objects. Layer miniatures no longer invalidate
 for surface-only changes or repaint an unchanged bitmap.
 
-Docked layer properties reserve canvas space. Layers has a bounded vertical resize
+Docked layer properties overlay the canvas beside Layers. Selecting, switching or
+deselecting objects preserves the canvas viewport, zoom, pan and toolbar position.
+Layers has a bounded vertical resize
 handle, Appearance shares the remaining height, and Color/Surface are collapsible
 field groups. Below 1200 px panels flow beneath the canvas. Dragging a panel releases
 its default docking position using the framework's explicit manual-position marker.
@@ -821,3 +828,13 @@ still changes the image. All 316 Grainy Land/framework Node tests and the shared
 UI contract passed. The 125 GPU checks also pass: the test compiler removes only
 the two intentionally removed Background grain terms from its frozen reference;
 object shading, contours and picking remain covered independently.
+
+### Startup and panel layout — 16 October 2026
+
+The first artwork frame waits for the startup preset or shared document. Flower Flow
+loads directly, with no intermediate Ember render. Graphics keeps four settings tabs;
+Flower type is the first control in Flora, and both botanical selectors retain their
+accessible names without visible headings. Appearance contains sibling Color,
+Advanced and Surface disclosures; only Color starts open. Collapsed sections use
+uniform header spacing. Animation puts a round Play/Stop icon after Motion and Loop.
+`tests/graphics-ui.html` checks delayed startup, section geometry and playback state.

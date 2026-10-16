@@ -1,3 +1,5 @@
+import {defaults as legacyDefaults} from '../legacy-document.js';
+import {editSharedParameters} from '../object-actions.js';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
@@ -13,14 +15,14 @@ test('JSON preserves seed, palette, dimensions and all appearance settings', () 
     const s = normalizeSettings({...defaults,mode:'abstract',seed:4294967295,width:1400,height:900,glow:81,grainSize:2.3,sky:'#AABBCC'});
     assert.deepEqual(readDocument(JSON.parse(JSON.stringify(makeDocument(s)))),s);
     assert.throws(() => readDocument({toolId:'other',schemaVersion:1,settings:{}}),/Grainy Land/);
-    assert.throws(() => normalizeSettings({schemaVersion:2}),/version/);
+    assert.throws(() => normalizeSettings({schemaVersion:99}),/version/);
     assert.throws(() => readDocument({toolId:'grainy_land',schemaVersion:1}),/Grainy Land/);
 });
 test('imported values cannot allocate unbounded surfaces or inject extra state', () => {
     const s = normalizeSettings({width:1e9,height:-1,seed:-1,grain:Infinity,glow:-100,grainSize:.23,mode:'bad',sky:'url(x)',unsafe:'x'});
     assert.equal(s.width,32768); assert.equal(s.height,1); assert.equal(s.seed,4294967295);
     assert.equal(s.grain,defaults.grain); assert.equal(s.glow,0); assert.equal(s.grainSize,.5);
-    assert.equal(s.sky,defaults.sky); assert.equal(s.mode,'landscape'); assert.equal(s.unsafe,undefined);
+    assert.equal(s.sky,defaults.sky); assert.equal(s.mode,undefined); assert.equal(s.unsafe,undefined);
 });
 test('geometry survives palette, grain, glow and export resolution changes', () => {
     const a = createScene(defaults);
@@ -107,8 +109,8 @@ test('stored preset migration backfills new fields without changing user choices
 
 test('default settings match the shipped Ember and cached built-ins update without touching saved presets', () => {
     const ember = JSON.parse(readFileSync(new URL('../presets/ember.json', import.meta.url), 'utf8'));
-    assert.deepEqual(defaults, ember);
-    assert.deepEqual(normalizeSettings(ember), ember);
+    assert.deepEqual(defaults, normalizeSettings(ember));
+    assert.deepEqual(normalizeSettings(normalizeSettings(ember)),normalizeSettings(ember));
     const pigment = { seeded: true, seed: 80423, depth: '#713004', toneCharacter:'pigment' };
     const drift = JSON.parse(readFileSync(new URL('../presets/drift.json', import.meta.url), 'utf8'));
     assert.equal(drift.seed,256455718);
@@ -116,17 +118,17 @@ test('default settings match the shipped Ember and cached built-ins update witho
     assert.equal(drift.abstractLayers.length,8);
     assert.deepEqual(drift.abstractLayers.map(l=>l.group),['sky','light','terrain','sky','light','depth','depth','terrain']);
     const manifest = JSON.parse(readFileSync(new URL('../presets/manifest.json', import.meta.url), 'utf8'));
-    assert.deepEqual(manifest.presets.map(p=>p.name), ['Flower Flow','Ember','Drift','Six Cup','Field']);
+    assert.deepEqual(manifest.presets.map(p=>p.name), ['Flower Flow','Ember','Drift','Six Cup','Field','Land','Spot','Plant','Flora']);
     const personal = { seed: 9, glow: 33 };
     let all = { Ember: { seeded: true, createdAt: 123, seed: 80423, glow: 82, ...presetTones.Ember }, Pigment: pigment, 'Quiet dunes': {seeded:true,depth:'#713004'}, Drift: {seeded:true,createdAt:456,seed:925731,scale:125,glow:34,...presetTones.Drift}, Personal: personal };
     let writes = 0;
     const store = { loadAll: () => all, saveAll: next => { all = next; writes++; } };
     migratePresets(store,{Drift:drift});
-    assert.deepEqual(normalizeSettings(all.Ember), ember);
+    assert.deepEqual(normalizeSettings(all.Ember), normalizeSettings(ember));
     assert.equal(all.Ember.createdAt, 123);
     assert.equal(Object.hasOwn(all,'Pigment'),false);
     assert.equal(Object.hasOwn(all,'Quiet dunes'),false);
-    assert.deepEqual(normalizeSettings(all.Drift), drift);
+    assert.deepEqual(normalizeSettings(all.Drift), normalizeSettings(drift));
     assert.equal(all.Drift.createdAt,456);
     assert.deepEqual(all.Personal, personal);
     migratePresets(store,{Drift:drift});
@@ -146,12 +148,12 @@ test('default settings match the shipped Ember and cached built-ins update witho
 test('fold and edge controls round-trip, and old documents receive safe defaults', () => {
     const custom=normalizeSettings({...defaults,folds:91,edgeVariation:17,glowCoverage:82});
     assert.deepEqual(readDocument(makeDocument(custom)),custom);
-    const old={...defaults};
+    const old={...legacyDefaults};
     for(const key of ['folds','edgeVariation','glowCoverage']) delete old[key];
     const upgraded=readDocument({toolId:'grainy_land',schemaVersion:1,settings:old});
-    for(const key of ['folds','edgeVariation','glowCoverage']) assert.equal(upgraded[key],defaults[key]);
+    for(const key of ['folds','edgeVariation','glowCoverage']) assert.equal(key==='folds'?upgraded.objectDefaults.land.folds:upgraded[key],legacyDefaults[key]);
     const bounded=normalizeSettings({folds:-30,edgeVariation:700,glowCoverage:Infinity});
-    assert.equal(bounded.folds,0);assert.equal(bounded.edgeVariation,100);assert.equal(bounded.glowCoverage,defaults.glowCoverage);
+    assert.equal(bounded.objectDefaults.land.folds,0);assert.equal(bounded.edgeVariation,100);assert.equal(bounded.glowCoverage,defaults.glowCoverage);
 });
 
 
@@ -167,7 +169,7 @@ test('original shipped depths migrate once while personal colors and other setti
     const old=structuredClone(all);let writes=0;
     const store={loadAll:()=>all,saveAll:value=>{all=value;writes++;}};
     migratePresets(store);
-    for(const {name} of manifest.presets) assert.deepEqual(all[name],{...old[name],depth:'#FF5900'});
+    for(const {name} of manifest.presets) assert.deepEqual(normalizeSettings(all[name]),normalizeSettings({...old[name],depth:'#FF5900'}));
     assert.deepEqual(all.Personal,old.Personal);
     migratePresets(store);assert.equal(writes,1);
     all.Drift={...old.Drift,seeded:false};migratePresets(store);
@@ -180,15 +182,15 @@ test('layout choices round-trip and Auto yields all four reproducible families',
     for(let seed=0;seed<64;seed++) families.add(createScene({...defaults,seed}).layoutFamily);
     assert.equal(families.size,4);
     for(const [family,layout] of ['basin','ridge','valley','fold'].entries()) {
-        const settings={...defaults,layout};
-        assert.equal(readDocument(makeDocument(settings)).layout,layout);
+        const settings={...legacyDefaults,layout};
+        assert.equal(readDocument(makeDocument(settings)).objectDefaults.land.layout,layout);
         assert.equal(createScene(settings).layoutFamily,family);
         assert.deepEqual(createScene(settings),createScene(settings));
         assert.ok(createScene(settings).secondCrest.every(Number.isFinite));
         assert.ok(createScene(settings).pocketStyle.every(Number.isFinite));
     }
-    assert.equal(normalizeSettings({layout:'__proto__'}).layout,'auto');
-    assert.equal(normalizeSettings({}).layout,'auto');
+    assert.equal(normalizeSettings({layout:'__proto__'}).objectDefaults.land.layout,'auto');
+    assert.equal(normalizeSettings({}).objectDefaults.land.layout,'auto');
     assert.deepEqual(createScene({...defaults,mode:'abstract',layout:'fold'}),createScene({...defaults,mode:'abstract',layout:'ridge'}));
 });
 

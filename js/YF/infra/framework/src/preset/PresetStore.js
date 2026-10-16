@@ -23,7 +23,8 @@ export class PresetStore {
     loadAll() {
         try {
             const raw = localStorage.getItem(this.storageKey);
-            return raw ? JSON.parse(raw) : {};
+            const parsed = raw ? JSON.parse(raw) : null;
+            return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
         } catch (e) {
             console.error('PresetStore.loadAll failed:', e);
             return {};
@@ -32,7 +33,7 @@ export class PresetStore {
 
     load(name) {
         const all = this.loadAll();
-        return all[name] || null;
+        return Object.hasOwn(all, name) ? all[name] : null;
     }
 
     has(name) {
@@ -71,9 +72,9 @@ export class PresetStore {
         const clean = String(name || '').trim();
         if (!clean) return { ok: false, reason: 'empty-name' };
         const all = this.loadAll();
-        if (all[clean] && !overwrite) return { ok: false, reason: 'exists' };
+        if (Object.hasOwn(all, clean) && !overwrite) return { ok: false, reason: 'exists' };
         const now = Date.now();
-        all[clean] = { ...blob, createdAt: all[clean]?.createdAt || now, updatedAt: now };
+        Object.defineProperty(all, clean, { value: { ...blob, createdAt: all[clean]?.createdAt || now, updatedAt: now }, enumerable: true, configurable: true, writable: true });
         return this.saveAll(all) ? { ok: true } : { ok: false, reason: 'storage' };
     }
 
@@ -81,7 +82,7 @@ export class PresetStore {
     update(name, blob) {
         const all = this.loadAll();
         const prev = all[name] || {};
-        all[name] = { ...blob, createdAt: prev.createdAt || Date.now(), updatedAt: Date.now() };
+        Object.defineProperty(all, name, { value: { ...blob, createdAt: prev.createdAt || Date.now(), updatedAt: Date.now() }, enumerable: true, configurable: true, writable: true });
         return this.saveAll(all);
     }
 
@@ -89,16 +90,16 @@ export class PresetStore {
         const clean = String(newName || '').trim();
         if (!clean) return { ok: false, reason: 'empty-name' };
         const all = this.loadAll();
-        if (!all[oldName]) return { ok: false, reason: 'not-found' };
-        if (all[clean] && clean !== oldName) return { ok: false, reason: 'exists' };
-        all[clean] = { ...all[oldName], updatedAt: Date.now() };
+        if (!Object.hasOwn(all, oldName)) return { ok: false, reason: 'not-found' };
+        if (Object.hasOwn(all, clean) && clean !== oldName) return { ok: false, reason: 'exists' };
+        Object.defineProperty(all, clean, { value: { ...all[oldName], updatedAt: Date.now() }, enumerable: true, configurable: true, writable: true });
         if (clean !== oldName) delete all[oldName];
         return this.saveAll(all) ? { ok: true } : { ok: false, reason: 'storage' };
     }
 
     delete(name) {
         const all = this.loadAll();
-        if (!all[name]) return false;
+        if (!Object.hasOwn(all, name)) return false;
         delete all[name];
         return this.saveAll(all);
     }

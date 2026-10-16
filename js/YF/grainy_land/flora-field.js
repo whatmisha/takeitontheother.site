@@ -1,9 +1,9 @@
 import {FLOWER_MOTION} from './flower-motion.js?v=petal-motion-1';
 import {MAX_LAYERS} from './layer-limits.js?v=petal-motion-1';
-import {effectiveSettings} from './object-model.js?v=petal-motion-1';
+import {effectiveSettings} from './object-model.js?v=unified-document-1';
 import { floraParts } from './flora.js?v=petal-motion-1';
 import { flattenVectorPath } from './vector-path.js?v=petal-motion-1';
-import { groupColor } from './custom-colors.js?v=petal-motion-1';
+import { groupColor } from './custom-colors.js?v=unified-document-1';
 const cache=new Map(),motionCache=new Map();
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 // Exact squared Euclidean distances for a binary mask. In the vertical pass

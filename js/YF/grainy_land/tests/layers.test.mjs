@@ -1,7 +1,8 @@
+import {defaults as currentDefaults} from '../legacy-document.js';
 import {MAX_DOCUMENT_BYTES} from '../layer-limits.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {defaults as currentDefaults,normalizeSettings,editForm,regenerate,makeDocument,readDocument} from '../document.js';
+import {normalizeSettings,editForm,regenerate,makeDocument,readDocument} from '../document.js';
 import {getLayers,MAX_LAYERS,editLayer,withLayers,addLayer,addBlueLayers,duplicateLayer,removeLayer,reorderLayer,convertLayer} from '../layers.js';
 import {createLayerScene} from '../scene.js';
 import {ShareCodec} from '../../infra/framework/src/preset/ShareCodec.js';
@@ -14,7 +15,7 @@ test('legacy forms become six layers with old Lock meaning Pinned, never editing
     assert.equal(stack.length,6);assert.equal(stack[2].mode,'pinned');assert.equal(stack[2].locked,false);
     assert.equal(stack[2].x,.12);assert.deepEqual(stack[2].strokes,[stroke]);
     const migrated=withLayers(legacy,stack);
-    assert.equal(migrated.landscapeForms,null);
+    assert.equal(migrated.landscapeForms,undefined);
     assert.deepEqual(createLayerScene(migrated),createLayerScene(legacy));
 });
 test('new drawn layers start empty and stay independent of generation controls',()=>{
@@ -65,12 +66,12 @@ test('reordering changes only compositing order; duplication creates an independ
     const changed=editLayer(copy.settings,copy.id,{x:.3},{manual:true});
     assert.equal(getLayers(changed).find(l=>l.id==='form-0').x,0);
 });
-test('deleted layers and empty stacks stay deleted after Generate, normalize, JSON and mode changes',()=>{
+test('deleted layers and empty stacks stay deleted after Generate, normalize and JSON',()=>{
     let s=defaults;for(const l of getLayers(s))s=removeLayer(s,l.id);
     assert.deepEqual(getLayers(s),[]);assert.deepEqual(getLayers(regenerate(s,17)),[]);
     assert.deepEqual(getLayers(readDocument(makeDocument(s))),[]);
-    const other=addLayer({...s,mode:'abstract'}).settings;
-    assert.equal(getLayers(other).length,7);assert.deepEqual(getLayers({...other,mode:'landscape'}),[]);
+    const other=addLayer(s).settings;
+    assert.equal(getLayers(other).length,1);assert.deepEqual(getLayers(s),[]);
 });
 test('layer stacks round-trip through JSON and share links with every mode and property',async()=>{
     let s=editLayer(defaults,'form-0',{x:.1,visible:false,opacity:45,name:'Distant peak'},{manual:true});

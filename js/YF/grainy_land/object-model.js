@@ -14,7 +14,7 @@ export const variationDefaults={fCount:1,fDensity:55,fMinSize:20,fMaxSize:150,fS
 export const variationRanges={fCount:[0,MAX_LAYERS,1],fDensity:[0,100,1],fMinSize:[5,100,1],fMaxSize:[100,250,1],fSizeVariation:[0,100,1],fShapeVariation:[0,100,1],fPoseVariation:[0,100,1]};
 export const parameterRanges=kind=>kind==='plant'?plantRanges:kind==='flower'?{...flowerRanges,...variationRanges}:terrainRanges;
 export const baseParameters=kind=>kind==='plant'?plantDefaults:kind==='flower'?{...flowerDefaults,...variationDefaults}:terrainDefaults;
-export const layerKind=(layer,settings)=>(Object.hasOwn(kindLabels,layer.kind)?layer.kind:null)??(layer.flora?(layer.flora.generator==='flower'?'flower':'plant'):layer.mode==='vector'?'vector':layer.mode==='drawn'&&!layer.hasBase?'drawn':modeKinds[settings.mode]);
+export const layerKind=(layer,settings)=>(Object.hasOwn(kindLabels,layer.kind)?layer.kind:null)??(layer.flora?(layer.flora.generator==='flower'?'flower':'plant'):layer.mode==='vector'?'vector':layer.mode==='drawn'&&!layer.hasBase?'drawn':modeKinds[settings.mode]??'land');
 export function normalizeParameters(kind,value={}){
  const defaults=baseParameters(kind),out={};
  for(const [key,[min,max,step]] of Object.entries(parameterRanges(kind))){const n=Number(value[key]);out[key]=Math.round(Math.max(min,Math.min(max,value[key]!=null&&Number.isFinite(n)?n:defaults[key]))/step)*step;}
@@ -24,10 +24,11 @@ export function normalizeParameters(kind,value={}){
  return out;
 }
 export function sharedParameters(settings,kind){
- const p=normalizeParameters(kind,kind===modeKinds[settings.mode]?settings:settings.objectDefaults?.[kind]??baseParameters(kind));
- const stack=settings[({landscape:'landscapeLayers',abstract:'abstractLayers',flora:'floraLayers',f:'fLayers'})[settings.mode]];
- if(kind==='plant')p.floraCount=stack?objectCount(settings,stack,kind):settings.floraCount??p.floraCount;
- if(kind==='flower')p.fCount=stack?objectCount(settings,stack,kind):settings.fCount??p.fCount;
+ const unified=settings.schemaVersion===2;
+ const p=normalizeParameters(kind,unified?settings.objectDefaults?.[kind]:kind===modeKinds[settings.mode]?settings:settings.objectDefaults?.[kind]);
+ const stack=unified?settings.layers:settings[({landscape:'landscapeLayers',abstract:'abstractLayers',flora:'floraLayers',f:'fLayers'})[settings.mode]];
+ if(kind==='plant'&&stack)p.floraCount=objectCount(settings,stack,kind);
+ if(kind==='flower'&&stack)p.fCount=objectCount(settings,stack,kind);
  return p;
 }
 export function layerParameters(settings,layer){const kind=layerKind(layer,settings);return layer.parameterMode==='individual'?normalizeParameters(kind,layer.parameters):sharedParameters(settings,kind);}

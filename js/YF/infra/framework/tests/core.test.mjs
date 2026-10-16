@@ -134,3 +134,17 @@ test('snapshot restoration may defer drawing while keeping controls and chrome s
  shell.applySnapshot({value:3},{deferRender:true});assert.deepEqual(calls,[['restore',{value:3}],'controls','scheduled','chrome']);assert.equal(shell._isApplying,false);
  calls.length=0;shell.applySnapshot({value:4});assert.deepEqual(calls,[['restore',{value:4}],'controls','immediate','chrome']);
 });
+
+test('deferred first paint ignores zoom and snapshot renders until bootstrap resolves', async()=>{
+ const previousDocument=globalThis.document;globalThis.document={querySelector:()=>null};
+ try{
+  let release;const frames=[],shell=new ApplicationShell({deferInitialRender:true,zoom:{},render:({settings})=>frames.push(settings.seed)});
+  for(const name of ['Settings','Dom','Target','Sliders','Ranges','Toggles','Panels','ColorPickers','Dice','Tooltips','Dialog','Export','HistoryAndPresets','Share','Shortcuts','ChangeTracking','PresetChrome','Mobile'])shell['_init'+name]=()=>{};
+  shell.settings={seed:'placeholder'};shell._logicalSize=()=>({width:800,height:600});shell._renderContext=()=>({settings:shell.settings});shell._bindZoomIndicator=()=>{};shell._refreshChrome=()=>{};
+  const sizes=[];shell.target={setLogicalSize:(w,h)=>sizes.push([w,h]),beginFrame(){},endFrame(){},initZoom(){shell.renderNow();}};
+  shell._bootstrapPresets=async()=>{await new Promise(r=>{release=r;});shell.settings={seed:'requested'};shell.renderNow();};
+  const pending=shell.init();assert.deepEqual(frames,[]);assert.deepEqual(sizes,[[800,600]]);
+  shell.renderNow();assert.deepEqual(frames,[]);release();await pending;
+  assert.deepEqual(frames,['requested']);shell.renderNow();assert.deepEqual(frames,['requested','requested']);
+ }finally{globalThis.document=previousDocument;}
+});

@@ -1,4 +1,4 @@
-import {defaults,switchMode} from '../document.js';
+import {defaults,switchMode} from '../legacy-document.js';
 import {withLayers} from '../layers.js';
 import {LandscapeRenderer} from '../render.js?v=layers-polish-1';
 const frame=document.querySelector('#app'),out=document.querySelector('#results'),log=[];
@@ -18,7 +18,7 @@ try{
  const pills=[...d.querySelectorAll('.layer-create button')];
  check('All add actions use shared pills',pills.length===7&&pills.every(b=>b.classList.contains('pill-toggle')&&b.querySelector('span')&&w.getComputedStyle(b).borderRadius==='999px'));
  check('Add actions follow the stack',list.nextElementSibling===d.querySelector('.layer-create'));
- await click('presetDropdownToggle');d.querySelector('#presetDropdownMenu [data-value="Ember"]').click();await pause();await click('modeFlower');await set('fCountValue',32);
+ await click('presetDropdownToggle');d.querySelector('#presetDropdownMenu [data-value="Six Cup"]').click();await pause();await click('settings-flower');await set('fCountValue',32);
  check('Full 32-layer stack plus Background',rows().length===32&&list.lastElementChild===bg);
  list.scrollTop=180;await pause();const previous=rows(),thumbs=new Map(previous.map(r=>[r.dataset.layerId,r.querySelector('canvas')])),scroll=list.scrollTop,id=previous[5].dataset.layerId;
  let paints=0;const proto=w.CanvasRenderingContext2D.prototype,put=proto.putImageData;

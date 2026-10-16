@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {flowerProfiles} from '../flower-profiles.js';
-import {defaults,switchMode,normalizeSettings,makeDocument,readDocument,regenerate} from '../document.js';
+import {normalizeSettings,makeDocument,readDocument,regenerate} from '../document.js';
+import {defaults,switchMode} from '../legacy-document.js';
 import {buildFlowerParts,buildFlowerFromProfile,flowerType,flowerRanges} from '../flower.js';
 import {getLayers,withLayers,editLayer,convertLayer} from '../layers.js';
 import {floraParts,editFloraPart} from '../flora.js';
@@ -17,14 +18,13 @@ const start=()=>switchMode(defaults,'f');
 // equality is checked separately by flower-preservation.html against saved hashes.
 const canonical=value=>JSON.stringify(value,(key,v)=>typeof v==='number'?Math.round(v*1e10)/1e10:v);
 const shape=(s,l=getLayers(s)[0])=>floraParts(l,s).map(p=>[p.id,p.path,p.hidden]);
-test('F starts with one flower, keeps four separate layer stacks and remembers its surface',async()=>{
- let s=start();assert.equal(s.mode,'f');assert.equal(getLayers(s).length,1);assert.equal(getLayers(s)[0].flora.generator,'flower');
+test('legacy single Flower migrates to one unified layer with appearance and edits intact',async()=>{
+ let s=normalizeSettings(start());assert.equal(s.mode,undefined);assert.equal(getLayers(s).length,1);
  s=editLayer(s,'flower-1',{name:'My flower',opacity:72});s={...s,grain:21};
- const flora=switchMode(s,'flora');assert.equal(getLayers(flora).length,4);assert.equal(flora.grain,49);
- const back=switchMode(flora,'f');assert.deepEqual(back.fLayers,s.fLayers);assert.equal(back.grain,21);assert.equal(getLayers(switchMode(s,'landscape')).length,8);
  assert.deepEqual(readDocument(makeDocument(s)),s);
  const codec=new ShareCodec({pristineDefaults:defaults});assert.deepEqual(normalizeSettings((await codec.decode(await codec.encode(s))).full),s);
 });
+
 test('All flower types are reproducible, keep one stem and have finite attached petals at extreme viewpoints',()=>{
  const types=new Set();for(let seed=0;seed<32;seed++){const s={...start(),seed};types.add(flowerType(getLayers(s)[0],s));}assert.deepEqual([...types],['radial']);
  for(const fType of ['fan','cup','lobed','radial'])for(const fTilt of [0,35,85])for(const fPetals of [3,12])for(const aspect of [.56,1,1.78]){
@@ -40,7 +40,7 @@ test('F controls change geometry without reshuffling the chosen type; invalid in
   for(const key of ['fScale','fPetals','fOpening','fWidth','fCurl','fAsymmetry','fRecognition','fTilt','fRotation','fCenterX','fCenterY','fStem','fBend'])assert.notDeepEqual(shape({...s,[key]:flowerRanges[key][0]}),before,key+' affects '+fType);
   assert.equal(flowerType(getLayers(s)[0],{...s,fTilt:80}),fType);
  }
- const s=normalizeSettings({...start(),fType:'invalid',fTilt:999,fPetals:100,fScale:null});assert.equal(s.fType,'radial');assert.equal(s.fTilt,85);assert.equal(s.fPetals,12);assert.equal(s.fScale,110);
+ const s=normalizeSettings({...start(),fType:'invalid',fTilt:999,fPetals:100,fScale:null}).objectDefaults.flower;assert.equal(s.fType,'radial');assert.equal(s.fTilt,85);assert.equal(s.fPetals,12);assert.equal(s.fScale,110);
 });
 test('Moving the flower center carries petals and their local edits; stem zero does not hide the bloom',()=>{
  const s=start();let l=getLayers(s)[0],parts=floraParts(l,s),p=parts.find(p=>p.id==='p1');
@@ -58,7 +58,7 @@ test('F regenerate preserves manual edits and pinning; Drawn freezes all flower 
  assert.deepEqual(shape(altered),before);assert.equal(bakeFlora(getLayers(altered)[0],altered),baked);
 });
 test('Custom colors on Flower parts remain protected in their own scene',()=>{
- let {settings:s,id}=addCustomColor(start()),l=getLayers(s)[0];l=editFloraPart(l,s,'p1',{group:id});s=withLayers(s,[l]);assert.equal(colorIsUsed(switchMode(s,'landscape'),id),false);assert.equal(colorIsUsed(switchMode(switchMode(s,'landscape'),'f'),id),true);
+ let {settings:s,id}=addCustomColor(start()),l=getLayers(s)[0];l=editFloraPart(l,s,'p1',{group:id});s=withLayers(s,[l]);assert.equal(colorIsUsed(s,id),true);assert.equal(colorIsUsed(readDocument(makeDocument(s)),id),true);
 });
 
 test('Flower center follows the attachment after inserting a stem anchor',()=>{

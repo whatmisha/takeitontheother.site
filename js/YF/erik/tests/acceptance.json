@@ -3,9 +3,9 @@
   "browser": "Codex in-app browser (Chromium)",
   "status": "passed",
   "unit": {
-    "command": "node --test erik/tests/model.test.mjs",
-    "passed": 15,
-    "collisionGeometryCombinations": 2160,
+    "command": "npm run test:erik",
+    "passed": 41,
+    "collisionGeometryCombinations": 3456,
     "collisionSpeeds": [
       10,
       120,
@@ -24,8 +24,8 @@
     },
     {
       "name": "Visible opening logo and empty final frame",
-      "frames": 1181,
-      "durationSeconds": 39.36666666666667
+      "frames": 480,
+      "durationSeconds": 16
     },
     {
       "name": "Deterministic random access and transparent 1080p PNG"
@@ -49,7 +49,8 @@
         "speed": 120,
         "tilt": 62,
         "perspective": 100,
-        "logoGap": 240
+        "logoGap": 240,
+        "lineHeight": 1.4
       },
       "fadeStartSeconds": 2.447,
       "fadeEndSeconds": 5.447
@@ -66,9 +67,21 @@
       "name": "Cyrillic text and paragraphs render"
     },
     {
+      "name": "Role/name columns render and match transparent worker PNG"
+    },
+    {
+      "name": "Full credits with centered team headings match transparent worker PNG"
+    },
+    {
+      "name": "Last ink triggers a smooth outro; trailing whitespace is ignored; faded worker PNG matches",
+      "frames": 690,
+      "durationSeconds": 23,
+      "fadeStartSeconds": 17.2833333333
+    },
+    {
       "name": "Complete ZIP: sequential names, exact frame count, transparent PNG",
-      "frames": 181,
-      "bytes": 15599295
+      "frames": 210,
+      "bytes": 17176261
     },
     {
       "name": "Export cancellation releases worker; next export succeeds"
@@ -78,21 +91,111 @@
       "width": 1920,
       "height": 1080,
       "fps": 30,
-      "durationSeconds": 6.033333333333333,
-      "bytes": 719133
+      "durationSeconds": 23,
+      "bytes": 25464136
     }
   ],
   "interfaceChecks": [
-    "Logo to text gap is visible beneath the logo; default 360 at speed 120 shows entry 00:03:00",
-    "Gap 720 moves entry to 00:06:00 without changing logo motion",
-    "Line spacing is visible beneath Font size; 2.2 increases space between the credit rows",
-    "Gap 720 and line spacing 2.2 persist after reload; default 360 and 1.4 restored after testing",
-    "Gap and line spacing changes update duration and match the worker PNG export",
-    "Reported settings and frame 00:05:28 show crawl only; the logo has disappeared before contact. Default gap 360 restored after checking."
+    "One inline-syntax textarea and a 1000 px maximum-width expanded editor; Apply preserves newlines, Cancel discards edits, one Undo restores the prior text.",
+    "Formatting hints are in the ? help popup, not on the Content panel.",
+    "Canvas pan/zoom and Fit control removed; wheel input does not move the artboard; resize preserves workspace center.",
+    "Motion has exactly four stacked sliders; header-to-Speed gap is 10 px; section headings and timing notes removed.",
+    "Text style retains Weight, Tracking and Text measure directly, without More typography; font caption, Lunnen Blue button, PNG note and role/name alignment controls removed.",
+    "Timeline is max 640 px wide, 82 px tall, with separate 36 px circular Play/Pause and Stop icons centered between the phase and editable timecode in the top row. Tick marks and current-segment caption replace event links; frame count and loop/step/restart buttons removed.",
+    "Play advances and changes to Pause; Pause freezes position; Stop returns to zero; 00:05:00 shows Logo \u2192 Crawl.",
+    "Wide-editor cancellation, Apply, Undo, Help, reload and preset selection checked in the real browser; Full Credits restored after QA.",
+    "At 1024x768 the canvas center and workspace center both equal (512,345); temporary viewport override reset.",
+    "Text starts at 5 rows (129.97 px); native vertical resize stops inside the Content panel. With Logo expanded and at 960x600, panel-body scrollHeight equals clientHeight; text scrolls inside its field.",
+    "Alignment UI and bindings removed; justify-all remains the default and existing preset settings are preserved.",
+    "Circular Play switches to a visible Pause SVG during playback; Stop returns to zero. Top row fits at 960x600 without overlap; viewport reset; no browser console errors."
   ],
   "repositoryLimits": [
-    "Catalog layout/boundary checks encounter pre-existing unregistered grid_generator_02",
-    "Wander Wall back-arrow entity fails the existing literal-arrow assertion",
-    "Cache-version check reports existing unversioned Sparky dependency edges"
-  ]
+    "Catalog directory coverage is blocked by pre-existing unregistered grid_generator_02.",
+    "Shared range, action and persistence acceptance scripts enumerate older tools and do not include Erik; passing them is not Erik coverage.",
+    "Full framework suite has an unrelated panel-resize integration assertion for Grainy Land stylesheet version; affected preset/core/persistence suites pass."
+  ],
+  "defaults": {
+    "logoGap": 450,
+    "fontSize": 42,
+    "lineHeight": 1.5,
+    "speed": 120,
+    "tilt": 70,
+    "perspective": 100,
+    "bodyCharacters": 389,
+    "textEntryTimecode": "00:03:23"
+  },
+  "observations": [
+    "Before this update, one intermediate run failed the worker PNG pixel-equality check at the logo/crawl handoff. The next complete run passed all 16 checks; the intermittent mismatch remains unisolated and the test now reports differing channel count and maximum delta.",
+    "During this update the first handoff PNG equality run differed in 107 of 8,294,400 channels, maximum delta 7. A repeat passed all 18 artifact checks. Exact-byte test remains strict; the pre-existing intermittent raster mismatch is not resolved.",
+    "Current update: all 19 browser artifact checks passed, including exact outro PNG equality and a 23.000-second Full Credits MP4. The initial outro test compared a fractional time with a frame-quantized export; corrected the test to sample the same 30 fps frame."
+  ],
+  "libraryChecks": {
+    "status": "passed",
+    "checks": 9,
+    "page": "erik/tests/library.html",
+    "coverage": [
+      "native full-preset save",
+      "content and settings switch together",
+      "cancel protection",
+      "malformed import protection",
+      "valid imports and cancellation",
+      "storage failure protects edits",
+      "persistence",
+      "embedded ending asset and settings persistence",
+      "invalid embedded SVG preserves live composition"
+    ]
+  },
+  "uiRegression": {
+    "frameworkTestsPassed": 27,
+    "erikTestsPassed": 41,
+    "scope": "Ending feature with common preview/export composition; all 19 crawl artifact checks re-run and passed on 2026-10-16"
+  },
+  "endingChecks": {
+    "date": "2026-10-16",
+    "status": "passed",
+    "page": "erik/tests/ending.html",
+    "checks": 10,
+    "coverage": [
+      "Text, SVG, Lottie JSON and dotLottie: visible front-facing output, exact worker PNG equality, deterministic seeking, transparency, fade boundaries and preset JSON round trips",
+      "Lottie source-rate animation and final-frame hold",
+      "SVG static/self-contained validation with working fragment gradient references",
+      "Post-crawl spatial gap and no overlap",
+      "All 30 frames of a one-second PNG sequence including visible last frame",
+      "Actual 3-second H.264 MP4 at 1920x1080 with visible decoded Lottie",
+      "Negative logo/ending gaps: overlap preview matches worker PNG, starts at or after frame zero, full crawl retained"
+    ],
+    "ui": [
+      "Imported ending.lottie through the real file picker",
+      "Changing gap to 450 at Speed 120 changed Full Credits with 3-second ending to 00:29:23",
+      "Fade toggle and embedded file restored after reload",
+      "No browser console errors"
+    ]
+  },
+  "draftChecks": {
+    "date": "2026-10-16",
+    "status": "passed",
+    "page": "erik/tests/draft.html",
+    "checks": 4,
+    "coverage": [
+      "4.7 MB source stored once; preset copies and autosave use compact internal references",
+      "IndexedDB reopen restores the exact original; portable JSON remains self-contained",
+      "Actual Draft is 30 seconds, with Fade in on and Fade out off; final PNG matches preview",
+      "Actual supplied Lottie exports a 210-frame, 7-second 1080p/30fps H.264 ending with a visible final frame"
+    ],
+    "ui": [
+      "Separate Fade in / Fade out switches independently change state and restore clean Draft",
+      "Reload retains Draft and its embedded Lottie; no warning/error logs"
+    ],
+    "regression": "All 9 ending checks (now including independent fades for text/SVG/JSON/dotLottie) and 9 library checks passed again."
+  },
+  "signedGapChecks": {
+    "date": "2026-10-16",
+    "status": "passed",
+    "range": [
+      -2400,
+      2400
+    ],
+    "ui": "Motion has five sliders; both Gap numeric inputs accept negative values. Ending tab no longer contains its gap. Timeline reports Crawl \u2192 Ending during overlap.",
+    "validation": "41 unit tests and all 10 ending browser checks passed."
+  }
 }

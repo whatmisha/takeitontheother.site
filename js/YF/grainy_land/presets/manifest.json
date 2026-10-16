@@ -19,6 +19,22 @@
     {
       "name": "Field",
       "file": "field.json"
+    },
+    {
+      "name": "Land",
+      "file": "land.json"
+    },
+    {
+      "name": "Spot",
+      "file": "spot.json"
+    },
+    {
+      "name": "Plant",
+      "file": "plant.json"
+    },
+    {
+      "name": "Flora",
+      "file": "flora.json"
     }
   ]
 }

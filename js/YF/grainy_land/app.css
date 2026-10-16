@@ -118,7 +118,7 @@
 .grainy-land #layerPanel .form-help { margin: 8px 0; }
 .grainy-land #materialPanel > .panel-content > .control-field-group { flex-shrink: 0; }
 .grainy-land #colorSection > .control-section { margin-bottom: 0; }
-.grainy-land .advanced-tones { border-top: 1px solid var(--color-border); padding-top: 8px; }
+
 .grainy-land #toolsPanel { left: calc((100vw + var(--canvas-left) - var(--canvas-right)) / 2); right: auto; top: 78px; transform: translateX(-50%); width: max-content; max-width: calc(100vw - var(--canvas-left) - var(--canvas-right)); flex-wrap: wrap; flex-direction: row; align-items: center; padding: 8px; gap: 8px; overflow: visible; }
 .grainy-land .tool-palette-grip { display: flex; align-items: center; align-self: stretch; padding: 0 2px; color: var(--color-text-muted); user-select: none; }
 .grainy-land .tool-palette-body { display: flex; align-items: center; gap: var(--spacing-xl); min-width: 0; }
@@ -199,7 +199,7 @@
 .grainy-land .flower-center { fill:var(--color-bg-panel,#191919); stroke:#b6ffce; stroke-width:1.5; pointer-events:all; cursor:move; }
 .grainy-land .flower-center-cross { fill:none; stroke:#b6ffce; stroke-width:1; pointer-events:none; }
 
-.grainy-land { --animation-panel-height: 176px; }
+.grainy-land { --animation-panel-height: 132px; }
 .grainy-land #exportMotion { inline-size: 5rem; flex-shrink: 0; white-space: nowrap; }
 .grainy-land .background-row .background-layer { flex: 1; min-width: 0; }
 .grainy-land .background-row.is-hidden .background-layer { opacity: .4; }
@@ -208,12 +208,6 @@
 
 
 
-/* Mode hover preserves the selected state and never changes tab dimensions. */
-.grainy-land #compositionPanel .segmented-control input:not(:checked):not(:disabled) + label:hover {
-    background: var(--color-bg-panel); color: var(--ui-foreground);
-}
-.grainy-land #compositionPanel .segmented-control input:checked + label:hover { filter: brightness(.86); }
-.grainy-land #compositionPanel .segmented-control input:focus-visible + label { outline: 1px solid var(--ui-foreground); outline-offset: 2px; }
 .grainy-land #layerHoverOverlay { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 
 /* Same combined progress surface and sizing as Sparky's export dock. */
@@ -246,7 +240,7 @@
 .grainy-land #objectParameterControls > .segmented-control { margin-bottom: 24px; }
 .grainy-land #sharedObjectSettings { margin-bottom: 24px; }
 
-/* The inspector remains beside Layers, with its own canvas space while docked. */
+/* The inspector overlays the canvas beside Layers; selection never changes the viewport. */
 
 .grainy-land #materialPanel > .panel-content > .appearance-section { flex-shrink: 0; }
 .grainy-land #selectionNote { margin: 0 0 16px; line-height: 1.4; }
@@ -255,7 +249,6 @@
 
  .grainy-land #compositionPanel { max-height: calc(100dvh - var(--composition-top) - var(--animation-panel-height) - 2 * var(--spacing-3xl)); }
 
- .grainy-land:has(#layerPanel:not([hidden]):not([data-panel-position="manual"])):not(:has(#layersPanel[data-panel-position="manual"])) { --canvas-right: calc(2 * var(--studio-panel-width) + 3 * var(--spacing-3xl)); }
  .grainy-land #layersPanel:not(.panel-collapsed) { min-height: min(260px, 36dvh); max-height: calc(100dvh - min(300px, 42dvh)); overflow: hidden; }
 
 }
@@ -310,3 +303,7 @@
     .grainy-land #toolsPanel #brushControls { flex: 1; min-width: 110px; }
  .grainy-land #animationPanel { grid-column: 1; grid-row: 8; }
 }
+
+.grainy-land #animationPanel .animation-controls { align-items: flex-end; margin-bottom: 0; }
+.grainy-land #animationPanel .animation-controls input { height: 36px; }
+.grainy-land .appearance-section > .control-section { margin-bottom: 0; padding-bottom: var(--spacing-3xl); }

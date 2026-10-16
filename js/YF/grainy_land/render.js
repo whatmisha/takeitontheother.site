@@ -1,12 +1,12 @@
 import {FloraFieldPool} from './flora-field-pool.js?v=layers-polish-1';
 import {FLOWER_MOTION} from './flower-motion.js?v=petal-motion-1';
-import {effectiveSettings} from './object-model.js?v=petal-motion-1';
+import {effectiveSettings} from './object-model.js?v=unified-document-1';
 import { bakeFlora } from './flora-field.js?v=layers-polish-1';
-import { MAX_CUSTOM_COLORS } from './custom-colors.js?v=petal-motion-1';
-import { createLayerScene, materialColors, adjacentColors, customMaterialColors, hexRGB } from './scene.js?v=petal-motion-1';
+import { MAX_CUSTOM_COLORS } from './custom-colors.js?v=unified-document-1';
+import { createLayerScene, materialColors, adjacentColors, customMaterialColors, hexRGB } from './scene.js?v=unified-document-1';
 import { bakePaint } from './paint.js?v=petal-motion-1';
-import { MAX_LAYERS, getLayers } from './layer-data.js?v=petal-motion-1';
-import { normalizeSettings } from './document.js?v=petal-motion-1';
+import { MAX_LAYERS, getLayers } from './layer-data.js?v=unified-document-1';
+import { normalizeSettings } from './document.js?v=unified-document-1';
 
 const vertexSource = `
 attribute vec2 position;

@@ -1,4 +1,5 @@
-import {defaults,switchMode,makeDocument,readDocument} from '../document.js?v=flower-field-2';
+import {defaults,switchMode} from '../legacy-document.js';
+import {makeDocument,readDocument} from '../document.js?v=unified-document-1';
 import {LandscapeRenderer} from '../render.js?v=flower-field-2';
 import {renderPNG} from '../png-export.js?v=flower-field-2';
 import {renderLayersZIP} from '../layers-export.js?v=flower-field-2';

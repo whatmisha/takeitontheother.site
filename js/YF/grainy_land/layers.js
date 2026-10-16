@@ -1,14 +1,14 @@
-import {effectiveSettings,objectCount,normalizeParameters} from './object-model.js?v=petal-motion-1';
+import {effectiveSettings,objectCount,normalizeParameters} from './object-model.js?v=unified-document-1';
 import { normalizeFloraParams } from './flora.js?v=petal-motion-1';
 import { defaultVectorPath } from './vector-path.js?v=petal-motion-1';
-import { normalizeSettings, formSettingsKey } from './document.js?v=petal-motion-1';
-import { MAX_LAYERS, getLayers, layerSettingsKey, normalizeLayerStack, geometrySnapshot, sourceGroup, blueLayerPair } from './layer-data.js?v=petal-motion-1';
-export { MAX_LAYERS, getLayers, layerSettingsKey } from './layer-data.js?v=petal-motion-1';
+import { normalizeSettings } from './document.js?v=unified-document-1';
+import { MAX_LAYERS, getLayers, layerSettingsKey, normalizeLayerStack, geometrySnapshot, sourceGroup, blueLayerPair } from './layer-data.js?v=unified-document-1';
+export { MAX_LAYERS, getLayers, layerSettingsKey } from './layer-data.js?v=unified-document-1';
 
 export function withLayers(settings,layers) {
     const s=normalizeSettings(settings);
     const next=normalizeLayerStack(layers,s);
-    return {...s,floraCount:objectCount(s,next,'plant'),fCount:objectCount(s,next,'flower'),[layerSettingsKey(s.mode)]:next,...(['flora','f'].includes(s.mode)?{}:{[formSettingsKey(s.mode)]:null})};
+    return normalizeSettings({...s,layers:next});
 }
 export function editLayer(settings,id,patch,{manual=false}={}) {
     const s=normalizeSettings(settings),stack=getLayers(s),layer=stack.find(l=>l.id===id);
@@ -23,10 +23,9 @@ export function addLayer(settings,mode='drawn') {
     const s=normalizeSettings(settings),stack=getLayers(s);
     if(stack.length>=MAX_LAYERS)throw new Error('Maximum '+MAX_LAYERS+' layers per composition.');
     const id=uniqueId(stack),salt=Number(id.slice(6))*2654435761>>>0,source=stack.length%6;
-    const plant=['flora','f'].includes(s.mode)&&mode==='auto';
     const vector=mode==='vector',drawn=mode==='drawn'||vector;
-    const layer={...(plant?{flora:{...(s.mode==='f'?{generator:'flower'}:{}),index:Math.max(-1,...stack.map(l=>l.flora?.index??-1))+1,variant:0,edits:{}}}:{}),id,name:plant?(s.mode==='f'?'Flower':'Plant '+(stack.length+1)):vector?'Vector shape':drawn?'Drawn layer':'Generated layer',source,mode:vector?'vector':drawn?'drawn':'auto',seed:(s.seed+salt)>>>0,salt,
-        layout:s.layout,group:plant&&s.mode==='f'?'depth':drawn?'terrain':sourceGroup(source),geometry:drawn?geometrySnapshot(s):null,hasBase:!drawn,...(vector?{vectorPath:defaultVectorPath()}: {})};
+    const layer={id,kind:vector?'vector':drawn?'drawn':'land',name:vector?'Vector shape':drawn?'Drawn layer':'Landform',source,mode:vector?'vector':drawn?'drawn':'auto',seed:(s.seed+salt)>>>0,salt,
+        layout:'auto',group:drawn?'terrain':sourceGroup(source),geometry:drawn?geometrySnapshot(s.objectDefaults.land):null,hasBase:!drawn,...(vector?{vectorPath:defaultVectorPath()}: {})};
     return {settings:withLayers(s,[...stack,layer]),id};
 }
 export function duplicateLayer(settings,id) {
@@ -63,7 +62,7 @@ export function addBlueLayers(settings) {
     const s=normalizeSettings(settings),stack=getLayers(s);
     if(stack.length>MAX_LAYERS-2)throw new Error('Two free layer slots are needed to add blue forms.');
     let start=1;while(stack.some(layer=>layer.id==='blue-'+start||layer.id==='blue-'+(start+1)))start+=2;
-    const pair=blueLayerPair(s,start);
+    const pair=blueLayerPair({...s,mode:'abstract',layout:s.objectDefaults.spot.layout},start);
     return {settings:withLayers(s,[...pair,...stack]),id:pair[1].id};
 }
 
@@ -71,6 +70,6 @@ export function addBlueLayer(settings) {
  const s=normalizeSettings(settings),stack=getLayers(s);
  if(stack.length>=MAX_LAYERS)throw new Error('Maximum '+MAX_LAYERS+' layers per composition.');
  let start=1;while(stack.some(l=>l.id==='blue-'+start))start++;
- const layer=blueLayerPair(s,start)[0];layer.parameterMode='individual';layer.parameters=normalizeParameters(layer.kind,effectiveSettings(s,layer));layer.source=6+(start-1)%2;
+ const layer=blueLayerPair({...s,mode:'abstract',layout:s.objectDefaults.spot.layout},start)[0];layer.parameterMode='individual';layer.parameters=normalizeParameters(layer.kind,effectiveSettings(s,layer));layer.source=6+(start-1)%2;
  return {settings:withLayers(s,[layer,...stack]),id:layer.id};
 }

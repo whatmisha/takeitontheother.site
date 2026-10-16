@@ -1,4 +1,4 @@
-import { ApplicationShell } from './ApplicationShell.js?v=uiq-3';
+import { ApplicationShell } from './ApplicationShell.js?v=initial-paint-1';
 
 /**
  * defineTool — declare a tool with a single config object.

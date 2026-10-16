@@ -1,8 +1,8 @@
 import {floraParts,editFloraPart} from './flora.js?v=petal-motion-1';
-import {getLayers,editLayer,layerSettingsKey} from './layers.js?v=petal-motion-1';
+import {getLayers,editLayer,layerSettingsKey} from './layers.js?v=unified-document-1';
 import {localToCanvas,canvasToLocal} from './transforms.js?v=petal-motion-1';
 import {moveVectorNode,setVectorNodesSmooth,splitVectorSegment,vectorSegment,cubicPoint,flattenVectorPath,vectorDistance} from './vector-path.js?v=petal-motion-1';
-import {groupColor} from './custom-colors.js?v=petal-motion-1';
+import {groupColor} from './custom-colors.js?v=unified-document-1';
 const byId=id=>document.getElementById(id),NS='http://www.w3.org/2000/svg';
 function svg(tag,attrs){const el=document.createElementNS(NS,tag);for(const [k,v]of Object.entries(attrs))el.setAttribute(k,String(v));return el;}
 export class FloraEditor{

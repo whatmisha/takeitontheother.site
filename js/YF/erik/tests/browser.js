@@ -1,5 +1,6 @@
-import { DEFAULTS, normalize, framePlan, WIDTH, HEIGHT, sceneAt } from '../model.js';
+import { DEFAULTS, normalize, framePlan, WIDTH, HEIGHT, sceneAt, crawlStart, parseCredits, creditsToText, FPS } from '../model.js';
 import { loadFont, CrawlRenderer } from '../renderer.js';
+import { expandedCredits } from '../expanded-credits.js';
 import { Exporter } from '../exporter.js';
 const reports = [], assert = (ok, message) => { if (!ok) throw new Error(message); };
 function record(name, detail = '') { const item = document.createElement('li'); item.textContent = `PASS · ${name}${detail ? ' · ' + detail : ''}`; document.getElementById('results').append(item); reports.push({ name, status: 'passed', detail }); }
@@ -26,15 +27,15 @@ try {
     record('Opening logo fills the frame and crops overflow');
     assert(alphaCount(await pixels(await transparent(plan.lastTime))) === 0, 'Last frame should be blank');
     const sheet = document.getElementById('stages'), sheetContext = sheet.getContext('2d');
-    for (const [index, time] of [0, 1, 3.7, 9].entries()) {
+    for (const [index, time] of [0, 1, 5, 9].entries()) {
         sheetContext.drawImage(renderer.render(s, time), index % 2 * 960, Math.floor(index / 2) * 580, 960, 540);
         sheetContext.fillStyle = '#ddd'; sheetContext.font = '20px system-ui';
         sheetContext.fillText(`${time.toFixed(1)} s`, index % 2 * 960 + 20, Math.floor(index / 2) * 580 + 565);
     }
     link(await new Promise(resolve => sheet.toBlob(resolve)), 'erik-stages.png');
     const logoOnly = { ...s, body: '' };
-    const before = await pixels(await transparent(89 / 30));
-    const logoBefore = await pixels(await renderer.render(logoOnly, 89 / 30, { transparent: true }).convertToBlob());
+    const before = await pixels(await transparent((Math.ceil(crawlStart(s) * 30) - 1) / 30));
+    const logoBefore = await pixels(await renderer.render(logoOnly, (Math.ceil(crawlStart(s) * 30) - 1) / 30, { transparent: true }).convertToBlob());
     assert(equal(before, logoBefore), 'Crawl appeared before the intro ends');
     const overlap = await pixels(await transparent(4));
     const logoOverlap = await pixels(await renderer.render(logoOnly, 4, { transparent: true }).convertToBlob());
@@ -45,7 +46,12 @@ try {
     const earlierLogo = await pixels(await renderer.render(logoOnly, 1, { transparent: true }).convertToBlob());
     assert(!equal(logoOverlap, earlierLogo), 'Logo is not moving');
     const overlapExport = await new Exporter().run('frame', s, 4);
-    assert(equal(overlap, await pixels(overlapExport.blob)), 'Logo/crawl overlap differs in worker export');
+    const exportedOverlap = await pixels(overlapExport.blob);
+    if (!equal(overlap, exportedOverlap)) {
+        let changed = 0, maxDelta = 0;
+        for (let i = 0; i < overlap.length; i++) if (overlap[i] !== exportedOverlap[i]) { changed++; maxDelta = Math.max(maxDelta, Math.abs(overlap[i] - exportedOverlap[i])); }
+        throw new Error(`Logo/crawl overlap differs in worker export: ${changed} channels, max delta ${maxDelta}`);
+    }
     record('Shared Speed controls logo motion; overlapping logo and crawl match worker export');
     record('Visible opening logo and empty final frame', `${plan.frames} frames / ${plan.duration.toFixed(3)} s`);
     const frameBlob = await transparent(12), first = await pixels(frameBlob);
@@ -75,7 +81,7 @@ try {
     assert(equal(first, await pixels(workerFrame.blob)), 'Worker and preview raster differ');
     record('Worker PNG matches full-resolution preview pixel-for-pixel'); link(workerFrame.blob, 'erik-frame.png');
     // Reproduce the reported 00:05:28 contact with the original 240-unit gap.
-    const regression = normalize({ logoGap: 240, fontSize: 36, speed: 120, tilt: 62, perspective: 100 });
+    const regression = normalize({ logoGap: 240, fontSize: 36, lineHeight: 1.4, speed: 120, tilt: 62, perspective: 100 });
     const regressionFade = renderer.prepare(regression).logoFade, regressionTime = 178 / 30;
     assert(sceneAt(regression, regressionTime, regressionFade).logoAlpha === 0, 'Logo survives into reported contact');
     const safeFrame = await pixels(await renderer.render(regression, regressionTime, { transparent: true }).convertToBlob());
@@ -120,16 +126,51 @@ try {
         assert(sceneAt(settings, (fade.end + 1) / settings.speed, fade).logoAlpha === 0, 'Logo reappears after fade');
     }
     record('Real glyph rasters never overlap across extreme settings', `${cases.length} configurations / ${separatedFrames} simultaneous-stage frames`);
-    const initialFade = { ...renderer.prepare(s).logoFade };
-    assert(renderer.prepare({ ...s, logoGap: 0 }).logoFade.end < initialFade.end, 'Gap change did not refresh collision deadline');
-    assert(renderer.prepare({ ...s, tilt: 30 }).logoFade.end !== initialFade.end, 'Tilt change did not refresh collision deadline');
-    assert(renderer.prepare({ ...s, perspective: 180 }).logoFade.end !== initialFade.end, 'Perspective change did not refresh collision deadline');
-    assert(renderer.prepare({ ...s, title: Array(10).fill('I').join('\n') }).logoFade.end !== initialFade.end, 'Logo change did not refresh collision deadline');
-    assert(renderer.prepare({ ...s, speed: 10 }).logoFade.end === initialFade.end, 'Speed altered spatial fade deadline');
+    const initialFade = { ...renderer.prepare(regression).logoFade };
+    assert(renderer.prepare({ ...regression, logoGap: 0 }).logoFade.end < initialFade.end, 'Gap change did not refresh collision deadline');
+    assert(renderer.prepare({ ...regression, tilt: 30 }).logoFade.end !== initialFade.end, 'Tilt change did not refresh collision deadline');
+    assert(renderer.prepare({ ...regression, perspective: 180 }).logoFade.end !== initialFade.end, 'Perspective change did not refresh collision deadline');
+    assert(renderer.prepare({ ...regression, title: Array(10).fill('I').join('\n') }).logoFade.end !== initialFade.end, 'Logo change did not refresh collision deadline');
+    assert(renderer.prepare({ ...regression, speed: 10 }).logoFade.end === initialFade.end, 'Speed altered spatial fade deadline');
     record('Fade recalculates after geometry edits while Speed preserves its spatial deadline');
     const cyrillic = normalize({ title: 'НОВАЯ ПЕРСПЕКТИВА', body: 'Буквы уходят вдаль.\n\nСъешь ещё этих мягких французских булок, да выпей чаю.' });
     const russian = await pixels(await renderer.render(cyrillic, 10, { transparent: true }).convertToBlob({ type: 'image/png' }));
     assert(alphaCount(russian) > 5000, 'Cyrillic did not render'); record('Cyrillic text and paragraphs render');
+    const paired = normalize({ ...s, body: creditsToText(parseCredits(s.body)), roleAlignment: 'right', nameAlignment: 'left', creditGap: 72 });
+    const pairedLayout = renderer.prepare(paired);
+    assert(pairedLayout.lines.some(line => line.x > 0), 'Credits need a separate name column');
+    const pairedFrame = await pixels(await renderer.render(paired, 12, { transparent: true }).convertToBlob());
+    const pairedExport = await new Exporter().run('frame', paired, 12);
+    assert(equal(pairedFrame, await pixels(pairedExport.blob)), 'Paired credits differ in worker export');
+    assert(alphaCount(pairedFrame) > 1000, 'Credits were not rendered');
+    record('Role/name columns render and match transparent worker PNG');
+    const full = expandedCredits(normalize());
+    const fullPlan = framePlan(full, renderer.prepare(full));
+    assert(fullPlan.frames === 690 && fullPlan.duration === 23, 'Full Credits must be 00:23:00');
+    const fullRaster = await pixels(await renderer.render(full, 12, { transparent: true }).convertToBlob());
+    const fullExport = await new Exporter().run('frame', full, 12);
+    assert(equal(fullRaster, await pixels(fullExport.blob)), 'Section headings differ between preview and worker');
+    link(await renderer.render(full, 12).convertToBlob(), 'erik-full-credits.png');
+    record('Full credits with centered team headings match transparent worker PNG');
+    const fade = fullPlan.textFade, fadeTime = Math.round((fade.start + fade.end) / 2 * FPS) / FPS;
+    const fadeRaster = await pixels(await renderer.render(full, fadeTime, { transparent: true }).convertToBlob());
+    const fadeExport = await new Exporter().run('frame', full, fadeTime);
+    assert(equal(fadeRaster, await pixels(fadeExport.blob)), 'Final text fade differs in worker');
+    assert(alphaCount(fadeRaster) > 1000, 'Fade midpoint must remain visible');
+    assert(alphaCount(await pixels(await renderer.render(full, fullPlan.lastTime, { transparent: true }).convertToBlob())) === 0, 'Full Credits last frame is not transparent');
+    const trailing = { ...full, body: full.body + '\n\n\n' };
+    assert(framePlan(trailing, renderer.prepare(trailing)).frames === 690, 'Trailing empty lines delay outro');
+    const outroSheet = document.createElement('canvas'); outroSheet.width = 1920; outroSheet.height = 1160;
+    const outroContext = outroSheet.getContext('2d');
+    for (const [i, t] of [12, fade.start, fadeTime, fullPlan.lastTime].entries()) {
+        outroContext.drawImage(renderer.render(full, t), i % 2 * 960, Math.floor(i / 2) * 580, 960, 540);
+        outroContext.fillStyle = '#ddd'; outroContext.font = '20px system-ui';
+        outroContext.fillText(`${t.toFixed(2)} s`, i % 2 * 960 + 20, Math.floor(i / 2) * 580 + 565);
+    }
+    link(await new Promise(resolve => outroSheet.toBlob(resolve)), 'erik-outro.png');
+    record('Last ink triggers a smooth outro; trailing whitespace is ignored; faded worker PNG matches', `${fullPlan.frames} frames / ${fullPlan.duration} s / fade from ${fade.start.toFixed(3)} s`);
+
+    link(await renderer.render(paired, 12).convertToBlob(), 'erik-credits.png');
     const brief = normalize({ title: 'Lunnen\nAiris', body: 'art director @enhanser', speed: 400, tilt: 80, perspective: 180 });
     const expected = framePlan(brief, renderer.prepare(brief));
     const sequence = await new Exporter(({ completed, total }) => { document.getElementById('state').textContent = `PNG sequence: ${completed}/${total}`; }).run('sequence', brief, 0);
@@ -152,12 +193,12 @@ try {
     const afterCancel = await cancelled.run('frame', s, 12);
     assert(equal(first, await pixels(afterCancel.blob)), 'Retry after cancellation');
     record('Export cancellation releases worker; next export succeeds');
-    const video = await new Exporter(({ completed, total }) => { document.getElementById('state').textContent = `MP4: ${completed}/${total}`; }).run('mp4', brief, 0);
+    const video = await new Exporter(({ completed, total }) => { document.getElementById('state').textContent = `MP4: ${completed}/${total}`; }).run('mp4', full, 0);
     const element = document.getElementById('video');
     await new Promise((resolve, reject) => { element.onloadeddata = resolve; element.onerror = () => reject(new Error('MP4 decode failed')); element.src = URL.createObjectURL(video.blob); });
     assert(element.videoWidth === WIDTH && element.videoHeight === HEIGHT, 'Video dimensions');
-    assert(Math.abs(element.duration - expected.duration) < .04, 'Video duration');
-    await new Promise(resolve => { element.onseeked = resolve; element.currentTime = expected.duration / 3; });
+    assert(Math.abs(element.duration - fullPlan.duration) < .04, 'Video duration');
+    await new Promise(resolve => { element.onseeked = resolve; element.currentTime = fullPlan.duration / 2; });
     const decoded = new OffscreenCanvas(WIDTH, HEIGHT), ctx = decoded.getContext('2d'); ctx.drawImage(element, 0, 0);
     const videoPixels = ctx.getImageData(0, 0, WIDTH, HEIGHT).data;
     let blue = 0; for (let i = 0; i < videoPixels.length; i += 4) if (videoPixels[i + 2] > 80 && videoPixels[i + 2] > videoPixels[i] * 1.5 && videoPixels[i + 2] > videoPixels[i + 1]) blue++;

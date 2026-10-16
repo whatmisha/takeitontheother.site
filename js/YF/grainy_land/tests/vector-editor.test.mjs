@@ -51,13 +51,13 @@ test('selecting a layer and Edit path suspend Pen; resuming Pen exits path editi
     const id=e.selected;v.startPen();addPoint(.2,.2);e.select(id);assert.equal(v.pen,null);v.setEditing(true);assert.equal(v.editing,true);
     v.startPen();assert.equal(v.editing,false);assert.equal(v.pen.length,1);assert.equal(e.selected,id);
 }));
-test('Landscape and Abstract keep independent drafts and refresh their status hints',()=>usingFixture(({e,v,addPoint})=>{
-    v.startPen();addPoint(.2,.2);addPoint(.4,.4);const landscape=structuredClone(v.pen);
-    e.tool.applySnapshot({...e.tool.settings,mode:'abstract'});assert.equal(v.pen,null);assert.equal(e.message,'');
-    v.startPen();assert.equal(v.pen.length,0);addPoint(.6,.6);const abstract=structuredClone(v.pen);e.setTool('move');
-    e.tool.applySnapshot({...e.tool.settings,mode:'landscape'});assert.match(e.message,/Press P to resume/);v.startPen();assert.deepEqual(v.pen,landscape);
-    e.tool.applySnapshot({...e.tool.settings,mode:'abstract'});assert.match(e.message,/Press P to resume/);v.startPen();assert.deepEqual(v.pen,abstract);
+test('settings tabs keep one Pen draft, while a new document has a separate draft',()=>usingFixture(({e,v,addPoint})=>{
+    v.startPen();addPoint(.2,.2);addPoint(.4,.4);const expected=structuredClone(v.pen);
+    for(const kind of ['land','spot','plant','flower']){e.tool.compositionKind=kind;v.sync();assert.deepEqual(v.pen,expected);}
+    e.setTool('move');v.startPen();assert.deepEqual(v.pen,expected);
+    e.tool.documentRevision=1;v.sync();assert.equal(v.pen,null);v.startPen();assert.equal(v.pen.length,0);
 }));
+
 test('point Delete after a properties button cannot fall through to layer deletion',()=>usingFixture(({e,v,key,element})=>{
     v.setEditing(true);const count=getLayers(e.tool.settings).length,event=key('Delete',element('toggleVectorPoint'));
     v.handleKey(event);assert.ok(event.stopped);assert.equal(e.layer().vectorPath.length,3);assert.equal(getLayers(e.tool.settings).length,count);
@@ -76,7 +76,7 @@ test('Escape discards only the current draft; completing a path creates one docu
 test('Pen checks the layer limit before entering and retains a suspended draft at capacity',()=>usingFixture(({e,v,addPoint,element})=>{
     v.startPen();addPoint(.2,.2);e.setTool('move');let s=e.tool.settings;while(getLayers(s).length<MAX_LAYERS)s=addLayer(s,'vector').settings;
     e.tool.applySnapshot(s);assert.equal(element('penTool').disabled,true);v.startPen();assert.equal(v.pen,null);assert.match(e.message,/Maximum 32 layers/);
-    e.tool.applySnapshot({...s,landscapeLayers:s.landscapeLayers.slice(0,-1)});v.startPen();assert.equal(v.pen.length,1);
+    e.tool.applySnapshot({...s,layers:s.layers.slice(0,-1)});v.startPen();assert.equal(v.pen.length,1);
 }));
 test('Pen drag is one undoable point; pointer cancellation rolls it back without losing redo',()=>usingFixture(({e,v,point,key})=>{
     v.startPen();v.penDown(point(.2,.2));v.pen[0].out=[.4,.3];v.pen[0].in=[0,.1];v.pen[0].smooth=true;const expected=structuredClone(v.pen);

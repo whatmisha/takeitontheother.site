@@ -269,6 +269,10 @@ body,
     gap: var(--spacing-lg);
 }
 
+.sparky-export-actions > [hidden] {
+    display: none;
+}
+
 .sparky-export-actions.is-exporting > .btn-fixed {
     visibility: hidden;
 }

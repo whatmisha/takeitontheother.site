@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {signedField,bakeFlora} from '../flora-field.js';
 import {bakeFlora as before} from './fixtures/field-before-cpu.js';
-import {defaults,switchMode} from '../document.js';
+import {defaults,switchMode} from '../legacy-document.js';
 import {getLayers} from '../layers.js';
 import {floraParts,editFloraPart} from '../flora.js';
 import {motionFrame} from '../motion.js';

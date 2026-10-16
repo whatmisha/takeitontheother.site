@@ -1,14 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {defaults,normalizeSettings,makeDocument,readDocument,regenerate,switchMode} from '../document.js';
+import {normalizeSettings,makeDocument,readDocument,regenerate} from '../document.js';
+import {defaults,switchMode} from '../legacy-document.js';
 import {getLayers,addLayer,addBlueLayer,withLayers} from '../layers.js';
 import {layerExportPlan} from '../layers-export.js';
 import {FormEditor} from '../form-editor.js';
-test('Background visibility survives documents, Generate and mode changes independently of export toggles',()=>{
+test('Background visibility survives documents, Generate and global appearance edits independently of export toggles',()=>{
  const s=normalizeSettings({...defaults,backgroundVisible:false});
  assert.equal(normalizeSettings({}).backgroundVisible,true);
  assert.deepEqual(readDocument(makeDocument(s)),s);
- assert.equal(regenerate(s,3).backgroundVisible,false);assert.equal(switchMode(s,'f').backgroundVisible,true);
+ assert.equal(regenerate(s,3).backgroundVisible,false);assert.equal(normalizeSettings({...s,grain:12}).backgroundVisible,false);
  assert.equal(s.transparentBackground,false);assert.equal(s.previewTransparent,false);
  const plan=layerExportPlan(s);assert.equal(plan.entries.at(-1).name,'09-Background-hidden.png');
  assert.ok(!layerExportPlan({...s,transparentBackground:true}).entries.some(e=>e.index===-1));

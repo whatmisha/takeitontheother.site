@@ -1,5 +1,6 @@
 import {LandscapeRenderer} from '../../../render.js?v=flower-f-2';
-import {defaults,switchMode,regenerate} from '../../../document.js?v=flower-f-2';
+import {defaults,switchMode} from '../../../legacy-document.js';
+import {regenerate} from '../../../document.js?v=unified-document-1';
 import {getLayers,withLayers} from '../../../layers.js?v=flower-f-2';
 import {flowerType} from '../../../flower.js?v=flower-f-2';
 import {buildFlowerParts as oldParts} from './flower-before.js';

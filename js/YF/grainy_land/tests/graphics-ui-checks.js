@@ -1,0 +1,42 @@
+const frame=document.querySelector('#app'),out=document.querySelector('#results'),log=[];
+const pause=(ms=50)=>new Promise(r=>setTimeout(r,ms));
+const check=(label,ok)=>{log.push((ok?'PASS ':'FAIL ')+label);out.textContent=log.join('\n');if(!ok)throw Error(label);};
+try{
+ const html=await(await fetch('../index.html')).text();
+ const instrument=`<script type="module">
+ import {LandscapeRenderer} from '/grainy_land/render.js?v=layers-polish-1';
+ import {ApplicationShell} from '/infra/framework/src/core/ApplicationShell.js?v=initial-paint-1';
+ window.startupFrames=[];window.loadingRenders=-1;
+ const original=LandscapeRenderer.prototype.render;
+ LandscapeRenderer.prototype.render=function(s,...args){window.startupFrames.push(s.seed);return original.call(this,s,...args);};
+ const bootstrap=ApplicationShell.prototype._bootstrapPresets;
+ ApplicationShell.prototype._bootstrapPresets=async function(){await new Promise(r=>setTimeout(r,250));window.loadingRenders=window.startupFrames.length;return bootstrap.call(this);};
+ await import('/grainy_land/tool.js?v=graphics-polish-1');
+ </script>`;
+ frame.srcdoc=html.replace('<head>','<head><base href="/grainy_land/">').replace('<script type="module" src="./tool.js?v=graphics-polish-1"></script>',instrument);
+ for(let i=0;i<300&&!frame.contentDocument?.documentElement.dataset.ready;i++)await pause();
+ const d=frame.contentDocument,w=frame.contentWindow,$=id=>d.getElementById(id),rect=id=>$(id).getBoundingClientRect();
+ const source=await(await fetch('../presets/flower-flow.json')).json();
+ check('App ready',d.documentElement.dataset.ready==='true');
+ check('No artwork is rendered while the startup preset is loading',w.loadingRenders===0);
+ check('First and subsequent startup frames use Flower Flow',w.startupFrames.length>0&&w.startupFrames.every(seed=>seed===source.seed));
+ check('Graphics panel heading',$('compositionPanelHeader').firstElementChild.firstChild.textContent==='Graphics');
+ check('Flower type is first, without a visible label',$('flowerComposition').firstElementChild===$('fType')&&!d.querySelector('label[for=fType]')&&$('fType').getAttribute('aria-label')==='Flower type');
+ check('Unlabelled selectors retain the standard spacing',['fType','floraLayout'].every(id=>w.getComputedStyle($(id)).marginBottom==='24px'));
+ check('Plant arrangement retains its accessible label only',!d.querySelector('label[for=floraLayout]')&&$('floraLayout').getAttribute('aria-label')==='Plant arrangement');
+ const sections=[...d.querySelectorAll('#materialPanel > .panel-content > details')];
+ check('Appearance has three sibling sections',sections.map(e=>e.id).join(',')==='colorSection,advancedTones,surfaceSection');
+ check('Only Color starts open',sections.every(e=>e.open===(e.id==='colorSection')));
+ $('colorHeading').click();await pause();
+ const boxes=sections.map(e=>e.getBoundingClientRect());
+ check('Collapsed section heights are equal and compact',boxes.every(b=>b.height>=36&&b.height<=44&&Math.abs(b.height-boxes[0].height)<1));
+ check('Collapsed sections have no cumulative margins',boxes.slice(1).every((b,i)=>Math.abs(b.top-boxes[i].bottom)<1));
+ $('tonesHeading').click();await pause();check('Advanced opens independently',$('advancedTones').open&&!$('colorSection').open&&$('toneAmountSlider').getBoundingClientRect().height>0);$('tonesHeading').click();$('colorHeading').click();
+ const button=$('playMotion'),b=rect('playMotion'),a=rect('motionAmount'),loop=rect('motionDuration');
+ check('Round Play is aligned with both inputs',b.width===36&&b.height===36&&Math.abs(a.bottom-b.bottom)<1&&Math.abs(loop.bottom-b.bottom)<1&&b.left>loop.right);
+ check('Play has an icon and an accessible name',button.querySelector('svg')&&button.getAttribute('aria-label')==='Play'&&!button.textContent.trim());
+ button.click();await pause();check('Playing shows Stop icon and state',button.getAttribute('aria-pressed')==='true'&&button.getAttribute('aria-label')==='Stop'&&button.querySelector('[data-play-icon]').hasAttribute('hidden')&&!button.querySelector('[data-stop-icon]').hasAttribute('hidden'));
+ button.click();await pause();check('Stopping restores Play without changing geometry',button.getAttribute('aria-pressed')==='false'&&button.getAttribute('aria-label')==='Play'&&rect('playMotion').width===b.width);
+ check('No render error',!$('operationStatus').textContent);
+ check('All startup and panel checks passed',true);
+}catch(e){out.textContent+='\nERROR '+e.stack;}

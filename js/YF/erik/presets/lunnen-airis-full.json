@@ -1,0 +1,27 @@
+{
+  "toolId": "erik",
+  "schemaVersion": 3,
+  "animation": "crawl",
+  "name": "Lunnen Airis — Full Credits",
+  "settings": {
+    "width": 1920,
+    "height": 1080,
+    "title": "Lunnen\nAiris",
+    "body": "-Lunnen team-\nart director | @enhanser\ngraphic designer | @whatmisha\nproduct manager | Sergey Kharchenko\nhead of product | @neverunderestimatethelittleguy\nproduct manager | @smirlira\ncreative producer | @natahandreeva\n-Photo production team-\ncontent production head | @zatais\nassistant producer | @kvolozina\nphotographer | @rosstovtseva\nretouch | @berezhneva.production\nset designer | @sakhar_d\nassistant set designer | @nedoabortesh\nmuah | @soya.mua\nstylist | @svetamiha\nassistant stylist | @bazaarovvv\ndop backstage | @yasha__yakovlev\nmodels | @motionmngt",
+    "roleAlignment": "right",
+    "nameAlignment": "left",
+    "creditGap": 48,
+    "fontSize": 42,
+    "weight": 400,
+    "lineHeight": 1.5,
+    "tracking": 0,
+    "columnWidth": 1120,
+    "alignment": "justify-all",
+    "tilt": 70,
+    "perspective": 100,
+    "speed": 120,
+    "logoGap": 450,
+    "textColor": "#2353DB",
+    "backgroundColor": "#000000"
+  }
+}

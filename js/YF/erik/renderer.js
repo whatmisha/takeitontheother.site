@@ -1,4 +1,5 @@
-import { WIDTH, HEIGHT, camera, layoutText, layoutKey, sceneAt, planLogoFade } from './model.js';
+import { EndingRenderer } from './ending-renderer.js';
+import { WIDTH, HEIGHT, camera, layoutText, layoutKey, sceneAt, planLogoFade, planTextFade, framePlan } from './model.js';
 const FONT_URL = new URL('../infra/framework/fonts/LunnenDisplay-VariableVF.woff2', import.meta.url);
 let fontReady;
 export function loadFont() {
@@ -64,6 +65,7 @@ function inkRows(surface) {
 }
 export class CrawlRenderer {
     constructor() {
+        this.ending = new EndingRenderer();
         this.canvas = makeCanvas(WIDTH, HEIGHT);
         this.gl = this.canvas.getContext('webgl', { alpha: true, premultipliedAlpha: true, antialias: false, preserveDrawingBuffer: true });
         if (!this.gl) throw new Error('WebGL is unavailable. Enable graphics acceleration and reload Erik.');
@@ -151,7 +153,7 @@ export class CrawlRenderer {
         const measuring = makeCanvas(1, 1).getContext('2d');
         const measure = (text, size) => { fontContext(measuring, settings, size); return measuring.measureText(text).width; };
         const layout = layoutText(settings, measure);
-        layout.inkTop = null; this.fadeKey = null;
+        layout.inkTop = null; layout.inkBottom = null; this.fadeKey = null;
         const scale = 1.5;
         const width = 2 ** Math.ceil(Math.log2((settings.columnWidth + 64) * scale));
         const tileHeight = 2048, worldWidth = width / scale, worldHeight = tileHeight / scale;
@@ -167,21 +169,23 @@ export class CrawlRenderer {
                 fontContext(ctx, settings, line.size);
                 const metrics = ctx.measureText(line.text);
                 const baseline = line.y + line.size;
-                const left = (worldWidth - settings.columnWidth) / 2;
+                const lineWidth = line.width ?? settings.columnWidth;
+                const left = (worldWidth - settings.columnWidth) / 2 + (line.x || 0);
                 if ((line.alignment === 'justify-all' || line.alignment === 'justify' && !line.last) && line.text.includes(' ')) {
                     const words = line.text.split(' ');
                     const widths = words.map(word => ctx.measureText(word).width);
-                    const gap = (settings.columnWidth - widths.reduce((a, b) => a + b, 0)) / (words.length - 1);
+                    const gap = (lineWidth - widths.reduce((a, b) => a + b, 0)) / (words.length - 1);
                     let x = left;
                     words.forEach((word, i) => { ctx.fillText(word, x, baseline); x += widths[i] + gap; });
                 } else {
-                    const x = line.alignment === 'center' ? (worldWidth - metrics.width) / 2 : left;
+                    const x = left + (line.alignment === 'center' ? (lineWidth - metrics.width) / 2 : line.alignment === 'right' ? lineWidth - metrics.width : 0);
                     ctx.fillText(line.text, x, baseline);
                 }
             }
-            if (layout.inkTop === null) {
-                const ink = inkRows(surface);
-                if (ink) layout.inkTop = index * worldHeight + Math.max(0, ink.top - 2) / scale;
+            const ink = inkRows(surface);
+            if (ink) {
+                if (layout.inkTop === null) layout.inkTop = index * worldHeight + Math.max(0, ink.top - 2) / scale;
+                layout.inkBottom = index * worldHeight + (ink.bottom + 2) / scale;
             }
             const texture = this.makeTexture(surface);
             this.tiles.push({ texture, y: index * worldHeight, width: worldWidth, height: worldHeight });
@@ -197,13 +201,13 @@ export class CrawlRenderer {
         gl.viewport(0, 0, width, height);
         const background = transparent ? [0, 0, 0, 0] : [...rgb(settings.backgroundColor), 1];
         gl.clearColor(...background); gl.clear(gl.COLOR_BUFFER_BIT);
-        const c = camera(settings), scene = sceneAt(settings, time, layout.logoFade);
+        const c = camera(settings), scene = sceneAt(settings, time, layout.logoFade, planTextFade(settings, layout));
         gl.uniform4f(this.uniform.camera, c.focal, c.sin, c.cos, c.planeScale);
         gl.uniform1f(this.uniform.motion, scene.crawlDistance);
         gl.uniform3fv(this.uniform.color, rgb(settings.textColor));
         gl.uniform2f(this.uniform.fade, c.fadeStart, c.fadeEnd);
-        gl.uniform1f(this.uniform.mode, 0); gl.uniform1f(this.uniform.opacity, 1);
-        for (const tile of scene.crawlVisible ? this.tiles : []) {
+        gl.uniform1f(this.uniform.mode, 0); gl.uniform1f(this.uniform.opacity, scene.textAlpha);
+        for (const tile of scene.crawlVisible && scene.textAlpha > 0 ? this.tiles : []) {
             if (scene.crawlDistance - tile.y < -240 || scene.crawlDistance - tile.y - tile.height > c.fadeEnd) continue;
             gl.bindTexture(gl.TEXTURE_2D, tile.texture);
             gl.uniform4f(this.uniform.tile, tile.width, tile.y, tile.height, 0);
@@ -215,9 +219,11 @@ export class CrawlRenderer {
             gl.bindTexture(gl.TEXTURE_2D, this.logo.texture);
             gl.drawArrays(gl.TRIANGLES, 0, 6);
         }
-        return this.canvas;
+        return this.ending.render(this.canvas, settings, time, framePlan(settings, layout).ending);
     }
+    loadEnding(settings, bitmap) { return this.ending.load(settings, bitmap); }
     destroy() {
+        this.ending.destroy();
         if (this.logo) this.gl.deleteTexture(this.logo.texture);
         this.tiles.forEach(tile => this.gl.deleteTexture(tile.texture));
         this.gl.deleteBuffer(this.buffer); this.gl.deleteProgram(this.program);

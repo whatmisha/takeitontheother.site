@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { DEFAULTS, CREDITS, LUNNEN_BLUE, INTRO, crawlStart, normalize, migrateDraft, hasContent, sceneAt, framePlan, project, camera, wrapText, layoutText, FPS, timecode, HEIGHT, planLogoFade, LOGO_CLEARANCE } from '../model.js';
+import { DEFAULTS, CREDITS, LUNNEN_BLUE, INTRO, crawlStart, normalize, migrateDraft, hasContent, sceneAt, framePlan, project, camera, wrapText, layoutText, FPS, timecode, HEIGHT, planLogoFade, planTextFade, LOGO_CLEARANCE } from '../model.js';
 const measure = (text, size = 10) => [...text].length * size * .5;
 const layout = settings => layoutText(settings, measure);
 test('Lunnen intro, supplied credits and brand color are the defaults', () => {
@@ -11,11 +11,13 @@ test('Lunnen intro, supplied credits and brand color are the defaults', () => {
     assert.equal(DEFAULTS.textColor, LUNNEN_BLUE);
     assert.equal(LUNNEN_BLUE, '#2353DB');
     assert.equal(DEFAULTS.alignment, 'justify-all');
+    assert.deepEqual([DEFAULTS.logoGap, DEFAULTS.fontSize, DEFAULTS.lineHeight, DEFAULTS.speed, DEFAULTS.tilt, DEFAULTS.perspective], [450, 42, 1.5, 120, 70, 100]);
 });
 test('duration follows text, gap and shared speed; output remains 1080p / 30 fps', () => {
     const s = normalize(), a = framePlan(s, layout(s));
     const faster = { ...s, speed: s.speed * 2 }, b = framePlan(faster, layout(faster));
-    assert.ok(Math.abs((a.duration - .5) / 2 - (b.duration - .5)) < 1 / FPS);
+    assert.equal(a.textFade.start / 2, b.textFade.start);
+    for (const p of [a, b]) assert.ok(p.textFade.end - p.textFade.start >= 5 - 1 / FPS && p.textFade.end - p.textFade.start < 6);
     const longer = { ...s, body: s.body.repeat(3) };
     assert.ok(framePlan(longer, layout(longer)).duration > a.duration);
     assert.deepEqual([normalize({ width: 42, height: 33 }).width, normalize().height], [1920, 1080]);
@@ -27,18 +29,18 @@ test('ribbon bottom corners stay pinned to frame corners across all camera setti
         const s = normalize({ tilt, perspective, columnWidth }), l = layout(s), p = framePlan(s, l);
         assert.deepEqual(project(-columnWidth / 2, 0, s), { x: 0, y: 1080, scale: 1 });
         assert.deepEqual(project(columnWidth / 2, 0, s), { x: 1920, y: 1080, scale: 1 });
-        assert.ok(sceneAt(s, p.lastTime).crawlTime * s.speed - l.height > camera(s).fadeEnd);
+        assert.equal(sceneAt(s, p.lastTime, l.logoFade, p.textFade).textAlpha, 0);
         assert.equal(p.duration, p.frames / FPS);
     }
 });
 test('logo recedes and fades while the crawl enters, then disappears', () => {
     const start = sceneAt(DEFAULTS, 0), middle = sceneAt(DEFAULTS, 1), overlap = sceneAt(DEFAULTS, 4), end = sceneAt(DEFAULTS, INTRO.logoFadeEnd / DEFAULTS.speed + 1 / FPS);
-    assert.equal(sceneAt(DEFAULTS, 89 / FPS).crawlVisible, false);
-    assert.equal(sceneAt(DEFAULTS, 90 / FPS).crawlVisible, true);
-    assert.equal(sceneAt(DEFAULTS, 90 / FPS).crawlTime, 0);
+    assert.equal(sceneAt(DEFAULTS, (Math.ceil(crawlStart(DEFAULTS) * FPS) - 1) / FPS).crawlVisible, false);
+    assert.equal(sceneAt(DEFAULTS, crawlStart(DEFAULTS)).crawlVisible, true);
+    assert.equal(sceneAt(DEFAULTS, crawlStart(DEFAULTS)).crawlTime, 0);
     assert.equal(start.phase, 'Logo'); assert.equal(start.logoAlpha, 1); assert.equal(start.crawlVisible, false);
     assert.ok(start.logoScale > middle.logoScale && middle.logoScale > overlap.logoScale);
-    assert.equal(overlap.phase, 'Logo → Crawl'); assert.equal(overlap.crawlTime, 1);
+    assert.equal(overlap.phase, 'Logo → Crawl'); assert.equal(overlap.crawlTime, 4 - crawlStart(DEFAULTS));
     assert.ok(overlap.logoAlpha === 1 && overlap.crawlVisible);
     assert.equal(end.logoAlpha, 0); assert.equal(end.phase, 'Crawl');
 });
@@ -84,7 +86,7 @@ test('logo is separate from the ribbon; optional or empty content has no dead le
 });
 test('draft migration upgrades demo fields and preserves authored fields', () => {
     const s = migrateDraft({ version: 1, settings: { title: 'A NEW PERSPECTIVE', textColor: '#ffe168', fontSize: 70, body: 'My credits', speed: 90 } });
-    assert.equal(s.title, DEFAULTS.title); assert.equal(s.textColor, LUNNEN_BLUE); assert.equal(s.fontSize, 36);
+    assert.equal(s.title, DEFAULTS.title); assert.equal(s.textColor, LUNNEN_BLUE); assert.equal(s.fontSize, 42);
     assert.equal(s.body, 'My credits'); assert.equal(s.speed, 90);
     const oldCredits = CREDITS.replace('graphic designers', 'graphical designers');
     assert.equal(migrateDraft({ version: 2, settings: { body: oldCredits } }).body, CREDITS);
@@ -95,11 +97,11 @@ test('speed 10 remains valid in persisted settings and produces the complete slo
     const slow = normalize({ speed: 10 }), regular = normalize();
     assert.equal(slow.speed, 10); assert.equal(normalize({ speed: 0 }).speed, 10);
     const slowPlan = framePlan(slow, layout(slow)), regularPlan = framePlan(regular, layout(regular));
-    assert.ok(Math.abs((slowPlan.duration - .5) / 12 - (regularPlan.duration - .5)) < 1 / FPS);
-    assert.ok(sceneAt(slow, slowPlan.lastTime).crawlTime * slow.speed - layout(slow).height > camera(slow).fadeEnd);
+    assert.ok(Math.abs(slowPlan.textFade.start / 12 - regularPlan.textFade.start) < 1e-8);
+    assert.equal(sceneAt(slow, slowPlan.lastTime, undefined, slowPlan.textFade).textAlpha, 0);
 });
 test('gap is a spatial offset: speed preserves separation and controls entry time', () => {
-    for (const logoGap of [0, 240, 360, 1200, 2400]) for (const speed of [10, 120, 400]) {
+    for (const logoGap of [-2400, -450, -10, 0, 240, 360, 1200, 2400]) for (const speed of [10, 120, 400]) {
         const s = normalize({ logoGap, speed });
         assert.equal(crawlStart(s), logoGap / speed);
         for (const t of [0, 1, 5, 30]) {
@@ -107,7 +109,7 @@ test('gap is a spatial offset: speed preserves separation and controls entry tim
             assert.equal(scene.logoTravel - scene.crawlDistance, logoGap);
         }
         assert.equal(sceneAt(s, crawlStart(s)).crawlVisible, true);
-        if (logoGap) assert.equal(sceneAt(s, crawlStart(s) - 1 / FPS).crawlVisible, false);
+        if (logoGap > 0) assert.equal(sceneAt(s, crawlStart(s) - 1 / FPS).crawlVisible, false);
         assert.equal(crawlStart({ ...s, title: '' }), 0);
         assert.equal(sceneAt({ ...s, title: '' }, 0).crawlVisible, true);
     }
@@ -117,7 +119,8 @@ test('gap is a spatial offset: speed preserves separation and controls entry tim
     assert.ok(Math.abs(framePlan(far, layout(far)).duration - framePlan(close, layout(close)).duration - 4) < 1 / FPS);
     assert.equal(sceneAt(normalize({ logoGap: 2400 }), 10).phase, 'Gap');
     assert.equal(migrateDraft({ version: 3, settings: { speed: 90, body: 'My text', lineHeight: 1.8 } }).logoGap, DEFAULTS.logoGap);
-    assert.equal(normalize({ logoGap: -20 }).logoGap, 0);
+    assert.equal(normalize({ logoGap: -20 }).logoGap, -20);
+    assert.equal(normalize({ logoGap: -3000 }).logoGap, -2400);
 });
 test('line spacing changes baseline distances and duration without changing the shared motion', () => {
     const tight = normalize({ lineHeight: .8 }), loose = normalize({ lineHeight: 3 });
@@ -135,7 +138,7 @@ test('timecode carries frames into seconds and minutes', () => {
 test('automatic logo fade stays ahead of contact across camera, gap, glyph bounds and speeds', () => {
     let cases = 0;
     for (const tilt of [30, 62, 80]) for (const perspective of [60, 100, 180])
-    for (const columnWidth of [600, 1120, 1500]) for (const logoGap of [0, 10, 240, 360, 2400])
+    for (const columnWidth of [600, 1120, 1500]) for (const logoGap of [-2400, -450, -10, 0, 10, 240, 360, 2400])
     for (const logoBottom of [150, 550, 2000, 50000]) for (const textTop of [0, 10, 100, 5000]) {
         const base = normalize({ tilt, perspective, columnWidth, logoGap });
         const fade = planLogoFade(base, { logoBottom, textTop });
@@ -155,10 +158,10 @@ test('automatic logo fade stays ahead of contact across camera, gap, glyph bound
         }
         cases++;
     }
-    assert.equal(cases, 2160);
+    assert.equal(cases, 3456);
 });
 test('collision fade covers screenshot timing, zero lead-in and missing content', () => {
-    const s = normalize({ logoGap: 240 }), bounds = { logoBottom: 550, textTop: 8 };
+    const s = normalize({ logoGap: 240, tilt: 62, fontSize: 36, lineHeight: 1.4 }), bounds = { logoBottom: 550, textTop: 8 };
     const fade = planLogoFade(s, bounds);
     assert.ok(fade.end < 178 / FPS * s.speed);
     assert.equal(sceneAt(s, 178 / FPS, fade).logoAlpha, 0);
@@ -171,4 +174,22 @@ test('collision fade covers screenshot timing, zero lead-in and missing content'
     assert.deepEqual(planLogoFade({ ...s, title: '' }, bounds), natural);
     assert.deepEqual(planLogoFade({ ...s, logoGap: 2400 }, bounds), natural);
     assert.deepEqual(planLogoFade(s, { logoBottom: 550, textTop: null }), natural);
+});
+
+test('outro starts at last ink crossing the bottom, ignores trailing whitespace and keeps motion constant', () => {
+    for (const speed of [10, 120, 400]) for (const tilt of [30, 70, 80]) for (const perspective of [60, 100, 180]) {
+        const settings = normalize({ speed, tilt, perspective }), l = { ...layout(settings), inkBottom: 1624 };
+        const fade = planTextFade(settings, l), start = fade.start;
+        assert.ok(Math.abs(project(0, start * speed - settings.logoGap - l.inkBottom, settings).y - HEIGHT) < 1e-8);
+        assert.equal(sceneAt(settings, start, undefined, fade).textAlpha, 1);
+        assert.equal(sceneAt(settings, fade.end, undefined, fade).textAlpha, 0);
+        const middle = sceneAt(settings, (start + fade.end) / 2, undefined, fade);
+        assert.ok(Math.abs(middle.textAlpha - .5) < 1e-8);
+        assert.equal(middle.phase, 'Fade out');
+        assert.deepEqual(fade, planTextFade(settings, { ...l, height: l.height + 10000 }));
+        assert.ok(project(0, .01 * speed, settings).y < HEIGHT);
+    }
+    const s = normalize({ title: '' }), l = { ...layout(s), inkBottom: 1624 };
+    assert.equal(planTextFade(s, l).start, 1624 / s.speed);
+    assert.equal(planTextFade(s, { lines: [] }), null);
 });

@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {defaults,switchMode,regenerate,normalizeSettings,makeDocument,readDocument} from '../document.js';
+import {regenerate,normalizeSettings,makeDocument,readDocument} from '../document.js';
+import {defaults,switchMode} from '../legacy-document.js';
 import {getLayers,withLayers,editLayer,convertLayer} from '../layers.js';
 import {resizeObjects,setParameterMode,editSharedParameters} from '../object-actions.js';
 import {effectiveSettings} from '../object-model.js';
@@ -14,8 +15,8 @@ const colors=(s,l)=>floraParts(l,s).map(p=>p.group??l.group);
 test('32 Plants and Flowers survive documents and export plans without truncation',()=>{
  for(const [mode,kind,key]of [['flora','plant','floraCount'],['f','flower','fCount']]){
   const s=resizeObjects(switchMode(defaults,mode),kind,32),round=readDocument(makeDocument(s));
-  assert.equal(s[key],32);assert.equal(getLayers(round).length,32);assert.deepEqual(getLayers(round),getLayers(s));
-  assert.equal(layerExportPlan(s).entries.length,33);assert.equal(resizeObjects(s,kind,99)[key],32);
+  assert.equal(s.objectDefaults[kind][key],32);assert.equal(getLayers(round).length,32);assert.deepEqual(getLayers(round),getLayers(s));
+  assert.equal(layerExportPlan(s).entries.length,33);assert.equal(resizeObjects(s,kind,99).objectDefaults[kind][key],32);
  }
 });
 test('size limits expand differences; zero variation restores common petal geometry',()=>{
@@ -37,16 +38,16 @@ test('most stems leave the lower edge while head positions and zero-length stems
    }
   }
   assert.ok(roots>=25,`${width} ${seed}: ${roots} roots hidden`);assert.ok(extended>10);
-  const noStem={...s,fStem:0};assert.ok(getLayers(noStem).every(l=>floraParts(l,noStem).find(p=>p.kind==='stem').hidden));
+  const noStem=editSharedParameters(s,'flower',{fStem:0});assert.ok(getLayers(noStem).every(l=>floraParts(l,noStem).find(p=>p.kind==='stem').hidden));
  }
 });
 test('flower and petal palettes are deterministic, editable and use the current palette',()=>{
  const s=field(),layers=getLayers(s),combinations=new Set(layers.map(l=>colors(s,l).join(':')));assert.ok(combinations.size>5);
  assert.ok(layers.some(l=>new Set(colors(s,l)).size===3));
- const uniform={...s,fColorVariation:0,fPetalColors:0};for(const l of layers)assert.deepEqual([...new Set(colors(uniform,l))],[l.group]);
- const patterns=['grouped','alternating','scattered'].map(fColorPattern=>layers.map(l=>colors({...s,fColorPattern},l)));
+ const uniform=editSharedParameters(s,'flower',{fColorVariation:0,fPetalColors:0});for(const l of layers)assert.deepEqual([...new Set(colors(uniform,l))],[l.group]);
+ const patterns=['grouped','alternating','scattered'].map(fColorPattern=>layers.map(l=>colors(editSharedParameters(s,'flower',{fColorPattern}),l)));
  assert.notDeepEqual(patterns[0],patterns[1]);assert.notDeepEqual(patterns[1],patterns[2]);
- const custom={...s,customColors:[{id:'custom-1',name:'Mint',color:'#80C9A1'}],fColorVariation:100,fPetalColors:100};
+ const custom=editSharedParameters({...s,customColors:[{id:'custom-1',name:'Mint',color:'#80C9A1'}]},'flower',{fColorVariation:100,fPetalColors:100});
  assert.ok(layers.some(l=>colors(custom,l).includes('custom-1')));assert.equal(colorIsUsed(custom,'custom-1'),true);assert.throws(()=>removeCustomColor(custom,'custom-1'));
  let l=layers[0];l=editFloraPart(l,s,'p1',{group:'sky'});const edited=withLayers(s,[l,...layers.slice(1)]);
  assert.equal(floraParts(l,{...edited,fColorPattern:'scattered',fPetalColors:100}).find(p=>p.id==='p1').group,'sky');

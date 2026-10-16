@@ -1,5 +1,6 @@
 import {checkFloraEdges} from './flora-edge-checks.js';
-import {defaults,switchMode,normalizeSettings,makeDocument,readDocument} from '../document.js?v=flower-field-2';
+import {defaults,switchMode,normalizeSettings} from '../legacy-document.js';
+import {makeDocument,readDocument} from '../document.js?v=unified-document-1';
 import {LandscapeRenderer} from '../render.js?v=flower-field-2';
 import {withLayers,getLayers,editLayer} from '../layers.js?v=flower-field-2';
 import {editFloraPart,floraParts} from '../flora.js?v=flower-field-2';

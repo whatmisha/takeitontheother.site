@@ -2,8 +2,8 @@
 // Geometry stays separate from palette, pigment and spray rendering.
 import {flowerProfiles} from './flower-profiles.js?v=petal-motion-1';
 export const flowerTypes=Object.fromEntries(Object.entries(flowerProfiles).map(([id,p])=>[id,p.label]));
-export {flowerDefaults,flowerRanges} from "./object-model.js?v=petal-motion-1";
-import {flowerDefaults,flowerRanges} from "./object-model.js?v=petal-motion-1";
+export {flowerDefaults,flowerRanges} from "./object-model.js?v=unified-document-1";
+import {flowerDefaults,flowerRanges} from "./object-model.js?v=unified-document-1";
 
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 export function normalizeFlowerParams(s={}){

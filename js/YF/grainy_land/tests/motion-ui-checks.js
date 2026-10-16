@@ -9,7 +9,7 @@ try{
  const still=()=>$('mainCanvas').toDataURL();
  const playing=()=>$('playMotion').getAttribute('aria-pressed')==='true';
  check('App ready',d.documentElement.dataset.ready==='true');
- await click('presetDropdownToggle');d.querySelector('#presetDropdownMenu [data-value="Ember"]').click();await pause();await click('modeFlower');
+ await click('presetDropdownToggle');d.querySelector('#presetDropdownMenu [data-value="Six Cup"]').click();await pause();await click('settings-flower');
  const count=$('fCountValue');count.value='32';count.focus();count.blur();await pause();
  check('32 flowers are ready',count.value==='32'&&d.querySelectorAll('#layerList > [data-layer-id]').length===32);
  const original=still();

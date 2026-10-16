@@ -1,0 +1,152 @@
+{
+  "coordinateSpaceVersion": 2,
+  "width": 480,
+  "height": 480,
+  "boundaryType": "circle",
+  "boundaryCenterX": 240,
+  "boundaryCenterY": 240,
+  "boundaryRadius": 240,
+  "boundaryRadiusX": 240,
+  "boundaryRadiusY": 240,
+  "boundaryRotation": 0,
+  "focusAngle": 74.47008742810789,
+  "focusDistance": 100,
+  "rayCount": 5,
+  "centerAngle": -90,
+  "angleStep": 36,
+  "angleSpan": 144,
+  "rayLength": 240,
+  "rayWidth": 80,
+  "roundness": 60,
+  "cornerSmoothing": 100,
+  "rayOverrides": [
+    {},
+    {},
+    {},
+    {},
+    {}
+  ],
+  "headColor": "#ffffff",
+  "eyeColor": "#000000",
+  "backgroundColor": "#000000",
+  "showSphere": true,
+  "showRayGuides": false,
+  "showBisectors": false,
+  "showPoint": true,
+  "followCursor": false,
+  "focusMode": "animate",
+  "motionDuration": 5,
+  "motionPointCount": 4,
+  "motionComplexity": 0,
+  "motionSmoothness": 50,
+  "motionStopCount": 3,
+  "motionSpeedVariation": 20,
+  "motionBlinkCount": 2,
+  "motionEmotionVariation": 0,
+  "motionBlur": 50,
+  "motionSeed": 2157258234,
+  "showMotionPath": true,
+  "bolidTargetAngle": 180,
+  "bolidTargetDistance": 40,
+  "bolidIntensity": 100,
+  "bolidColorTrail": 0,
+  "eyePerspective": 100,
+  "eyeSize": 50,
+  "eyeDistance": -20,
+  "cute": 72,
+  "angry": 0,
+  "motionPath": {
+    "version": 1,
+    "seed": 2157258234,
+    "complexity": 0,
+    "smoothness": 50,
+    "center": {
+      "x": 240,
+      "y": 240
+    },
+    "radius": 240,
+    "importMeta": null,
+    "segments": [
+      {
+        "start": {
+          "x": 238.02318038721413,
+          "y": 241.08684761945648
+        },
+        "control1": {
+          "x": 326.4539996244254,
+          "y": 142.19829549647585
+        },
+        "control2": {
+          "x": 336.4100037256168,
+          "y": 104.04381796558287
+        },
+        "end": {
+          "x": 398.39759383406306,
+          "y": 105.98317201148794
+        },
+        "kind": "curve",
+        "role": "source"
+      },
+      {
+        "start": {
+          "x": 398.39759383406306,
+          "y": 105.98317201148794
+        },
+        "control1": {
+          "x": 466.4495433727561,
+          "y": 108.11225661436893
+        },
+        "control2": {
+          "x": 493.0932913809421,
+          "y": 221.33702830074702
+        },
+        "end": {
+          "x": 437.43518698429716,
+          "y": 320.6453049441264
+        },
+        "kind": "curve",
+        "role": "source"
+      },
+      {
+        "start": {
+          "x": 437.43518698429716,
+          "y": 320.6453049441264
+        },
+        "control1": {
+          "x": 351.9347689041422,
+          "y": 473.1998927058406
+        },
+        "control2": {
+          "x": -30.014340029003193,
+          "y": 436.4126243786412
+        },
+        "end": {
+          "x": 17.528764770010042,
+          "y": 330.0363787323905
+        },
+        "kind": "curve",
+        "role": "source"
+      },
+      {
+        "start": {
+          "x": 17.528764770010042,
+          "y": 330.0363787323905
+        },
+        "control1": {
+          "x": 43.331388483078086,
+          "y": 272.30379584739416
+        },
+        "control2": {
+          "x": 149.1818091836453,
+          "y": 340.4345031395846
+        },
+        "end": {
+          "x": 238.02318038721413,
+          "y": 241.08684761945648
+        },
+        "kind": "curve",
+        "role": "source"
+      }
+    ]
+  }
+}

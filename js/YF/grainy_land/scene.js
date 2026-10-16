@@ -1,12 +1,13 @@
-import {effectiveSettings} from './object-model.js?v=petal-motion-1';
-import { getLayers, layerGroups } from './layer-data.js?v=petal-motion-1';
+import {effectiveSettings} from './object-model.js?v=unified-document-1';
+import { getLayers, layerGroups } from './layer-data.js?v=unified-document-1';
 import { SeededRandom } from '../infra/framework/src/index.js';
-import { normalizeSettings, layouts, toneKeys, formSettingsKey } from './document.js?v=petal-motion-1';
+import { normalizeSettings, layouts, toneKeys } from './document.js?v=unified-document-1';
+import { normalizeSettings as normalizeGeometry, formSettingsKey } from './legacy-document.js?v=unified-document-1';
 
 // Geometry is independent of the palette, texture and raster resolution.
 // Coordinates are normalized; this is the extension point for future painted fields.
 function generatedScene(settings) {
-    const s = normalizeSettings(settings);
+    const s = normalizeGeometry({...settings,schemaVersion:1,sceneMemory:null});
     const random = new SeededRandom(s.seed).fork('landforms-v2');
     const between = (a, b) => random.float(a, b);
     // Each surface has its own center, width, elevation and lift. Side banks
@@ -69,7 +70,7 @@ function generatedScene(settings) {
 }
 
 export function createScene(settings) {
-    const s = normalizeSettings(settings), scene = generatedScene(s);
+    const s = normalizeGeometry({...settings,schemaVersion:1,sceneMemory:null}), scene = generatedScene(s);
     const edits = s[formSettingsKey(s.mode)];
     const sources = new Map([[s.seed + ':' + s.layout, scene]]);
     scene.formPhases = [];
@@ -225,7 +226,7 @@ function deriveNeighbors(settings) {
             highC=C*(1-spread*.35);
             highL=L+profile.light*.6;
         }
-        if(['flora','f'].includes(s.mode)&&i<2){highHue=h-spread*profile.hue*1.25;highL=L+profile.light*.8;lowL=L-profile.light;}
+        if(s.toneProfile==='botanical'&&i<2){highHue=h-spread*profile.hue*1.25;highL=L+profile.light*.8;lowL=L-profile.light;}
         low.push(encode(lowL,lowC,lowHue));
         high.push(encode(highL,highC,highHue));
     }

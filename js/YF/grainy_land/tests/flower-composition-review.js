@@ -1,4 +1,5 @@
-import {defaults,switchMode,regenerate} from '../document.js?v=flower-field-2';
+import {defaults,switchMode} from '../legacy-document.js';
+import {regenerate} from '../document.js?v=unified-document-1';
 import {resizeObjects} from '../object-actions.js?v=flower-field-2';
 import {LandscapeRenderer} from '../render.js?v=flower-field-2';
 const out=document.querySelector('#results'),sheet=document.querySelector('#sheet'),ctx=sheet.getContext('2d'),renderer=new LandscapeRenderer();

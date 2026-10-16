@@ -1,23 +1,23 @@
 import {MotionPlayback} from './motion-playback.js?v=gpu-perf-1';
-import {jsonExportName} from './export-naming.js?v=preset-export-1';
+import {jsonExportName} from './export-naming.js?v=unified-document-1';
 import {MAX_DOCUMENT_BYTES} from './layer-limits.js?v=petal-motion-1';
 import { ExportProgress } from './export-progress.js?v=petal-motion-1';
-import { ObjectUI } from './object-ui.js?v=petal-motion-1';
-import { modeLabels } from './object-model.js?v=petal-motion-1';
+import { ObjectUI } from './object-ui.js?v=unified-document-1';
+import { kindLabels, parameterRanges } from './object-model.js?v=unified-document-1';
 import { PrintColor } from './print-color.js?v=petal-motion-1';
-import { motionFrame, renderVideo } from './motion.js?v=gpu-perf-1';
+import { motionFrame, renderVideo } from './motion.js?v=unified-document-1';
 import { CustomColorEditor } from './custom-color-editor.js?v=petal-motion-1';
 import { editCanvas } from './canvas-size.js?v=petal-motion-1';
 import { renderPNG } from './png-export.js?v=petal-motion-1';
 import { renderLayersZIP } from './layers-export.js?v=petal-motion-1';
 import { downloadBlob } from '../infra/framework/src/ui/GeneratorHost.js?v=petal-motion-1';
 import { defineTool, UnifiedColorPicker, ToolUiController, FileIntakeController, PresetMenuKeyboardController } from '../infra/framework/src/index.js?v=petal-motion-1';
-import { defaults, ranges, switchMode, regenerate, toneKeys, migratePresets, normalizeSettings, makeDocument, readDocument, exportDimensions } from './document.js?v=flower-flow-1';
-import { adjacentColors, hexRGB } from './scene.js?v=petal-motion-1';
+import { defaults, ranges, preferredKind, regenerate, toneKeys, migratePresets, normalizeSettings, makeDocument, readDocument, exportDimensions } from './document.js?v=unified-document-1';
+import { adjacentColors, hexRGB } from './scene.js?v=unified-document-1';
 import { LandscapeRenderer } from './render.js?v=layers-polish-1';
 
-import { getLayers } from './layer-data.js?v=petal-motion-1';
-import { FormEditor } from './form-editor.js?v=layers-polish-1';
+import { getLayers } from './layer-data.js?v=unified-document-1';
+import { FormEditor } from './form-editor.js?v=unified-document-1';
 import { editableTarget, visibleDialog } from '../infra/framework/src/ui/CommandPolicy.js?v=2';
 
 const printColor=new PrintColor();
@@ -65,15 +65,6 @@ function change(tool, updates, label = 'Edit') {
 
 function sync(tool) {
     const s = tool.settings;
-    for (const radio of document.querySelectorAll('input[name="mode"]')) radio.checked = radio.value === s.mode;
-    for (const key of ['horizon','relief']) {
-        byId(key+'Slider').disabled = s.mode !== 'landscape'; byId(key+'Value').disabled = s.mode !== 'landscape';
-        byId(key+'Slider').closest('.control-group').hidden=s.mode!=='landscape';
-    }
-    byId('flowerComposition').hidden=s.mode!=='f';byId('fType').value=s.fType;
-    byId('floraComposition').hidden=s.mode!=='flora';byId('floraLayout').value=s.floraLayout;
-    for(const key of ['scale','complexity','flow','folds'])byId(key+'Slider').closest('.control-group').hidden=['flora','f'].includes(s.mode);
-    byId('newBlueLayers').hidden=s.mode!=='abstract';
     byId('toneCharacterSelect').value = s.toneCharacter;
     const neighbors=adjacentColors(s), strength=s.toneAmount/100;
     ['sky','terrain','depth','light'].forEach(key => {
@@ -120,11 +111,16 @@ function sync(tool) {
     byId('transparentBackground').checked=s.transparentBackground;
     const exportAction=ui?.actions.find(action=>action.id==='png');
     if(exportAction)exportAction.label=s.exportLayers?'ZIP':'PNG';
-    byId('mainCanvas').setAttribute('aria-label', s.mode === 'f' ? 'Generated grainy Flora artwork' : s.mode === 'flora' ? 'Generated grainy Plant artwork' : s.mode === 'abstract' ? 'Generated grainy Spot artwork' : 'Generated grainy landscape');
+    byId('mainCanvas').setAttribute('aria-label','Grainy artwork');
     formEditor?.sync();
     ui?.refresh();
 }
+function resetDocumentUI(tool,settings){
+    tool.documentRevision=(tool.documentRevision??0)+1;tool.compositionKind=preferredKind(settings);
+    formEditor?.select(null);formEditor?.vector?.drafts.clear();
+}
 function bind(tool) {
+    tool.compositionKind=preferredKind(tool.settings);
     listeners = new AbortController();
     const lifecycleSignal = listeners.signal;
     const on = (element, type, callback, options={}) => element.addEventListener(type, callback, { ...options, signal: listeners.signal });
@@ -146,9 +142,6 @@ function bind(tool) {
     });
     tonePicker.init();
     for (const key of toneKeys) on(byId(key+'Auto'), 'click', () => change(tool, {[key]:null}, 'Automatic tone'));
-    for (const radio of document.querySelectorAll('input[name="mode"]')) on(radio, 'change', () => change(tool,switchMode(tool.settings,radio.value),'Mode'));
-    on(byId('fType'),'change',()=>change(tool,{fType:byId('fType').value},'Flower type'));
-    on(byId('floraLayout'),'change',()=>change(tool,{floraLayout:byId('floraLayout').value},'Plant arrangement'));
     on(byId('seedInput'),'change',e => change(tool,regenerate(tool.settings,Number(e.target.value)),'Seed'));
     on(byId('toneCharacterSelect'),'change',e => change(tool,{toneCharacter:e.target.value},'Tone character'));
     const fit = () => { tool.renderNow(); tool.target.fitToScreen(); };
@@ -184,7 +177,7 @@ function bind(tool) {
         onSelect: async file => {
             const settings = readDocument(JSON.parse(await file.text()));
             if (lifecycleSignal.aborted) return;
-            change(tool,settings,'Import JSON'); tool.applySnapshot(tool.getSnapshot()); fit(); status('Settings imported.');
+            resetDocumentUI(tool,settings);change(tool,settings,'Import JSON'); tool.applySnapshot(tool.getSnapshot()); fit(); status('Settings imported.');
         }, onError: error => status(error.message || 'Could not import settings.'),
         onReject: result => status(result.message)
     }).init();
@@ -194,10 +187,16 @@ function bind(tool) {
     for(const key of ['printIntent','motionAmount','motionDuration'])on(byId(key),'change',()=>change(tool,{[key]:Number(byId(key).value)},'Output settings'));
     on(byId('loadICC'),'click',()=>byId('iccFile').click());
     on(byId('iccFile'),'change',async()=>{const file=byId('iccFile').files[0];if(!file)return;try{if(file.size>4*1024*1024)throw Error('ICC profiles are limited to 4 MiB.');const profile=await printColor.load(new Uint8Array(await file.arrayBuffer()),file.name);byId('iccName').textContent=profile.name+' · '+profile.space;byId('softProof').disabled=false;byId('exportTIFF').disabled=false;tool.render();status('ICC profile loaded for this session.');}catch(error){status(error.message);}finally{byId('iccFile').value='';}});
+    const syncPlaybackButton=playing=>{
+        const button=byId('playMotion');button.setAttribute('aria-pressed',String(playing));
+        button.setAttribute('aria-label',playing?'Stop':'Play');button.title=(playing?'Stop':'Play')+' (Space)';
+        button.querySelector('[data-play-icon]').toggleAttribute('hidden',playing);
+        button.querySelector('[data-stop-icon]').toggleAttribute('hidden',!playing);
+    };
     const stopMotion=()=>{
         if(motionStart==null)return;
         motionStart=null;playback?.stop();motionRenderer?.destroy();motionRenderer=null;
-        byId('playMotion').textContent='Play';byId('playMotion').setAttribute('aria-pressed','false');tool.renderNow();
+        syncPlaybackButton(false);tool.renderNow();
     };
     playback=new MotionPlayback({
         getContext:()=>motionView,
@@ -212,7 +211,7 @@ function bind(tool) {
     });
     const toggleMotion=()=>{
         if(motionStart!=null){stopMotion();return;}
-        formEditor.select(null);motionStart=performance.now();byId('playMotion').textContent='Stop';byId('playMotion').setAttribute('aria-pressed','true');
+        formEditor.select(null);motionStart=performance.now();syncPlaybackButton(true);
         tool.renderNow();playback.start();
     };
     // Defer a Space tap until release so Space + drag keeps panning without starting playback.
@@ -248,7 +247,7 @@ function bind(tool) {
     ui = new ToolUiController({
         id: 'grainy_land', title: 'Grainy Land',
         summaries: {
-            compositionPanel: () => modeLabels[tool.settings.mode],
+            compositionPanel: () => kindLabels[tool.compositionKind],
             layersPanel: () => {const count=getLayers(tool.settings).length;return count+' '+(count===1?'layer':'layers');}
         },
         actions: [
@@ -294,6 +293,7 @@ function bind(tool) {
             { id:'redo', label:'Redo', kind:'command', group:'keyboard', shortcut:'mod+shift+z', run: () => tool.redo() }
         ], onError: (error,action) => {if(!['png','motion-video','print-tiff'].includes(action?.id))status(error.message || 'Operation failed.');}
     }).init();
+    tool.uiRefresh=()=>ui?.refresh();
     resizeObserver = new ResizeObserver(() => fit()); resizeObserver.observe(byId('canvasContainer'));
     // Dock properties beside Layers; a manually dragged properties panel keeps its own position.
     const updateLayerDock=()=>{
@@ -322,7 +322,8 @@ const app = defineTool({
         presetDropdown:'presetDropdown',presetToggle:'presetDropdownToggle',presetMenu:'presetDropdownMenu',
         saveBtn:'savePresetBtn',shareBtn:'presetToolbarShareBtn' },
     settings: defaults,
-    controls: { sliders: Object.entries(ranges).filter(([key])=>!['floraCount','fCount','fDensity'].includes(key)).map(([setting,[min,max,step]]) => ({
+    deferInitialRender: true,
+    controls: { sliders: Object.entries(ranges).filter(([key])=>!['land','plant','flower'].some(kind=>Object.hasOwn(parameterRanges(kind),key))).map(([setting,[min,max,step]]) => ({
         id:setting+'Slider', valueId:setting+'Value',setting,min,max,decimals:step<1?1:0,baseStep:step,shiftStep:step*10
     })), toggles:false },
     panels: ['canvas','composition','material','layers','layer','tools','animation'].map(name => ({id:name+'Panel',headerId:name+'PanelHeader',persistent:true})),
@@ -332,7 +333,7 @@ const app = defineTool({
     presets: { migrate:async store => {
         // Refresh named built-ins from their shipped files; personal copies stay intact.
         const shipped={};
-        for(const [name,file] of [['Ember','ember.json'],['Drift','drift.json'],['Field','field.json'],['Six Cup','six-cup.json'],['Flower Flow','flower-flow.json']]){
+        for(const {name,file} of (await(await fetch('./presets/manifest.json',{cache:'no-cache'})).json()).presets){
         if(store.loadAll()?.[name]?.seeded!==true && !(name==='Six Cup' && store.loadAll()?.['Six cup']?.seeded===true))continue;
         try{
             const response=await fetch('./presets/'+file,{cache:'no-cache',signal:AbortSignal.timeout(5000)});
@@ -343,13 +344,13 @@ const app = defineTool({
         migratePresets(store,shipped);
     }, storageKey:'upgrade:grainy_land:presets:v1',basePath:'./presets',forceSeed:true,defaultName:'Flower Flow',
         colorDots: s => [s.sky,s.terrain,s.depth,s.light].map(value => ({kind:'solid',value})),
-        suggestSaveName: tool => modeLabels[tool.settings.mode]+' '+tool.settings.seed },
+        suggestSaveName: tool => 'Composition '+tool.settings.seed },
     history: { maxSize:60,debounceMs:150 },
     share: {}, shortcuts: false, dialog: {},
     export: { filename:'grainy-land.svg' },
     zoom: { fitPadding:{top:16,right:16,bottom:16,left:16} },
     restore: (tool,snap) => tool.settingsStore.fromJSON(normalizeSettings(snap),true),
-    applyPreset: (tool,blob) => tool.settingsStore.fromJSON(normalizeSettings(blob),true),
+    applyPreset: (tool,blob) => {const settings=normalizeSettings(blob);resetDocumentUI(tool,settings);tool.settingsStore.fromJSON(settings,true);},
     syncControls: sync,
     render: context => draw(context),
     renderTo: context => draw(context,true),

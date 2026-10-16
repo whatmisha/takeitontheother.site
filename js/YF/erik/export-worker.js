@@ -1,5 +1,5 @@
-import { normalize, framePlan, FPS, hasContent } from './model.js';
-import { loadFont, CrawlRenderer } from './renderer.js';
+import { normalize, FPS, hasContent } from './model.js';
+import { animationType } from './animations.js';
 import { StoredZipWriter } from './framework-export.js';
 import { supportedVideoConfig, encodeVideo } from './video.js';
 self.onmessage = async ({ data }) => {
@@ -11,12 +11,13 @@ self.onmessage = async ({ data }) => {
         }
         if (!['mp4', 'sequence', 'frame'].includes(type)) throw new Error('Unknown export format.');
         const config = type === 'mp4' ? await supportedVideoConfig() : null;
-        await loadFont();
+        const animation = animationType('crawl'); await animation.load();
         const settings = normalize(input);
-        renderer = new CrawlRenderer();
+        renderer = animation.createRenderer();
+        await renderer.loadEnding(settings, data.bitmap);
         const layout = renderer.prepare(settings);
         if (!hasContent(settings)) throw new Error('Add a logo or some text before exporting.');
-        const plan = framePlan(settings, layout);
+        const plan = animation.plan(settings, layout);
         const progress = (completed, total) => self.postMessage({ type: 'progress', completed, total });
         let blob, filename;
         if (type === 'frame') {

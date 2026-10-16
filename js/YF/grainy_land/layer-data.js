@@ -1,6 +1,6 @@
 import {FLOWER_MOTION} from './flower-motion.js?v=petal-motion-1';
 import {composeFlowers} from './flower-composition.js?v=petal-motion-1';
-import {layerKind,normalizeParameters,normalizeComposition} from './object-model.js?v=petal-motion-1';
+import {layerKind,normalizeParameters,normalizeComposition} from './object-model.js?v=unified-document-1';
 import { normalizeFlora, floraTemplate } from './flora.js?v=petal-motion-1';
 import { normalizeMaterial } from './transforms.js?v=petal-motion-1';
 import { normalizeVectorPath, defaultVectorPath } from './vector-path.js?v=petal-motion-1';
@@ -8,7 +8,7 @@ import { normalizeStrokes } from './paint.js?v=petal-motion-1';
 
 import {MAX_LAYERS} from './layer-limits.js?v=petal-motion-1';
 export {MAX_LAYERS};
-export const layerSettingsKey=mode=>mode==='f'?'fLayers':mode==='flora'?'floraLayers':mode==='abstract'?'abstractLayers':'landscapeLayers';
+export const layerSettingsKey=()=> 'layers';
 export const layerNames=['Terrain','Bank 1','Basin','Bank 2','Fold','Foreground'];
 export const layerGroups=['terrain','depth','light','sky'];
 export const sourceGroup=i=>i>=6?'sky':i===0?'terrain':(i===2||i===5?'light':'depth');
@@ -42,7 +42,7 @@ export function normalizeLayerStack(value,settings) {
 // Missing stacks preserve old documents exactly. An empty array is deliberately
 // empty and must never regenerate the six original forms.
 function rawLayers(settings) {
-    const explicit=settings[layerSettingsKey(settings.mode)];
+    const explicit=settings.schemaVersion===2?settings.layers:settings[({landscape:'landscapeLayers',abstract:'abstractLayers',flora:'floraLayers',f:'fLayers'})[settings.mode]];
     if(Array.isArray(explicit))return explicit;
     if(settings.mode==='f')return normalizeLayerStack(composeFlowers(settings,floraTemplate({...settings,floraLayout:'single',floraCount:settings.fCount??1}).map(l=>({...l,id:'flower-'+(l.flora.index+1),name:'Flower '+(l.flora.index+1),flora:{...l.flora,generator:'flower'}}))),settings);
     if(settings.mode==='flora')return normalizeLayerStack(floraTemplate(settings),settings);

@@ -1,7 +1,8 @@
 import {resizeObjects} from '../object-actions.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {defaults,floraSurfaceDefaults,switchMode,normalizeSettings,regenerate,editForm,makeDocument,readDocument} from '../document.js';
+import {floraSurfaceDefaults,normalizeSettings,regenerate,editForm,makeDocument,readDocument} from '../document.js';
+import {defaults,switchMode,normalizeSettings as normalizeLegacy} from '../legacy-document.js';
 import {floraParts,editFloraPart} from '../flora.js';
 import {bakeFlora,signedField} from '../flora-field.js';
 import {getLayers,withLayers,editLayer,convertLayer,addLayer} from '../layers.js';
@@ -9,10 +10,10 @@ import {addCustomColor,colorIsUsed} from '../custom-colors.js';
 import {splitVectorSegment,moveVectorNode} from '../vector-path.js';
 import {layerExportPlan} from '../layers-export.js';
 import {ShareCodec} from '../../infra/framework/src/preset/ShareCodec.js';
-const settings=()=>normalizeSettings({...defaults,mode:'flora'});
+const settings=()=>normalizeLegacy({...defaults,mode:'flora'});
 const shape=(l,s)=>floraParts(l,s).map(p=>[p.id,p.parent,p.path,p.origin]);
 test('Flora validates discrete controls and bounds untrusted edits',()=>{
- const s=normalizeSettings({...settings(),floraCount:5.7,floraBranches:2.4,floraScale:999,floraRecognition:null});
+ const s=normalizeLegacy({...settings(),floraCount:5.7,floraBranches:2.4,floraScale:999,floraRecognition:null});
  assert.equal(s.floraCount,6);assert.equal(s.floraBranches,2);assert.equal(s.floraScale,180);assert.equal(s.floraRecognition,55);
  assert.equal(getLayers({...s,floraLayout:'single'}).length,6);
  for(const layout of ['single','cluster','field']){const a={...s,floraLayout:layout};for(const l of getLayers(a))assert.ok(floraParts(l,a).every(p=>p.path.every(n=>Number.isFinite(n.x)&&Number.isFinite(n.y))));}
@@ -50,13 +51,13 @@ test('Generate keeps manual petal paths; Drawn conversion freezes all Flora geom
  const altered=regenerate({...s,floraScale:180,floraLayout:'field',floraCount:12,floraBranches:5,floraRecognition:0},8877);
  assert.deepEqual(shape(getLayers(altered)[0],altered),before);
 });
-test('Flora edits preserve Landscape and Abstract and round-trip through JSON/share',async()=>{
- let s={...editForm(defaults,0,{x:.2}),mode:'flora'},l=getLayers(s)[0];s=editLayer(s,l.id,{opacity:60});
- assert.equal(s.landscapeForms[0].x,.2);const land=s.landscapeForms;
- s=addLayer({...s,mode:'abstract'},'vector').settings;s=normalizeSettings({...s,mode:'flora'});
- const re=readDocument(JSON.parse(JSON.stringify(makeDocument(s))));assert.deepEqual(re,s);assert.deepEqual(re.landscapeForms,land);
- const codec=new ShareCodec({pristineDefaults:defaults});assert.deepEqual(normalizeSettings((await codec.decode(await codec.encode(s))).full),s);
+test('Plant, vector and land layers share one document and round-trip through JSON/share',async()=>{
+ let s=withLayers(settings(),getLayers(settings()));const first=getLayers(s)[0];
+ s=editLayer(s,first.id,{x:.12},{manual:true});s=addLayer(s,'vector').settings;s=addLayer(s,'auto').settings;
+ assert.ok(getLayers(s).some(l=>l.kind==='plant'));assert.ok(getLayers(s).some(l=>l.kind==='vector'));assert.ok(getLayers(s).some(l=>l.kind==='land'));
+ assert.deepEqual(readDocument(makeDocument(s)),s);const codec=new ShareCodec({pristineDefaults:defaults});assert.deepEqual(normalizeSettings((await codec.decode(await codec.encode(s))).full),s);
 });
+
 test('Custom colors survive on parent and parts and cannot be deleted while used',()=>{
  const {settings:s,id}=addCustomColor(settings());let l=getLayers(s)[0];l=editFloraPart(l,s,'p1',{group:id});
  const a=editLayer(withLayers(s,[l]),l.id,{group:id}),b=readDocument(makeDocument(a));
@@ -77,22 +78,11 @@ test('Layer export treats each plant as a single independent PNG',()=>{
  const plan=layerExportPlan(settings());assert.equal(plan.entries.length,5);assert.ok(plan.entries.filter(e=>e.index>=0).length===4);
 });
 
-test('Flora surface defaults are scoped to mode entry and retain edits through round trips',async()=>{
- const surface=s=>Object.fromEntries(Object.keys(floraSurfaceDefaults).map(k=>[k,s[k]]));
- const land={...defaults,grain:17,contrast:135},flora=switchMode(land,'flora');
- assert.deepEqual(surface(flora),floraSurfaceDefaults);assert.equal(flora.sky,land.sky);
- assert.deepEqual(surface(normalizeSettings({mode:'flora'})),floraSurfaceDefaults);
- const edited={...flora,grain:72,softness:29},back=switchMode(edited,'landscape');
- assert.deepEqual(surface(back),surface(land));assert.equal(switchMode(back,'flora').grain,72);
- assert.deepEqual(surface(switchMode(switchMode(edited,'abstract'),'flora')),surface(edited));
- assert.equal(switchMode(readDocument(makeDocument(back)),'flora').softness,29);
- const codec=new ShareCodec({pristineDefaults:defaults}),shared=await codec.decode(await codec.encode(back));
- assert.deepEqual(surface(switchMode(shared.full,'flora')),surface(edited));
- assert.deepEqual(surface(normalizeSettings(edited)),surface(edited));
- assert.equal(switchMode({...defaults,mode:'abstract',glow:66},'landscape').glow,defaults.glow);
- assert.deepEqual(surface(normalizeSettings(defaults)),surface(defaults));
+test('legacy Plant surface defaults migrate once; surface is global in a unified document',async()=>{
+ const s=normalizeSettings({mode:'flora'});for(const [key,value] of Object.entries(floraSurfaceDefaults))assert.equal(s[key],value);
+ const edited={...s,grain:72,softness:29};assert.deepEqual(readDocument(makeDocument(edited)),edited);
+ const codec=new ShareCodec({pristineDefaults:defaults});assert.deepEqual(normalizeSettings((await codec.decode(await codec.encode(edited))).full),edited);
 });
-
 
 test('Cluster has a dominant head, staggered junctions and both directions of growth',()=>{
  const directions=new Set(),positions=new Set(),colorPlans=new Set();

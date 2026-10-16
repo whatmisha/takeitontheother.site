@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {ObjectUI} from '../object-ui.js';
-import {defaults,switchMode} from '../document.js';
+import {defaults,switchMode} from '../legacy-document.js';
 import {getLayers,editLayer} from '../layers.js';
 import {resizeObjects,countLimits} from '../object-actions.js';
 import {selectedLayers,selectionValue,editSelection,deleteSelection} from '../selection.js';
@@ -19,17 +19,17 @@ test('count drafts commit once on Enter, cancel on Escape, and invalid drafts ne
  const calls=[],tool={settings:resizeObjects(switchMode(defaults,'f'),'flower',3),history:{flush(){},beginTransaction(label){calls.push('begin');},endTransaction(){calls.push('end');}},presets:{markDirty(){}},applySnapshot(s,options){assert.equal(options.deferRender,true);this.settings=s;}};
  const ui=new ObjectUI(tool,()=>{},{});
  try{
-  const binding=ui.bindSlider(range,value,()=>({value:tool.settings.fCount}),n=>ui.live(resizeObjects(tool.settings,'flower',n),'Count'),0,32,1);
+  const binding=ui.bindSlider(range,value,()=>({value:tool.settings.objectDefaults.flower.fCount}),n=>ui.live(resizeObjects(tool.settings,'flower',n),'Count'),0,32,1);
   const before=getLayers(tool.settings);
   document.activeElement=value;value.value='1';value.dispatchEvent(new Event('input'));value.value='12';value.dispatchEvent(new Event('input'));
-  assert.deepEqual(getLayers(tool.settings),before);assert.equal(tool.settings.fCount,3);
+  assert.deepEqual(getLayers(tool.settings),before);assert.equal(tool.settings.objectDefaults.flower.fCount,3);
   value.key('Escape');assert.equal(value.value,'3');assert.deepEqual(calls,[]);
-  document.activeElement=value;value.value='5';value.key('Enter');assert.equal(tool.settings.fCount,5);assert.deepEqual(calls,['begin','end']);
+  document.activeElement=value;value.value='5';value.key('Enter');assert.equal(tool.settings.objectDefaults.flower.fCount,5);assert.deepEqual(calls,['begin','end']);
   ui.syncSlider(binding,0,32);
-  for(const draft of ['', 'invalid']){document.activeElement=value;value.value=draft;value.key('Enter');assert.equal(tool.settings.fCount,5);}
+  for(const draft of ['', 'invalid']){document.activeElement=value;value.value=draft;value.key('Enter');assert.equal(tool.settings.objectDefaults.flower.fCount,5);}
   assert.deepEqual(calls,['begin','end']);
   document.activeElement=value;value.value='';value.key('Escape');assert.equal(value.value,'5');
-  ui.destroy();range.value='9';range.dispatchEvent(new Event('input'));assert.equal(tool.settings.fCount,5);
+  ui.destroy();range.value='9';range.dispatchEvent(new Event('input'));assert.equal(tool.settings.objectDefaults.flower.fCount,5);
  }finally{ui.destroy();globalThis.document=previous;}
 });
 test('mixed property cancellation preserves Mixed and selection edits skip locks regardless of primary',()=>{

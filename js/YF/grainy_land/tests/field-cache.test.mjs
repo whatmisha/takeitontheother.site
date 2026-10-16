@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
-import {defaults,switchMode} from '../document.js';
+import {defaults,switchMode} from '../legacy-document.js';
 import {getLayers,editLayer} from '../layers.js';
 import {bakeFlora} from '../flora-field.js';
 const fixtures=[

@@ -1,0 +1,16 @@
+{
+  "presets": [
+    {
+      "name": "Lunnen Airis",
+      "file": "lunnen-airis.json"
+    },
+    {
+      "name": "Lunnen Airis — Full Credits",
+      "file": "lunnen-airis-full.json"
+    },
+    {
+      "name": "Draft",
+      "file": "draft.json"
+    }
+  ]
+}

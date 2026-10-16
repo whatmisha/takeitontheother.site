@@ -232,6 +232,7 @@ const wrapTime = (timeMs, durationMs) => {
 /** Build six ordinary filled paths shared by SVG preview and Canvas export. */
 export function buildBolidColorTrailLayers(settings, focus, {
     timeMs = 0,
+    includeGeometry = false,
     durationMs = finiteOr(settings.motionDuration, 5) * 1000
 } = {}) {
     if (settings.focusMode !== 'bolid') return [];
@@ -287,6 +288,7 @@ export function buildBolidColorTrailLayers(settings, focus, {
                 offsetX: trail.x * trailDistance + lateral.x * lateralDistance,
                 offsetY: trail.y * trailDistance + lateral.y * lateralDistance,
                 sampleTimeMs,
+                ...(includeGeometry ? { rounded: geometry.rounded } : {}),
                 path: geometry.rounded.path
             };
         })

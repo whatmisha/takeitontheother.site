@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>Sparky Lottie acceptance</title>
+<h1>Sparky Lottie visual checks</h1>
+<p>Compare the SVG and Canvas Lottie players with the existing renderer.</p>
+<button type="button" id="run">Run checks</button>
+<pre id="status">Uses lottie-web 5.13.0 from unpkg for this test page only.</pre>
+<script type="module">
+import { runLottieVisualChecks } from './lottieBrowser.js';
+document.getElementById('run').addEventListener('click', async (event) => {
+    event.target.disabled = true;
+    try {
+        if (!window.lottie) await new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'https://unpkg.com/lottie-web@5.13.0/build/player/lottie.min.js';
+            script.onload = resolve;
+            script.onerror = () => reject(new Error('Could not load the test player.'));
+            document.head.append(script);
+        });
+        const results = await runLottieVisualChecks(window.lottie);
+        const report = document.createElement('pre');
+        report.textContent = `PASS: ${results.length} visual cases`;
+        document.body.prepend(report);
+    } catch (error) {
+        const report = document.createElement('pre');
+        report.textContent = `FAIL: ${error.message}`;
+        document.body.prepend(report);
+    }
+});
+</script>
+</html>

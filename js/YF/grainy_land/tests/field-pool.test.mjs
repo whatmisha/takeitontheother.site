@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {readFile} from 'node:fs/promises';
 import {FloraFieldPool} from '../flora-field-pool.js';
-import {defaults,switchMode} from '../document.js';
+import {defaults,switchMode} from '../legacy-document.js';
 import {motionFrame} from '../motion.js';
 import {getLayers} from '../layer-data.js';
 import {createLayerScene} from '../scene.js';

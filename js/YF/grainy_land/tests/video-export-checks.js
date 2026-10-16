@@ -1,4 +1,5 @@
-import {defaults,switchMode,normalizeSettings} from '../document.js?v=petal-motion-1';
+import {defaults,switchMode} from '../legacy-document.js';
+import {normalizeSettings} from '../document.js?v=unified-document-1';
 import {LandscapeRenderer} from '../render.js?v=petal-motion-1';
 import {renderVideo,motionFrame} from '../motion.js?v=video-frames-1';
 import {resizeObjects} from '../object-actions.js?v=petal-motion-1';

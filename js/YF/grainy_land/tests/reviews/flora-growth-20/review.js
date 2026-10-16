@@ -1,5 +1,6 @@
 import {LandscapeRenderer} from '../../../render.js?v=flora-growth-1';
-import {defaults,switchMode,regenerate} from '../../../document.js?v=flora-growth-1';
+import {defaults,switchMode} from '../../../legacy-document.js';
+import {regenerate} from '../../../document.js?v=unified-document-1';
 const seeds=await(await fetch('seeds.json')).json();
 const base=switchMode(defaults,'flora'),status=document.querySelector('#status'),grid=document.querySelector('#grid');
 const make=(w,h)=>Object.assign(document.createElement('canvas'),{width:w,height:h});

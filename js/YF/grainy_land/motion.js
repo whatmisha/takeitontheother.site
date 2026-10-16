@@ -1,12 +1,14 @@
+import {normalizeSettings} from './document.js?v=unified-document-1';
 import {muxAvcToMp4} from '../infra/framework/src/export/mp4Muxer.js';
 import {FLOWER_MOTION} from './flower-motion.js?v=petal-motion-1';
-import {getLayers,layerSettingsKey} from './layer-data.js?v=petal-motion-1';
+import {getLayers,layerSettingsKey} from './layer-data.js?v=unified-document-1';
 export function motionFrame(settings,phase){
+ settings=normalizeSettings(settings);
  const angle=((phase%1)+1)%1*Math.PI*2,amount=(settings.motionAmount??3)/100,stack=getLayers(settings),aspect=settings.width/settings.height;
  if(!angle||!amount)return settings;
  const groups=new Map();stack.forEach((l,i)=>{if(!l.collection||l.locked)return;const g=groups.get(l.collection)??{members:[],first:i};g.members.push(l);groups.set(l.collection,g);});
  const rotation=Math.sin(angle)*amount*90,a=rotation*Math.PI/180,c=Math.cos(a),sn=Math.sin(a);
- return {...settings,[layerSettingsKey(settings.mode)]:stack.map((l,i)=>{
+ return {...settings,[layerSettingsKey()]:stack.map((l,i)=>{
   if(l.locked)return l;const g=groups.get(l.collection),first=g?stack[g.first]:l,index=g?.first??i,p=(first.seed%997)/997*Math.PI*2+index*.7;
   let x=l.x,y=l.y;if(g){const cx=g.members.reduce((v,m)=>v+m.x,0)/g.members.length,cy=g.members.reduce((v,m)=>v+m.y,0)/g.members.length,dx=(l.x-cx)*aspect,dy=l.y-cy;x=cx+(dx*c-dy*sn)/aspect;y=cy+dx*sn+dy*c;}
   return {...l,...(l.flora?.generator==='flower'&&l.visible?{[FLOWER_MOTION]:{angle,amount}}:{}),x:x+(Math.sin(angle+p)-Math.sin(p))*amount,y:y+(Math.cos(angle+p)-Math.cos(p))*amount*.5,rotation:(l.rotation||0)+rotation};

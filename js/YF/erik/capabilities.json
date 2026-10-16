@@ -12,20 +12,49 @@
     "png"
   ],
   "history": true,
-  "presets": false,
-  "share": false,
+  "presets": true,
+  "share": true,
   "storageKey": "upgrade:erik:draft:v1",
   "acceptance": {
     "status": "passed",
     "unit": [
-      "erik/tests/model.test.mjs"
+      "erik/tests/model.test.mjs",
+      "erik/tests/projects.test.mjs",
+      "erik/tests/presets.test.mjs",
+      "erik/tests/ending.test.mjs",
+      "erik/tests/asset-storage.test.mjs"
     ],
     "artifact": [
       "erik/tests/browser.html",
-      "erik/tests/browser.js"
+      "erik/tests/browser.js",
+      "erik/tests/library.html",
+      "erik/tests/library.browser.js",
+      "erik/tests/ending.html",
+      "erik/tests/ending.browser.js",
+      "erik/tests/draft.html",
+      "erik/tests/draft.browser.js"
     ],
     "browser": [
       "erik/tests/acceptance.json"
     ]
-  }
+  },
+  "presetLibrary": {
+    "format": "Erik JSON v5 (v1/v2/v3/v4 imports supported)",
+    "storageKey": "upgrade:erik:presets:v1",
+    "includes": "content, ending assets and all settings",
+    "seed": "erik/presets/manifest.json",
+    "assetStorage": "IndexedDB: upgrade:erik:ending-assets:v1"
+  },
+  "contentNotation": [
+    "plain text",
+    "role | name",
+    "-heading-"
+  ],
+  "endingTypes": [
+    "none",
+    "text",
+    "svg",
+    "lottie-json",
+    "dotlottie"
+  ]
 }

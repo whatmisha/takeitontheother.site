@@ -10,7 +10,7 @@ import {
 } from './src/geometry/eyeGeometry.js?v=20260828-1';
 import { createSparkyExportBaseName } from './src/export/exportNaming.js';
 import { createStaticSparkySvg } from './src/export/staticSvgExporter.js?v=20260825-2';
-import { AnimationExporter } from './src/export/animationExporter.js?v=g7-resilience-1';
+import { AnimationExporter } from './src/export/animationExporter.js?v=lottie-1';
 import {
     BOLID_EYE_MOTION_TIME_CONSTANT,
     EYE_MOTION_TIME_CONSTANT,
@@ -831,6 +831,7 @@ function syncFocusModeUI(app) {
     document.getElementById('showMotionPathToggle')?.toggleAttribute('hidden', !path);
     const pngButton = document.getElementById('exportPngBtn');
     const primaryButton = document.getElementById('exportSvgBtn');
+    document.getElementById('exportLottieBtn')?.toggleAttribute('hidden', !animated);
     if (pngButton) pngButton.textContent = animated ? 'PNG ZIP' : 'PNG';
     if (primaryButton) primaryButton.textContent = animated ? 'MP4 ⌘E' : 'SVG ⌘E';
 }
@@ -2662,6 +2663,7 @@ const app = defineTool({
             message: document.getElementById('animationExportMessage'),
             cancelButton: document.getElementById('animationExportCancelBtn'),
             exportButtons: [
+                document.getElementById('exportLottieBtn'),
                 document.getElementById('exportPngBtn'),
                 document.getElementById('exportSvgBtn')
             ],
@@ -2729,6 +2731,11 @@ const app = defineTool({
                     console.error('SVG export failed:', error);
                 }
             });
+        });
+        document.getElementById('exportLottieBtn')?.addEventListener('click', () => {
+            if (isAnimatedFocusMode(tool.settings.focusMode)) {
+                exportFocusAnimation(tool, 'lottie').catch(() => {});
+            }
         });
         document.getElementById('exportPngBtn')?.addEventListener('click', () => {
             Promise.resolve(tool.exportPNG()).catch(() => {});
