@@ -30,7 +30,7 @@ try {
     assert(restored.settings.endingFadeIn && !restored.settings.endingFadeOut, 'Fades not persisted');
     record('IndexedDB reopen restores exact source; portable JSON embeds it and preserves separate fades');
     await loadFont(); renderer = new CrawlRenderer(); await renderer.loadEnding(settings);
-    const plan = framePlan(settings, renderer.prepare(settings)); assert(plan.frames === 680, 'Supplied composition should be 00:22:20');
+    const plan = framePlan(settings, renderer.prepare(settings)); assert(plan.frames > 680, 'Expanded credits must extend the previous 680-frame composition');
     assert(sceneAt(settings, plan.ending.start, renderer.layout.logoFade, plan.textFade).textAlpha > 0, 'Negative ending gap should overlap the crawl fade');
     const clip = normalize({ ...settings, title: '', body: '' });
     const first = await pixels(await renderer.render(clip, 0, { transparent: true }).convertToBlob());
@@ -39,7 +39,7 @@ try {
     const exported = await new Exporter().run('frame', settings, plan.lastTime), worker = await pixels(exported.blob);
     assert(last.every((v,i) => v === worker[i]), 'Preview and exported ending differ');
     document.getElementById('preview').getContext('2d').drawImage(renderer.render(settings, plan.lastTime), 0, 0);
-    record('Actual Draft: 00:22:20, overlapping crawl fade, transparent ending Fade in start, visible final frame, exact preview/worker PNG');
+    record('Expanded Draft: overlapping crawl fade, transparent ending Fade in start, visible final frame, exact preview/worker PNG');
     const video = await new Exporter(({completed,total}) => document.getElementById('state').textContent = `Draft MP4 ${completed}/${total}`).run('mp4', clip, 0);
     const element = document.getElementById('video');
     await new Promise((resolve,reject) => { element.onloadeddata = resolve; element.onerror = () => reject(new Error('MP4 decode failed')); element.src = URL.createObjectURL(video.blob); });

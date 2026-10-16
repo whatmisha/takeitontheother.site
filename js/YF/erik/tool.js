@@ -4,7 +4,7 @@ import { readEndingFile, loadLottie, svgBitmap } from './ending-assets.js';
 import { defineTool, ToolUiController, DialogHost, FileIntakeController } from '../infra/framework/src/index.js';
 import { DEFAULTS, RANGES, FPS, WIDTH, HEIGHT, normalize, timecode, migrateDraft, hasContent, sceneAt, crawlStart, hasText, parseBody, parseTimecode, TEXT_LIMIT } from './model.js';
 import { animationType } from './animations.js?v=2';
-import { PresetLibrary, PRESET_KEY, migrateLibrary, seedDraftPreset } from './library.js';
+import { PresetLibrary, PRESET_KEY, migrateLibrary, seedDraftPreset } from './library.js?v=3';
 import { presetDocument } from './document.js';
 const animation = animationType('crawl');
 import { Exporter, probeVideo, download } from './exporter.js?v=2';

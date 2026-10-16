@@ -52,7 +52,7 @@ export function migrateNotation(store, storage = localStorage) {
     if (!store.saveAll(next)) throw new Error('Presets could not be upgraded. The original library is backed up.');
 }
 // Refresh shipped Draft once per revision; preserve deletions and unrelated custom names.
-export const DRAFT_PRESET_REVISION = '2';
+export const DRAFT_PRESET_REVISION = '3';
 export async function seedDraftPreset(store, assetStorage, { storage = localStorage, load = async () => {
     const response = await fetch(new URL('./presets/draft.json', import.meta.url), { cache: 'no-cache' });
     if (!response.ok) throw new Error('Draft preset could not be loaded. Reload to retry.');
