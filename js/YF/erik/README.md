@@ -1,6 +1,6 @@
 # Erik
 
-Desktop perspective crawl in Lunnen Display. Open `erik/` through the YF HTTP server. No build or external services. The optional Lottie renderer is vendored locally and loads only for Lottie endings.
+Desktop perspective crawl in Lunnen Display. The font’s discretionary ligatures (`dlig`), including NN and the Lunnen wordmark, are always enabled for logo, crawl and text ending through the shared preview/export font loader. Open `erik/` through the YF HTTP server. No build or external services. The optional Lottie renderer is vendored locally and loads only for Lottie endings.
 
 - Optional outlined logo, defaulting to two lines: Lunnen / Airis. It fills both frame dimensions with overflow cropped, recedes upright at the same constant world speed as the ribbon. It starts closer to the camera; both elements use the same perspective projection. Its fade is distance-based and automatically finishes before the crawl reaches it, with a 24 px clearance at 1080p. The normal fade window (5.5–8.5 seconds at speed 120) moves earlier when the actual glyph geometry requires it. The logo-to-text gap is a spatial offset along their shared motion path: entry time is gap ÷ speed. The default gap is 450 (first entry frame 00:03:23 at speed 120); a gap of 240 restores 00:02:00. Removing the logo starts the crawl immediately.
 - The supplied 14 credit lines are the default body. Default Lunnen Blue is `#2353DB`, matching Pizza Boxer. Manual line breaks and paragraphs are supported.
@@ -64,6 +64,8 @@ SVG, Lottie JSON and `.lottie` archives up to 5 MiB are accepted. SVG must be st
 
 `tests/ending.html` covers real text/SVG/Lottie/dotLottie rendering, exact preview/worker PNG equality, random seeking, transparent output, optional fades, gap timing, complete PNG sequence and actual H.264 decode. `tests/library.html` verifies that embedded assets save/restore through native presets and malformed embedded SVG cannot replace live content.
 
-The shipped **Draft** preset uses the supplied Sparky Lottie, a 7-second ending at 81% size, zero gap, Fade in on and Fade out off. It is added once to existing libraries without overwriting a user preset of the same name. Large ending sources are stored once in the Erik IndexedDB database; local presets and the working draft hold internal references. Exported JSON and share payloads still embed the full original asset.
+The shipped **Draft** preset uses the supplied Sparky Lottie, a 5-second ending at 36% size, gap −200 and Speed 150, with Fade in on and Fade out off (00:22:20 total). Shipped Draft revisions refresh an installed Draft once; clean working copies follow the update, while unsaved edits, deleted presets and unrelated custom presets are retained. Large ending sources are stored once in the Erik IndexedDB database; local presets and the working draft hold internal references. Exported JSON and share payloads still embed the full original asset.
 
 Both gap controls live in Motion and accept −2400…2400. A negative Logo → text gap starts with the crawl already advanced; automatic logo clearance still applies. A negative Crawl → ending gap brings the ending forward to overlap the crawl, clamped at frame zero. The total duration covers both animations, so an early ending does not cut off the crawl.
+
+`tests/ligatures.html` checks NN and Lunnen case variants across weights/tracking, compares each text stage against unjoined glyphs, and verifies pixel-identical worker PNG output.

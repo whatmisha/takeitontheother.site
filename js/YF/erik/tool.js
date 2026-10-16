@@ -3,11 +3,11 @@ import { hasEnding, ASSET_MAX_BYTES } from './ending-model.js';
 import { readEndingFile, loadLottie, svgBitmap } from './ending-assets.js';
 import { defineTool, ToolUiController, DialogHost, FileIntakeController } from '../infra/framework/src/index.js';
 import { DEFAULTS, RANGES, FPS, WIDTH, HEIGHT, normalize, timecode, migrateDraft, hasContent, sceneAt, crawlStart, hasText, parseBody, parseTimecode, TEXT_LIMIT } from './model.js';
-import { animationType } from './animations.js';
+import { animationType } from './animations.js?v=2';
 import { PresetLibrary, PRESET_KEY, migrateLibrary, seedDraftPreset } from './library.js';
 import { presetDocument } from './document.js';
 const animation = animationType('crawl');
-import { Exporter, probeVideo, download } from './exporter.js';
+import { Exporter, probeVideo, download } from './exporter.js?v=2';
 const $ = id => document.getElementById(id);
 const DRAFT_KEY = 'upgrade:erik:draft:v1';
 let renderer, ui, plan, raf = 0, frame = 0, playing = false, clockStart = 0, frameStart = 0;
@@ -161,7 +161,7 @@ async function exportFile(type) {
     } finally { $('exportStatus').hidden = true; $('exportActions').classList.remove('is-exporting'); ui.refresh(); }
 }
 const assetStorage = await EndingAssetStorage.open().catch(error => { status(error.message); throw error; });
-const initialSettings = readDraft();
+let initialSettings = readDraft();
 await assetStorage.prepare(initialSettings.endingAsset);
 const tool = defineTool({
     renderer: 'canvas', dom: { canvas: 'canvasContainer', surface: 'mainCanvas' },
@@ -169,7 +169,14 @@ const tool = defineTool({
     presets: { storageKey: PRESET_KEY, basePath: './presets', defaultName: draftPresetName || 'Lunnen Airis',
         migrate: async store => {
             await assetStorage.attach(store);
-            try { migrateLibrary(store, initialSettings); await seedDraftPreset(store, assetStorage); } catch (error) { startupNotice = error.message; }
+            try {
+                migrateLibrary(store, initialSettings);
+                const updated = await seedDraftPreset(store, assetStorage);
+                // Refresh a clean working copy too, while retaining unsaved authored edits.
+                if (updated?.previous && draftPresetName === 'Draft' && JSON.stringify(initialSettings) === JSON.stringify(normalize(updated.previous.settings))) {
+                    initialSettings = normalize(updated.current.settings);
+                }
+            } catch (error) { startupNotice = error.message; }
         },
         colorDots: blob => [blob.settings?.textColor, blob.settings?.backgroundColor].filter(Boolean).map(value => ({ kind: 'solid', value })),
         suggestSaveName: () => library?.suggestedName || 'Lunnen Airis'

@@ -5,7 +5,7 @@ export class Exporter {
     get busy() { return this.worker !== null; }
     run(type, settings, time) {
         if (this.busy) return Promise.reject(new Error('An export is already running.'));
-        const worker = new Worker(new URL('./export-worker.js', import.meta.url), { type: 'module' });
+        const worker = new Worker(new URL('./export-worker.js?v=2', import.meta.url), { type: 'module' });
         this.worker = worker;
         return new Promise((resolve, reject) => {
             const finish = (error, result) => {
@@ -33,7 +33,7 @@ export class Exporter {
 }
 export function probeVideo() {
     return new Promise(resolve => {
-        const worker = new Worker(new URL('./export-worker.js', import.meta.url), { type: 'module' });
+        const worker = new Worker(new URL('./export-worker.js?v=2', import.meta.url), { type: 'module' });
         const finish = result => { clearTimeout(timer); worker.terminate(); resolve(result); };
         const timer = setTimeout(() => finish({ supported: false, message: 'MP4 capability check timed out. Reload to retry, or export PNG.' }), 10000);
         worker.onerror = () => finish({ supported: false, message: 'MP4 is unavailable in this browser.' });

@@ -1,5 +1,5 @@
 import { normalize, FPS, hasContent } from './model.js';
-import { animationType } from './animations.js';
+import { animationType } from './animations.js?v=2';
 import { StoredZipWriter } from './framework-export.js';
 import { supportedVideoConfig, encodeVideo } from './video.js';
 self.onmessage = async ({ data }) => {

@@ -4,7 +4,7 @@
   "status": "passed",
   "unit": {
     "command": "npm run test:erik",
-    "passed": 41,
+    "passed": 42,
     "collisionGeometryCombinations": 3456,
     "collisionSpeeds": [
       10,
@@ -102,7 +102,7 @@
     "Motion has exactly four stacked sliders; header-to-Speed gap is 10 px; section headings and timing notes removed.",
     "Text style retains Weight, Tracking and Text measure directly, without More typography; font caption, Lunnen Blue button, PNG note and role/name alignment controls removed.",
     "Timeline is max 640 px wide, 82 px tall, with separate 36 px circular Play/Pause and Stop icons centered between the phase and editable timecode in the top row. Tick marks and current-segment caption replace event links; frame count and loop/step/restart buttons removed.",
-    "Play advances and changes to Pause; Pause freezes position; Stop returns to zero; 00:05:00 shows Logo \u2192 Crawl.",
+    "Play advances and changes to Pause; Pause freezes position; Stop returns to zero; 00:05:00 shows Logo → Crawl.",
     "Wide-editor cancellation, Apply, Undo, Help, reload and preset selection checked in the real browser; Full Credits restored after QA.",
     "At 1024x768 the canvas center and workspace center both equal (512,345); temporary viewport override reset.",
     "Text starts at 5 rows (129.97 px); native vertical resize stops inside the Content panel. With Logo expanded and at 960x600, panel-body scrollHeight equals clientHeight; text scrolls inside its field.",
@@ -147,7 +147,7 @@
   },
   "uiRegression": {
     "frameworkTestsPassed": 27,
-    "erikTestsPassed": 41,
+    "erikTestsPassed": 42,
     "scope": "Ending feature with common preview/export composition; all 19 crawl artifact checks re-run and passed on 2026-10-16"
   },
   "endingChecks": {
@@ -177,16 +177,26 @@
     "page": "erik/tests/draft.html",
     "checks": 4,
     "coverage": [
-      "4.7 MB source stored once; preset copies and autosave use compact internal references",
+      "4.9 MB source stored once; preset copies and autosave use compact internal references",
       "IndexedDB reopen restores the exact original; portable JSON remains self-contained",
-      "Actual Draft is 30 seconds, with Fade in on and Fade out off; final PNG matches preview",
-      "Actual supplied Lottie exports a 210-frame, 7-second 1080p/30fps H.264 ending with a visible final frame"
+      "Updated Draft is 00:22:20 with ending overlapping the crawl fade; final PNG matches preview",
+      "Updated supplied Lottie exports a 150-frame, 5-second 1080p/30fps H.264 ending with a visible final frame"
     ],
     "ui": [
       "Separate Fade in / Fade out switches independently change state and restore clean Draft",
-      "Reload retains Draft and its embedded Lottie; no warning/error logs"
+      "Reload retains Draft and its embedded Lottie; no warning/error logs",
+      "Installed Draft revision 1 updated to revision 2 after reload; timeline shows 00:22:20."
     ],
-    "regression": "All 9 ending checks (now including independent fades for text/SVG/JSON/dotLottie) and 9 library checks passed again."
+    "regression": "All 9 ending checks (now including independent fades for text/SVG/JSON/dotLottie) and 9 library checks passed again.",
+    "revision": 2,
+    "settings": {
+      "speed": 150,
+      "endingDuration": 5,
+      "endingScale": 36,
+      "endingGap": -200,
+      "endingFadeIn": true,
+      "endingFadeOut": false
+    }
   },
   "signedGapChecks": {
     "date": "2026-10-16",
@@ -195,7 +205,19 @@
       -2400,
       2400
     ],
-    "ui": "Motion has five sliders; both Gap numeric inputs accept negative values. Ending tab no longer contains its gap. Timeline reports Crawl \u2192 Ending during overlap.",
+    "ui": "Motion has five sliders; both Gap numeric inputs accept negative values. Ending tab no longer contains its gap. Timeline reports Crawl → Ending during overlap.",
     "validation": "41 unit tests and all 10 ending browser checks passed."
+  },
+  "ligatureChecks": {
+    "date": "2026-10-16",
+    "status": "passed",
+    "page": "erik/tests/ligatures.html",
+    "checks": 4,
+    "coverage": [
+      "NN, Lunnen, LUNNEN and lunnen shape with authored dlig ligatures at weights 100/250/400 and tracking -2/0/2/8 (48 combinations).",
+      "Logo, crawl (headings, role/name cells and ordinary text), and text ending differ from unjoined-letter references and match transparent worker PNG pixel-for-pixel.",
+      "Draft remains 680 frames / 00:22:20; updated app visually checked at 00:02:00 with joined NN and no console warnings/errors.",
+      "42 unit tests pass; preview and export dependency versions updated together to invalidate cached font policy."
+    ]
   }
 }

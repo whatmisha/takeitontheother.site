@@ -1,7 +1,7 @@
 import { DEFAULTS, normalize, framePlan, WIDTH, HEIGHT, sceneAt, crawlStart, parseCredits, creditsToText, FPS } from '../model.js';
-import { loadFont, CrawlRenderer } from '../renderer.js';
+import { loadFont, CrawlRenderer } from '../renderer.js?v=2';
 import { expandedCredits } from '../expanded-credits.js';
-import { Exporter } from '../exporter.js';
+import { Exporter } from '../exporter.js?v=2';
 const reports = [], assert = (ok, message) => { if (!ok) throw new Error(message); };
 function record(name, detail = '') { const item = document.createElement('li'); item.textContent = `PASS · ${name}${detail ? ' · ' + detail : ''}`; document.getElementById('results').append(item); reports.push({ name, status: 'passed', detail }); }
 const pixels = async blob => {

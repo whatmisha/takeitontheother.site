@@ -30,3 +30,23 @@ test('Draft is added once to existing libraries, respects user content and retri
     const custom = new PresetStore({storageKey:'custom'}); custom.create('Draft', presetDocument(normalize({body:'Keep'}), 'Draft'));
     await seedDraftPreset(custom, assets, {load}); assert.equal(custom.load('Draft').settings.body, 'Keep'); assert.equal(loads, 2);
 });
+test('Draft revision updates the installed preset atomically and preserves later edits or deletion', async () => {
+    globalThis.localStorage = memory();
+    const store = new PresetStore({storageKey: 'revision'}), assets = { async prepare() {} };
+    const old = presetDocument(normalize({speed:120, endingDuration:7}), 'Draft');
+    const next = presetDocument(normalize({speed:150, endingDuration:5, endingGap:-200}), 'Draft');
+    store.create('Draft', old); localStorage.setItem('revision:draft-v1', '1');
+    const save = store.saveAll; store.saveAll = () => false;
+    await assert.rejects(seedDraftPreset(store, assets, {load:async()=>next}));
+    assert.equal(store.load('Draft').settings.speed,120); assert.equal(localStorage.getItem('revision:draft-revision'),null);
+    store.saveAll = save;
+    const updated = await seedDraftPreset(store, assets, {load:async()=>next});
+    assert.deepEqual(updated.previous.settings,old.settings); assert.deepEqual(updated.current,next);
+    assert.deepEqual(store.load('Draft').settings,next.settings);
+    store.update('Draft',presetDocument(normalize({body:'Authored after update'}),'Draft'));
+    assert.equal(await seedDraftPreset(store,assets,{load:async()=>next}),null);
+    assert.equal(store.load('Draft').settings.body,'Authored after update');
+    const deleted = new PresetStore({storageKey:'deleted'}); localStorage.setItem('deleted:draft-v1','1');
+    await seedDraftPreset(deleted,assets,{load:async()=>{throw new Error('Should not re-add a deleted preset');}});
+    assert.equal(deleted.has('Draft'),false);
+});

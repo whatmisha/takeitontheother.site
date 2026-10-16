@@ -1,6 +1,6 @@
-import { CrawlRenderer, loadFont } from '../renderer.js';
+import { CrawlRenderer, loadFont } from '../renderer.js?v=2';
 import { normalize, framePlan } from '../model.js';
-import { Exporter } from '../exporter.js';
+import { Exporter } from '../exporter.js?v=2';
 import { readEndingFile, svgImageSource } from '../ending-assets.js';
 import { presetDocument, parsePreset } from '../document.js';
 const reports = [], assert = (value, message) => { if (!value) throw new Error(message); };

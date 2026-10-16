@@ -77,7 +77,8 @@ test('v4 presets and v8 drafts preserve the old combined fade without overriding
 test('Draft ships the full attached Lottie and independent fades with the supplied composition', () => {
     const doc = parsePreset(readFileSync(new URL('../presets/draft.json', import.meta.url), 'utf8'));
     assert.equal(doc.name, 'Draft'); assert.equal(doc.settings.endingFadeIn, true); assert.equal(doc.settings.endingFadeOut, false);
-    assert.equal(doc.settings.endingDuration, 7); assert.equal(doc.settings.endingScale, 81); assert.equal(doc.settings.endingGap, 0);
+    assert.equal(doc.settings.endingDuration, 5); assert.equal(doc.settings.endingScale, 36); assert.equal(doc.settings.endingGap, -200);
+    assert.equal(doc.settings.speed, 150); assert.equal(doc.settings.endingAsset.name, 'sparky_20261016_10-01-11-lottie.json');
     assert.equal(validateLottieJSON(doc.settings.endingAsset.data).op, 300);
     assert.ok(new TextEncoder().encode(doc.settings.endingAsset.data).length > 4 * 1024 * 1024);
 });

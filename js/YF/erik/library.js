@@ -51,20 +51,26 @@ export function migrateNotation(store, storage = localStorage) {
     }));
     if (!store.saveAll(next)) throw new Error('Presets could not be upgraded. The original library is backed up.');
 }
-// Add the new shipped preset for existing libraries without replacing authored entries.
+// Refresh shipped Draft once per revision; preserve deletions and unrelated custom names.
+export const DRAFT_PRESET_REVISION = '2';
 export async function seedDraftPreset(store, assetStorage, { storage = localStorage, load = async () => {
-    const response = await fetch(new URL('./presets/draft.json', import.meta.url));
+    const response = await fetch(new URL('./presets/draft.json', import.meta.url), { cache: 'no-cache' });
     if (!response.ok) throw new Error('Draft preset could not be loaded. Reload to retry.');
     return response.json();
 } } = {}) {
-    const marker = store.storageKey + ':draft-v1';
-    if (storage.getItem(marker) === '1') return;
-    if (!store.has('Draft')) {
-        const doc = parsePreset(await load());
-        await assetStorage.prepare(doc.settings.endingAsset);
-        if (!store.create('Draft', doc).ok) throw new Error('Draft preset could not be saved. Reload to retry.');
+    const marker = store.storageKey + ':draft-revision', legacyMarker = store.storageKey + ':draft-v1';
+    if (storage.getItem(marker) === DRAFT_PRESET_REVISION) return null;
+    const wasSeeded = storage.getItem(legacyMarker) === '1' || storage.getItem(marker) !== null;
+    const previous = store.load('Draft');
+    if ((!previous && wasSeeded) || (previous && !wasSeeded)) {
+        storage.setItem(marker, DRAFT_PRESET_REVISION); return null;
     }
-    storage.setItem(marker, '1');
+    const current = parsePreset(await load());
+    await assetStorage.prepare(current.settings.endingAsset);
+    if (!store.create('Draft', current, { overwrite: Boolean(previous) }).ok) throw new Error('Draft preset could not be saved. Reload to retry.');
+    storage.setItem(marker, DRAFT_PRESET_REVISION);
+    storage.setItem(legacyMarker, '1');
+    return { previous, current };
 }
 export class PresetLibrary {
     constructor({ app, status, changed, assetStorage }) { Object.assign(this, { app, status, changed, assetStorage }); this.abort = new AbortController(); }

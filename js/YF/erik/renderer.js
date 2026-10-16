@@ -4,7 +4,9 @@ const FONT_URL = new URL('../infra/framework/fonts/LunnenDisplay-VariableVF.woff
 let fontReady;
 export function loadFont() {
     return fontReady ||= (async () => {
-        const font = new FontFace('Erik Lunnen', `url("${FONT_URL.href}")`, { weight: '100 400', style: 'normal' });
+        // Enable the font’s NN / LUNNEN ligatures on the face itself so Canvas
+        // text measurement, logo, crawl, ending and export workers shape alike.
+        const font = new FontFace('Erik Lunnen', `url("${FONT_URL.href}")`, { weight: '100 400', style: 'normal', featureSettings: '"dlig" 1' });
         await font.load();
         (globalThis.document?.fonts || globalThis.fonts).add(font);
     })();

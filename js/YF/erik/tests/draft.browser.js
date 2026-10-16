@@ -1,6 +1,6 @@
-import { CrawlRenderer, loadFont } from '../renderer.js';
-import { normalize, framePlan } from '../model.js';
-import { Exporter } from '../exporter.js';
+import { CrawlRenderer, loadFont } from '../renderer.js?v=2';
+import { normalize, framePlan, sceneAt } from '../model.js';
+import { Exporter } from '../exporter.js?v=2';
 import { presetDocument, parsePreset } from '../document.js';
 import { EndingAssetStorage } from '../asset-storage.js';
 import { seedDraftPreset } from '../library.js';
@@ -21,7 +21,7 @@ try {
     localStorage.setItem(key + ':working', JSON.stringify(assets.pack({ settings })));
     assert(localStorage.getItem(key).length + localStorage.getItem(key + ':working').length < 15000, 'Large source duplicated in localStorage');
     assert(assets.sources.size === 1, 'Identical sources were duplicated');
-    record('Draft, a preset copy and autosave fit in localStorage; the 4.7 MB Lottie is stored once');
+    record('Draft, a preset copy and autosave fit in localStorage; the 4.9 MB Lottie is stored once');
     assets.close(); assets = await EndingAssetStorage.open(key);
     store = new PresetStore({ storageKey: key }); await assets.attach(store);
     const restored = store.load('Draft'), draft = assets.unpack(JSON.parse(localStorage.getItem(key + ':working')));
@@ -30,28 +30,29 @@ try {
     assert(restored.settings.endingFadeIn && !restored.settings.endingFadeOut, 'Fades not persisted');
     record('IndexedDB reopen restores exact source; portable JSON embeds it and preserves separate fades');
     await loadFont(); renderer = new CrawlRenderer(); await renderer.loadEnding(settings);
-    const plan = framePlan(settings, renderer.prepare(settings)); assert(plan.duration === 30, 'Supplied composition should be 30 seconds');
-    const first = await pixels(await renderer.render(settings, plan.ending.start, { transparent: true }).convertToBlob());
+    const plan = framePlan(settings, renderer.prepare(settings)); assert(plan.frames === 680, 'Supplied composition should be 00:22:20');
+    assert(sceneAt(settings, plan.ending.start, renderer.layout.logoFade, plan.textFade).textAlpha > 0, 'Negative ending gap should overlap the crawl fade');
+    const clip = normalize({ ...settings, title: '', body: '' });
+    const first = await pixels(await renderer.render(clip, 0, { transparent: true }).convertToBlob());
     const last = await pixels(await renderer.render(settings, plan.lastTime, { transparent: true }).convertToBlob());
     assert(count(first) === 0 && count(last) > 5000, 'Fade in or visible last frame failed');
     const exported = await new Exporter().run('frame', settings, plan.lastTime), worker = await pixels(exported.blob);
     assert(last.every((v,i) => v === worker[i]), 'Preview and exported ending differ');
     document.getElementById('preview').getContext('2d').drawImage(renderer.render(settings, plan.lastTime), 0, 0);
-    record('Actual Draft: 30 seconds, transparent Fade in start, visible final frame, exact preview/worker PNG');
-    const clip = normalize({ ...settings, title: '', body: '' });
+    record('Actual Draft: 00:22:20, overlapping crawl fade, transparent ending Fade in start, visible final frame, exact preview/worker PNG');
     const video = await new Exporter(({completed,total}) => document.getElementById('state').textContent = `Draft MP4 ${completed}/${total}`).run('mp4', clip, 0);
     const element = document.getElementById('video');
     await new Promise((resolve,reject) => { element.onloadeddata = resolve; element.onerror = () => reject(new Error('MP4 decode failed')); element.src = URL.createObjectURL(video.blob); });
-    assert(element.videoWidth === 1920 && element.videoHeight === 1080 && Math.abs(element.duration - 7) < .04, 'MP4 dimensions/duration');
-    await new Promise(resolve => { element.onseeked = resolve; element.currentTime = 6.9; });
+    assert(element.videoWidth === 1920 && element.videoHeight === 1080 && Math.abs(element.duration - 5) < .04, 'MP4 dimensions/duration');
+    await new Promise(resolve => { element.onseeked = resolve; element.currentTime = 4.9; });
     const frame = new OffscreenCanvas(1920,1080), ctx = frame.getContext('2d'); ctx.drawImage(element,0,0);
     assert(ctx.getImageData(0,0,1920,1080).data.some((value,i) => i%4 !== 3 && value > 50), 'MP4 final frame blank');
-    record('Actual supplied Lottie exports 210 H.264 frames at 1080p/30fps; the last frame remains visible');
+    record('Actual supplied Lottie exports 150 H.264 frames at 1080p/30fps; the last frame remains visible');
     document.getElementById('state').textContent = 'All Draft checks passed';
 } catch(error) { document.getElementById('state').textContent = 'FAIL: ' + error.message; reports.push(error.stack); }
 finally {
     assets?.close(); renderer?.destroy();
-    localStorage.removeItem(key); localStorage.removeItem(key + ':working'); localStorage.removeItem(key + ':draft-v1');
+    localStorage.removeItem(key); localStorage.removeItem(key + ':working'); localStorage.removeItem(key + ':draft-v1'); localStorage.removeItem(key + ':draft-revision');
     indexedDB.deleteDatabase(key);
     document.getElementById('report').textContent = JSON.stringify(reports,null,2);
 }
