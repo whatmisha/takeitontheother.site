@@ -28,17 +28,18 @@ function frameCountForJob(job) {
 }
 
 function sceneForFrame(job, frameIndex, frameCount) {
+    const buildScene = job.buildScene || buildGlobalScene;
     if (job.animationKind === 'person-search') {
         job.searchPlan ??= createPersonSearchPlan(job.settings);
         return buildPersonSearchScene(job.settings, job.searchPlan, frameIndex / frameCount);
     }
     if (job.animationKind === 'rotation') {
-        return buildGlobalScene(
+        return buildScene(
             { ...job.settings, animationMode: 'static' },
             rotationFrameOptions(job.settings, frameIndex, frameCount)
         );
     }
-    return buildGlobalScene(job.settings, {
+    return buildScene(job.settings, {
         timeSeconds: frameIndex / (FPS * slowMotionFactorForJob(job))
     });
 }
@@ -189,6 +190,10 @@ self.addEventListener('message', async (event) => {
     try {
         if (typeof OffscreenCanvas === 'undefined') {
             throw new Error('This browser cannot render animation frames in a background worker.');
+        }
+        if (job.settings.planetMode === true) {
+            const { buildPlanetScene } = await import('../geometry/planetGeometry.js');
+            job.buildScene = (settings, options) => buildPlanetScene(settings, { ...options, includeGeographyGuides: false });
         }
         const result = job.format === 'png-sequence'
             ? await exportPngSequence(job)

@@ -77,3 +77,21 @@ The Magnet `Field` toggle controls only the green dashed field indicator; hiding
 The Selection panel and canvas mark picking are currently inactive. The dormant sizing implementation remains isolated in the source so it can be restored with the panel later.
 
 Run the focused regression suite with `npm test`.
+
+## Planet
+
+`planet.html` opens a separate Planet tab based on Main Draft. It uses locally
+bundled Natural Earth country polygons with overseas territories grouped under
+their sovereign country. Click countries on the globe or search their English,
+Russian, or territory names to toggle a shared selection. Drag rotates the globe.
+
+Land growth applies to all land; country growth multiplies that land size for
+the selected group. For example, both at 100% give land ×2 and selected countries
+×4. Coast and group borders have independent inward softness in angular degrees;
+shared borders inside the selected group are not feathered. Countries without a
+point get the nearest existing point as a full-strength representative.
+
+Contours are off by default and are preview guides. SVG, PNG, and rotation exports
+include the geographic point sizes and omit guide contours. Planet presets and
+navigation sessions use separate storage from Sphere. See `src/data/README.md`
+for the geographic source and regeneration instructions.

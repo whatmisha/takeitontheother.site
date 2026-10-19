@@ -24,7 +24,7 @@ const normalize = ({ x, y, z }) => {
     return { x: x / length, y: y / length, z: z / length };
 };
 
-function rotateVector(source, rotationX, rotationY, rotationZ) {
+export function rotateVector(source, rotationX, rotationY, rotationZ) {
     const rx = degreesToRadians(rotationX);
     const ry = degreesToRadians(rotationY);
     const rz = degreesToRadians(rotationZ);
@@ -324,7 +324,7 @@ function ringTopologyAxes(count) {
     return result;
 }
 
-function axesForSettings(settings) {
+export function axesForSettings(settings) {
     const count = Math.ceil(settings.ellipseCount);
     if (settings.topologyMode === 'progressive') return progressiveAxes(count);
     if (settings.topologyMode === 'rings') return ringTopologyAxes(count);
@@ -419,6 +419,18 @@ export function normalizeSettings(source = {}) {
             : defaults.rotationAnimation.easing,
         coordinateMode: 'screen'
     };
+    if (settings.planetMode === true) {
+        settings.magnetStrength = 0;
+        settings.magnetFollow = false;
+        settings.landGrowth = clamp(finiteOr(settings.landGrowth, 100), 0, 400);
+        settings.countryGrowth = clamp(finiteOr(settings.countryGrowth, 100), 0, 400);
+        settings.landSoftness = clamp(finiteOr(settings.landSoftness, 0), 0, 10);
+        settings.countrySoftness = clamp(finiteOr(settings.countrySoftness, 0), 0, 10);
+        settings.selectedCountries = Array.isArray(settings.selectedCountries)
+            ? [...new Set(settings.selectedCountries.filter((id) => typeof id === 'string' && /^[A-Z0-9]{3}$/.test(id)))]
+            : [];
+        settings.showCountryBorders = Boolean(settings.showCountryBorders);
+    }
     settings.overrides = settings.overrides && typeof settings.overrides === 'object'
         ? structuredClone(settings.overrides)
         : {};
@@ -518,7 +530,7 @@ function perspectiveDistance(perspective) {
     return 1.04 + 4 * ((1 - amount) / amount) ** 2;
 }
 
-function cameraModel(settings) {
+export function cameraModel(settings) {
     const distance = perspectiveDistance(settings.perspective);
     if (!Number.isFinite(distance)) return { distance, framing: 1, horizonZ: 0 };
     return {
@@ -528,7 +540,7 @@ function cameraModel(settings) {
     };
 }
 
-function projectPoint(point, settings, camera = cameraModel(settings)) {
+export function projectPoint(point, settings, camera = cameraModel(settings)) {
     const cameraScale = Number.isFinite(camera.distance)
         ? camera.distance / Math.max(0.01, camera.distance - point.z)
         : 1;
@@ -566,6 +578,16 @@ function screenToSurface(x, y, settings) {
         y: imageY * time,
         z: camera.distance * (1 - time)
     });
+}
+
+// Inverse camera and rotation for surface picking, including perspective views.
+export function screenToWorldSurface(x, y, settings, options = {}) {
+    if (Math.hypot(x - ARTBOARD_CENTER, y - ARTBOARD_CENTER) > settings.sphereRadius) return null;
+    const rotation = worldRotationForScreenSettings(settings, options);
+    let point = screenToSurface(x, y, settings);
+    point = rotateVector(point, 0, 0, -rotation.z);
+    point = rotateVector(point, 0, -rotation.y, 0);
+    return rotateVector(point, -rotation.x, 0, 0);
 }
 
 function magnetAngularRadius(settings) {
@@ -826,6 +848,8 @@ export function buildGlobalScene(rawSettings, options = {}) {
             );
             const magnetScale = 1 + settings.magnetStrength / 100 * 1.55 * influence;
             requestedAngularRadius *= magnetScale;
+            const surfaceEffect = options.surfaceEffects?.[pointIndex];
+            if (surfaceEffect) requestedAngularRadius *= surfaceEffect.surfaceScale;
             requestedAngularRadius = clamp(requestedAngularRadius, EPSILON, MAX_CAP_ANGULAR_RADIUS);
             const angularRadius = requestedAngularRadius * activation;
             const frontPoints = sphericalCapPolygon(normal, angularRadius, settings, true, camera);
@@ -852,6 +876,7 @@ export function buildGlobalScene(rawSettings, options = {}) {
                 requestedAngularRadius,
                 depth: normal.z,
                 activation,
+                ...(surfaceEffect || {}),
                 magnetInfluence: influence,
                 overlapScale: activation
             });

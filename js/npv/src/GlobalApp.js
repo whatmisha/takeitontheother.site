@@ -186,11 +186,15 @@ export class GlobalApp {
 
     buildScene() {
         const previewOffsets = this.rotationPreview?.offsets || {};
-        return buildGlobalScene(this.settings, {
+        return this.sceneForSettings(this.settings, {
             timeSeconds: this.currentAnimationTime(),
             transientMagnet: this.transientMagnet,
             ...previewOffsets
         });
+    }
+
+    sceneForSettings(settings, options = {}) {
+        return buildGlobalScene(settings, options);
     }
 
     renderNow() {
@@ -469,6 +473,9 @@ export class GlobalApp {
                 this.history.end(this.settings);
             } else {
                 this.history.end(this.settings);
+                if (event.type === 'pointerup') {
+                    this.onSurfaceClick?.(this.clientToArtboard(event.clientX, event.clientY));
+                }
             }
         };
         this.canvas.addEventListener('pointerup', finish);
@@ -580,7 +587,7 @@ export class GlobalApp {
         const list = document.getElementById('presetList');
         list.replaceChildren();
         this.presetManager.names().forEach((name) => {
-            const builtIn = Boolean(SEEDED_PRESETS[name]);
+            const builtIn = Boolean(this.presetManager.builtIns[name]);
             const row = document.createElement('div');
             row.className = `preset-entry${builtIn ? '' : ' has-actions'}${name === this.presetManager.currentName ? ' is-active' : ''}`;
             row.setAttribute('role', 'option');
@@ -614,7 +621,7 @@ export class GlobalApp {
         newButton.textContent = '+ New preset';
         newButton.addEventListener('click', () => {
             this.presetManager.markClean('Untitled');
-            this.replaceSettings(defaultSettings(), { resetHistory: true, markDirty: true });
+            this.replaceSettings(clone(this.presetManager.defaults), { resetHistory: true, markDirty: true });
             this.closePresetMenu();
         });
         list.appendChild(newButton);
@@ -638,7 +645,7 @@ export class GlobalApp {
     }
 
     async savePreset() {
-        const suggested = SEEDED_PRESETS[this.presetManager.currentName]
+        const suggested = this.presetManager.builtIns[this.presetManager.currentName]
             ? `${this.presetManager.currentName} Copy`
             : this.presetManager.currentName === 'Untitled' ? 'My Global' : this.presetManager.currentName;
         const name = await this.prompt('Save preset', 'Choose a name for this state.', suggested);
@@ -882,7 +889,7 @@ export class GlobalApp {
                 if (error.name !== 'AbortError') console.error(error);
             });
         }
-        const scene = buildGlobalScene(this.exportSnapshot());
+        const scene = this.sceneForSettings(this.exportSnapshot(), { includeGeographyGuides: false });
         const svg = sceneToSvgString(scene);
         downloadText(svg, `${exportBaseName()}.svg`, 'image/svg+xml;charset=utf-8');
         return Promise.resolve();
@@ -898,7 +905,7 @@ export class GlobalApp {
                 if (error.name !== 'AbortError') console.error(error);
             });
         }
-        const scene = buildGlobalScene(this.exportSnapshot());
+        const scene = this.sceneForSettings(this.exportSnapshot(), { includeGeographyGuides: false });
         const svgText = sceneToSvgString(scene);
         const blob = new Blob([svgText], { type: 'image/svg+xml' });
         const url = URL.createObjectURL(blob);

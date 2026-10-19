@@ -1,0 +1,136 @@
+#planetPanel {
+    max-height: calc(100dvh - 104px);
+}
+
+#planetPanel .panel-content {
+    max-height: calc(100dvh - 148px);
+}
+
+.planet-app #magnetPanel[hidden] { display: none; }
+
+.country-selection-summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin: 14px 0 10px;
+    font-size: 12px;
+}
+
+.country-selection-summary button {
+    padding: 4px 0 4px 8px;
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+    font: inherit;
+}
+
+.country-selection-summary button:disabled { opacity: 0.35; cursor: default; }
+
+.country-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    max-height: 76px;
+    overflow: auto;
+}
+
+.country-chips:not(:empty) { margin-bottom: 12px; }
+
+.country-chip {
+    max-width: 100%;
+    border-radius: 14px;
+    padding: 6px 10px;
+    background: var(--text);
+    color: var(--bg);
+    cursor: pointer;
+    font: inherit;
+    font-size: 11px;
+    text-align: left;
+}
+
+#countrySearch {
+    width: 100%;
+    min-height: 36px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 8px 10px;
+    background: var(--input);
+    color: var(--text);
+    font-size: 12px;
+}
+
+#countrySearch::placeholder { color: var(--muted); }
+
+.country-results {
+    max-height: 146px;
+    margin: 6px 0 16px;
+    overflow: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+}
+
+.country-result {
+    display: flex;
+    width: 100%;
+    min-height: 30px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 6px 8px;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font: inherit;
+    font-size: 12px;
+    text-align: left;
+}
+
+.country-result:hover,
+.country-result[aria-checked="true"] { background: rgba(255, 255, 255, 0.08); color: #fff; }
+.country-check { color: var(--muted); }
+.country-result[aria-checked="true"] .country-check { color: #fff; }
+.country-empty { padding: 10px 8px; font-size: 12px; color: var(--muted); }
+.planet-scale-summary { margin: -4px 0 14px; color: var(--text-secondary); font-size: 11px; }
+
+.country-tooltip {
+    position: fixed;
+    z-index: 1600;
+    max-width: 180px;
+    padding: 6px 10px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--panel);
+    color: var(--text);
+    font-size: 12px;
+    pointer-events: none;
+}
+
+.planet-app button:focus-visible,
+.planet-app input:focus-visible { outline: 1px solid var(--text); outline-offset: 2px; }
+
+@media (max-width: 900px) {
+    .planet-app #planetPanel { display: block; right: 12px; bottom: 90px; max-height: 48dvh; }
+    .planet-app #planetPanel .panel-content { max-height: calc(48dvh - 44px); }
+}
+
+@media (max-width: 640px) {
+    .planet-app .topbar { width: calc(100vw - 24px); flex-wrap: wrap; justify-content: center; }
+    .planet-app .tool-tab { min-width: 68px; padding: 0 12px; }
+    .planet-app .preset-toggle { min-width: 72px; padding: 0 12px; }
+    .planet-app #planetPanel { right: 12px; bottom: 148px; width: min(300px, calc(100vw - 24px)); max-height: 38dvh; }
+    .planet-app #planetPanel .panel-content { max-height: calc(38dvh - 44px); }
+    .planet-app .canvas-container { bottom: 28dvh; }
+}
+
+.planet-app #savePresetButton[hidden] { display: none; }
+
+@media (max-width: 1250px) {
+    .planet-app #geometryPanel,
+    .planet-app #transformPanel { top: 80px; }
+}
+
+@media (min-width: 800px) and (max-width: 1000px) {
+    .planet-app .canvas-container { right: calc(var(--panel-width) + 40px); }
+}

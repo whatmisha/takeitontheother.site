@@ -205,15 +205,17 @@ export const SEEDED_PRESETS = Object.freeze({
 });
 
 export class PresetManager {
-    constructor(defaults) {
+    constructor(defaults, { builtIns = SEEDED_PRESETS, storageKey = STORAGE_KEY, defaultName = DEFAULT_PRESET_NAME } = {}) {
         this.defaults = clone(defaults);
-        this.currentName = DEFAULT_PRESET_NAME;
+        this.builtIns = builtIns;
+        this.storageKey = storageKey;
+        this.currentName = defaultName;
         this.dirty = false;
     }
 
     loadUserPresets() {
         try {
-            const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            const parsed = JSON.parse(localStorage.getItem(this.storageKey) || '{}');
             return parsed && typeof parsed === 'object' ? parsed : {};
         } catch {
             return {};
@@ -221,16 +223,16 @@ export class PresetManager {
     }
 
     saveUserPresets(presets) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(presets));
+        localStorage.setItem(this.storageKey, JSON.stringify(presets));
     }
 
     names() {
-        const seeded = Object.keys(SEEDED_PRESETS);
-        return [...seeded, ...Object.keys(this.loadUserPresets()).filter((name) => !SEEDED_PRESETS[name])];
+        const seeded = Object.keys(this.builtIns);
+        return [...seeded, ...Object.keys(this.loadUserPresets()).filter((name) => !this.builtIns[name])];
     }
 
     get(name) {
-        const source = SEEDED_PRESETS[name] || this.loadUserPresets()[name];
+        const source = this.builtIns[name] || this.loadUserPresets()[name];
         if (!source) return null;
         const state = { ...clone(this.defaults), ...clone(source) };
         if (!Object.hasOwn(source, 'rotationCoordinateMode')) delete state.rotationCoordinateMode;
@@ -238,7 +240,7 @@ export class PresetManager {
     }
 
     save(name, state) {
-        if (SEEDED_PRESETS[name]) return false;
+        if (this.builtIns[name]) return false;
         const presets = this.loadUserPresets();
         presets[name] = clone(state);
         this.saveUserPresets(presets);
@@ -248,7 +250,7 @@ export class PresetManager {
     }
 
     delete(name) {
-        if (SEEDED_PRESETS[name]) return false;
+        if (this.builtIns[name]) return false;
         const presets = this.loadUserPresets();
         if (!presets[name]) return false;
         delete presets[name];

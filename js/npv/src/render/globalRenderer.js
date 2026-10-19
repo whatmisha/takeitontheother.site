@@ -21,6 +21,8 @@ function markAttributes(mark, path, opacity, selected) {
         class: 'ellipse-mark',
         'data-ellipse-id': mark.id,
         'data-pair-index': mark.pairIndex,
+        'data-country-id': mark.countryId,
+        'data-fallback-countries': mark.fallbackCountryIds?.length ? mark.fallbackCountryIds.join(' ') : null,
         'data-selected': selected ? 'true' : 'false',
         d: path,
         fill: mark.color,
@@ -63,6 +65,13 @@ export function renderSceneToSvg(svg, scene, {
         }
     });
     svg.append(backMarks, frontMarks);
+
+    if (includeGuides && scene.planet) {
+        const geography = createSvgElement('g', { class: 'planet-outlines', 'data-export-exclude': 'true', 'pointer-events': 'none', fill: 'none' });
+        geography.appendChild(createSvgElement('path', { d: scene.planet.normal, stroke: scene.settings.ellipseColor, 'stroke-opacity': 0.4, 'stroke-width': 0.55 }));
+        geography.appendChild(createSvgElement('path', { d: scene.planet.selected, stroke: scene.settings.ellipseColor, 'stroke-opacity': 0.85, 'stroke-width': 0.85 }));
+        svg.appendChild(geography);
+    }
 
     const showMagnetField = scene.settings.magnetStrength > 0 && scene.settings.showMagnetField;
     if (includeGuides && (scene.settings.showGuides || showMagnetField)) {
