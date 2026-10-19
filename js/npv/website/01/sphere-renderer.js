@@ -1,15 +1,41 @@
-import { ARTBOARD_SIZE, buildGlobalScene } from '../../src/geometry/globalGeometry.js';
+import { ARTBOARD_SIZE, MAX_ELLIPSES, buildGlobalScene, geometryControlLimits } from '../../src/geometry/globalGeometry.js';
 import { SEEDED_PRESETS } from '../../src/core/presets.js';
 
-// Match the Figma hero's dot spacing and diameter without changing the editor preset.
-export const WEBSITE_SPHERE_PRESET = Object.freeze({
-  ...SEEDED_PRESETS['Main Draft'],
-  ellipseCount: 520,
-  diameter: 7.3,
-  sphereRadius: 224,
-  magnetStrength: 0,
-  showMagnetField: false
-});
+// Diameter and gap use the generator's 480-unit artboard, not CSS pixels.
+// Keep the site's framing and resolve density without shrinking either value.
+export function createWebsiteSpherePreset({ diameter = 4, overlapGap = 6, sphereRadius = 224 } = {}) {
+  const preset = {
+    ...SEEDED_PRESETS['Main Draft'],
+    diameter,
+    overlapGap,
+    sphereRadius,
+    magnetStrength: 0,
+    showMagnetField: false
+  };
+  const fits = ellipseCount => geometryControlLimits({ ...preset, ellipseCount }).diameterMax >= diameter;
+
+  // Above 128 pairs, Main Draft uses a nested sequence: adding a pair can
+  // only reduce minimum separation. Search that sequence without building
+  // projected paths for each candidate count.
+  let lower = 129;
+  let upper = MAX_ELLIPSES;
+  if (fits(lower)) {
+    while (lower < upper) {
+      const middle = Math.ceil((lower + upper) / 2);
+      if (fits(middle)) lower = middle;
+      else upper = middle - 1;
+    }
+  } else {
+    // Small layouts relax their axes independently and are not monotonic.
+    // Check them in descending order instead of applying binary search.
+    lower = 128;
+    while (lower > 1 && !fits(lower)) lower--;
+  }
+  return { ...preset, ellipseCount: lower };
+}
+
+// Resolve once on page load; scrolling and resizing reuse the same axes.
+export const WEBSITE_SPHERE_PRESET = Object.freeze(createWebsiteSpherePreset());
 
 const TAU = Math.PI * 2;
 

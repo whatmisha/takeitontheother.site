@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildGlobalScene } from '../../../src/geometry/globalGeometry.js';
-import { projectCap, WEBSITE_SPHERE_PRESET } from '../sphere-renderer.js';
+import { axesForSettings, buildGlobalScene } from '../../../src/geometry/globalGeometry.js';
+import { createWebsiteSpherePreset, projectCap, WEBSITE_SPHERE_PRESET } from '../sphere-renderer.js';
 
 const preset = WEBSITE_SPHERE_PRESET;
 
@@ -39,4 +39,46 @@ test('caps crossing the horizon are distinguished from front and back caps', () 
   const limb = projectCap({x:1,y:0,z:0}, radius, angularRadius);
   assert.equal(limb.visible, true);
   assert.equal(limb.whole, false);
+});
+
+// Measure the physical boundary gap independently of the generator's limit
+// calculation. Absolute dot products include the opposite side of each pair.
+function minimumSurfaceGap(settings) {
+  const axes = axesForSettings(settings);
+  let closestDot = -1;
+  for (let i = 0; i < axes.length; i++) {
+    for (let j = i + 1; j < axes.length; j++) {
+      const a = axes[i];
+      const b = axes[j];
+      closestDot = Math.max(closestDot, Math.abs(a.x * b.x + a.y * b.y + a.z * b.z));
+    }
+  }
+  const separation = Math.acos(Math.min(1, closestDot));
+  const angularDiameter = 2 * Math.asin(settings.diameter / (2 * settings.sphereRadius));
+  return (separation - angularDiameter) * settings.sphereRadius;
+}
+
+test('website density fills Main Draft while preserving diameter 4 and surface gap 6', () => {
+  const scene = buildGlobalScene(preset);
+  assert.equal(scene.settings.diameter, 4);
+  assert.equal(scene.settings.overlapGap, 6);
+  assert.equal(scene.axes.length, preset.ellipseCount);
+  assert.ok(scene.elements.every(mark => Math.abs(2 * scene.sphereRadius * Math.sin(mark.angularRadius) - 4) < 1e-9));
+  assert.ok(minimumSurfaceGap(preset) >= 6 - 1e-9);
+  assert.ok(minimumSurfaceGap({ ...preset, ellipseCount: preset.ellipseCount + 1 }) < 6);
+});
+
+test('density responds to sphere size, diameter and gap instead of a preset count', () => {
+  const smallerSphere = createWebsiteSpherePreset({ sphereRadius: 180 });
+  const largerSphere = createWebsiteSpherePreset({ sphereRadius: 240 });
+  const largerMarks = createWebsiteSpherePreset({ diameter: 6 });
+  const widerGap = createWebsiteSpherePreset({ overlapGap: 8 });
+  assert.ok(smallerSphere.ellipseCount < preset.ellipseCount);
+  assert.ok(largerSphere.ellipseCount > preset.ellipseCount);
+  assert.ok(largerMarks.ellipseCount < preset.ellipseCount);
+  assert.ok(widerGap.ellipseCount < preset.ellipseCount);
+  for (const settings of [smallerSphere, largerSphere, largerMarks, widerGap]) {
+    assert.ok(minimumSurfaceGap(settings) >= settings.overlapGap - 1e-9);
+    assert.ok(minimumSurfaceGap({ ...settings, ellipseCount: settings.ellipseCount + 1 }) < settings.overlapGap);
+  }
 });
