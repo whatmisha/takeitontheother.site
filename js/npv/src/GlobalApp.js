@@ -779,7 +779,8 @@ export class GlobalApp {
             } else if (!mod && !event.altKey && !event.shiftKey && !event.repeat
                 && (key === 'j' || event.code === 'KeyJ')) {
                 event.preventDefault();
-                document.getElementById('exportJson').hidden = false;
+                const button = document.getElementById('exportJson');
+                button.hidden = !button.hidden;
             } else if (mod && key === 'j') {
                 event.preventDefault();
                 this.exportPresetJson();
