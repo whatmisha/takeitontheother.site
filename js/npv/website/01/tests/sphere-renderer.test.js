@@ -1,9 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { axesForSettings, buildGlobalScene } from '../../../src/geometry/globalGeometry.js';
-import { createWebsiteSpherePreset, projectCap, WEBSITE_SPHERE_PRESET } from '../sphere-renderer.js';
+import { ARTBOARD_SIZE, buildGlobalScene } from '../../../src/geometry/globalGeometry.js';
+import { SEEDED_PRESETS } from '../../../src/core/presets.js';
+import { MainSphere, projectCap } from '../sphere-renderer.js';
+import { createWebsiteSphereLayout } from '../sphere-layout.js';
 
-const preset = WEBSITE_SPHERE_PRESET;
+const preset = SEEDED_PRESETS['Main Draft'];
 
 for (const degrees of [0, 31, 90, 180]) {
   test(`Website sphere analytic projection matches the original generator at ${degrees} degrees`, () => {
@@ -41,44 +43,79 @@ test('caps crossing the horizon are distinguished from front and back caps', () 
   assert.equal(limb.whole, false);
 });
 
-// Measure the physical boundary gap independently of the generator's limit
-// calculation. Absolute dot products include the opposite side of each pair.
-function minimumSurfaceGap(settings) {
-  const axes = axesForSettings(settings);
-  let closestDot = -1;
-  for (let i = 0; i < axes.length; i++) {
-    for (let j = i + 1; j < axes.length; j++) {
-      const a = axes[i];
-      const b = axes[j];
-      closestDot = Math.max(closestDot, Math.abs(a.x * b.x + a.y * b.y + a.z * b.z));
+// Independent nearest-neighbor check using a sorted sweep, including both
+// hemispheres. It does not reuse the layout generator's spatial hash.
+function minimumSurfaceGap(layout, cssSize) {
+  const points = layout.axes.flatMap(axis => [axis, { x: -axis.x, y: -axis.y, z: -axis.z }])
+    .sort((a, b) => a.z - b.z);
+  let closestSquared = Infinity;
+  for (let i = 0; i < points.length; i++) {
+    const a = points[i];
+    for (let j = i + 1; j < points.length; j++) {
+      const b = points[j];
+      const dz = b.z - a.z;
+      if (dz * dz > closestSquared) break;
+      closestSquared = Math.min(closestSquared, (a.x - b.x) ** 2 + (a.y - b.y) ** 2 + dz * dz);
     }
   }
-  const separation = Math.acos(Math.min(1, closestDot));
-  const angularDiameter = 2 * Math.asin(settings.diameter / (2 * settings.sphereRadius));
-  return (separation - angularDiameter) * settings.sphereRadius;
+  const separation = 2 * Math.asin(Math.sqrt(closestSquared) / 2);
+  return (separation - 2 * layout.angularRadius) * layout.sphereRadius * cssSize / ARTBOARD_SIZE;
 }
 
-test('website density fills Main Draft while preserving diameter 4 and surface gap 6', () => {
-  const scene = buildGlobalScene(preset);
-  assert.equal(scene.settings.diameter, 4);
-  assert.equal(scene.settings.overlapGap, 6);
-  assert.equal(scene.axes.length, preset.ellipseCount);
-  assert.ok(scene.elements.every(mark => Math.abs(2 * scene.sphereRadius * Math.sin(mark.angularRadius) - 4) < 1e-9));
-  assert.ok(minimumSurfaceGap(preset) >= 6 - 1e-9);
-  assert.ok(minimumSurfaceGap({ ...preset, ellipseCount: preset.ellipseCount + 1 }) < 6);
+for (const cssSize of [480, 561.6, 1108, 1331.46]) {
+  test(`displayed sphere at ${cssSize}px keeps a 4px diameter and at least 6px surface gap`, () => {
+    const layout = createWebsiteSphereLayout(cssSize);
+    const actualDiameter = 2 * layout.sphereRadius * Math.sin(layout.angularRadius) * cssSize / ARTBOARD_SIZE;
+    assert.ok(Math.abs(actualDiameter - 4) < 1e-9);
+    const gap = minimumSurfaceGap(layout, cssSize);
+    assert.ok(gap >= 6 - 1e-8, `minimum gap: ${gap}`);
+    assert.ok(gap < 6.02, `the field should fill down to the requested gap: ${gap}`);
+    if (cssSize >= 1108) assert.ok(layout.axes.length > 8192, 'website density must exceed the editor cap when needed');
+  });
+}
+
+test('larger spheres gain dots rather than enlarging them', () => {
+  const small = createWebsiteSphereLayout(561.6);
+  const large = createWebsiteSphereLayout(1108);
+  assert.ok(large.axes.length > small.axes.length * 3);
 });
 
-test('density responds to sphere size, diameter and gap instead of a preset count', () => {
-  const smallerSphere = createWebsiteSpherePreset({ sphereRadius: 180 });
-  const largerSphere = createWebsiteSpherePreset({ sphereRadius: 240 });
-  const largerMarks = createWebsiteSpherePreset({ diameter: 6 });
-  const widerGap = createWebsiteSpherePreset({ overlapGap: 8 });
-  assert.ok(smallerSphere.ellipseCount < preset.ellipseCount);
-  assert.ok(largerSphere.ellipseCount > preset.ellipseCount);
-  assert.ok(largerMarks.ellipseCount < preset.ellipseCount);
-  assert.ok(widerGap.ellipseCount < preset.ellipseCount);
-  for (const settings of [smallerSphere, largerSphere, largerMarks, widerGap]) {
-    assert.ok(minimumSurfaceGap(settings) >= settings.overlapGap - 1e-9);
-    assert.ok(minimumSurfaceGap({ ...settings, ellipseCount: settings.ellipseCount + 1 }) < settings.overlapGap);
+test('scroll and DPR changes reuse the layout; width changes keep a 4px rendered diameter', () => {
+  const previousDpr = globalThis.devicePixelRatio;
+  let cssSize = 1108;
+  const context = {
+    scale: 1,
+    maximumRadius: 0,
+    setTransform(scale) { this.scale = scale; },
+    clearRect() { this.maximumRadius = 0; },
+    ellipse(x, y, major) { this.maximumRadius = Math.max(this.maximumRadius, major); },
+    beginPath() {}, moveTo() {}, lineTo() {}, closePath() {}, fill() {}
+  };
+  const canvas = {
+    width: 0, height: 0,
+    getContext: () => context,
+    getBoundingClientRect: () => ({ width: cssSize })
+  };
+  const renderedDiameter = () => context.maximumRadius * 2 * context.scale * cssSize / canvas.width;
+  try {
+    globalThis.devicePixelRatio = 1;
+    const sphere = new MainSphere(canvas);
+    const initialAxes = sphere.axes;
+    assert.ok(Math.abs(renderedDiameter() - 4) < 1e-9);
+    sphere.draw(73);
+    assert.equal(sphere.axes, initialAxes);
+    globalThis.devicePixelRatio = 2;
+    sphere.resize();
+    assert.equal(sphere.axes, initialAxes);
+    assert.equal(canvas.width, 2216);
+    assert.ok(Math.abs(renderedDiameter() - 4) < 1e-9);
+    cssSize = 1331.46;
+    sphere.resize();
+    assert.notEqual(sphere.axes, initialAxes);
+    assert.equal(sphere.rotation, 73);
+    assert.ok(Math.abs(renderedDiameter() - 4) < 1e-9);
+  } finally {
+    if (previousDpr === undefined) delete globalThis.devicePixelRatio;
+    else globalThis.devicePixelRatio = previousDpr;
   }
 });

@@ -1,41 +1,6 @@
-import { ARTBOARD_SIZE, MAX_ELLIPSES, buildGlobalScene, geometryControlLimits } from '../../src/geometry/globalGeometry.js';
-import { SEEDED_PRESETS } from '../../src/core/presets.js';
-
-// Diameter and gap use the generator's 480-unit artboard, not CSS pixels.
-// Keep the site's framing and resolve density without shrinking either value.
-export function createWebsiteSpherePreset({ diameter = 4, overlapGap = 6, sphereRadius = 224 } = {}) {
-  const preset = {
-    ...SEEDED_PRESETS['Main Draft'],
-    diameter,
-    overlapGap,
-    sphereRadius,
-    magnetStrength: 0,
-    showMagnetField: false
-  };
-  const fits = ellipseCount => geometryControlLimits({ ...preset, ellipseCount }).diameterMax >= diameter;
-
-  // Above 128 pairs, Main Draft uses a nested sequence: adding a pair can
-  // only reduce minimum separation. Search that sequence without building
-  // projected paths for each candidate count.
-  let lower = 129;
-  let upper = MAX_ELLIPSES;
-  if (fits(lower)) {
-    while (lower < upper) {
-      const middle = Math.ceil((lower + upper) / 2);
-      if (fits(middle)) lower = middle;
-      else upper = middle - 1;
-    }
-  } else {
-    // Small layouts relax their axes independently and are not monotonic.
-    // Check them in descending order instead of applying binary search.
-    lower = 128;
-    while (lower > 1 && !fits(lower)) lower--;
-  }
-  return { ...preset, ellipseCount: lower };
-}
-
-// Resolve once on page load; scrolling and resizing reuse the same axes.
-export const WEBSITE_SPHERE_PRESET = Object.freeze(createWebsiteSpherePreset());
+import { ARTBOARD_SIZE } from '../../src/geometry/globalGeometry.js';
+import { createWebsiteSphereLayout } from './sphere-layout.js';
+import { axisRotation, rotationMatrix } from './planet-motion.js';
 
 const TAU = Math.PI * 2;
 
@@ -100,63 +65,103 @@ function horizonCap(normal, angularRadius, radius) {
 }
 
 export class MainSphere {
-  constructor(canvas, preset = WEBSITE_SPHERE_PRESET) {
+  constructor(canvas) {
     this.canvas = canvas;
     this.context = canvas.getContext('2d');
-    // Reuse the generator's axes, constrained sizes and preset. The site's
-    // first version deliberately omits the live magnet and perspective.
-    const scene = buildGlobalScene({ ...preset, magnetStrength: 0, showMagnetField: false });
-    this.axes = scene.axes;
-    this.radius = scene.sphereRadius;
-    this.angularRadius = scene.elements[0].angularRadius;
-    this.color = scene.settings.ellipseColor;
     this.rotation = 0;
+    this.cssSize = 0;
+    this.layoutVersion = 0;
+    this.frame = { orientation: axisRotation(0, 0), land: 0, regions: {} };
     this.resize();
   }
 
   resize() {
-    const size = Math.max(1, Math.round(this.canvas.getBoundingClientRect().width * Math.min(devicePixelRatio || 1, 2)));
+    const cssSize = this.canvas.getBoundingClientRect().width;
+    if (cssSize <= 0) return;
+    // Regenerate only when the displayed width changes, never while scrolling.
+    // A height-only resize or DPR change preserves the existing arrangement.
+    if (Math.abs(cssSize - this.cssSize) > .01) {
+      const layout = createWebsiteSphereLayout(cssSize);
+      this.axes = layout.axes;
+      this.layoutVersion++;
+      this.geography = null;
+      this.radius = layout.sphereRadius;
+      this.angularRadius = layout.angularRadius;
+      this.color = layout.color;
+      this.cssSize = cssSize;
+    }
+    const size = Math.max(1, Math.round(cssSize * Math.min(globalThis.devicePixelRatio || 1, 2)));
     if (this.canvas.width !== size || this.canvas.height !== size) {
       this.canvas.width = size;
       this.canvas.height = size;
     }
-    this.draw(this.rotation);
+    this.drawFrame(this.frame);
   }
 
   draw(degrees) {
     this.rotation = degrees;
+    this.drawFrame({ orientation: axisRotation(0, degrees), land: 0, regions: {} });
+  }
+
+  setGeography(masks, version) {
+    if (version !== this.layoutVersion || masks.land.length !== this.axes.length * 2) return false;
+    this.geography = masks;
+    return true;
+  }
+
+  drawFrame(frame) {
+    this.frame = frame;
+    if (!this.axes) return;
     const context = this.context;
     const scale = this.canvas.width / ARTBOARD_SIZE;
     context.setTransform(scale, 0, 0, scale, 0, 0);
     context.clearRect(0, 0, ARTBOARD_SIZE, ARTBOARD_SIZE);
     context.fillStyle = this.color;
-    const angle = degrees * Math.PI / 180;
-    const cosine = Math.cos(angle);
-    const sine = Math.sin(angle);
+    const matrix = rotationMatrix(frame.orientation);
+    const geography = this.geography;
+    const activeRegions = geography ? Object.entries(frame.regions)
+      .filter(([id, weight]) => weight > 0 && geography.regions[id]) : [];
+    let pointIndex = 0;
+    let batchSize = 0;
     context.beginPath();
     for (const axis of this.axes) {
+      const x = matrix[0]*axis.x + matrix[1]*axis.y + matrix[2]*axis.z;
+      const y = matrix[3]*axis.x + matrix[4]*axis.y + matrix[5]*axis.z;
+      const z = matrix[6]*axis.x + matrix[7]*axis.y + matrix[8]*axis.z;
       for (const side of [1, -1]) {
-        // Screen Y rotation, matching worldRotationForScreenSettings.
-        const normal = {
-          x: axis.x * side,
-          y: (axis.y * cosine - axis.z * sine) * side,
-          z: (axis.y * sine + axis.z * cosine) * side
-        };
-        const cap = projectCap(normal, this.radius, this.angularRadius);
+        // Masks stay attached to the unrotated surface, including its back side.
+        let country = 0;
+        for (const [id, weight] of activeRegions) country += geography.regions[id][pointIndex] * weight;
+        country = Math.min(1, country);
+        const land = geography ? Math.max(geography.land[pointIndex], country) : 0;
+        // 4px ocean → 7px land → 9.8px region. Stay below the
+        // 10px lattice spacing so highlighted countries retain separate dots.
+        const growth = (1 + .75 * frame.land * land) * (1 + .4 * country);
+        const angularRadius = this.angularRadius * growth;
+        pointIndex++;
+        const normal = { x: x * side, y: y * side, z: z * side };
+        const cap = projectCap(normal, this.radius, angularRadius);
         if (!cap.visible) continue;
         if (cap.whole) {
           context.moveTo(cap.x + Math.cos(cap.angle) * cap.major,
             cap.y + Math.sin(cap.angle) * cap.major);
           context.ellipse(cap.x, cap.y, cap.major, cap.minor, cap.angle, 0, TAU);
         } else {
-          const points = horizonCap(normal, this.angularRadius, this.radius);
+          const points = horizonCap(normal, angularRadius, this.radius);
           if (points.length < 3) continue;
           context.moveTo(points[0].x, points[0].y);
           for (let i = 1; i < points.length; i++) context.lineTo(points[i].x, points[i].y);
         }
         context.closePath();
+        // Bounded paths avoid expensive tessellation of thousands of ellipses
+        // at once. All marks are opaque; panel opacity is applied in CSS.
+        if (++batchSize === 256) {
+          context.fill();
+          context.beginPath();
+          batchSize = 0;
+        }
       }
     }
-    context.fill();
+    if (batchSize) context.fill();
   }
 }
