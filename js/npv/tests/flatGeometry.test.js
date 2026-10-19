@@ -440,6 +440,8 @@ test('Flat UI exposes pinned fields and brush-radius shortcuts without editable 
     assert.match(html, /id="fieldX"[^>]*min="-960"[^>]*max="960"[^>]*value="0"[^>]*data-flat-coordinate="x"/);
     assert.match(html, /id="fieldY"[^>]*min="-960"[^>]*max="960"[^>]*value="0"[^>]*data-flat-coordinate="y"/);
     assert.match(html, /id="personMinimumScale"/);
+    assert.match(html, /id="searchStep"[^>]*min="1"[^>]*max="6"[^>]*step="1"[^>]*value="1"[^>]*data-flat-setting="searchStep"/);
+    assert.match(html, /id="searchStepValue"[^>]*value="1"/);
     assert.match(html, /id="personIconScale"[^>]*min="100"[^>]*max="400"/);
     assert.doesNotMatch(html, /id="personScale"/);
     assert.match(html, /id="spacingX"/);

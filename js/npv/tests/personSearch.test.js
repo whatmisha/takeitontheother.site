@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { getFlatPreset } from '../src/core/flatPresets.js';
 import { normalizeFlatSettings, buildFlatScene } from '../src/geometry/flatGeometry.js';
-import { createPersonSearchPlan, samplePersonSearch, buildPersonSearchScene } from '../src/animation/personSearch.js';
+import { createPersonSearchPlan, samplePersonSearch, buildPersonSearchScene, personSearchKey } from '../src/animation/personSearch.js';
 import { flatSceneToSvgString, drawFlatSceneOnContext } from '../src/render/flatRenderer.js';
 import { PERSON_RESPONSE_MS, personTransition } from '../src/animation/personMotion.js';
 
@@ -15,6 +15,59 @@ test('Search defaults match the requested animation settings without changing st
     assert.equal(settings.searchDuration, 10);
     assert.equal(settings.searchStartRandomness, 100);
     assert.equal(settings.searchPathRandomness, 0);
+    assert.equal(settings.searchStep, 1);
+});
+
+test('movement step normalizes safely and invalidates the cached search plan', () => {
+    for (const [input, expected] of [[undefined, 1], [NaN, 1], [Infinity, 1], [-3, 1], [2.7, 3], [100, 6]]) {
+        assert.equal(normalizeFlatSettings({ searchStep: input }).searchStep, expected);
+    }
+    assert.notEqual(personSearchKey(settings), personSearchKey({ ...settings, searchStep: 2 }));
+});
+
+test('movement step skips route cells without changing starts, route cost or arrival timing', () => {
+    for (const distribution of ['grid', 'paired']) {
+        for (const searchPathRandomness of [0, 100]) {
+            const base = { ...settings, distribution, searchPathRandomness };
+            const regular = createPersonSearchPlan(base);
+            for (const searchStep of [2, 3, 6]) {
+                const sparse = createPersonSearchPlan({ ...base, searchStep });
+                sparse.candidates.forEach((candidate, c) => {
+                    const original = regular.candidates[c];
+                    const indices = original.path.map((_, i) => i).filter(i => i % searchStep === 0 || i === original.path.length - 1);
+                    assert.deepEqual(candidate.path.map(n => n.id), indices.map(i => original.path[i].id));
+                    assert.deepEqual(candidate.arrivals, indices.map(i => original.arrivals[i]));
+                    assert.equal(candidate.totalCost, original.totalCost);
+                    assert.equal(candidate.path.at(-1).id, sparse.target.id);
+                    assert.ok(candidate.path.length < original.path.length);
+                });
+            }
+        }
+    }
+});
+
+test('skipped cells never form extra icons and sparse preview frames remain deterministic and continuous', () => {
+    const s = normalizeFlatSettings({ ...settings, searchStep: 6, searchPathRandomness: 100 });
+    const p = createPersonSearchPlan(s);
+    const visibleHeads = new Set(p.candidates.flatMap(candidate => candidate.path.map(node => node.id)));
+    for (const progress of [0.17, 0.3, 0.47, 0.6, 0.8]) {
+        const scene = buildPersonSearchScene(s, p, progress);
+        assert.deepEqual(scene, buildPersonSearchScene(s, createPersonSearchPlan(JSON.parse(JSON.stringify(s))), progress));
+        for (const mark of scene.elements.filter(mark => mark.role === 'head')) assert.ok(visibleHeads.has(mark.id));
+    }
+    for (const candidate of p.candidates) {
+        for (let i = 1; i < candidate.arrivals.length; i += 1) {
+            const start = candidate.arrivals[i - 1], end = candidate.arrivals[i];
+            for (const fraction of [0, 0.12, 0.48, 0.55, 0.92, 1]) {
+                const t = start + (end - start) * fraction;
+                const a = buildPersonSearchScene(s, p, t - 1e-6);
+                const b = buildPersonSearchScene(s, p, t + 1e-6);
+                a.elements.forEach((mark, j) => {
+                    for (const key of ['cy', 'rx', 'ry']) assert.ok(Math.abs(mark[key] - b.elements[j][key]) < 0.05);
+                });
+            }
+        }
+    }
 });
 
 test('finalist transitions share the fast interactive response and settle exactly', () => {
@@ -185,7 +238,7 @@ test('paired tiles, small canvases and oversized icons remain finite and respect
 test('search settings survive JSON while old presets keep interactive behavior', () => {
     assert.equal(settings.personAnimation, 'interactive');
     const animated = normalizeFlatSettings({ ...settings, personAnimation: 'search', searchCandidates: 6,
-        searchDuration: 12, searchStartRandomness: 87, searchPathRandomness: 92, searchSeed: 4294967295 });
+        searchDuration: 12, searchStartRandomness: 87, searchPathRandomness: 92, searchStep: 4, searchSeed: 4294967295 });
     assert.deepEqual(normalizeFlatSettings(JSON.parse(JSON.stringify(animated))), animated);
 });
 
@@ -249,19 +302,21 @@ test('seed changes the staging and outcome, while zero randomness ignores the se
 
 test('random encounters stay separated and end with one survivor for multiple seeds and layouts', () => {
     for (const distribution of ['grid', 'paired']) {
-        for (let seed = 0; seed < 10; seed += 1) {
-            const p = createPersonSearchPlan({ ...settings, distribution, searchSeed: seed,
-                searchStartRandomness: 100, searchPathRandomness: 100, searchCandidates: 12 });
-            assert.equal(samplePersonSearch(p, 0.8).count, 1);
-            for (let frame = 0; frame < 240; frame += 1) {
-                const actors = samplePersonSearch(p, frame / 240).actors;
-                const bounds = actors.map(({ from, to }) => ({ left: Math.min(from.bounds.left, to.bounds.left),
-                    right: Math.max(from.bounds.right, to.bounds.right), top: Math.min(from.bounds.top, to.bounds.top),
-                    bottom: Math.max(from.bounds.bottom, to.bounds.bottom) }));
-                bounds.forEach((a, i) => bounds.slice(i + 1).forEach((b) => {
-                    assert.ok(a.right <= b.left || b.right <= a.left || a.bottom <= b.top || b.bottom <= a.top,
-                        `${distribution}, seed ${seed}, frame ${frame}`);
-                }));
+        for (const searchStep of [1, 2, 3, 6]) {
+            for (let seed = 0; seed < 10; seed += 1) {
+                const p = createPersonSearchPlan({ ...settings, distribution, searchSeed: seed,
+                    searchStartRandomness: 100, searchPathRandomness: seed % 2 ? 100 : 0, searchCandidates: 12, searchStep });
+                assert.equal(samplePersonSearch(p, 0.8).count, 1);
+                for (let frame = 0; frame < 240; frame += 1) {
+                    const actors = samplePersonSearch(p, frame / 240).actors;
+                    const bounds = actors.map(({ from, to }) => ({ left: Math.min(from.bounds.left, to.bounds.left),
+                        right: Math.max(from.bounds.right, to.bounds.right), top: Math.min(from.bounds.top, to.bounds.top),
+                        bottom: Math.max(from.bounds.bottom, to.bounds.bottom) }));
+                    bounds.forEach((a, i) => bounds.slice(i + 1).forEach((b) => {
+                        assert.ok(a.right <= b.left || b.right <= a.left || a.bottom <= b.top || b.bottom <= a.top,
+                            `${distribution}, step ${searchStep}, seed ${seed}, frame ${frame}`);
+                    }));
+                }
             }
         }
     }

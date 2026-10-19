@@ -15,7 +15,7 @@ const FINAL_PERSON_SCALE = 1.5;
 export function personSearchKey(settings) {
     return JSON.stringify(['width', 'height', 'spacingX', 'spacingY', 'distribution',
         'stagger', 'ellipseWidth', 'ellipseHeight', 'personIconScale', 'searchCandidates',
-        'searchStartRandomness', 'searchPathRandomness', 'searchSeed', 'searchDuration']
+        'searchStartRandomness', 'searchPathRandomness', 'searchStep', 'searchSeed', 'searchDuration']
         .map((key) => settings[key]));
 }
 
@@ -282,11 +282,15 @@ export function createPersonSearchPlan(rawSettings) {
             if (!trees.has(waypoint.id)) trees.set(waypoint.id, shortestPaths(byId, waypoint, edgeCost));
             route.push(...tracePath(route.at(-1), waypoint, trees.get(waypoint.id), byId).slice(1));
         }
-        const path = eraseLoops(route);
+        const fullPath = eraseLoops(route);
         const distances = [0];
-        for (let i = 1; i < path.length; i += 1) distances.push(distances.at(-1) + edgeCost(path[i - 1], path[i]));
+        for (let i = 1; i < fullPath.length; i += 1) distances.push(distances.at(-1) + edgeCost(fullPath[i - 1], fullPath[i]));
+        // Skip visible stops, not elapsed route time. Always retain the start and center.
+        // Collision reservations below use these longer handovers as well.
+        const stops = fullPath.map((_, i) => i).filter(i => i % settings.searchStep === 0 || i === fullPath.length - 1);
+        const path = stops.map(i => fullPath[i]);
         const moveStart = MOVE_START + index / Math.max(1, starts.length - 1) * 0.025;
-        const arrivals = distances.map((distance) => mix(moveStart, MOVE_END, distance / Math.max(1, distances.at(-1))));
+        const arrivals = stops.map(i => mix(moveStart, MOVE_END, distances[i] / Math.max(1, distances.at(-1))));
         const candidate = { id: `search-${index}`, path, arrivals, totalCost: distances.at(-1),
             spawn: 0.015 + index * 0.01, fadeStart: 1, fadeEnd: 1 };
         plan.candidates.push(candidate);

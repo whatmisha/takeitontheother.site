@@ -173,6 +173,10 @@
                             <input id="searchPathRandomness" type="range" min="0" max="100" step="1" value="0" data-flat-setting="searchPathRandomness">
                         </div>
                         <div class="control-group">
+                            <label for="searchStep"><span>Movement step <span class="unit">cells</span></span><input class="value-display" type="text" id="searchStepValue" value="1" inputmode="numeric" aria-label="Movement step value"></label>
+                            <input id="searchStep" type="range" min="1" max="6" step="1" value="1" data-flat-setting="searchStep" title="1: every cell; 2: every other cell; 3: every third cell, and so on.">
+                        </div>
+                        <div class="control-group">
                             <label for="flatSearchTimeline"><span id="flatSearchPhase">Appearing · 0</span><span class="unit">Loop</span></label>
                             <input id="flatSearchTimeline" type="range" min="0" max="999" step="1" value="0" aria-label="Search animation timeline">
                         </div>

@@ -38,6 +38,7 @@ export function defaultFlatSettings() {
         searchCandidates: 12,
         searchStartRandomness: 100,
         searchPathRandomness: 0,
+        searchStep: 1,
         searchSeed: 1,
         fieldRadius: 78,
         falloffCurve: 0,
@@ -97,6 +98,7 @@ export function normalizeFlatSettings(source = {}) {
     settings.searchCandidates = Math.round(clamp(finiteOr(settings.searchCandidates, defaults.searchCandidates), 2, 12));
     settings.searchStartRandomness = clamp(finiteOr(settings.searchStartRandomness, defaults.searchStartRandomness), 0, 100);
     settings.searchPathRandomness = clamp(finiteOr(settings.searchPathRandomness, defaults.searchPathRandomness), 0, 100);
+    settings.searchStep = Math.round(clamp(finiteOr(settings.searchStep, defaults.searchStep), 1, 6));
     settings.searchSeed = Math.round(clamp(finiteOr(settings.searchSeed, defaults.searchSeed), 0, 0xffffffff));
     settings.fieldRadius = clamp(finiteOr(settings.fieldRadius, defaults.fieldRadius), 5, 240);
     settings.falloffCurve = clamp(finiteOr(settings.falloffCurve, defaults.falloffCurve), -100, 100);

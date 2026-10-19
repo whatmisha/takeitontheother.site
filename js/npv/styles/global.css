@@ -882,7 +882,7 @@ input[type="range"]:disabled {
 }
 
 .flat-search-mode #flatFieldPanel {
-    --flat-field-height: max(120px, calc(100vh - 495px));
+    --flat-field-height: max(120px, calc(100vh - 550px));
 }
 
 #flatAnimationPanel {
