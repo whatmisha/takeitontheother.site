@@ -1010,6 +1010,10 @@ input[type="range"]:disabled {
     gap: 10px;
 }
 
+#exportJson[hidden] {
+    display: none;
+}
+
 .video-export-group {
     display: flex;
     gap: 10px;

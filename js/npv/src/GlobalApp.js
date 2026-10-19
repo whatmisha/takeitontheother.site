@@ -104,6 +104,7 @@ export class GlobalApp {
                 document.getElementById('exportPrimary'),
                 document.getElementById('exportPngSequence'),
                 document.getElementById('exportVideo'),
+                document.getElementById('exportJson'),
                 document.getElementById('slowVideoExport')
             ],
             onError: (error) => this.alert('Export failed', error.message)
@@ -775,9 +776,13 @@ export class GlobalApp {
                 event.preventDefault();
                 if (event.shiftKey) this.exportPngAction();
                 else this.exportPrimaryAction();
+            } else if (!mod && !event.altKey && !event.shiftKey && !event.repeat
+                && (key === 'j' || event.code === 'KeyJ')) {
+                event.preventDefault();
+                document.getElementById('exportJson').hidden = false;
             } else if (mod && key === 'j') {
                 event.preventDefault();
-                downloadText(JSON.stringify(this.settings, null, 2), `${exportBaseName()}.json`, 'application/json');
+                this.exportPresetJson();
             }
         });
     }
@@ -840,6 +845,7 @@ export class GlobalApp {
         document.getElementById('restartAnimation').addEventListener('click', () => this.restartAnimation());
         document.getElementById('exportPng').addEventListener('click', () => this.exportPngAction());
         document.getElementById('exportPrimary').addEventListener('click', () => this.exportPrimaryAction());
+        document.getElementById('exportJson').addEventListener('click', () => this.exportPresetJson());
         document.getElementById('exportPngSequence').addEventListener('click', () => {
             this.exportRotationAnimation('png-sequence');
         });
@@ -847,6 +853,10 @@ export class GlobalApp {
             const slowMotionFactor = document.getElementById('slowVideoExport').checked ? 4 : 1;
             this.exportRotationAnimation('mp4', { slowMotionFactor });
         });
+    }
+
+    exportPresetJson() {
+        downloadText(JSON.stringify(this.snapshot(), null, 2), `${exportBaseName()}.json`, 'application/json');
     }
 
     exportRotationAnimation(format, { slowMotionFactor = 1 } = {}) {

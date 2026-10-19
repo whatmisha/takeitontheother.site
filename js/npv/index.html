@@ -215,6 +215,7 @@
                         <li><kbd>⇧ ⌘ E</kbd><span>Export PNG or sequence</span></li>
                         <li><kbd>⌘ Z</kbd><span>Undo</span></li>
                         <li><kbd>⇧ ⌘ Z</kbd><span>Redo</span></li>
+                        <li><kbd>J</kbd><span>Show JSON export button</span></li>
                         <li><kbd>⌘ J</kbd><span>Export settings JSON</span></li>
                     </ul>
                 </div>
@@ -230,6 +231,7 @@
                         <span>Slow ×4</span>
                     </label>
                 </div>
+                <button class="action-button" id="exportJson" type="button" title="Export current preset settings as JSON" hidden>JSON</button>
                 <div class="export-status" id="exportStatus" hidden data-state="idle" aria-live="polite">
                     <progress id="exportProgress" max="1" value="0"></progress>
                     <span id="exportMessage">Preparing</span>
