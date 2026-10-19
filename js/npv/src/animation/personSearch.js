@@ -9,6 +9,7 @@ const mix = (a, b, t) => a + (b - a) * t;
 const MOVE_START = 0.23;
 const MOVE_END = 0.67;
 const FADE_TIME = 0.045;
+const FINAL_PERSON_SCALE = 1.5;
 
 // Settings baked into the route graph, collision schedule or transition timing.
 export function personSearchKey(settings) {
@@ -305,7 +306,7 @@ export function samplePersonSearch(plan, progress) {
             * (1 - smooth((p - candidate.fadeStart) / Math.max(1e-9, candidate.fadeEnd - candidate.fadeStart))) * reset;
         const travel = travelAt(plan, candidate, p);
         return { ...travel, id: candidate.id, strength,
-            iconScale: candidate.id === plan.winnerId ? 1 + 0.22 * selected : 1,
+            iconScale: candidate.id === plan.winnerId ? mix(1, FINAL_PERSON_SCALE, selected) : 1,
             radiusScale: candidate.id === plan.winnerId ? 1 + 0.18 * selected + 0.12 * pulse : 1 };
     }).filter((actor) => actor.strength > 0.00001);
     const phase = p < MOVE_START ? 'Appearing' : p < MOVE_END ? 'Searching'

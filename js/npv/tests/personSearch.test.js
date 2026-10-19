@@ -27,7 +27,7 @@ test('finalist transitions share the fast interactive response and settle exactl
         assert.ok(steps[i] - steps[i - 1] < steps[i - 1] - steps[i - 2]);
     }
     const selected = samplePersonSearch(plan, 0.67 + 0.055 * 0.2).actors.find(a => a.id === plan.winnerId);
-    assert.ok((selected.iconScale - 1) / 0.22 > 0.6);
+    assert.ok((selected.iconScale - 1) / 0.5 > 0.6);
     const disappearing = samplePersonSearch(plan, 0.92 + 0.065 * 0.2).actors[0];
     assert.ok(disappearing.strength < 0.4);
     assert.equal(samplePersonSearch(plan, 0.985).count, 0);
@@ -108,10 +108,35 @@ test('selected Person preserves the reference silhouette and vector exports capt
     for (const role of ['head', 'shoulders']) {
         const selected = scene.elements.find((mark) => mark.role === role);
         const original = regular.elements.find((mark) => mark.role === role);
-        assert.ok(Math.abs(selected.rx / original.rx - 1.22) < 1e-9);
-        assert.ok(Math.abs(selected.ry / original.ry - 1.22) < 1e-9);
+        assert.ok(Math.abs(selected.rx / original.rx - 1.5) < 1e-9);
+        assert.ok(Math.abs(selected.ry / original.ry - 1.5) < 1e-9);
     }
     assert.doesNotMatch(flatSceneToSvgString(scene), /NaN|Infinity|guide/);
+});
+
+test('only the finalist grows to 150 percent after reaching the center', () => {
+    for (const progress of [0.17, 0.4, 0.6, 0.67]) {
+        for (const actor of samplePersonSearch(plan, progress).actors) assert.equal(actor.iconScale, 1);
+    }
+    let previous = 1;
+    for (const progress of [0.68, 0.69, 0.71, 0.725, 0.8, 0.91]) {
+        const frame = samplePersonSearch(plan, progress);
+        assert.equal(frame.count, 1);
+        const actor = frame.actors[0];
+        assert.equal(actor.id, plan.winnerId);
+        assert.equal(actor.x, plan.target.x);
+        assert.equal(actor.y, plan.target.y);
+        assert.ok(actor.iconScale >= previous && actor.iconScale <= 1.5);
+        previous = actor.iconScale;
+    }
+    assert.equal(previous, 1.5);
+    const scene = buildPersonSearchScene(settings, plan, 0.8);
+    const head = scene.elements.find(mark => mark.role === 'head');
+    const shoulders = scene.elements.find(mark => mark.role === 'shoulders');
+    const regular = buildFlatScene({ ...settings, fieldX: 0, fieldY: 0 });
+    const originalHead = regular.elements.find(mark => mark.role === 'head');
+    const originalShoulders = regular.elements.find(mark => mark.role === 'shoulders');
+    assert.ok(Math.abs((shoulders.cy - head.cy) / (originalShoulders.cy - originalHead.cy) - 1.5) < 1e-9);
 });
 
 test('handover boundaries stay continuous with large non-circular source ellipses', () => {
