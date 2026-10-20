@@ -276,6 +276,47 @@ button:focus-visible, a:focus-visible {
 }
 .services-main { display: flex; flex-direction: column; gap: 94px; }
 .services-note { margin-top: auto; color: white; line-height: 42.5px; }
+.services-note { transition: color 120ms ease; }
+.services-note.is-formula-active { color: var(--ink); cursor: none; }
+.formula-cursor {
+  position: fixed;
+  z-index: 20;
+  left: 0;
+  top: 0;
+  width: min(clamp(220px, 24vw, 300px), calc(100vw - 24px));
+  aspect-ratio: 11149.5 / 3161.4;
+  pointer-events: none;
+  visibility: hidden;
+  transition: visibility 120ms;
+}
+.formula-cursor.is-visible { visibility: visible; }
+/* Fade individual layers: opacity on their parent would isolate backdrop blur. */
+.formula-cursor > * { opacity: 0; transition: opacity 120ms ease; }
+.formula-cursor.is-visible > * { opacity: 1; }
+.formula-art {
+  position: absolute;
+  inset: 0;
+  background: url('./assets/formula.svg') center / contain no-repeat;
+}
+.formula-blur {
+  position: absolute;
+  inset: -64px -96px;
+  -webkit-backdrop-filter: blur(var(--blur));
+  backdrop-filter: blur(var(--blur));
+  /* All layers are opaque under the SVG; only the surrounding halo fades. */
+  -webkit-mask-image: radial-gradient(ellipse closest-side, #000 65%, transparent var(--edge));
+  mask-image: radial-gradient(ellipse closest-side, #000 65%, transparent var(--edge));
+}
+.formula-blur:nth-child(1) { --blur: 1px; --edge: 100%; }
+.formula-blur:nth-child(2) { --blur: 2px; --edge: 96%; }
+.formula-blur:nth-child(3) { --blur: 4px; --edge: 92%; }
+.formula-blur:nth-child(4) { --blur: 8px; --edge: 88%; }
+.formula-blur:nth-child(5) { --blur: 16px; --edge: 84%; }
+.formula-blur:nth-child(6) { --blur: 24px; --edge: 80%; }
+@media (prefers-reduced-motion: reduce) {
+  .services-note, .formula-cursor, .formula-cursor > * { transition: none; }
+}
+
 .service-list {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

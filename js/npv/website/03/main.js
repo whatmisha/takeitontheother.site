@@ -1,3 +1,4 @@
+import { FormulaCursor } from './formula-cursor.js';
 import { ContactDialog } from './contact-dialog.js';
 import { SEEDED_PRESETS } from './runtime/core/presets.js';
 import { buildGlobalScene } from './runtime/geometry/globalGeometry.js';
@@ -14,6 +15,7 @@ const planet = new PlanetExperience(sphere, reducedMotion, surface);
 const story = new Story(reducedMotion, state => planet.setStoryState(state), () => planet.schedule());
 planet.beforeFrame = () => story.flush();
 new ContactDialog();
+new FormulaCursor();
 const logo = document.querySelector('.logo');
 const logoSvg = document.querySelector('#logo-sphere');
 const logoPreset = SEEDED_PRESETS['Person Five'];

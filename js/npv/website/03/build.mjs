@@ -10,7 +10,7 @@ const options={absWorkingDir:root,outdir:resolve(outdir,'assets'),bundle:true,mi
   format:'esm',target:['es2022'],entryNames:'[name]-[hash]',assetNames:'[name]-[hash]',
   metafile:true,legalComments:'eof',logLevel:'info'};
 const site=await build({...options,entryPoints:['main.js','styles.css','planet-worker.js'],
-  splitting:true,loader:{'.woff2':'file'}});
+  splitting:true,loader:{'.woff2':'file','.svg':'file'}});
 const entry=name=>Object.entries(site.metafile.outputs).find(([,info])=>info.entryPoint===name)?.[0];
 const outputs=Object.keys(site.metafile.outputs);
 let html=await readFile(resolve(root,'index.html'),'utf8');
@@ -33,7 +33,7 @@ async function compress(directory){
   for(const item of await readdir(directory,{withFileTypes:true})){
     const path=resolve(directory,item.name);
     if(item.isDirectory()){await compress(path);continue;}
-    if(!['.html','.js','.css','.woff2'].includes(extname(path)))continue;
+    if(!['.html','.js','.css','.svg','.woff2'].includes(extname(path)))continue;
     const bytes=await readFile(path),record={file:path.slice(outdir.length+1),bytes:bytes.length};
     if(extname(path)!=='.woff2'){
       const gzip=gzipSync(bytes,{level:9});
