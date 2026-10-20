@@ -270,7 +270,7 @@ button:focus-visible, a:focus-visible {
   transition: color 180ms ease;
 }
 .region-trigger:focus-visible { outline-color: var(--ink); outline-offset: 3px; }
-.trusted { border-top: 1px solid #000; padding: 12px 12px 0 0; color: white; }
+.trusted { padding: 12px 12px 0 0; color: white; }
 .services .screen-copy {
   min-height: calc(var(--screen-height) - max(132px, calc(var(--screen-height) / 2 - 92px)) - var(--page-padding));
 }
