@@ -271,6 +271,11 @@ button:focus-visible, a:focus-visible {
 }
 .region-trigger:focus-visible { outline-color: var(--ink); outline-offset: 3px; }
 .trusted { border-top: 1px solid #000; padding: 12px 12px 0 0; color: white; }
+.services .screen-copy {
+  min-height: calc(var(--screen-height) - max(132px, calc(var(--screen-height) / 2 - 92px)) - var(--page-padding));
+}
+.services-main { display: flex; flex-direction: column; gap: 94px; }
+.services-note { margin-top: auto; color: white; line-height: 42.5px; }
 .service-list {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -311,6 +316,7 @@ button:focus-visible, a:focus-visible {
   .screen-title { font-size: 40px; line-height: 40px; }
   .title-phrase { white-space: normal; }
   .screen-description p, .service-title { font-size: 18px; line-height: 22px; letter-spacing: -.18px; }
+  .services-main { gap: 24px; }
   .service-list { grid-template-columns: minmax(0, 1fr); gap: 24px; }
   .service-card { padding-right: 0; }
   .desktop-break { display: none; }
@@ -361,6 +367,9 @@ button:focus-visible, a:focus-visible {
     box-shadow: 0 2px 20px #11111112;
   }
   .content { margin-left: 0; }
+  .services .screen-copy {
+    min-height: calc(var(--screen-height) - var(--mobile-split) - 28px - 96px - env(safe-area-inset-bottom));
+  }
   .screen {
     /* Each scene includes the fixed graphic's upper half and its own copy. */
     padding-top: calc(var(--mobile-split) + 28px);

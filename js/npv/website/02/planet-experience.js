@@ -15,6 +15,7 @@ export class PlanetExperience {
     this.lastTime = 0;
     this.hovered = this.focused = null;
     this.selectedRegion = 'us';
+    this.initialPosePending = true;
     this.current = { orientation: axisRotation(0, 0), land: 0, flat: 0,
       regions: Object.fromEntries(REGION_IDS.map(id => [id, 0])) };
     this.worker = new Worker(new URL('./planet-worker.js', import.meta.url), { type: 'module' });
@@ -142,14 +143,16 @@ export class PlanetExperience {
     const land = this.sphere.geography ? progress : 0;
     const lift = focusLift(canvas.top + canvas.height / 2,
       this.sphere.radius * canvas.width / 480, panel.top, panel.height);
-    const scrollTurn = this.reducedMotion.matches ? 0 : scrollY / Math.max(1, innerHeight) * 180;
-    const plain = axisRotation(0, scrollTurn);
-    // Bring the default region into view gradually with the land, preserving
-    // plain sphere rotation on the first screen and hover previews on the second.
+    const turn = this.reducedMotion.matches ? 0 : (this.storyState?.sphereTurn
+      ?? Math.min(0, scrollY / Math.max(1, innerHeight) - .65) * 180);
+    const home = PLANET_REGIONS.us;
+    // Longitude is aligned from the first frame. Scroll only changes pitch;
+    // geography can then appear without turning the globe sideways to the US.
+    const entry = regionOrientation(home.longitude, home.latitude, lift + turn);
     const region = PLANET_REGIONS[active];
     const planet = regionOrientation(region.longitude, region.latitude, lift);
     this.target = {
-      orientation: slerp(plain, planet, land),
+      orientation: active === 'us' ? entry : slerp(entry, planet, land),
       land,
       flat: this.storyState?.flat || 0,
       regions: Object.fromEntries(REGION_IDS.map(id => [id, active === id ? land : 0]))
@@ -158,6 +161,12 @@ export class PlanetExperience {
       this.target.orientation = this.surface.orientation;
       this.target.land = this.surface.entryFrame.land;
       this.target.regions = this.surface.entryFrame.regions;
+    }
+    if (this.initialPosePending) {
+      this.current.orientation = [...this.target.orientation];
+      this.sphere.drawFrame(this.current);
+      // Story supplies the final layout synchronously during startup.
+      this.initialPosePending = !this.storyState;
     }
     this.schedule();
   }

@@ -40,6 +40,9 @@ export function storyAt(scroll, layout, reduced = false) {
   }
   return { copies, active: index + (transition >= .5 ? 1 : 0),
     planetTurn: (scroll - scenes[1].start) / height,
+    // Finish the vertical roll when land starts appearing, including any
+    // extra reading distance on short/mobile viewports.
+    sphereTurn: Math.min(0, (scroll - scenes[0].overflow) / height - .65) * 180,
     land: clamp(index + transition), flat: clamp(index + transition - 1) };
 }
 
@@ -53,25 +56,4 @@ export function rebaseStoryScroll(scroll, previous, next) {
     ? (before.overflow ? local/before.overflow*after.overflow : 0)
     : after.overflow+(local-before.overflow)/previous.height*next.height;
   return clamp(after.start+position,0,Math.max(0,next.total-next.height));
-}
-
-
-// Match the globe's 170 ms response instead of snapping text to each scroll event.
-export function advanceCopies(current, target, delta, immediate = false) {
-  if (immediate) return {copies: target.map(copy => ({...copy})), moving: false};
-  const amount = 1 - Math.exp(-clamp(delta, 0, 64) / 170);
-  let moving = false;
-  const copies = target.map((destination, index) => {
-    const previous = current[index];
-    const approach = (value, end, tolerance) => {
-      if (Math.abs(end - value) <= tolerance) return end;
-      moving = true;
-      return value + (end - value) * amount;
-    };
-    return {
-      y: previous.opacity === 0 ? destination.y : approach(previous.y, destination.y, .05),
-      opacity: approach(previous.opacity, destination.opacity, .001)
-    };
-  });
-  return {copies, moving};
 }

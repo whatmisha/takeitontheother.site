@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { storyLayout, storyAt, rebaseStoryScroll, advanceCopies } from '../story-timeline.js';
+import { storyLayout, storyAt, rebaseStoryScroll } from '../story-timeline.js';
 import { projectSurface, matchSurface, surfaceMark, surfaceParameters } from '../surface-plan.js';
 import { createWebsiteSphereLayout } from '../sphere-layout.js';
 import { regionOrientation } from '../planet-motion.js';
@@ -90,23 +90,6 @@ test('resizing preserves the active scene and progress instead of restoring an o
   near(storyAt(scroll,mobile).flat,storyAt(768*1.8,desktop).flat);
 });
 
-
-test('copy motion approaches scroll targets continuously, settles, and respects reduced motion', () => {
-  const layout=storyLayout([417,232,194],768);
-  let current=storyAt(0,layout).copies;
-  const target=storyAt(768,layout).copies;
-  const first=advanceCopies(current,target,16);
-  assert.ok(first.copies[0].opacity>0 && first.copies[0].opacity<1);
-  assert.ok(first.copies[1].opacity>0 && first.copies[1].opacity<1);
-  assert.ok(first.moving);
-  let result=first, frames=0;
-  while(result.moving && frames++<200) result=advanceCopies(result.copies,target,16);
-  assert.equal(result.moving,false,'animation releases its frame loop after settling');
-  assert.deepEqual(result.copies,target);
-  assert.deepEqual(advanceCopies(first.copies,target,16,true),{copies:target,moving:false});
-  const reverse=advanceCopies(first.copies,storyAt(0,layout).copies,16);
-  assert.ok(reverse.copies[0].opacity>first.copies[0].opacity,'reversing starts from the visible pose');
-});
 
 test('Talent doubles the complete Person silhouette while keeping the underlying dots at 4 px', () => {
   const settings=talentSettings(714,768);

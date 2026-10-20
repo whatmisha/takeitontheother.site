@@ -6,6 +6,7 @@ import { geographicToSurface, COUNTRY_BY_ID } from '../../../src/geometry/planet
 import { axisRotation, focusLift, orientationDistance, planetProgress, regionOrientation, rotationMatrix, slerp } from '../planet-motion.js';
 import { MainSphere } from '../sphere-renderer.js';
 import { PlanetExperience } from '../planet-experience.js';
+import { storyAt, storyLayout } from '../story-timeline.js';
 
 const rotate = (point, orientation) => {
   const m = rotationMatrix(orientation);
@@ -225,7 +226,7 @@ test('the surface transition settles at both ends and resumes the current sphere
 });
 
 
-test('Who enters focused on US, blends that focus with land, and resets it on a new visit', () => {
+test('Who reveals US without a second turn, and resets its selection on a new visit', () => {
   const names = ['document', 'scrollY', 'innerWidth', 'innerHeight'];
   const previous = Object.fromEntries(names.map(name => [name, globalThis[name]]));
   globalThis.document = {body:{classList:{toggle(){}}}};
@@ -245,7 +246,7 @@ test('Who enters focused on US, blends that focus with land, and resets it on a 
   try {
     experience.setStoryState({active:0,land:0,flat:0});
     assert.equal(experience.selectedRegion,'us');
-    near(orientationDistance(experience.target.orientation,axisRotation(0,180)),0);
+    const alignedWithoutLand = [...experience.target.orientation];
     assert.equal(experience.target.regions.us,0);
     experience.setStoryState({active:0,land:.25,flat:0});
     assert.equal(experience.target.land,.25,'default selection does not force an abrupt land reveal');
@@ -254,6 +255,8 @@ test('Who enters focused on US, blends that focus with land, and resets it on a 
     const lift=focusLift(663,224*1108/480,0,768);
     const us=PLANET_REGIONS.us;
     near(orientationDistance(experience.target.orientation,regionOrientation(us.longitude,us.latitude,lift)),0);
+    near(orientationDistance(experience.target.orientation,alignedWithoutLand),0);
+    assert.deepEqual(experience.target.orientation,alignedWithoutLand,'revealing land does not change the camera pose');
     assert.equal(experience.target.regions.us,1);
     assert.deepEqual(buttons.map(button=>button['aria-pressed']),['true','false','false']);
     experience.hovered='uk';
@@ -272,6 +275,65 @@ test('Who enters focused on US, blends that focus with land, and resets it on a 
   } finally {
     for (const name of names) {
       if (previous[name]===undefined) delete globalThis[name]; else globalThis[name]=previous[name];
+    }
+  }
+});
+
+
+test('entry rotation is vertical only and US is already in place before the first land appears', () => {
+  const names=['document','scrollY','innerWidth','innerHeight'];
+  const previous=Object.fromEntries(names.map(name=>[name,globalThis[name]]));
+  globalThis.document={body:{classList:{toggle(){}}}};
+  const home=PLANET_REGIONS.us;
+  const point=geographicToSurface(home.longitude,home.latitude);
+  try {
+    for(const [width,height,panelHeight,canvasWidth,canvasTop,heights] of [
+      [1440,768,768,1108,109,[417,232,194]],
+      [390,844,422,561.6,141.2,[402,232,335]]
+    ]) {
+      globalThis.innerWidth=width; globalThis.innerHeight=height;
+      const mobile=width<768;
+      const panelWidth=mobile?width:714;
+      const layout=storyLayout(heights,height,mobile);
+      const experience={
+        sphere:{geography:{},radius:224,canvas:{getBoundingClientRect:()=>({top:canvasTop,width:canvasWidth,height:canvasWidth})},drawFrame(){}},
+        panel:{getBoundingClientRect:()=>({top:0,width:panelWidth,height:panelHeight,bottom:panelHeight})},
+        heading:{getBoundingClientRect:()=>({top:layout.scenes[1].anchor})},
+        copy:{getBoundingClientRect:()=>({top:layout.scenes[1].anchor,bottom:layout.scenes[1].anchor+heights[1]})},
+        reducedMotion:{matches:false},buttons:[],selectedRegion:'us',hovered:null,focused:null,
+        sync:PlanetExperience.prototype.sync,setStoryState:PlanetExperience.prototype.setStoryState,schedule(){},
+        initialPosePending:true,current:{orientation:axisRotation(0,0),land:0,regions:{}}
+      };
+      const lift=focusLift(canvasTop+canvasWidth/2,224*canvasWidth/480,0,panelHeight);
+      const final=regionOrientation(home.longitude,home.latitude,lift);
+      const horizontal=rotationMatrix(final).slice(0,3);
+      let previousTurn=-Infinity, last;
+      for(let step=0;step<=100;step++) {
+        globalThis.scrollY=layout.scenes[1].start*step/100;
+        const state=storyAt(scrollY,layout);
+        experience.setStoryState(state);
+        const pose=experience.target.orientation;
+        rotationMatrix(pose).slice(0,3).forEach((value,i)=>near(value,horizontal[i]));
+        near(rotate(point,pose).x,0);
+        assert.ok(state.sphereTurn>=previousTurn,'scroll never reverses the vertical roll');
+        previousTurn=state.sphereTurn;
+        if(state.land>0) {
+          near(orientationDistance(pose,final),0,'US needs no extra turn once land is visible');
+          assert.ok(experience.target.regions.us>0,'US highlights with the first land');
+        }
+        if(step===0) near(orientationDistance(experience.current.orientation,pose),0);
+        // The animation between adjacent targets must not introduce a side turn either.
+        if(last) near(rotate(point,slerp(last,pose,.5)).x,0);
+        last=pose;
+      }
+      near(orientationDistance(last,final),0);
+      experience.sphere.geography=null;
+      experience.sync();
+      near(orientationDistance(experience.target.orientation,final),0,'late geography cannot move the camera');
+    }
+  } finally {
+    for(const name of names) {
+      if(previous[name]===undefined) delete globalThis[name]; else globalThis[name]=previous[name];
     }
   }
 });
