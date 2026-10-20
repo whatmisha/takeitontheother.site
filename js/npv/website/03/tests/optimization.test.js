@@ -9,6 +9,8 @@ import {buildFlatLayout,buildFlatScene} from '../runtime/geometry/flatGeometry.j
 import {buildFlatScene as originalFlat} from '../../../src/geometry/flatGeometry.js';
 import {talentSettings} from '../talent-surface.js';
 import {MainSphere} from '../sphere-renderer.js';
+import {MainSphere as OriginalSphere} from '../../02/sphere-renderer.js';
+import {axisRotation} from '../planet-motion.js';
 import {LayoutCache} from '../layout-cache.js';
 import {LayoutClient} from '../layout-client.js';
 import {Story} from '../story.js';
@@ -35,13 +37,13 @@ test('reusing the flat grid preserves every cursor pose without mutating its bas
   assert.deepEqual(layout,before);
 });
 
-test('width cache is bounded, reuses geometry and masks, and evicts the oldest width',()=>{
+test('width cache is bounded, reuses geometry and masks, and evicts the oldest width',async()=>{
   const cache=new LayoutCache(2);
   const first=cache.get(160);
-  const masks=cache.masks(first);
+  const masks=await cache.masks(first);
   cache.get(180);
   assert.equal(cache.get(160),first);
-  assert.equal(cache.masks(first),masks);
+  assert.equal(await cache.masks(first),masks);
   cache.get(200);
   assert.deepEqual([...cache.entries.keys()],[160,200]);
 });
@@ -80,4 +82,44 @@ test('multiple scroll events are rendered once per shared frame, with no text da
   Story.prototype.invalidate.call(story);Story.prototype.invalidate.call(story);
   Story.prototype.flush.call(story);Story.prototype.flush.call(story);
   assert.equal(updates,1);assert.equal(requested,2);
+});
+
+
+test('optimized renderer emits the same visible ellipses as version 02',()=>{
+  const makeCanvas=()=>{
+    const ellipses=[];
+    const ctx={setTransform(){},clearRect(){ellipses.length=0;},beginPath(){},moveTo(){},
+      lineTo(){},closePath(){},fill(){},ellipse(...args){ellipses.push(args);}};
+    return {canvas:{width:0,height:0,getContext:()=>ctx,getBoundingClientRect:()=>({width:480})},ellipses};
+  };
+  const a=makeCanvas(),b=makeCanvas();
+  const original=new OriginalSphere(a.canvas),optimized=new MainSphere(b.canvas);
+  optimized.setLayout(createWebsiteSphereLayout(480),optimized.layoutVersion);
+  const land=Float32Array.from({length:original.axes.length*2},(_,i)=>i%3===0?1:0);
+  const us=Float32Array.from(land,(v,i)=>v&&i%2===0?1:0);
+  original.setGeography({land,regions:{us}},original.layoutVersion);
+  optimized.setGeography({land,regions:{us}},optimized.layoutVersion);
+  for(const degrees of [0,31,90,180])for(const weight of [0,.4,1]){
+    const frame={orientation:axisRotation(0,degrees),land:weight,regions:{us:weight}};
+    original.drawFrame(frame);optimized.drawFrame(frame);
+    assert.equal(a.ellipses.length,b.ellipses.length);
+    a.ellipses.forEach((ellipse,i)=>ellipse.forEach((value,j)=>
+      assert.ok(Math.abs(value-b.ellipses[i][j])<1e-9)));
+  }
+});
+
+test('worker-unavailable fallback still delivers a matching layout and geography',async()=>{
+  const previous=globalThis.Worker;
+  globalThis.Worker=class{constructor(){throw new Error('Workers blocked');}};
+  try{
+    let delivered;
+    await new Promise((resolve,reject)=>{
+      const timeout=setTimeout(()=>reject(new Error('fallback timeout')),5000);
+      const client=new LayoutClient((layout,version)=>{delivered={layout,version};},(masks,version)=>{
+        try{assert.equal(version,7);assert.equal(masks.land.length,delivered.layout.axes.length*2);
+          assert.equal(delivered.version,7);clearTimeout(timeout);resolve();}catch(error){clearTimeout(timeout);reject(error);}
+      });
+      client.request({version:7,cssSize:160});
+    });
+  }finally{if(previous===undefined)delete globalThis.Worker;else globalThis.Worker=previous;}
 });

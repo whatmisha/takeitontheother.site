@@ -170,26 +170,30 @@ function buildAxisSequence() {
             projectiveDistanceScore(chosen[index], chosen.slice(0, index))
         );
     }
-    const scores = candidates.map((candidate) => projectiveDistanceScore(candidate, chosen));
+    // Compare cosines in the hot loop: acos is monotone decreasing. Only the
+    // few potential winners need an angle comparison to retain the original
+    // tie-breaking (including floating-point rounding) exactly.
+    const scores = candidates.map(candidate => Math.max(...chosen.map(axis =>
+        clamp(Math.abs(candidate.x*axis.x + candidate.y*axis.y + candidate.z*axis.z), -1, 1))));
     const greedyLimit = Math.min(MAX_ELLIPSES, 2048);
     while (chosen.length < greedyLimit) {
         let bestIndex = -1;
-        let bestScore = -Infinity;
+        let bestScore = Infinity;
         for (let index = 0; index < candidates.length; index += 1) {
-            if (scores[index] > bestScore) {
+            if (bestIndex < 0 || (scores[index] < bestScore && Math.acos(scores[index]) > Math.acos(bestScore))) {
                 bestIndex = index;
                 bestScore = scores[index];
             }
         }
         const best = candidates[bestIndex];
         chosen.push(best);
-        separations.push(Math.min(separations.at(-1), bestScore));
+        separations.push(Math.min(separations.at(-1), Math.acos(bestScore)));
         for (let index = 0; index < candidates.length; index += 1) {
             const candidate = candidates[index];
             const dotProduct = Math.abs(
                 candidate.x * best.x + candidate.y * best.y + candidate.z * best.z
             );
-            scores[index] = Math.min(scores[index], Math.acos(clamp(dotProduct, -1, 1)));
+            scores[index] = Math.max(scores[index], clamp(dotProduct, -1, 1));
         }
     }
     if (chosen.length < MAX_ELLIPSES) {

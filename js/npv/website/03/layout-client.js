@@ -3,7 +3,9 @@ export class LayoutClient {
     this.onLayout = onLayout;
     this.onGeography = onGeography;
     try {
-      this.worker = new Worker(new URL('./planet-worker.js', import.meta.url), {type:'module'});
+      const builtWorker = globalThis.document?.querySelector?.('meta[name="npv-worker"]')?.content;
+      const url = builtWorker ? new URL(builtWorker,document.baseURI) : new URL('./planet-worker.js',import.meta.url);
+      this.worker = new Worker(url, {type:'module'});
       this.worker.onmessage = ({data}) => {
         if (data.type === 'layout') {
           const axes = [];
@@ -29,11 +31,11 @@ export class LayoutClient {
     if (!this.failed) { this.worker.postMessage(request); return; }
     // Keep the site usable if workers are unavailable (for example a restrictive
     // host CSP). This path is never part of a normal main-thread startup.
-    import('./layout-cache.js').then(({LayoutCache}) => {
+    import('./layout-cache.js').then(async ({LayoutCache}) => {
       this.cache ||= new LayoutCache();
       const entry = this.cache.get(request.cssSize);
       this.onLayout(entry.layout,request.version);
-      this.onGeography(this.cache.masks(entry),request.version);
+      this.onGeography(await this.cache.masks(entry),request.version);
     }).catch(error => console.error('Unable to prepare sphere:',error)).finally(() => {
       this.busy = false; this.inFlight = null; this.flush();
     });
