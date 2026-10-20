@@ -1,0 +1,126 @@
+{
+  "date": "2026-10-20",
+  "environment": "Local WebKit, iframe with fixed viewport, warm HTTP cache, no CPU/network throttling. Mobile numbers are a mobile-sized viewport on this computer, not a physical phone.",
+  "scenario": "5 s forward scroll, 3 s pointer movement on the flat surface, 5 s reverse scroll.",
+  "results": [
+    {
+      "version": "02",
+      "viewport": [
+        1440,
+        768
+      ],
+      "blurLayers": 6,
+      "firstSphereMs": 328.4,
+      "domReadyMs": 413.3,
+      "frameGapP95": 25,
+      "frameGapMax": 26.1,
+      "framesOver25ms": 38,
+      "callbackP95": 20.3,
+      "callbackMax": 27.7,
+      "longTasks": 1,
+      "run": "initial"
+    },
+    {
+      "version": "02",
+      "viewport": [
+        1440,
+        768
+      ],
+      "blurLayers": 6,
+      "firstSphereMs": 366.8,
+      "domReadyMs": 453,
+      "frameGapP95": 25,
+      "frameGapMax": 26,
+      "framesOver25ms": 40,
+      "callbackP95": 20.2,
+      "callbackMax": 26.4,
+      "longTasks": 1,
+      "run": "control"
+    },
+    {
+      "version": "03",
+      "viewport": [
+        1440,
+        768
+      ],
+      "blurLayers": 6,
+      "firstSphereMs": 264.5,
+      "domReadyMs": 44.8,
+      "frameGapP95": 9.3,
+      "frameGapMax": 25,
+      "framesOver25ms": 0,
+      "callbackP95": 9.3,
+      "callbackMax": 23.7,
+      "longTasks": 0,
+      "run": "final"
+    },
+    {
+      "version": "02",
+      "viewport": [
+        390,
+        844
+      ],
+      "blurLayers": 6,
+      "firstSphereMs": 265.7,
+      "domReadyMs": 291.3,
+      "frameGapP95": 9.4,
+      "frameGapMax": 41.7,
+      "framesOver25ms": 19,
+      "callbackP95": 7.7,
+      "callbackMax": 33.9,
+      "longTasks": 1,
+      "run": "initial"
+    },
+    {
+      "version": "03",
+      "viewport": [
+        390,
+        844
+      ],
+      "blurLayers": 6,
+      "firstSphereMs": 279.5,
+      "domReadyMs": 54.4,
+      "frameGapP95": 9.2,
+      "frameGapMax": 10.6,
+      "framesOver25ms": 0,
+      "callbackP95": 3.3,
+      "callbackMax": 9.5,
+      "longTasks": 0,
+      "run": "final"
+    },
+    {
+      "version": "03",
+      "viewport": [
+        1440,
+        768
+      ],
+      "blurLayers": 3,
+      "firstSphereMs": 354.1,
+      "domReadyMs": 38.8,
+      "frameGapP95": 8.4,
+      "frameGapMax": 24.9,
+      "framesOver25ms": 0,
+      "callbackP95": 9.3,
+      "callbackMax": 24.7,
+      "longTasks": 0,
+      "run": "blur comparison before axis optimization"
+    },
+    {
+      "version": "03",
+      "viewport": [
+        1440,
+        768
+      ],
+      "blurLayers": 6,
+      "firstSphereMs": 343.3,
+      "domReadyMs": 38.2,
+      "frameGapP95": 9.2,
+      "frameGapMax": 24.9,
+      "framesOver25ms": 0,
+      "callbackP95": 9.6,
+      "callbackMax": 25.8,
+      "longTasks": 0,
+      "run": "blur comparison before axis optimization"
+    }
+  ]
+}
