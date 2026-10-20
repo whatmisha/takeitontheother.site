@@ -100,6 +100,8 @@ test('scroll and DPR changes reuse the layout; width changes keep a 4px rendered
   try {
     globalThis.devicePixelRatio = 1;
     const sphere = new MainSphere(canvas);
+    sphere.setLayout(createWebsiteSphereLayout(cssSize),sphere.layoutVersion);
+    sphere.drawFrame(sphere.frame);
     const initialAxes = sphere.axes;
     assert.ok(Math.abs(renderedDiameter() - 4) < 1e-9);
     sphere.draw(73);
@@ -111,6 +113,8 @@ test('scroll and DPR changes reuse the layout; width changes keep a 4px rendered
     assert.ok(Math.abs(renderedDiameter() - 4) < 1e-9);
     cssSize = 1331.46;
     sphere.resize();
+    sphere.setLayout(createWebsiteSphereLayout(cssSize),sphere.layoutVersion);
+    sphere.drawFrame(sphere.frame);
     assert.notEqual(sphere.axes, initialAxes);
     assert.equal(sphere.rotation, 73);
     assert.ok(Math.abs(renderedDiameter() - 4) < 1e-9);

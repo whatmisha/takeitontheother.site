@@ -1,5 +1,4 @@
-import { ARTBOARD_SIZE } from '../../src/geometry/globalGeometry.js';
-import { createWebsiteSphereLayout } from './sphere-layout.js';
+const ARTBOARD_SIZE = 480;
 import { axisRotation, rotationMatrix } from './planet-motion.js';
 
 const TAU = Math.PI * 2;
@@ -81,13 +80,11 @@ export class MainSphere {
     // Regenerate only when the displayed width changes, never while scrolling.
     // A height-only resize or DPR change preserves the existing arrangement.
     if (Math.abs(cssSize - this.cssSize) > .01) {
-      const layout = createWebsiteSphereLayout(cssSize);
-      this.axes = layout.axes;
       this.layoutVersion++;
       this.geography = null;
-      this.radius = layout.sphereRadius;
-      this.angularRadius = layout.angularRadius;
-      this.color = layout.color;
+      this.radius = 224;
+      this.angularRadius = Math.asin(4 / (2 * this.radius * cssSize / ARTBOARD_SIZE));
+      this.color = '#ffffff';
       this.cssSize = cssSize;
     }
     const size = Math.max(1, Math.round(cssSize * Math.min(globalThis.devicePixelRatio || 1, 2)));
@@ -103,8 +100,24 @@ export class MainSphere {
     this.drawFrame({ orientation: axisRotation(0, degrees), land: 0, regions: {} });
   }
 
+  setViewport(panel, canvas) {
+    const scale = ARTBOARD_SIZE / canvas.width;
+    this.viewport = {left:(panel.left-canvas.left)*scale, right:(panel.right-canvas.left)*scale,
+      top:(panel.top-canvas.top)*scale, bottom:(panel.bottom-canvas.top)*scale};
+  }
+
+  setLayout(layout, version) {
+    if (version !== this.layoutVersion) return false;
+    this.axes = layout.axes;
+    this.radius = layout.sphereRadius;
+    this.angularRadius = layout.angularRadius;
+    this.color = layout.color;
+    this.geography = null;
+    return true;
+  }
+
   setGeography(masks, version) {
-    if (version !== this.layoutVersion || masks.land.length !== this.axes.length * 2) return false;
+    if (!this.axes || version !== this.layoutVersion || masks.land.length !== this.axes.length * 2) return false;
     this.geography = masks;
     return true;
   }
@@ -122,6 +135,18 @@ export class MainSphere {
     const planetAmount = geography ? frame.land : 0;
     const activeRegions = geography ? Object.entries(frame.regions)
       .filter(([id, weight]) => weight > 0 && geography.regions[id]) : [];
+    const sizes = new Map();
+    const sizeFor = growth => {
+      let size = sizes.get(growth);
+      if (!size) {
+        const angle = this.angularRadius * growth;
+        const sine = Math.sin(angle);
+        size = {angle,sine,center:this.radius*Math.cos(angle),major:this.radius*sine};
+        sizes.set(growth,size);
+      }
+      return size;
+    };
+    const viewport = this.viewport;
     let pointIndex = 0;
     let batchSize = 0;
     context.beginPath();
@@ -138,17 +163,22 @@ export class MainSphere {
         // From the same 4px base, Planet fades ocean to 3.2px and land to
         // 7px. Selected countries grow a further 80%, to about 12.6px.
         const growth = (1 + planetAmount * (.95 * land - .2)) * (1 + .8 * country);
-        const angularRadius = this.angularRadius * growth;
+        const size = sizeFor(growth);
         pointIndex++;
-        const normal = { x: x * side, y: y * side, z: z * side };
-        const cap = projectCap(normal, this.radius, angularRadius);
-        if (!cap.visible) continue;
+        const nz = z * side;
+        if (nz < -size.sine) continue;
+        const cx = 240 + x * side * size.center;
+        const cy = 240 + y * side * size.center;
+        if (viewport && (cx+size.major<viewport.left || cx-size.major>viewport.right
+          || cy+size.major<viewport.top || cy-size.major>viewport.bottom)) continue;
+        const cap = {x:cx,y:cy,major:size.major,minor:size.major*Math.abs(nz),
+          angle:Math.atan2(y*side,x*side)+Math.PI/2,whole:nz>=size.sine};
         if (cap.whole) {
           context.moveTo(cap.x + Math.cos(cap.angle) * cap.major,
             cap.y + Math.sin(cap.angle) * cap.major);
           context.ellipse(cap.x, cap.y, cap.major, cap.minor, cap.angle, 0, TAU);
         } else {
-          const points = horizonCap(normal, angularRadius, this.radius);
+          const points = horizonCap({x:x*side,y:y*side,z:nz}, size.angle, this.radius);
           if (points.length < 3) continue;
           context.moveTo(points[0].x, points[0].y);
           for (let i = 1; i < points.length; i++) context.lineTo(points[i].x, points[i].y);

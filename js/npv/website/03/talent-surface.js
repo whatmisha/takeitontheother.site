@@ -1,5 +1,5 @@
-import { getFlatPreset } from '../../src/core/flatPresets.js';
-import { buildFlatLayout, buildFlatScene } from '../../src/geometry/flatGeometry.js';
+import { getFlatPreset } from './runtime/core/flatPresets.js';
+import { buildFlatLayout, buildFlatScene } from './runtime/geometry/flatGeometry.js';
 import { matchSurface, projectSurface, surfaceMark, surfaceParameters } from './surface-plan.js';
 
 export function talentSettings(width, height) {
@@ -17,7 +17,7 @@ export class TalentSurface {
     this.resize();
     const follow = event => {
       if ((this.progress || 0) < .9 || document.querySelector('.contact-dialog[open]')) return;
-      const rect = this.panel.getBoundingClientRect();
+      const rect = this.bounds;
       const inside = event.clientX >= rect.left && event.clientX < rect.right
         && event.clientY >= rect.top && event.clientY < rect.bottom;
       this.pointerInside = inside;
@@ -31,10 +31,13 @@ export class TalentSurface {
 
   resize() {
     const rect = this.panel.getBoundingClientRect();
+    const dpr = Math.min(devicePixelRatio || 1,2);
+    if (rect.width === this.width && rect.height === this.height && dpr === this.dpr) return;
+    this.dpr = dpr;
+    this.bounds = rect;
     this.width = rect.width; this.height = rect.height;
     this.defaultField = {x:0,y:this.height < 500 ? this.height*.12 : 0};
     if (!this.pointerInside) this.field = {...this.defaultField};
-    const dpr = Math.min(devicePixelRatio || 1,2);
     this.canvas.width = Math.round(this.width*dpr);
     this.canvas.height = Math.round(this.height*dpr);
     this.settings = talentSettings(this.width, this.height);
@@ -52,6 +55,8 @@ export class TalentSurface {
     this.points = projectSurface(this.sphere,frame,{canvasWidth:canvas.width,
       canvasLeft:canvas.left-panel.left,canvasTop:canvas.top-panel.top});
     this.plan = matchSurface(this.points,this.layout.elements,this.width,this.height);
+    this.plan.survivors = [...this.plan.matches.keys()].sort((a,b)=>a-b)
+      .map(sourceIndex=>({...this.points[sourceIndex],sourceIndex}));
     this.circle = {x:canvas.left-panel.left+canvas.width/2,
       y:canvas.top-panel.top+canvas.height/2,radius:this.sphere.radius*canvas.width/480};
   }
@@ -72,7 +77,7 @@ export class TalentSurface {
     this.sphere.canvas.style.opacity = '0';
     const parameters = surfaceParameters(progress);
     if (this.dirty) {
-      this.targets = buildFlatScene(this.settings,{transientField:this.field}).elements;
+      this.targets = buildFlatScene(this.settings,{transientField:this.field,layout:this.layout}).elements;
       this.dirty = false;
     }
     const amount = reducedMotion ? 1 : 1-Math.exp(-delta/85);
@@ -99,7 +104,9 @@ export class TalentSurface {
     }
     ctx.beginPath();
     let batch=0;
-    this.points.forEach((source,index) => {
+    const sources = progress === 1 ? this.plan.survivors : this.points;
+    sources.forEach((source, index) => {
+      if (progress === 1) index = source.sourceIndex;
       const targetIndex = this.plan.matches.get(index);
       const target = targetIndex === undefined ? null : this.person[targetIndex];
       const mark = surfaceMark(source,target,parameters,this.plan);

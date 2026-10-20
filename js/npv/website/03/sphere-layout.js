@@ -1,5 +1,5 @@
-import { ARTBOARD_SIZE, SPHERE_AXES } from '../../src/geometry/globalGeometry.js';
-import { SEEDED_PRESETS } from '../../src/core/presets.js';
+import { ARTBOARD_SIZE, getSphereAxes } from './runtime/geometry/globalGeometry.js';
+import { SEEDED_PRESETS } from './runtime/core/presets.js';
 
 const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
 
@@ -64,7 +64,7 @@ export function createWebsiteSphereLayout(cssSize, {
 
   // Preserve the generator's existing centers wherever they fit. Fill remaining
   // space from a finer equal-area candidate field, without the editor's count cap.
-  for (const point of SPHERE_AXES) accept(point);
+  for (const point of getSphereAxes()) accept(point);
   const candidateCount = Math.ceil(8 / (1 - Math.cos(separation / 2)));
   const bits = Math.ceil(Math.log2(candidateCount));
   for (let step = 0; step < 2 ** bits; step++) {

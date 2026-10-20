@@ -1,4 +1,4 @@
-import { planetMaskForAxes } from '../../src/geometry/planetGeography.js';
+import { planetMaskForAxes } from './runtime/geometry/planetGeography.js';
 import { PLANET_REGIONS } from './planet-regions.js';
 
 // Reuse Planet's geography, including a representative dot for small countries.

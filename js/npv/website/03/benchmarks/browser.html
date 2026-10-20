@@ -1,0 +1,7 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>NPV performance comparison</title>
+<style>body{margin:16px;font:14px system-ui;background:#eee}button,select{font:inherit;padding:8px}iframe{display:block;border:0;transform-origin:top left;margin-top:16px}pre{white-space:pre-wrap}#stage{overflow:hidden}</style>
+<label>Version <select id="version"><option>02</option><option>03</option><option value="dist">03 build</option></select></label>
+<label>Viewport <select id="size"><option value="1440,768">Desktop 1440 × 768</option><option value="390,844">Mobile 390 × 844</option></select></label>
+<label>Blur <select id="blur"><option value="6">6 layers</option><option value="3">3 layers (experiment)</option></select></label>
+<button id="run">Run loading + scroll + pointer benchmark</button><pre id="result">Ready</pre><div id="stage"></div>
+<script type="module" src="./browser.js"></script></html>

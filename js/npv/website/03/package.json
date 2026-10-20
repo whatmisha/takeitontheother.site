@@ -1,0 +1,14 @@
+{
+  "name": "npv-website-03",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "build": "node build.mjs",
+    "preview": "node serve.mjs",
+    "bench": "node benchmarks/measure.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2"
+  }
+}

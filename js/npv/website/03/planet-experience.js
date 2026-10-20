@@ -1,3 +1,4 @@
+import { LayoutClient } from './layout-client.js';
 import { PLANET_REGIONS, REGION_IDS } from './planet-regions.js';
 import { axisRotation, clamp, focusLift, orientationDistance, planetProgress, regionOrientation, slerp } from './planet-motion.js';
 
@@ -18,22 +19,17 @@ export class PlanetExperience {
     this.initialPosePending = true;
     this.current = { orientation: axisRotation(0, 0), land: 0, flat: 0,
       regions: Object.fromEntries(REGION_IDS.map(id => [id, 0])) };
-    this.worker = new Worker(new URL('./planet-worker.js', import.meta.url), { type: 'module' });
-    this.worker.onmessage = ({ data }) => {
-      this.workerBusy = false;
-      if (this.sphere.setGeography(data.masks, data.version)) this.sync();
-      if (this.pendingLayout) this.sendLayout();
-    };
-    this.worker.onerror = error => {
-      console.error('Unable to prepare Planet geography:', error.message);
-      this.worker.terminate();
-      this.workerFailed = true;
-    };
+    this.layouts = new LayoutClient((layout, version) => {
+      if (!this.sphere.setLayout(layout, version)) return;
+      if (this.surface) this.surface.points = null;
+      this.sync();
+    }, (masks, version) => {
+      if (this.sphere.setGeography(masks, version)) this.sync();
+    });
     this.bindRegions();
-    addEventListener('scroll', () => this.sync(), { passive: true });
     // Also covers viewport-height changes which do not resize a mobile panel's width.
-    addEventListener('resize', () => this.resize(), { passive: true });
-    this.resizeObserver = new ResizeObserver(() => this.resize());
+    addEventListener('resize', () => this.queueResize(), { passive: true });
+    this.resizeObserver = new ResizeObserver(() => this.queueResize());
     this.resizeObserver.observe(this.panel);
     reducedMotion.addEventListener('change', () => this.sync());
     document.addEventListener('visibilitychange', () => {
@@ -45,26 +41,19 @@ export class PlanetExperience {
     this.resize();
   }
 
+  queueResize() { this.resizePending = true; this.schedule(); }
+
   resize() {
+    this.resizePending = false;
     this.sphere.resize();
     this.surface?.resize();
+    this.metrics = { panel:this.panel.getBoundingClientRect(), canvas:this.sphere.canvas.getBoundingClientRect() };
+    this.sphere.setViewport(this.metrics.panel, this.metrics.canvas);
     if (this.requestedVersion !== this.sphere.layoutVersion) {
       this.requestedVersion = this.sphere.layoutVersion;
-      this.current.land = 0;
-      // At most one calculation in flight; resizing replaces the queued request.
-      this.pendingLayout = { version: this.sphere.layoutVersion, axes: this.sphere.axes };
-      if (!this.workerBusy && !this.workerFailed) this.sendLayout();
+      this.layouts.request({version:this.sphere.layoutVersion,cssSize:this.sphere.cssSize});
     }
     this.sync();
-  }
-
-  sendLayout() {
-    const { version, axes } = this.pendingLayout;
-    this.pendingLayout = null;
-    const coordinates = new Float64Array(axes.length * 3);
-    axes.forEach((axis, index) => coordinates.set([axis.x, axis.y, axis.z], index * 3));
-    this.workerBusy = true;
-    this.worker.postMessage({ version, coordinates }, [coordinates.buffer]);
   }
 
   bindRegions() {
@@ -118,26 +107,33 @@ export class PlanetExperience {
   }
 
   schedule() {
-    if (!this.frame && !document.hidden) this.frame = requestAnimationFrame(now => this.animate(now));
+    if (!this.frame && !this.inFrame && !document.hidden) this.frame = requestAnimationFrame(now => this.animate(now));
   }
 
   sync() {
-    document.body.classList.toggle('is-scrolled', scrollY > 1);
-    const panel = this.panel.getBoundingClientRect();
-    const canvas = this.sphere.canvas.getBoundingClientRect();
+    const scrolled = scrollY > 1;
+    if (this.scrolled !== scrolled) {
+      document.body.classList.toggle('is-scrolled', scrolled);
+      this.scrolled = scrolled;
+    }
+    const panel = this.metrics?.panel ?? this.panel.getBoundingClientRect();
+    const canvas = this.metrics?.canvas ?? this.sphere.canvas.getBoundingClientRect();
     const visibleTop = panel.width >= innerWidth - 1 ? panel.bottom : 84;
-    const headingTop = this.heading.getBoundingClientRect().top;
-    const copy = this.copy.getBoundingClientRect();
+    const copy = this.storyState?.copyBounds ?? this.copy.getBoundingClientRect();
+    const headingTop = copy.top;
     if (copy.bottom <= visibleTop || copy.top >= innerHeight
       || (this.storyState && (this.storyState.active !== 1 || this.storyState.flat > .01))) {
       this.hovered = this.focused = null;
     }
     const preview = this.hovered || this.focused;
     const active = preview || this.selectedRegion;
-    for (const button of this.buttons) {
-      const selected = button.dataset.region === this.selectedRegion;
-      button.classList.toggle('is-active', selected);
-      button.setAttribute('aria-pressed', String(selected));
+    if (this.renderedRegion !== this.selectedRegion) {
+      for (const button of this.buttons) {
+        const selected = button.dataset.region === this.selectedRegion;
+        button.classList.toggle('is-active', selected);
+        button.setAttribute('aria-pressed', String(selected));
+      }
+      this.renderedRegion = this.selectedRegion;
     }
     const progress = preview ? 1 : (this.storyState?.land ?? planetProgress(headingTop, visibleTop, innerHeight));
     const land = this.sphere.geography ? progress : 0;
@@ -173,6 +169,10 @@ export class PlanetExperience {
 
   animate(now) {
     this.frame = 0;
+    this.inFrame = true;
+    this.beforeFrame?.();
+    if (this.resizePending) this.resize();
+    if (!this.sphere.axes && this.layouts) { this.lastTime = 0; this.inFrame = false; return; }
     const delta = this.lastTime ? clamp(now - this.lastTime, 0, 64) : 16;
     this.lastTime = now;
     const amount = this.reducedMotion.matches ? 1 : 1 - Math.exp(-delta / 170);
@@ -205,6 +205,7 @@ export class PlanetExperience {
       || this.current.flat !== (this.target.flat || 0)
       || this.current.land !== this.target.land
       || REGION_IDS.some(id => this.current.regions[id] !== this.target.regions[id]);
+    this.inFrame = false;
     if (moving && !document.hidden && !this.frame) this.frame = requestAnimationFrame(time => this.animate(time));
     else this.lastTime = 0;
   }
