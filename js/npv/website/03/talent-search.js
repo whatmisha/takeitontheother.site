@@ -1,6 +1,6 @@
 import { createPersonSearchPlan, buildPersonSearchScene } from './runtime/animation/personSearch.js';
 
-export const SEARCH_DELAY_MS = 600;
+export const SEARCH_DELAY_MS = 200;
 // The selection pulse has settled; the generator fades the winner after .92.
 export const SEARCH_HOLD_PROGRESS = .82;
 
