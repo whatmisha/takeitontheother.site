@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { ARTBOARD_SIZE, buildGlobalScene } from '../../../src/geometry/globalGeometry.js';
-import { SEEDED_PRESETS } from '../../../src/core/presets.js';
+import { ARTBOARD_SIZE, buildGlobalScene } from '../runtime/geometry/globalGeometry.js';
+import { SEEDED_PRESETS } from '../runtime/core/presets.js';
 import { MainSphere, projectCap } from '../sphere-renderer.js';
 import { createWebsiteSphereLayout } from '../sphere-layout.js';
 

@@ -4,7 +4,7 @@ import { storyLayout, storyAt, rebaseStoryScroll } from '../story-timeline.js';
 import { projectSurface, matchSurface, surfaceMark, surfaceParameters } from '../surface-plan.js';
 import { createWebsiteSphereLayout } from '../sphere-layout.js';
 import { regionOrientation } from '../planet-motion.js';
-import { buildFlatLayout, buildFlatScene } from '../../../src/geometry/flatGeometry.js';
+import { buildFlatLayout, buildFlatScene } from '../runtime/geometry/flatGeometry.js';
 import { talentSettings } from '../talent-surface.js';
 const near = (a,b) => assert.ok(Math.abs(a-b)<1e-8, `${a} vs ${b}`);
 

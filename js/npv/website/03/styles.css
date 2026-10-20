@@ -275,8 +275,7 @@ button:focus-visible, a:focus-visible {
   min-height: calc(var(--screen-height) - max(132px, calc(var(--screen-height) / 2 - 92px)) - var(--page-padding));
 }
 .services-main { display: flex; flex-direction: column; gap: 94px; }
-.services-note { margin-top: auto; color: white; line-height: 42.5px; }
-.services-note { transition: color 120ms ease; }
+.services-note { margin-top: auto; align-self: flex-start; max-width: 100%; color: white; line-height: 42.5px; transition: color 120ms ease; }
 .services-note.is-formula-active { color: var(--ink); cursor: none; }
 .formula-cursor {
   position: fixed;

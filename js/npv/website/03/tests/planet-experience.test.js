@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { PLANET_REGIONS } from '../planet-regions.js';
 import { buildPlanetMasks } from '../planet-masks.js';
-import { geographicToSurface, COUNTRY_BY_ID } from '../../../src/geometry/planetGeography.js';
+import { geographicToSurface, COUNTRY_BY_ID } from '../runtime/geometry/planetGeography.js';
 import { axisRotation, focusLift, orientationDistance, planetProgress, regionOrientation, rotationMatrix, slerp } from '../planet-motion.js';
 import { MainSphere } from '../sphere-renderer.js';
 import { PlanetExperience } from '../planet-experience.js';

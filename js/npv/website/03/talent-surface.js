@@ -1,9 +1,11 @@
 import { getFlatPreset } from './runtime/core/flatPresets.js';
-import { buildFlatLayout, buildFlatScene } from './runtime/geometry/flatGeometry.js';
+import { buildFlatLayout } from './runtime/geometry/flatGeometry.js';
+import { TalentSearch } from './talent-search.js';
 import { matchSurface, projectSurface, surfaceMark, surfaceParameters } from './surface-plan.js';
 
 export function talentSettings(width, height) {
-  return {...getFlatPreset('Talent'), width, height, ellipseWidth: 4, ellipseHeight: 4, personIconScale: 300};
+  return {...getFlatPreset('Talent'), width, height, ellipseWidth: 4, ellipseHeight: 4, personIconScale: 300,
+    personAnimation: 'search', searchStep: 2, fieldFollow: false};
 }
 
 export class TalentSurface {
@@ -12,21 +14,8 @@ export class TalentSurface {
     this.canvas = canvas;
     this.context = canvas.getContext('2d');
     this.panel = canvas.parentElement;
-    this.field = {x:0,y:0};
     this.active = false;
     this.resize();
-    const follow = event => {
-      if ((this.progress || 0) < .9 || document.querySelector('.contact-dialog[open]')) return;
-      const rect = this.bounds;
-      const inside = event.clientX >= rect.left && event.clientX < rect.right
-        && event.clientY >= rect.top && event.clientY < rect.bottom;
-      this.pointerInside = inside;
-      this.field = inside ? {x:event.clientX-rect.left-this.width/2,y:event.clientY-rect.top-this.height/2} : {...this.defaultField};
-      this.dirty = true;
-      this.onChange?.();
-    };
-    addEventListener('pointermove', event => { if (event.pointerType !== 'touch') follow(event); }, {passive:true});
-    addEventListener('pointerdown', follow, {passive:true});
   }
 
   resize() {
@@ -36,14 +25,12 @@ export class TalentSurface {
     this.dpr = dpr;
     this.bounds = rect;
     this.width = rect.width; this.height = rect.height;
-    this.defaultField = {x:0,y:this.height < 500 ? this.height*.12 : 0};
-    if (!this.pointerInside) this.field = {...this.defaultField};
     this.canvas.width = Math.round(this.width*dpr);
     this.canvas.height = Math.round(this.height*dpr);
     this.settings = talentSettings(this.width, this.height);
     this.layout = buildFlatLayout(this.settings);
     this.person = this.layout.elements.map(point => ({...point}));
-    this.dirty = true;
+    this.search = new TalentSearch(this.layout);
     this.points = null;
   }
 
@@ -69,6 +56,7 @@ export class TalentSurface {
       this.sphere.canvas.style.opacity = '';
       this.active = false;
       this.points = null;
+      this.search.reset();
       return false;
     }
     if (!this.points) this.capture(frame);
@@ -76,12 +64,12 @@ export class TalentSurface {
     this.canvas.hidden = false;
     this.sphere.canvas.style.opacity = '0';
     const parameters = surfaceParameters(progress);
-    if (this.dirty) {
-      this.targets = buildFlatScene(this.settings,{transientField:this.field,layout:this.layout}).elements;
-      this.dirty = false;
-    }
-    const amount = reducedMotion ? 1 : 1-Math.exp(-delta/85);
-    let moving = false;
+    const search = this.search.sample(progress === 1, delta, reducedMotion);
+    this.targets = search.elements;
+    // Search already eases each handover. Only damp its return to the plain
+    // lattice when scrolling back into the spherical transition.
+    const amount = reducedMotion || progress === 1 ? 1 : 1-Math.exp(-delta/85);
+    let moving = search.running;
     this.person.forEach((point,index) => {
       const base = this.layout.elements[index], target = this.targets[index];
       for (const key of ['cx','cy','rx','ry']) {

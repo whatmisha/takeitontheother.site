@@ -36,6 +36,11 @@ test('production preview serves compression and correct cache headers',{skip:!ma
     assert.match(response.headers.get('cache-control'),/immutable/);
     assert.match(response.headers.get('content-type'),/javascript/);
     assert.equal((await response.arrayBuffer()).byteLength,asset.bytes);
+    const formula=manifest.find(entry=>entry.file.endsWith('.svg'));
+    assert.ok(formula,'the formula SVG is included in the standalone output');
+    const image=await fetch(new URL(formula.file,base),{headers:{'Accept-Encoding':'br'}});
+    assert.equal(image.headers.get('content-type'),'image/svg+xml');
+    assert.ok((await image.text()).includes('#ffffff'));
     const plain=await fetch(new URL(asset.file,base),{headers:{'Accept-Encoding':'br;q=0,gzip;q=0'}});
     assert.equal(plain.headers.get('content-encoding'),null);
     assert.equal((await fetch(new URL('missing.js',base))).status,404);
