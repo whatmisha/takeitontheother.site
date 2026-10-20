@@ -1,12 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { TalentSearch, SEARCH_DELAY_MS } from '../talent-search.js';
+import { TalentSearch, SEARCH_DELAY_MS, SEARCH_HOLD_PROGRESS } from '../talent-search.js';
 import { TalentSurface, talentSettings } from '../talent-surface.js';
 import { buildFlatLayout } from '../runtime/geometry/flatGeometry.js';
 import { createPersonSearchPlan, buildPersonSearchScene } from '../runtime/animation/personSearch.js';
 
 for (const [width, height] of [[714,768], [390,422]]) {
-  test(`Search ${width}×${height} waits for the flat scene, then loops through selection with step 2`, () => {
+  test(`Search ${width}×${height} waits for the flat scene, then holds the selected person with step 2`, () => {
     const layout = buildFlatLayout(talentSettings(width,height));
     const before = structuredClone(layout);
     const search = new TalentSearch(layout);
@@ -31,9 +31,14 @@ for (const [width, height] of [[714,768], [390,422]]) {
     assert.equal(selected.search.phase, 'Selected');
     assert.equal(selected.search.count, 1);
     assert.equal(selected.running, true);
-    const loop = search.sample(true, 3700);
-    assert.equal(loop.search.progress, .17);
-    assert.deepEqual(loop.elements, frame.elements);
+    const held = search.sample(true, 200);
+    assert.equal(held.search.progress, SEARCH_HOLD_PROGRESS);
+    assert.equal(held.search.phase, 'Selected');
+    assert.equal(held.search.count, 1);
+    assert.equal(held.running, false);
+    assert.equal(held.search.actors[0].strength, 1);
+    assert.deepEqual(held.elements, buildPersonSearchScene(layout.settings, search.plan, SEARCH_HOLD_PROGRESS).elements);
+    assert.deepEqual(search.sample(true, 60000), held, 'the winner never fades or restarts');
     assert.deepEqual(layout,before,'animation never mutates the base grid');
   });
 }
@@ -81,6 +86,11 @@ test('the surface draws Search poses without pointer listeners and settles when 
     assert.equal(ellipses.length,expected.length);
     ellipses.forEach((ellipse,i)=>expected[i] && ['cx','cy','rx','ry'].forEach((key,j)=>
       assert.ok(Math.abs(ellipse[j]-expected[i][key])<1e-9)));
+    surface.draw({flat:1},200,false);
+    assert.equal(surface.draw({flat:1},16,false),false,'the final figure releases the animation loop');
+    const held=structuredClone(surface.person);
+    assert.equal(surface.draw({flat:1},60000,false),false);
+    assert.deepEqual(surface.person,held);
     for(let i=0;i<100;i++)surface.draw({flat:.8},16,false);
     assert.equal(surface.draw({flat:.8},16,false),false,'no perpetual animation during a paused transition');
     assert.equal(surface.draw({flat:0},16,false),false);

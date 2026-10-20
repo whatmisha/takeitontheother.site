@@ -1,6 +1,8 @@
 import { createPersonSearchPlan, buildPersonSearchScene } from './runtime/animation/personSearch.js';
 
 export const SEARCH_DELAY_MS = 600;
+// The selection pulse has settled; the generator fades the winner after .92.
+export const SEARCH_HOLD_PROGRESS = .82;
 
 // Advance on rendered time, so a hidden tab never skips ahead in the search.
 export class TalentSearch {
@@ -19,15 +21,20 @@ export class TalentSearch {
     }
     if (reducedMotion) {
       this.reset();
-      this.plan ??= createPersonSearchPlan(this.layout.settings);
-      this.still ??= buildPersonSearchScene(this.layout.settings, this.plan, .8);
-      return {...this.still, running: false};
+      return this.hold();
     }
-    this.elapsed += Math.max(0, delta);
+    const duration = this.layout.settings.searchDuration * 1000;
+    this.elapsed = Math.min(SEARCH_DELAY_MS + duration * SEARCH_HOLD_PROGRESS,
+      this.elapsed + Math.max(0, delta));
     if (this.elapsed <= SEARCH_DELAY_MS) return {elements: this.layout.elements, running: true};
     this.plan ??= createPersonSearchPlan(this.layout.settings);
-    const duration = this.layout.settings.searchDuration * 1000;
-    const progress = ((this.elapsed - SEARCH_DELAY_MS) % duration) / duration;
+    const progress = (this.elapsed - SEARCH_DELAY_MS) / duration;
+    if (progress >= SEARCH_HOLD_PROGRESS) return this.hold();
     return {...buildPersonSearchScene(this.layout.settings, this.plan, progress), running: true};
+  }
+  hold() {
+    this.plan ??= createPersonSearchPlan(this.layout.settings);
+    this.still ??= buildPersonSearchScene(this.layout.settings, this.plan, SEARCH_HOLD_PROGRESS);
+    return {...this.still, running: false};
   }
 }

@@ -40,7 +40,7 @@ test('production preview serves compression and correct cache headers',{skip:!ma
     assert.ok(formula,'the formula SVG is included in the standalone output');
     const image=await fetch(new URL(formula.file,base),{headers:{'Accept-Encoding':'br'}});
     assert.equal(image.headers.get('content-type'),'image/svg+xml');
-    assert.ok((await image.text()).includes('#ffffff'));
+    assert.ok((await image.text()).includes('#111111'));
     const plain=await fetch(new URL(asset.file,base),{headers:{'Accept-Encoding':'br;q=0,gzip;q=0'}});
     assert.equal(plain.headers.get('content-encoding'),null);
     assert.equal((await fetch(new URL('missing.js',base))).status,404);

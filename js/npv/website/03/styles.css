@@ -274,9 +274,9 @@ button:focus-visible, a:focus-visible {
 .services .screen-copy {
   min-height: calc(var(--screen-height) - max(132px, calc(var(--screen-height) / 2 - 92px)) - var(--page-padding));
 }
-.services-main { display: flex; flex-direction: column; gap: 94px; }
-.services-note { margin-top: auto; align-self: flex-start; max-width: 100%; color: white; line-height: 42.5px; transition: color 120ms ease; }
-.services-note.is-formula-active { color: var(--ink); cursor: none; }
+.services-main { display: flex; flex-direction: column; gap: inherit; }
+.services-note { margin-top: auto; align-self: flex-start; max-width: 100%; color: var(--ink); line-height: 42.5px; transition: color 120ms ease; }
+.services-note.is-formula-active { color: white; cursor: none; }
 .formula-cursor {
   position: fixed;
   z-index: 20;
@@ -299,19 +299,30 @@ button:focus-visible, a:focus-visible {
 }
 .formula-blur {
   position: absolute;
-  inset: -64px -96px;
+  inset: -104px -144px;
   -webkit-backdrop-filter: blur(var(--blur));
   backdrop-filter: blur(var(--blur));
-  /* All layers are opaque under the SVG; only the surrounding halo fades. */
-  -webkit-mask-image: radial-gradient(ellipse closest-side, #000 65%, transparent var(--edge));
-  mask-image: radial-gradient(ellipse closest-side, #000 65%, transparent var(--edge));
+  /* Wide, eased falloffs with staggered starts avoid a shared hard ring.
+     Even the strongest layer stays opaque across the complete formula. */
+  --fade: calc(var(--edge) - var(--solid));
+  --mask: radial-gradient(ellipse closest-side,
+    #000 var(--solid),
+    rgb(0 0 0 / .972) calc(var(--solid) + var(--fade) * .1),
+    rgb(0 0 0 / .896) calc(var(--solid) + var(--fade) * .2),
+    rgb(0 0 0 / .648) calc(var(--solid) + var(--fade) * .4),
+    rgb(0 0 0 / .352) calc(var(--solid) + var(--fade) * .6),
+    rgb(0 0 0 / .104) calc(var(--solid) + var(--fade) * .8),
+    rgb(0 0 0 / .028) calc(var(--solid) + var(--fade) * .9),
+    transparent var(--edge));
+  -webkit-mask-image: var(--mask);
+  mask-image: var(--mask);
 }
-.formula-blur:nth-child(1) { --blur: 1px; --edge: 100%; }
-.formula-blur:nth-child(2) { --blur: 2px; --edge: 96%; }
-.formula-blur:nth-child(3) { --blur: 4px; --edge: 92%; }
-.formula-blur:nth-child(4) { --blur: 8px; --edge: 88%; }
-.formula-blur:nth-child(5) { --blur: 16px; --edge: 84%; }
-.formula-blur:nth-child(6) { --blur: 24px; --edge: 80%; }
+.formula-blur:nth-child(1) { --blur: 1px; --solid: 72%; --edge: 100%; }
+.formula-blur:nth-child(2) { --blur: 2px; --solid: 70%; --edge: 100%; }
+.formula-blur:nth-child(3) { --blur: 4px; --solid: 68%; --edge: 100%; }
+.formula-blur:nth-child(4) { --blur: 8px; --solid: 65%; --edge: 99%; }
+.formula-blur:nth-child(5) { --blur: 16px; --solid: 62%; --edge: 98%; }
+.formula-blur:nth-child(6) { --blur: 24px; --solid: 60%; --edge: 96%; }
 @media (prefers-reduced-motion: reduce) {
   .services-note, .formula-cursor, .formula-cursor > * { transition: none; }
 }
@@ -356,7 +367,6 @@ button:focus-visible, a:focus-visible {
   .screen-title { font-size: 40px; line-height: 40px; }
   .title-phrase { white-space: normal; }
   .screen-description p, .service-title { font-size: 18px; line-height: 22px; letter-spacing: -.18px; }
-  .services-main { gap: 24px; }
   .service-list { grid-template-columns: minmax(0, 1fr); gap: 24px; }
   .service-card { padding-right: 0; }
   .desktop-break { display: none; }
