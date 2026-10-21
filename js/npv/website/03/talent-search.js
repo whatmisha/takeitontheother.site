@@ -1,6 +1,6 @@
 import { createPersonSearchPlan, buildPersonSearchScene } from './runtime/animation/personSearch.js';
 
-export const SEARCH_DELAY_MS = 200;
+export const SEARCH_START_FLAT = .9;
 // The selection pulse has settled; the generator fades the winner after .92.
 export const SEARCH_HOLD_PROGRESS = .82;
 
@@ -24,11 +24,10 @@ export class TalentSearch {
       return this.hold();
     }
     const duration = this.layout.settings.searchDuration * 1000;
-    this.elapsed = Math.min(SEARCH_DELAY_MS + duration * SEARCH_HOLD_PROGRESS,
+    this.elapsed = Math.min(duration * SEARCH_HOLD_PROGRESS,
       this.elapsed + Math.max(0, delta));
-    if (this.elapsed <= SEARCH_DELAY_MS) return {elements: this.layout.elements, running: true};
     this.plan ??= createPersonSearchPlan(this.layout.settings);
-    const progress = (this.elapsed - SEARCH_DELAY_MS) / duration;
+    const progress = this.elapsed / duration;
     if (progress >= SEARCH_HOLD_PROGRESS) return this.hold();
     return {...buildPersonSearchScene(this.layout.settings, this.plan, progress), running: true};
   }

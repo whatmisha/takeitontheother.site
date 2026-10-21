@@ -1,12 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { TalentSearch, SEARCH_DELAY_MS, SEARCH_HOLD_PROGRESS } from '../talent-search.js';
+import { TalentSearch, SEARCH_HOLD_PROGRESS } from '../talent-search.js';
 import { TalentSurface, talentSettings } from '../talent-surface.js';
 import { buildFlatLayout } from '../runtime/geometry/flatGeometry.js';
 import { createPersonSearchPlan, buildPersonSearchScene } from '../runtime/animation/personSearch.js';
 
 for (const [width, height] of [[714,768], [390,422]]) {
-  test(`Search ${width}×${height} waits for the flat scene, then holds the selected person with step 2`, () => {
+  test(`Search ${width}×${height} starts without a delay, then holds the selected person with step 2`, () => {
     const layout = buildFlatLayout(talentSettings(width,height));
     const before = structuredClone(layout);
     const search = new TalentSearch(layout);
@@ -15,9 +15,7 @@ for (const [width, height] of [[714,768], [390,422]]) {
     assert.ok(layout.elements.every(point => point.rx === 2 && point.ry === 2));
     assert.equal(search.sample(false, 10000).running, false);
     assert.equal(search.plan, null, 'no route calculation on the sphere screens');
-    assert.equal(search.sample(true, SEARCH_DELAY_MS - 1).elements, layout.elements);
-    assert.equal(search.plan, null);
-    const frame = search.sample(true, 1701);
+    const frame = search.sample(true, 1700);
     assert.equal(frame.search.progress, .17);
     assert.ok(frame.search.count > 1);
     assert.deepEqual(frame.elements, buildPersonSearchScene(layout.settings, search.plan, .17).elements);
@@ -43,15 +41,14 @@ for (const [width, height] of [[714,768], [390,422]]) {
   });
 }
 
-test('leaving the third screen resets its delay while retaining the cached plan', () => {
+test('leaving the third screen resets playback while retaining the cached plan', () => {
   const search = new TalentSearch(buildFlatLayout(talentSettings(714,768)));
-  search.sample(true, SEARCH_DELAY_MS + 4500);
+  search.sample(true, 4500);
   const plan = search.plan;
   const exit = search.sample(false,16);
   assert.equal(exit.running,false);
   assert.equal(exit.elements,search.layout.elements);
   assert.equal(search.elapsed,0);
-  assert.equal(search.sample(true,SEARCH_DELAY_MS).elements,search.layout.elements);
   assert.equal(search.plan,plan);
   assert.equal(search.sample(true,1700).search.progress,.17);
 });
@@ -64,7 +61,7 @@ test('reduced motion shows a stationary selected candidate and requests no conti
   assert.equal(still.running,false);
   assert.deepEqual(search.sample(true,5000,true),still);
   assert.equal(search.elapsed,0);
-  assert.equal(search.sample(true,16,false).elements,search.layout.elements);
+  assert.equal(search.sample(true,16,false).search.progress,.0016);
 });
 
 test('the surface draws Search poses without pointer listeners and settles when scrolling back', () => {
@@ -81,7 +78,16 @@ test('the surface draws Search poses without pointer listeners and settles when 
     surface.points=surface.layout.elements.map(p=>({x:p.cx,y:p.cy,rx:2,ry:2,angle:0}));
     surface.plan={matches:new Map(surface.points.map((_,i)=>[i,i])),
       survivors:surface.points.map((p,i)=>({...p,sourceIndex:i})),focus:{x:195,y:211},center:{x:195,y:211}};
-    assert.equal(surface.draw({flat:1},SEARCH_DELAY_MS+8000,false),true);
+    surface.draw({flat:.89},1000,false);
+    assert.equal(surface.search.elapsed,0,'Search stays idle before the last part of flattening');
+    for(let i=0;i<30;i++)surface.draw({flat:.95},16,false);
+    assert.ok(surface.search.sample(true,0).search.count>0,'people appear while the grid is still flattening');
+    assert.ok(surface.person.some((point,i)=>point.rx>surface.layout.elements[i].rx));
+    surface.draw({flat:1},16,false);
+    assert.equal(surface.search.elapsed,496,'finishing the transition does not restart Search');
+    surface.search.reset();
+    ellipses.length=0;
+    assert.equal(surface.draw({flat:1},8000,false),true);
     const expected=surface.search.sample(true,0).elements.filter(p=>p.rx>=.015 && p.ry>=.015);
     assert.equal(ellipses.length,expected.length);
     ellipses.forEach((ellipse,i)=>expected[i] && ['cx','cy','rx','ry'].forEach((key,j)=>

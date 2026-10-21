@@ -1,6 +1,6 @@
 import { getFlatPreset } from './runtime/core/flatPresets.js';
 import { buildFlatLayout } from './runtime/geometry/flatGeometry.js';
-import { TalentSearch } from './talent-search.js';
+import { TalentSearch, SEARCH_START_FLAT } from './talent-search.js';
 import { matchSurface, projectSurface, surfaceMark, surfaceParameters } from './surface-plan.js';
 
 export function talentSettings(width, height) {
@@ -64,7 +64,7 @@ export class TalentSurface {
     this.canvas.hidden = false;
     this.sphere.canvas.style.opacity = '0';
     const parameters = surfaceParameters(progress);
-    const search = this.search.sample(progress === 1, delta, reducedMotion);
+    const search = this.search.sample(progress >= SEARCH_START_FLAT, delta, reducedMotion);
     this.targets = search.elements;
     // Search already eases each handover. Only damp its return to the plain
     // lattice when scrolling back into the spherical transition.
