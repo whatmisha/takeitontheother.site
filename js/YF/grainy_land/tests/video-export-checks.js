@@ -1,7 +1,7 @@
 import {defaults,switchMode} from '../legacy-document.js';
 import {normalizeSettings} from '../document.js?v=unified-document-1';
 import {LandscapeRenderer} from '../render.js?v=petal-motion-1';
-import {renderVideo,motionFrame} from '../motion.js?v=video-frames-1';
+import {renderVideo,motionFrame} from '../motion.js?v=video-timestamps-1';
 import {resizeObjects} from '../object-actions.js?v=petal-motion-1';
 
 const log=[],out=document.querySelector('#results'),progress=document.querySelector('#progress');
@@ -16,10 +16,13 @@ const event=(target,type)=>new Promise((resolve,reject)=>{
  const timer=setTimeout(fail,20000);target.addEventListener(type,done,{once:true});target.addEventListener('error',fail,{once:true});
 });
 try{
+ const flowerFlow=normalizeSettings(await (await fetch('../presets/flower-flow.json')).json());
  const six=normalizeSettings(await (await fetch('../presets/six-cup.json')).json());
  const base={...defaults,width:640,height:360,motionDuration:2,motionAmount:8};
  const flowers=(type,count,width=640,height=360)=>resizeObjects({...switchMode(base,'f'),width,height,fType:type,motionDuration:2,motionAmount:8},'flower',count);
  const cases=[
+  ['Flower Flow · default 6-second loop',flowerFlow],
+  ['Flower Flow · WebKit canvas timestamps',flowerFlow,{webkitTimestamps:true}],
   ['Land',base],['Spot',switchMode(base,'abstract')],['Plant',switchMode(base,'flora')],
   ['Six cup · 1920 × 1080',{...six,motionDuration:2,motionAmount:8}],
   ['Fan · 4 flowers',flowers('fan',4)],['Lobed · 8 flowers · portrait',flowers('lobed',8,360,640)],
@@ -32,6 +35,14 @@ try{
  for(const [name,s,options={}] of cases){
   const renderer=new LandscapeRenderer(),original=JSON.stringify(s),start=performance.now();
   let rendered=0;
+  const NativeVideoFrame=globalThis.VideoFrame;
+  if(options.webkitTimestamps)globalThis.VideoFrame=class extends NativeVideoFrame{
+   constructor(source,init){
+    // Reproduce WebKit 321880 even when this suite runs in Chromium.
+    const timestamp=Math.trunc((((init.timestamp/1000)/1000)*1000)*1000);
+    super(source,{...init,timestamp});
+   }
+  };
   const source={gl:renderer.gl,async renderAsync(...args){rendered++;if(options.slow){const end=performance.now()+80;while(performance.now()<end){ /* Simulate a render slower than 30 fps. */ }}return renderer.renderAsync(...args);}};
   try{
    const result=await renderVideo(source,s,{onProgress:({message})=>{progress.textContent=name+' · '+message;}});
@@ -54,7 +65,7 @@ try{
    else check(name+' · hidden Background flattens to black',samples[0].every((v,i)=>i%4===3?v===255:v<3));
    check(name+' · source document is unchanged',JSON.stringify(s)===original);
    write('  Export and verification: '+((performance.now()-start)/1000).toFixed(1)+' s');
-  }finally{renderer.destroy();}
+  }finally{globalThis.VideoFrame=NativeVideoFrame;renderer.destroy();}
  }
  const renderer=new LandscapeRenderer(),controller=new AbortController();
  try{

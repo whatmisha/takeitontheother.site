@@ -10,7 +10,7 @@ const check=(label,ok)=>{log.push((ok?'PASS ':'FAIL ')+label);out.textContent=lo
 try{
  for(let i=0;i<250&&!frame.contentDocument?.documentElement.dataset.ready;i++)await pause();
  const d=frame.contentDocument,w=frame.contentWindow,$=id=>d.getElementById(id);
- const {app}=await w.eval("import('/grainy_land/tool.js?v=graphics-polish-1')");
+ const {app}=await w.eval("import('/grainy_land/tool.js?v=video-timestamps-1')");
  const errors=[];w.addEventListener('error',e=>errors.push(e.message));
  const click=async id=>{$(id).click();await pause();};
  const set=async(id,value)=>{$(id).value=String(value);$(id).dispatchEvent(new w.Event('input',{bubbles:true}));$(id).dispatchEvent(new w.Event('change',{bubbles:true}));$(id).blur();$(id).dispatchEvent(new w.FocusEvent('blur'));await pause();};

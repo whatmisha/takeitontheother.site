@@ -11,9 +11,9 @@ try{
  LandscapeRenderer.prototype.render=function(s,...args){window.startupFrames.push(s.seed);return original.call(this,s,...args);};
  const bootstrap=ApplicationShell.prototype._bootstrapPresets;
  ApplicationShell.prototype._bootstrapPresets=async function(){await new Promise(r=>setTimeout(r,250));window.loadingRenders=window.startupFrames.length;return bootstrap.call(this);};
- await import('/grainy_land/tool.js?v=graphics-polish-1');
+ await import('/grainy_land/tool.js?v=video-timestamps-1');
  </script>`;
- frame.srcdoc=html.replace('<head>','<head><base href="/grainy_land/">').replace('<script type="module" src="./tool.js?v=graphics-polish-1"></script>',instrument);
+ frame.srcdoc=html.replace('<head>','<head><base href="/grainy_land/">').replace('<script type="module" src="./tool.js?v=video-timestamps-1"></script>',instrument);
  for(let i=0;i<300&&!frame.contentDocument?.documentElement.dataset.ready;i++)await pause();
  const d=frame.contentDocument,w=frame.contentWindow,$=id=>d.getElementById(id),rect=id=>$(id).getBoundingClientRect();
  const source=await(await fetch('../presets/flower-flow.json')).json();

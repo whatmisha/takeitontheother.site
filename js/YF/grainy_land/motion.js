@@ -46,7 +46,7 @@ export async function renderVideo(renderer,settings,{signal,onProgress=()=>{}}={
  signal?.throwIfAborted();
  const canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;
  let encoder,error,decoderConfig,rejectFailure;
- const chunks=[];
+ const chunks=[],submittedTimestamps=new Map();
  // Errors/abort must also interrupt dequeue and flush waits, not just the frame loop.
  const failure=new Promise((_,reject)=>{rejectFailure=reject;});
  failure.catch(()=>{});
@@ -97,7 +97,13 @@ export async function renderVideo(renderer,settings,{signal,onProgress=()=>{}}={
    if(renderer.gl?.isContextLost())throw Error('The graphics context was lost during export. Please retry.');
    ctx.fillStyle='#000';ctx.fillRect(0,0,width,height);ctx.drawImage(surface,0,0);
    const frame=new VideoFrame(canvas,{timestamp:timestampAt(index),duration:timestampAt(index+1)-timestampAt(index)});
-   try{encoder.encode(frame,{keyFrame:index%VIDEO_FPS===0});}finally{frame.close();}
+   try{
+    // Canvas-backed VideoFrames in WebKit can change the requested timestamp
+    // by 1 µs (WebKit 321880). Match output to the actual submitted frame, then
+    // restore its exact timeline time before muxing. No browser-specific branch.
+    submittedTimestamps.set(frame.timestamp,timestampAt(index));
+    encoder.encode(frame,{keyFrame:index%VIDEO_FPS===0});
+   }finally{frame.close();}
    onProgress({current:index+1,total:frameCount,message:'MP4 · '+(index+1)+' / '+frameCount});
    // Give progress, Cancel and the encoder a turn even on expensive scenes. A
    // background tab may take longer, but no frame is skipped or timed differently.
@@ -106,10 +112,13 @@ export async function renderVideo(renderer,settings,{signal,onProgress=()=>{}}={
   assertActive();
   onProgress({current:frameCount,total:frameCount,message:'MP4 · Finishing'});
   await wait(encoder.flush());assertActive();
-  const timestamps=new Set(chunks.map(chunk=>chunk.timestamp));
-  if(chunks.length!==frameCount||timestamps.size!==frameCount||
-   Array.from({length:frameCount},(_,i)=>timestampAt(i)).some(t=>!timestamps.has(t))){
-   throw Error('The video encoder returned incomplete frames. Please retry the export.');
+  const incomplete=()=>Error('The video encoder returned incomplete frames. Please retry the export.');
+  if(chunks.length!==frameCount||submittedTimestamps.size!==frameCount)throw incomplete();
+  const received=new Set();
+  for(const chunk of chunks){
+   const timestamp=submittedTimestamps.get(chunk.timestamp);
+   if(timestamp===undefined||received.has(timestamp))throw incomplete();
+   received.add(timestamp);chunk.timestamp=timestamp;
   }
   const data=muxAvcToMp4({chunks,decoderConfig,width,height,fps:VIDEO_FPS});
   return {blob:new Blob([data],{type:'video/mp4'}),extension:'mp4',width,height,fps:VIDEO_FPS,frameCount,duration:frameCount/VIDEO_FPS};

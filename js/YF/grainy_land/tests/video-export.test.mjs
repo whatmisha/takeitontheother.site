@@ -7,8 +7,9 @@ function environment(t,options={}){
  const saved=new Map(),frames=[],renders=[],encoders=[],fills=[],progress=[];
  const replace=(key,value)=>{saved.set(key,Object.getOwnPropertyDescriptor(globalThis,key));Object.defineProperty(globalThis,key,{value,configurable:true,writable:true});};
  t.after(()=>{for(const [key,descriptor] of saved){if(descriptor)Object.defineProperty(globalThis,key,descriptor);else delete globalThis[key];}});
+ const webkitTimestamp=us=>Math.trunc((((us/1000)/1000)*1000)*1000);
  const canvas={width:0,height:0,getContext:(type,opts)=>{assert.equal(opts.alpha,false);return {set fillStyle(v){assert.equal(v,'#000');},fillRect(...args){fills.push(args);},drawImage(){}};}};
- class Frame{constructor(source,init){this.source=source;Object.assign(this,init);frames.push(this);}close(){this.closed=true;}}
+ class Frame{constructor(source,init){this.source=source;Object.assign(this,init);if(options.webkitTimestamps)this.timestamp=webkitTimestamp(init.timestamp);frames.push(this);}close(){this.closed=true;}}
  class Encoder extends EventTarget{
   static async isConfigSupported(config){return {supported:!options.unsupported,config};}
   constructor(callbacks){super();this.callbacks=callbacks;this.state='unconfigured';this.encodeQueueSize=0;this.timers=[];encoders.push(this);}
@@ -20,7 +21,7 @@ function environment(t,options={}){
    this.timers.push(setTimeout(()=>{
     if(options.asyncError){this.callbacks.error(Error('Codec failed'));return;}
     this.encodeQueueSize--;
-    if(!(options.drop&&frame.timestamp===33333))this.callbacks.output({timestamp:options.duplicate?0:frame.timestamp,type:keyFrame?'key':'delta',byteLength:1,copyTo:data=>{data[0]=1;}},{decoderConfig:{description:new Uint8Array([1,100,0,40,255])}});
+    if(!(options.drop&&frame.timestamp===33333))this.callbacks.output({timestamp:options.duplicate?0:frame.timestamp+(options.timestampShift??0),type:keyFrame?'key':'delta',byteLength:1,copyTo:data=>{data[0]=1;}},{decoderConfig:{description:new Uint8Array([1,100,0,40,255])}});
     this.dispatchEvent(new Event('dequeue'));
    },options.delay??0));
   }
@@ -100,3 +101,25 @@ test('abort during asynchronous preparation does not submit or save an extra fra
  await assert.rejects(renderVideo(e.renderer,settings,{signal:controller.signal}),{name:'AbortError'});
  assert.equal(e.frames.length,0);assert.equal(e.encoders[0].state,'closed');
 });
+
+// WebKit bug 321880: CanvasImageSource -> VideoFrame can round down by 1 µs.
+// At 30 fps the first affected frame is #121, so short exports miss the regression.
+test('Six-second exports accept actual canvas frame timestamps and preserve the exact MP4 timeline',async t=>{
+ const e=environment(t,{webkitTimestamps:true});
+ const result=await renderVideo(e.renderer,{...settings,motionDuration:6});
+ assert.equal(result.frameCount,180);assert.equal(result.duration,6);
+ assert.equal(e.frames[121].timestamp,4033332);assert.equal(e.frames[124].timestamp,4133332);
+ const bytes=new Uint8Array(await result.blob.arrayBuffer()),stts=atom(bytes,'stts'),stsz=atom(bytes,'stsz'),mdhd=atom(bytes,'mdhd');
+ assert.equal(u32(bytes,stsz+12),180);assert.equal(u32(bytes,stts+16),3000);
+ assert.equal(u32(bytes,mdhd+20),540000);
+ assert.ok(!new TextDecoder('latin1').decode(bytes).includes('ctts'),'rounding must not shift presentation times');
+ assert.equal(e.encoders[0].state,'closed');assert.ok(e.frames.every(f=>f.closed));
+});
+
+for(const option of ['drop','duplicate','timestampShift']){
+ test('WebKit canvas rounding does not hide '+option+' in encoder output',async t=>{
+  const e=environment(t,{webkitTimestamps:true,[option]:option==='timestampShift'?3:true});
+  await assert.rejects(renderVideo(e.renderer,{...settings,motionDuration:6}),/incomplete/);
+  assert.equal(e.encoders[0].state,'closed');assert.ok(e.frames.every(f=>f.closed));
+ });
+}
