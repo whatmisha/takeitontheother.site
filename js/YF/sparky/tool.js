@@ -10,7 +10,7 @@ import {
 } from './src/geometry/eyeGeometry.js?v=20260828-1';
 import { createSparkyExportBaseName } from './src/export/exportNaming.js';
 import { createStaticSparkySvg } from './src/export/staticSvgExporter.js?v=20260825-2';
-import { AnimationExporter } from './src/export/animationExporter.js?v=lottie-1';
+import { AnimationExporter } from './src/export/animationExporter.js?v=lottie-1&layout=root-infra-1';
 import {
     BOLID_EYE_MOTION_TIME_CONSTANT,
     EYE_MOTION_TIME_CONSTANT,
@@ -77,7 +77,7 @@ import {
     buildBolidEyeColorTrailLayers,
     buildBolidColorTrailLayers,
     normalizeBolidColorTrail
-} from './src/animation/bolidColorTrail.js?v=20260828-5';
+} from './src/animation/bolidColorTrail.js?v=20260828-5&layout=root-infra-1';
 import {
     normalizeMotionBlur,
     resolvePreviewMotionBlurGhosts,

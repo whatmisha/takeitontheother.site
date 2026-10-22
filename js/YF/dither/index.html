@@ -14,7 +14,7 @@
     
     <title>Dither - Image Dithering Tool</title>
     <link rel="stylesheet" href="framework-base.css?v=g6-choice-1&layout=root-infra-1">
-    <link rel="stylesheet" href="style.css?v=uiq-4">
+    <link rel="stylesheet" href="style.css?v=uiq-4&rev=canvas-size-1&layout=root-infra-1">
     <link rel="stylesheet" href="../infra/framework/css/ui-contract.css?v=panel-resize-1&rev=2">
 </head>
 <body>
@@ -24,7 +24,7 @@
         </div>
         <div class="main-content">
             <div class="canvas-container">
-                <canvas id="canvas" class="ui-artboard" aria-label="Output image"></canvas>
+                <canvas id="canvas" width="800" height="600" class="ui-artboard" aria-label="Output image"></canvas>
                 <canvas id="overlayCanvas"></canvas>
             </div>
 
@@ -108,6 +108,20 @@
                     </button>
                 </div>
                 <div class="panel-content">
+                <section class="control-section control-field-group control-field-group--flush" aria-labelledby="canvasSizeHeading">
+                    <h3 class="control-field-heading" id="canvasSizeHeading">Canvas size</h3>
+                    <div class="canvas-size-fields">
+                        <div class="control-group">
+                            <label for="canvasWidth">Width, px</label>
+                            <input type="number" class="value-display canvas-size-input" id="canvasWidth" min="1" max="4096" step="1" value="800" inputmode="numeric" aria-describedby="canvasSizeStatus">
+                        </div>
+                        <div class="control-group">
+                            <label for="canvasHeight">Height, px</label>
+                            <input type="number" class="value-display canvas-size-input" id="canvasHeight" min="1" max="4096" step="1" value="600" inputmode="numeric" aria-describedby="canvasSizeStatus">
+                        </div>
+                    </div>
+                    <p class="hint-text" id="canvasSizeStatus" role="status">PNG at 1× uses this size.</p>
+                </section>
                 <section class="control-section">
                     
                     <div class="control-group">
@@ -279,7 +293,7 @@
 
     <script type="module" src="../infra/framework/src/ui/actionDockAutoInit.js?v=g7-resilience-4"></script>
     <script src="js/export/DitherPngExport.js?v=uiq-2" defer></script>
-    <script src="dither.js?v=uiq-4&layout=root-infra-1" defer></script>
+    <script src="dither.js?v=uiq-4&layout=root-infra-1&rev=canvas-size-1" defer></script>
     <script type="module" src="../infra/framework/src/ui/unifiedUiAutoInit.js?v=uiq-4"></script>
     <script type="module" src="../infra/framework/src/ui/panelResizeAutoInit.js?v=9"></script>
 </body>

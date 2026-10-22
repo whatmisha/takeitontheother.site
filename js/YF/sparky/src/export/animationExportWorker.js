@@ -1,5 +1,5 @@
 import { sampleEyeAnimationTimeline } from '../animation/eyeTimeline.js?v=20260828-2';
-import { createMotion, sampleMotionFocus, createLoopingEyeMotion } from './animationExportMotion.js';
+import { createMotion, sampleMotionFocus, createLoopingEyeMotion } from './animationExportMotion.js?layout=root-infra-1';
 import { settingsAtBolidTime } from '../animation/bolid.js?v=20260828-3';
 import {
     resolveBlinkMotionBlurTime,
@@ -13,13 +13,13 @@ import {
 import {
     buildAnimationFrameScene,
     drawAnimationFrame
-} from '../render/animationFrameRenderer.js?v=lottie-1';
+} from '../render/animationFrameRenderer.js?v=lottie-1&layout=root-infra-1';
 import {
     createAnimationFrameSamples,
     sampleAnimationFrame
 } from './animationFrameSamples.js?v=20260827-3';
 import { StoredZipBlobBuilder } from './zipStore.js?v=20260825-1';
-import { muxAvcToMp4 } from './mp4Muxer.js';
+import { muxAvcToMp4 } from './mp4Muxer.js?layout=root-infra-1';
 import {
     ANIMATION_EXPORT_FPS,
     ANIMATION_EXPORT_SIZE,
@@ -445,7 +445,7 @@ self.addEventListener('message', async (event) => {
         }
         let result;
         if (job.format === 'lottie') {
-            const { createLottieAnimation } = await import('./lottieExporter.js');
+            const { createLottieAnimation } = await import('./lottieExporter.js?layout=root-infra-1');
             const animation = createLottieAnimation({
                 ...job,
                 onProgress: (completed, total) => {

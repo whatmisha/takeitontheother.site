@@ -164,7 +164,7 @@ test('shared CSS stays below the Dither compatibility skin', async () => {
     );
     assert.equal(
         html.match(/class="value-display(?!-)/gu)?.length || 0,
-        13,
+        15,
         'Dither value-display inventory changed'
     );
 
@@ -283,6 +283,7 @@ test('Dither panels use shared viewport-clamped drag behavior', () => {
     const manager = new AdapterPanelManager();
     const controls = {
         style: {},
+        dataset: {},
         getBoundingClientRect: () => ({ width: 300, height: 400 })
     };
 

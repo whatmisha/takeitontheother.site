@@ -16,7 +16,7 @@ import {
     sampleLoopFocus
 } from '../animation/loopTimeline.js?v=20260827-1';
 import { BOLID_EYE_MOTION_TIME_CONSTANT, advanceEyeMotionToTarget, createEyeMotionState } from '../animation/eyeMotion.js?v=20260828-1';
-import { buildAnimationFrameScene } from '../render/animationFrameRenderer.js?v=lottie-1';
+import { buildAnimationFrameScene } from '../render/animationFrameRenderer.js?v=lottie-1&layout=root-infra-1';
 const EYE_MOTION_WARMUP_FRAMES = 24;
 
 export function createMotion(settings, startFocus, motionPath = null) {

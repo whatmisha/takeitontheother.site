@@ -9,6 +9,7 @@ class DitheringTool {
         // Canvas dimensions
         MAX_CANVAS_WIDTH: 800,
         MAX_CANVAS_HEIGHT: 600,
+        MAX_CUSTOM_CANVAS_SIZE: 4096,
         OVERLAY_PADDING: 200,
         
         // Interaction handles
@@ -47,6 +48,7 @@ class DitheringTool {
         this.originalImage = null;
         this.currentImageData = null;
         this.sampleImage = null;
+        this.canvasSize = null;
         
         // Cache DOM elements
         this.dom = this.cacheDOMElements();
@@ -122,6 +124,7 @@ class DitheringTool {
         
         this.initFileIntakes();
         this.initEventListeners();
+        this.initCanvasSizeInputs();
         this.panelManager = new PanelManager();
         this.panelManager.registerPanel('controlsPanel', {
             headerId: 'panelHeader',
@@ -148,6 +151,9 @@ class DitheringTool {
         return {
             imageInput: document.getElementById('imageInput'),
             sampleInput: document.getElementById('sampleInput'),
+            canvasWidth: document.getElementById('canvasWidth'),
+            canvasHeight: document.getElementById('canvasHeight'),
+            canvasSizeStatus: document.getElementById('canvasSizeStatus'),
             exportBtn: document.getElementById('exportBtn'),
             removeImageBtn: document.getElementById('removeImageBtn'),
             removeSampleBtn: document.getElementById('removeSampleBtn'),
@@ -804,7 +810,7 @@ class DitheringTool {
             const min = parseFloat(input.dataset.min);
             const max = parseFloat(input.dataset.max);
             
-            if (!slider) return;
+            if (!slider || slider.type !== 'range') return;
             
             // Get step from slider or determine from data
             const step = parseFloat(slider.step) || this.getStepForSlider(sliderId);
@@ -1610,6 +1616,55 @@ class DitheringTool {
         });
     }
     
+    initCanvasSizeInputs() {
+        for (const input of [this.dom.canvasWidth, this.dom.canvasHeight]) {
+            input.addEventListener('focus', () => input.select());
+            input.addEventListener('blur', () => {
+                const width = this.dom.canvasWidth.value;
+                const height = this.dom.canvasHeight.value;
+                if (Number(width) === this.canvas.width && Number(height) === this.canvas.height) {
+                    this.syncCanvasSizeInputs();
+                    return;
+                }
+                this.setCanvasSize(width, height);
+            });
+            input.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    input.blur();
+                } else if (event.key === 'Escape') {
+                    event.preventDefault();
+                    this.syncCanvasSizeInputs();
+                    input.blur();
+                }
+            });
+        }
+    }
+
+    syncCanvasSizeInputs() {
+        this.dom.canvasWidth.value = this.canvas.width;
+        this.dom.canvasHeight.value = this.canvas.height;
+        this.dom.canvasSizeStatus.textContent = 'PNG at 1× uses this size.';
+    }
+
+    setCanvasSize(width, height) {
+        const dimensions = [Number(width), Number(height)];
+        const maxSize = DitheringTool.CONSTANTS.MAX_CUSTOM_CANVAS_SIZE;
+        if (dimensions.some(value => !Number.isInteger(value) || value < 1 || value > maxSize)) {
+            this.syncCanvasSizeInputs();
+            this.dom.canvasSizeStatus.textContent = `Use whole numbers from 1 to ${maxSize} px.`;
+            return false;
+        }
+        this.canvasSize = { width: dimensions[0], height: dimensions[1] };
+        if (this.canvas.width === dimensions[0] && this.canvas.height === dimensions[1]) {
+            this.syncCanvasSizeInputs();
+            return true;
+        }
+        this.updateCanvasSize({ preserveTransform: true });
+        this.applyEffects();
+        return true;
+    }
+
     syncOverlaySize() {
         const rect = this.canvas.getBoundingClientRect();
         if (!rect.width || !rect.height || !this.canvas.width || !this.canvas.height) return;
@@ -1625,25 +1680,24 @@ class DitheringTool {
         };
     }
 
-    updateCanvasSize() {
-        // Canvas size is determined by sample image if it exists, otherwise by processed image
+    updateCanvasSize({ preserveTransform = false } = {}) {
+        // Keep an explicit size across source/layout changes; otherwise fit the source.
         const referenceImage = this.sampleImage || this.originalImage;
-        
-        if (!referenceImage) return;
-        
-        const maxWidth = DitheringTool.CONSTANTS.MAX_CANVAS_WIDTH;
-        const maxHeight = DitheringTool.CONSTANTS.MAX_CANVAS_HEIGHT;
-        let width = referenceImage.width;
-        let height = referenceImage.height;
-        
-        if (width > maxWidth || height > maxHeight) {
-            const ratio = Math.min(maxWidth / width, maxHeight / height);
-            width = Math.floor(width * ratio);
-            height = Math.floor(height * ratio);
+        if (!this.canvasSize && !referenceImage) return;
+
+        let { width, height } = this.canvasSize || referenceImage;
+        if (!this.canvasSize) {
+            const ratio = Math.min(1,
+                DitheringTool.CONSTANTS.MAX_CANVAS_WIDTH / width,
+                DitheringTool.CONSTANTS.MAX_CANVAS_HEIGHT / height);
+            width = Math.max(1, Math.floor(width * ratio));
+            height = Math.max(1, Math.floor(height * ratio));
         }
-        
+
+        const sizeChanged = this.canvas.width !== width || this.canvas.height !== height;
         this.canvas.width = width;
         this.canvas.height = height;
+        this.syncCanvasSizeInputs();
         
         // Set overlay canvas to be larger to show overflow
         const padding = DitheringTool.CONSTANTS.OVERLAY_PADDING;
@@ -1656,13 +1710,13 @@ class DitheringTool {
         if (this.originalImage) {
             const dimensionsChanged = this.transform.originalWidth !== this.originalImage.width || 
                                      this.transform.originalHeight !== this.originalImage.height;
-            if (this.transform.originalWidth === 0 || !this.sampleImage || dimensionsChanged) {
-                this.resetTransform();
+            if (preserveTransform || sizeChanged || this.transform.originalWidth === 0 || !this.sampleImage || dimensionsChanged) {
+                this.resetTransform({ preserveSettings: preserveTransform });
             }
         }
     }
     
-    resetTransform() {
+    resetTransform({ preserveSettings = false } = {}) {
         if (!this.originalImage) return;
         
         // Fill the canvas with the image, maintaining aspect ratio (cover behavior)
@@ -1684,19 +1738,23 @@ class DitheringTool {
             height = canvasWidth / imgAspect;
         }
         
+        const { scale, rotation, positionX, positionY } = preserveSettings
+            ? this.transform
+            : { scale: 1, rotation: 0, positionX: 0, positionY: 0 };
+        const baseValue = Math.max(width, height);
         this.transform = {
-            x: (canvasWidth - width) / 2,
-            y: (canvasHeight - height) / 2,
-            width: width,
-            height: height,
-            originalWidth: width,
-            originalHeight: height,
+            x: (canvasWidth - width * scale) / 2 + positionX / 100 * baseValue,
+            y: (canvasHeight - height * scale) / 2 + positionY / 100 * baseValue,
+            width: width * scale,
+            height: height * scale,
+            originalWidth: this.originalImage.width,
+            originalHeight: this.originalImage.height,
             baseWidth: width,
             baseHeight: height,
-            rotation: 0,
-            scale: 1,
-            positionX: 0,
-            positionY: 0
+            rotation,
+            scale,
+            positionX,
+            positionY
         };
         
         // Инвалидировать кэш при сбросе трансформации
@@ -1704,26 +1762,26 @@ class DitheringTool {
         
         // Reset position X slider
         if (this.dom.positionXSlider) {
-            this.dom.positionXSlider.value = 0;
-            this.dom.positionXValue.value = '0';
+            this.dom.positionXSlider.value = positionX;
+            this.dom.positionXValue.value = positionX;
         }
         
         // Reset position Y slider
         if (this.dom.positionYSlider) {
-            this.dom.positionYSlider.value = 0;
-            this.dom.positionYValue.value = '0';
+            this.dom.positionYSlider.value = positionY;
+            this.dom.positionYValue.value = positionY;
         }
         
         // Reset scale slider
         if (this.dom.scaleSlider) {
-            this.dom.scaleSlider.value = 1;
-            this.dom.scaleValue.value = '100%';
+            this.dom.scaleSlider.value = scale;
+            this.dom.scaleValue.value = `${Math.round(scale * 100)}%`;
         }
         
         // Reset rotation slider
         if (this.dom.rotationSlider) {
-            this.dom.rotationSlider.value = 0;
-            this.dom.rotationValue.value = '0°';
+            this.dom.rotationSlider.value = rotation;
+            this.dom.rotationValue.value = `${rotation}°`;
         }
         
         this.applyEffects();

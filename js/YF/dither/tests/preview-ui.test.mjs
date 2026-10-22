@@ -72,6 +72,101 @@ test('sources and Reset belong in Texture; the bottom dock contains output actio
     assert.equal(panel.match(/data-file-shortcut-persistent="true"/gu).length, 2);
     assert.match(source, /root: 'imageSourceIntake'/u);
     assert.match(source, /root: 'layoutSourceIntake'/u);
-    assert.match(html, /<canvas id="canvas" class="ui-artboard"/u);
+    assert.match(html, /<canvas id="canvas"[^>]*class="ui-artboard"/u);
     assert.doesNotMatch(html, /<canvas id="overlayCanvas"[^>]*class="ui-artboard"/u);
+});
+
+function sizedPreview() {
+    const tool = preview();
+    tool.canvasSize = null;
+    tool.dom = { canvasWidth: {}, canvasHeight: {}, canvasSizeStatus: {} };
+    tool.cache = { baseValue: 0, processedImage: {} };
+    tool.originalImage = { width: 1600, height: 1200 };
+    tool.sampleImage = null;
+    tool.transform = { originalWidth: 0, scale: 1, rotation: 0, positionX: 0, positionY: 0 };
+    tool.applyEffects = () => {};
+    return tool;
+}
+
+test('custom resolution changes the actual artwork and overlay buffers and retains transform settings', () => {
+    const tool = sizedPreview();
+    tool.updateCanvasSize();
+    Object.assign(tool.transform, { scale: 1.5, rotation: 30, positionX: 10, positionY: -20 });
+    assert.equal(tool.setCanvasSize('1080', '1350'), true);
+    assert.deepEqual([tool.canvas.width, tool.canvas.height], [1080, 1350]);
+    assert.deepEqual([tool.overlayCanvas.width, tool.overlayCanvas.height], [1480, 1750]);
+    assert.deepEqual([tool.dom.canvasWidth.value, tool.dom.canvasHeight.value], [1080, 1350]);
+    assert.deepEqual([tool.transform.scale, tool.transform.rotation, tool.transform.positionX, tool.transform.positionY], [1.5, 30, 10, -20]);
+    assert.deepEqual([tool.transform.baseWidth, tool.transform.baseHeight], [1800, 1350]);
+    assert.deepEqual([tool.transform.width, tool.transform.height, tool.transform.x, tool.transform.y], [2700, 2025, -630, -697.5]);
+    assert.equal(tool.cache.processedImage, null);
+});
+
+test('manual dimensions survive source/layout replacement and removal, even on an empty canvas', async () => {
+    const tool = sizedPreview();
+    tool.originalImage = null;
+    assert.equal(tool.setCanvasSize(321, 123), true);
+    tool.decodeImageFile = async image => image;
+    await tool.loadImage({ width: 2400, height: 1600 });
+    await tool.loadSampleImage({ width: 1000, height: 1000 });
+    assert.deepEqual([tool.canvas.width, tool.canvas.height], [321, 123]);
+    tool.originalImage = null;
+    tool.sampleImage = null;
+    tool.updateCanvasSize();
+    assert.deepEqual([tool.canvas.width, tool.canvas.height], [321, 123]);
+});
+
+test('invalid sizes leave the artwork intact and restore the last accepted fields', () => {
+    const tool = sizedPreview();
+    tool.setCanvasSize(1080, 1350);
+    for (const value of ['', ' ', 'no', NaN, Infinity, 0, -1, 1.5, 4097]) {
+        assert.equal(tool.setCanvasSize(value, 1350), false);
+        assert.equal(tool.setCanvasSize(1080, value), false);
+        assert.deepEqual([tool.canvas.width, tool.canvas.height], [1080, 1350]);
+        assert.deepEqual([tool.dom.canvasWidth.value, tool.dom.canvasHeight.value], [1080, 1350]);
+        assert.match(tool.dom.canvasSizeStatus.textContent, /whole numbers/);
+    }
+    tool.originalImage = null;
+    assert.equal(tool.setCanvasSize(1, 4096), true);
+    assert.deepEqual([tool.canvas.width, tool.canvas.height], [1, 4096]);
+});
+
+test('automatic size follows the source until edited and refits the image when the layout loads later', () => {
+    const tool = sizedPreview();
+    tool.updateCanvasSize();
+    assert.deepEqual([tool.canvas.width, tool.canvas.height], [800, 600]);
+    tool.sampleImage = { width: 1000, height: 1000 };
+    tool.updateCanvasSize();
+    assert.deepEqual([tool.canvas.width, tool.canvas.height], [600, 600]);
+    assert.deepEqual([tool.transform.width, tool.transform.height, tool.transform.x], [800, 600, -100]);
+    tool.setCanvasSize(600, 600);
+    tool.sampleImage = { width: 500, height: 1000 };
+    tool.updateCanvasSize();
+    assert.deepEqual([tool.canvas.width, tool.canvas.height], [600, 600]);
+});
+
+test('Enter applies dimensions and Escape cancels pending edits', () => {
+    const tool = sizedPreview();
+    for (const name of ['canvasWidth', 'canvasHeight']) {
+        const listeners = {};
+        Object.assign(tool.dom[name], {
+            addEventListener: (event, callback) => { listeners[event] = callback; },
+            blur: () => listeners.blur(),
+            listeners
+        });
+    }
+    tool.updateCanvasSize();
+    tool.initCanvasSizeInputs();
+    tool.dom.canvasWidth.blur();
+    assert.equal(tool.canvasSize, null, 'focus without an edit keeps automatic sizing');
+    tool.dom.canvasWidth.value = '900';
+    tool.dom.canvasWidth.listeners.keydown({ key: 'Escape', preventDefault() {} });
+    assert.equal(tool.canvasSize, null, 'cancelled edits keep automatic sizing');
+    tool.dom.canvasWidth.value = '1200';
+    tool.dom.canvasWidth.listeners.keydown({ key: 'Enter', preventDefault() {} });
+    assert.deepEqual([tool.canvas.width, tool.canvas.height], [1200, 600]);
+    tool.dom.canvasHeight.value = '900';
+    tool.dom.canvasHeight.listeners.keydown({ key: 'Escape', preventDefault() {} });
+    assert.deepEqual([tool.canvas.width, tool.canvas.height], [1200, 600]);
+    assert.equal(tool.dom.canvasHeight.value, 600);
 });

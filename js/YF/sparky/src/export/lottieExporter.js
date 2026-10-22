@@ -1,10 +1,10 @@
-import { createMotion, createLoopingEyeMotion } from './animationExportMotion.js';
+import { createMotion, createLoopingEyeMotion } from './animationExportMotion.js?layout=root-infra-1';
 import { ANIMATION_EXPORT_FPS, ANIMATION_EXPORT_SIZE } from './animationExportDefaults.js';
 import { createAnimationFrameSamples, sampleAnimationFrame } from './animationFrameSamples.js';
-import { buildAnimationFrameScene, ANIMATION_ARTBOARD_SIZE } from '../render/animationFrameRenderer.js?v=lottie-1';
+import { buildAnimationFrameScene, ANIMATION_ARTBOARD_SIZE } from '../render/animationFrameRenderer.js?v=lottie-1&layout=root-infra-1';
 import { advanceEyeMotionToTarget, currentEyeMotionTransform } from '../animation/eyeMotion.js?v=20260828-1';
 import { buildEyeLidGeometry } from '../geometry/eyeGeometry.js?v=20260828-1';
-import { buildBolidEyeColorTrailLayers } from '../animation/bolidColorTrail.js?v=lottie-1';
+import { buildBolidEyeColorTrailLayers } from '../animation/bolidColorTrail.js?v=lottie-1&layout=root-infra-1';
 import { roundedPolygonToLottie, eyeCurveToLottie, packLottieShape, unpackLottieShape } from './lottieGeometry.js';
 import { createLottieProperty } from './lottieKeyframes.js';
 

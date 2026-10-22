@@ -9,7 +9,7 @@ import { settingsAtBolidTime } from '../animation/bolid.js?v=20260828-3';
 import {
     buildBolidColorTrailLayers,
     buildBolidEyeColorTrailLayers
-} from '../animation/bolidColorTrail.js?v=lottie-1';
+} from '../animation/bolidColorTrail.js?v=lottie-1&layout=root-infra-1';
 import { createBolidEyeScaffold } from '../animation/bolidEyeScaffold.js?v=20260828-2';
 
 export const ANIMATION_ARTBOARD_SIZE = 480;

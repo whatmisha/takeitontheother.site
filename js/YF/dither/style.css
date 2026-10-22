@@ -611,3 +611,32 @@ body {
     bottom: auto;
     cursor: default;
 }
+
+/* Exact artwork dimensions are independent of the preview's display size. */
+.canvas-size-fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--spacing-xl);
+}
+
+.canvas-size-input {
+    width: 100%;
+    min-width: 0;
+    margin-top: var(--spacing-sm);
+    padding: 8px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-input);
+    background: var(--color-bg-input);
+    color: var(--color-text);
+    text-align: left;
+}
+
+.canvas-size-input:focus-visible {
+    outline: 1px solid var(--color-text);
+    outline-offset: 1px;
+}
+
+#canvasSizeStatus {
+    margin-bottom: var(--spacing-3xl);
+    color: var(--color-text-muted);
+}
